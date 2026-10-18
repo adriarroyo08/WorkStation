@@ -12,13 +12,55 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 | `shared/` | Modelo de datos, estadísticas (1RM de Epley, récords, volumen), importadores de Hevy y cliente IA. |
 
 ### Funciones de la app
-- Entrenamiento en vivo: series con kg/reps (o tiempo/distancia), tipos de serie (calentamiento, drop, fallo), columna "Anterior" con la sesión previa, temporizador de descanso con vibración.
-- Rutinas: crear, editar, reordenar y empezar desde rutina.
-- Historial con volumen, duración y series.
-- Progreso por ejercicio: gráfica de 1RM estimado, peso máximo, volumen y reps; récords personales (avisa al batir uno).
-- Peso corporal.
-- **Coach IA**: chat con contexto de tu historial; si te propone una rutina, se guarda con un toque.
-- Backup/restauración en JSON e **importación del CSV de Hevy**.
+
+**Entrenar**
+- Registro en vivo: kg/reps, peso corporal (+lastre o asistido), tiempo (con cronómetro) y distancia.
+- Tipos de serie: calentamiento, drop set y al fallo. RPE opcional.
+- Columna "Anterior" con la sesión previa (toca para copiarla; los calentamientos se emparejan con calentamientos).
+- 🏆 Récord en vivo al completar una serie que bate tu marca.
+- Superseries, reordenar, reemplazar ejercicio y nota fija por ejercicio.
+- Temporizador de descanso por ejercicio, con sonido, vibración y barra de progreso. En superseries arranca tras el último ejercicio del bloque.
+- Generador de series de calentamiento y calculadora de discos (barra y discos configurables).
+- Pantalla siempre encendida mientras entrenas y aviso de "entrenamiento en curso" en las demás pestañas.
+- Al terminar: resumen con récords batidos y distribución muscular, imagen para compartir, "Guardar como rutina" y "Actualizar rutina".
+
+**Rutinas**
+- Carpetas, duplicar, mover, compartir como texto y editor serie a serie.
+- Explorar 7 programas predefinidos: Cuerpo completo, 5×5, Torso/Pierna, PPL, Arnold split, En casa y Glúteo.
+- El Coach IA crea rutinas o programas enteros que guardas con un toque.
+
+**Ejercicios**
+- 115 ejercicios en español con imágenes animadas (inicio/fin del movimiento) e instrucciones.
+- Catálogo completo de 870+ ejercicios de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público).
+- Ejercicios personalizados con músculos secundarios.
+- Ficha por ejercicio:
+  - Gráficas de 1RM estimado, peso máximo, mejor serie, volumen y reps, filtrables por rango.
+  - Historial.
+  - Cómo hacerlo (con traducción por IA).
+  - Récords: mejor peso por número de repeticiones y totales de por vida.
+
+**Historial**: lista agrupada por mes con buscador y calendario. Cada entrenamiento se puede editar (fecha, duración, series), repetir o borrar.
+
+**Perfil**
+- Totales y racha de semanas seguidas.
+- Gráfico de las últimas 12 semanas (entrenos, duración, volumen, series o reps).
+- Distribución muscular (30 días / 3 meses / 1 año), calendario y ejercicios principales.
+- **Informes semanales, mensuales y anuales**:
+  - Comparación con el periodo anterior y objetivo semanal cumplido.
+  - Volumen por día, récords batidos, series por músculo y ejercicios más trabajados.
+  - Análisis del coach IA, impresión a PDF y copia como texto.
+- **Medidas**: peso, % de grasa y 11 perímetros con gráficas, más fotos de progreso con comparador (las fotos se quedan en el dispositivo).
+
+**Ajustes**: descanso por defecto, objetivo semanal, RPE, sonido/vibración, pantalla encendida, inicio de semana, tema claro/oscuro, barra y discos, IA, backups JSON, exportación CSV compatible con Hevy e importación del CSV de Hevy.
+
+Funciona sin conexión: el catálogo y las imágenes vistas quedan en caché.
+
+## Desarrollo
+
+```bash
+npm install && npm test          # tests del código compartido (vitest)
+npm run catalog                  # regenera app/public/catalog.json desde free-exercise-db
+```
 
 ## Uso rápido
 
@@ -62,7 +104,7 @@ Añade a la config de tu cliente MCP (en Claude Desktop: *Ajustes → Desarrolla
 }
 ```
 
-Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `personal_records`, `list_exercises`, `list_routines`, `create_routine`, `log_workout`, `log_measurement`, `import_from_hevy`.
+Herramientas: `training_summary`, `period_report` (informe semanal/mensual/anual), `list_workouts`, `get_workout`, `exercise_history`, `personal_records`, `list_exercises`, `list_routines`, `create_routine` (con superseries), `list_programs`, `add_program`, `log_workout`, `log_measurement`, `import_from_hevy`.
 
 **Sincronización app ↔ MCP:** el servidor trabaja sobre un fichero JSON con el mismo formato que el backup de la app.
 Exporta el backup desde la app → guárdalo en la ruta de `WORKSTATION_DATA` → pide a la IA lo que quieras (p. ej. "créame una rutina de pierna") → importa ese fichero de nuevo en la app (se fusiona sin duplicar).

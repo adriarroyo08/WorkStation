@@ -1,55 +1,103 @@
-import { useState } from 'react';
-import { formatSet, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
-import { fmtDate, useStore } from '../store';
+import { useMemo, useState } from 'react';
+import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
+import { cap, fmtDate, fmtNum, useStore } from '../store';
+import { MonthCalendar } from './ui';
+import WorkoutDetail from './WorkoutDetail';
 
-export default function History() {
-  const { data, update } = useStore();
+export default function History({ onExercise, goTrain }: { onExercise: (id: string) => void; goTrain: () => void }) {
+  const { data, settings } = useStore();
   const [open, setOpen] = useState<string | null>(null);
+  const [mode, setMode] = useState<'list' | 'calendar'>('list');
+  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [day, setDay] = useState<string | null>(null);
+  const [q, setQ] = useState('');
   const ex = new Map(data.exercises.map((e) => [e.id, e]));
-  const list = [...data.workouts].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const prCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of prEvents(data)) m.set(e.workoutId, (m.get(e.workoutId) ?? 0) + 1);
+    return m;
+  }, [data]);
+  const trained = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const w of data.workouts) m.set(new Date(w.startedAt).toDateString(), (m.get(new Date(w.startedAt).toDateString()) ?? 0) + 1);
+    return m;
+  }, [data.workouts]);
+
+  if (open) return <WorkoutDetail id={open} onBack={() => setOpen(null)} onExercise={onExercise} goTrain={goTrain} />;
+
+  let list = [...data.workouts].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  if (q) list = list.filter((w) => w.name.toLowerCase().includes(q.toLowerCase()) || w.exercises.some((e) => ex.get(e.exerciseId)?.name.toLowerCase().includes(q.toLowerCase())));
+  if (mode === 'calendar') list = list.filter((w) => (day ? new Date(w.startedAt).toDateString() === day : new Date(w.startedAt).getMonth() === month.getMonth() && new Date(w.startedAt).getFullYear() === month.getFullYear()));
+
+  // Agrupar por mes como en Hevy.
+  const groups: { label: string; items: typeof list }[] = [];
+  for (const w of list) {
+    const label = cap(new Date(w.startedAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }));
+    if (groups.at(-1)?.label !== label) groups.push({ label, items: [] });
+    groups.at(-1)!.items.push(w);
+  }
 
   return (
     <section>
-      <h1>Historial</h1>
-      {!list.length && <p className="muted">Aún no hay entrenamientos. ¡Empieza uno o importa tus datos de Hevy en Ajustes!</p>}
-      {list.map((w) => (
-        <div key={w.id} className="card" onClick={() => setOpen(open === w.id ? null : w.id)}>
+      <div className="row">
+        <h1 className="grow">Historial</h1>
+        <div className="segmented small">
+          <button className={mode === 'list' ? 'on' : ''} onClick={() => setMode('list')}>
+            Lista
+          </button>
+          <button className={mode === 'calendar' ? 'on' : ''} onClick={() => setMode('calendar')}>
+            Calendario
+          </button>
+        </div>
+      </div>
+      {mode === 'list' && <input placeholder="Buscar por nombre o ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />}
+      {mode === 'calendar' && (
+        <div className="card">
           <div className="row">
-            <div className="grow">
-              <b>{w.name}</b>
-              <div className="muted small">{fmtDate(w.startedAt)}</div>
-            </div>
-            <div className="small right">
-              {workoutDurationMin(w)} min · {workoutSetCount(w)} series
-              <div className="muted">{workoutVolume(w).toLocaleString('es-ES')} kg</div>
-            </div>
+            <button className="ghost" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)), setDay(null))}>
+              ‹
+            </button>
+            <b className="grow center-text">{cap(month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }))}</b>
+            <button className="ghost" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)), setDay(null))}>
+              ›
+            </button>
           </div>
-          {open === w.id ? (
-            <div className="detail">
-              {w.notes && <p className="muted">{w.notes}</p>}
-              {w.exercises.map((e, i) => (
-                <div key={i}>
-                  <b className="accent-text">{ex.get(e.exerciseId)?.name ?? e.exerciseId}</b>
-                  <ol>
-                    {e.sets.map((s, j) => (
-                      <li key={j}>{formatSet(s, ex.get(e.exerciseId))}</li>
-                    ))}
-                  </ol>
+          <MonthCalendar month={month} trained={trained} mondayFirst={settings.weekStartsMonday} onDay={(d) => setDay(day === d.toDateString() ? null : d.toDateString())} />
+          <p className="muted small center-text">
+            {list.length} entrenamientos {day ? 'ese día' : 'este mes'}
+          </p>
+        </div>
+      )}
+      {!data.workouts.length && <p className="muted">Aún no hay entrenamientos. ¡Empieza uno o importa tus datos de Hevy en Ajustes!</p>}
+      {groups.map((g) => (
+        <div key={g.label}>
+          <h3 className="muted month-h">
+            {g.label} · {g.items.length}
+          </h3>
+          {g.items.map((w) => (
+            <button key={w.id} className="card full left" onClick={() => setOpen(w.id)}>
+              <div className="row">
+                <div className="grow">
+                  <b>{w.name}</b>
+                  <div className="muted small">{fmtDate(w.startedAt)}</div>
                 </div>
-              ))}
-              <button
-                className="danger"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  if (confirm('¿Borrar este entrenamiento?')) update((d) => void (d.workouts = d.workouts.filter((x) => x.id !== w.id)));
-                }}
-              >
-                Borrar
-              </button>
-            </div>
-          ) : (
-            <div className="muted small">{w.exercises.map((e) => ex.get(e.exerciseId)?.name ?? e.exerciseId).join(' · ')}</div>
-          )}
+                {prCount.get(w.id) ? <span className="pr-pill">🏆 {prCount.get(w.id)}</span> : null}
+              </div>
+              <div className="row small muted wstats">
+                <span>⏱ {workoutDurationMin(w)} min</span>
+                <span>🏋️ {fmtNum(workoutVolume(w))} kg</span>
+                <span>✅ {workoutSetCount(w)} series</span>
+              </div>
+              <div className="small exsum">
+                {w.exercises.slice(0, 4).map((e, i) => (
+                  <div key={i}>
+                    {e.sets.length} × {ex.get(e.exerciseId)?.name ?? e.exerciseId}
+                  </div>
+                ))}
+                {w.exercises.length > 4 && <div className="muted">+ {w.exercises.length - 4} más</div>}
+              </div>
+            </button>
+          ))}
         </div>
       ))}
     </section>

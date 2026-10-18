@@ -1,11 +1,16 @@
 // Modelo de datos compartido entre la app (PWA) y el servidor MCP.
 // El fichero de backup JSON (WorkstationData) es el formato de intercambio.
 
-export type ExerciseKind = 'weight_reps' | 'reps' | 'duration' | 'distance';
+// weight_reps: peso + reps · reps: peso corporal (+kg lastre opcional) · assisted: peso corporal asistido (kg de ayuda)
+// duration: tiempo · distance: distancia + tiempo
+export type ExerciseKind = 'weight_reps' | 'reps' | 'assisted' | 'duration' | 'distance';
 
 export type MuscleGroup =
   | 'pecho'
   | 'espalda'
+  | 'dorsales'
+  | 'trapecio'
+  | 'lumbar'
   | 'hombros'
   | 'biceps'
   | 'triceps'
@@ -13,17 +18,27 @@ export type MuscleGroup =
   | 'cuadriceps'
   | 'isquios'
   | 'gluteos'
+  | 'abductores'
+  | 'aductores'
   | 'gemelos'
   | 'core'
+  | 'cuello'
   | 'cardio'
-  | 'cuerpo_completo';
+  | 'cuerpo_completo'
+  | 'otro';
 
 export interface Exercise {
   id: string;
   name: string;
   muscle: MuscleGroup;
+  secondary?: MuscleGroup[];
   equipment: string;
   kind: ExerciseKind;
+  // Id en el catálogo libre free-exercise-db (imágenes + instrucciones).
+  media?: string;
+  instructions?: string[];
+  // Nota fija que aparece cada vez que haces el ejercicio.
+  stickyNote?: string;
   custom?: boolean;
 }
 
@@ -42,6 +57,9 @@ export interface WorkoutSet {
 export interface WorkoutExercise {
   exerciseId: string;
   notes?: string;
+  restSec?: number;
+  // Ejercicios consecutivos con el mismo supersetId forman una superserie.
+  supersetId?: string;
   sets: WorkoutSet[];
 }
 
@@ -59,30 +77,64 @@ export interface RoutineExercise {
   exerciseId: string;
   restSec: number;
   notes?: string;
-  sets: { type: SetType; weight?: number; reps?: number; durationSec?: number }[];
+  supersetId?: string;
+  sets: { type: SetType; weight?: number; reps?: number; durationSec?: number; distanceM?: number }[];
 }
 
 export interface Routine {
   id: string;
   name: string;
   notes?: string;
+  folderId?: string;
   exercises: RoutineExercise[];
 }
 
-export interface Measurement {
+export interface RoutineFolder {
   id: string;
-  date: string; // ISO
-  bodyweight?: number;
-  bodyFat?: number;
+  name: string;
 }
+
+export const MEASUREMENT_FIELDS = ['bodyweight', 'bodyFat', 'neck', 'shoulders', 'chest', 'waist', 'hips', 'leftArm', 'rightArm', 'leftThigh', 'rightThigh', 'leftCalf', 'rightCalf'] as const;
+export type MeasurementField = (typeof MEASUREMENT_FIELDS)[number];
+
+// photos: ids de fotos de progreso guardadas solo en el dispositivo (IndexedDB), no en el JSON.
+export type Measurement = { id: string; date: string; notes?: string; photos?: string[] } & Partial<Record<MeasurementField, number>>;
+
+export interface Settings {
+  defaultRestSec: number;
+  weekStartsMonday: boolean;
+  weeklyGoal: number; // entrenos por semana
+  keepAwake: boolean;
+  sound: boolean;
+  vibrate: boolean;
+  showRpe: boolean;
+  theme: 'auto' | 'dark' | 'light';
+  barKg: number;
+  platesKg: number[];
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  defaultRestSec: 90,
+  weekStartsMonday: true,
+  weeklyGoal: 3,
+  keepAwake: true,
+  sound: true,
+  vibrate: true,
+  showRpe: false,
+  theme: 'auto',
+  barKg: 20,
+  platesKg: [25, 20, 15, 10, 5, 2.5, 1.25],
+};
 
 export interface WorkstationData {
   version: 1;
   exportedAt?: string;
   exercises: Exercise[];
   routines: Routine[];
+  folders: RoutineFolder[];
   workouts: Workout[];
   measurements: Measurement[];
+  settings: Settings;
 }
 
 export function uid(): string {

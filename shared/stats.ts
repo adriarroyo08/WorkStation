@@ -1,4 +1,5 @@
-import type { Exercise, Workout, WorkoutSet, WorkstationData } from './types';
+import { MUSCLE_LABELS } from './exercises';
+import type { Exercise, MuscleGroup, Workout, WorkoutSet, WorkstationData } from './types';
 
 // 1RM estimado (fórmula de Epley).
 export function estimate1RM(weight: number, reps: number): number {
@@ -7,22 +8,27 @@ export function estimate1RM(weight: number, reps: number): number {
   return Math.round(weight * (1 + reps / 30) * 10) / 10;
 }
 
-const counts = (s: WorkoutSet) => s.done && s.type !== 'warmup';
+export const countsAsWorkSet = (s: WorkoutSet) => s.done && s.type !== 'warmup';
+
+const byDate = (a: Workout, b: Workout) => a.startedAt.localeCompare(b.startedAt);
 
 export function workoutVolume(w: Workout): number {
   let v = 0;
-  for (const ex of w.exercises)
-    for (const s of ex.sets) if (counts(s)) v += (s.weight ?? 0) * (s.reps ?? 0);
+  for (const ex of w.exercises) for (const s of ex.sets) if (countsAsWorkSet(s)) v += (s.weight ?? 0) * (s.reps ?? 0);
   return Math.round(v);
 }
 
 export function workoutSetCount(w: Workout): number {
-  return w.exercises.reduce((n, ex) => n + ex.sets.filter(counts).length, 0);
+  return w.exercises.reduce((n, ex) => n + ex.sets.filter(countsAsWorkSet).length, 0);
+}
+
+export function workoutReps(w: Workout): number {
+  return w.exercises.reduce((n, ex) => n + ex.sets.filter(countsAsWorkSet).reduce((r, s) => r + (s.reps ?? 0), 0), 0);
 }
 
 export function workoutDurationMin(w: Workout): number {
   if (!w.endedAt) return 0;
-  return Math.round((Date.parse(w.endedAt) - Date.parse(w.startedAt)) / 60000);
+  return Math.max(0, Math.round((Date.parse(w.endedAt) - Date.parse(w.startedAt)) / 60000));
 }
 
 export interface ExerciseSession {
@@ -31,8 +37,12 @@ export interface ExerciseSession {
   sets: WorkoutSet[];
   bestWeight: number;
   best1RM: number;
+  bestSetVolume: number;
   volume: number;
   maxReps: number;
+  totalReps: number;
+  maxDuration: number;
+  maxDistance: number;
 }
 
 export function exerciseHistory(data: WorkstationData, exerciseId: string): ExerciseSession[] {
@@ -40,7 +50,7 @@ export function exerciseHistory(data: WorkstationData, exerciseId: string): Exer
   for (const w of data.workouts) {
     for (const ex of w.exercises) {
       if (ex.exerciseId !== exerciseId) continue;
-      const sets = ex.sets.filter(counts);
+      const sets = ex.sets.filter(countsAsWorkSet);
       if (!sets.length) continue;
       out.push({
         workoutId: w.id,
@@ -48,12 +58,36 @@ export function exerciseHistory(data: WorkstationData, exerciseId: string): Exer
         sets,
         bestWeight: Math.max(0, ...sets.map((s) => s.weight ?? 0)),
         best1RM: Math.max(0, ...sets.map((s) => estimate1RM(s.weight ?? 0, s.reps ?? 0))),
+        bestSetVolume: Math.max(0, ...sets.map((s) => (s.weight ?? 0) * (s.reps ?? 0))),
         volume: sets.reduce((v, s) => v + (s.weight ?? 0) * (s.reps ?? 0), 0),
         maxReps: Math.max(0, ...sets.map((s) => s.reps ?? 0)),
+        totalReps: sets.reduce((v, s) => v + (s.reps ?? 0), 0),
+        maxDuration: Math.max(0, ...sets.map((s) => s.durationSec ?? 0)),
+        maxDistance: Math.max(0, ...sets.map((s) => s.distanceM ?? 0)),
       });
     }
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// Series (incluido calentamiento) de la última sesión anterior a `before` en la que se hizo el ejercicio.
+export function lastSessionSets(data: WorkstationData, exerciseId: string, before?: string, excludeId?: string): WorkoutSet[] {
+  const ws = data.workouts.filter((w) => w.id !== excludeId && (!before || w.startedAt < before)).sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  for (const w of ws) {
+    const sets = w.exercises.filter((e) => e.exerciseId === exerciseId).flatMap((e) => e.sets.filter((s) => s.done));
+    if (sets.length) return sets;
+  }
+  return [];
+}
+
+// Empareja cada serie con la equivalente de la sesión anterior: el n-ésimo calentamiento con el n-ésimo
+// calentamiento y la n-ésima serie efectiva con la n-ésima efectiva.
+export function alignPrevious(sets: { type: WorkoutSet['type'] }[], prev: WorkoutSet[]): (WorkoutSet | undefined)[] {
+  const pw = prev.filter((s) => s.type === 'warmup');
+  const pn = prev.filter((s) => s.type !== 'warmup');
+  let w = 0,
+    n = 0;
+  return sets.map((s) => (s.type === 'warmup' ? pw[w++] : pn[n++]));
 }
 
 export interface PersonalRecord {
@@ -62,7 +96,11 @@ export interface PersonalRecord {
   bestWeight: number;
   best1RM: number;
   maxReps: number;
+  bestSetVolume: number;
   bestVolumeSession: number;
+  maxDuration: number;
+  maxDistance: number;
+  sessions: number;
   lastDate: string;
 }
 
@@ -73,25 +111,120 @@ export function personalRecords(data: WorkstationData): PersonalRecord[] {
   for (const id of ids) {
     const h = exerciseHistory(data, id);
     if (!h.length) continue;
+    const max = (k: keyof ExerciseSession) => Math.max(...h.map((s) => s[k] as number));
     prs.push({
       exerciseId: id,
       exerciseName: names.get(id) ?? id,
-      bestWeight: Math.max(...h.map((s) => s.bestWeight)),
-      best1RM: Math.max(...h.map((s) => s.best1RM)),
-      maxReps: Math.max(...h.map((s) => s.maxReps)),
-      bestVolumeSession: Math.round(Math.max(...h.map((s) => s.volume))),
+      bestWeight: max('bestWeight'),
+      best1RM: max('best1RM'),
+      maxReps: max('maxReps'),
+      bestSetVolume: Math.round(max('bestSetVolume')),
+      bestVolumeSession: Math.round(max('volume')),
+      maxDuration: max('maxDuration'),
+      maxDistance: max('maxDistance'),
+      sessions: h.length,
       lastDate: h[h.length - 1].date,
     });
   }
   return prs.sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
 }
 
+// Mejor peso levantado para cada número de repeticiones ("récords por serie").
+export function repRecords(data: WorkstationData, exerciseId: string, maxReps = 15): { reps: number; weight: number; date: string }[] {
+  const best = new Map<number, { weight: number; date: string }>();
+  for (const s of exerciseHistory(data, exerciseId))
+    for (const set of s.sets) {
+      const r = set.reps ?? 0;
+      const w = set.weight ?? 0;
+      if (r < 1 || r > maxReps || w <= 0) continue;
+      if (!best.has(r) || best.get(r)!.weight < w) best.set(r, { weight: w, date: s.date });
+    }
+  return [...best.entries()].sort((a, b) => a[0] - b[0]).map(([reps, v]) => ({ reps, ...v }));
+}
+
+export type PrKind = 'weight' | '1rm' | 'setVolume' | 'reps' | 'duration' | 'distance';
+export const PR_LABELS: Record<PrKind, string> = { weight: 'Peso máximo', '1rm': '1RM estimado', setVolume: 'Mejor serie (volumen)', reps: 'Más repeticiones', duration: 'Más tiempo', distance: 'Más distancia' };
+
+export interface PrEvent {
+  workoutId: string;
+  exerciseId: string;
+  date: string;
+  kind: PrKind;
+  value: number;
+  previous: number;
+}
+
+function setMetrics(s: WorkoutSet, ex?: Exercise): Partial<Record<PrKind, number>> {
+  const k = ex?.kind ?? 'weight_reps';
+  if (k === 'duration') return { duration: s.durationSec ?? 0 };
+  if (k === 'distance') return { distance: s.distanceM ?? 0 };
+  if (k === 'assisted') return { reps: s.reps ?? 0 };
+  if (k === 'reps') return { reps: s.reps ?? 0, ...(s.weight ? { weight: s.weight } : {}) };
+  return { weight: s.weight ?? 0, '1rm': estimate1RM(s.weight ?? 0, s.reps ?? 0), setVolume: (s.weight ?? 0) * (s.reps ?? 0) };
+}
+
+// Recorre el historial en orden y devuelve cada vez que se batió un récord.
+// La primera sesión de un ejercicio no cuenta como récord (no hay con qué comparar).
+export function prEvents(data: WorkstationData, extra?: Workout): PrEvent[] {
+  const ex = new Map(data.exercises.map((e) => [e.id, e]));
+  const bests = new Map<string, Partial<Record<PrKind, number>>>();
+  const events: PrEvent[] = [];
+  const all = extra ? [...data.workouts.filter((w) => w.id !== extra.id), extra] : data.workouts;
+  for (const w of [...all].sort(byDate)) {
+    for (const we of w.exercises) {
+      const sessionBest: Partial<Record<PrKind, number>> = {};
+      for (const s of we.sets.filter(countsAsWorkSet))
+        for (const [k, v] of Object.entries(setMetrics(s, ex.get(we.exerciseId))) as [PrKind, number][]) sessionBest[k] = Math.max(sessionBest[k] ?? 0, v);
+      if (!Object.keys(sessionBest).length) continue;
+      const prev = bests.get(we.exerciseId);
+      if (!prev) {
+        bests.set(we.exerciseId, sessionBest);
+        continue;
+      }
+      for (const [k, v] of Object.entries(sessionBest) as [PrKind, number][]) {
+        const p = prev[k] ?? 0;
+        if (v > 0 && v > p) {
+          if (p > 0) events.push({ workoutId: w.id, exerciseId: we.exerciseId, date: w.startedAt, kind: k, value: Math.round(v * 10) / 10, previous: Math.round(p * 10) / 10 });
+          prev[k] = v;
+        }
+      }
+    }
+  }
+  return events;
+}
+
+// Series efectivas por músculo (el principal cuenta 1, los secundarios 0,5).
+export function muscleSets(data: WorkstationData, workouts: Workout[], includeSecondary = true): Partial<Record<MuscleGroup, number>> {
+  const ex = new Map(data.exercises.map((e) => [e.id, e]));
+  const out: Partial<Record<MuscleGroup, number>> = {};
+  for (const w of workouts)
+    for (const we of w.exercises) {
+      const e = ex.get(we.exerciseId);
+      const n = we.sets.filter(countsAsWorkSet).length;
+      if (!n) continue;
+      const m = e?.muscle ?? 'otro';
+      out[m] = (out[m] ?? 0) + n;
+      if (includeSecondary) for (const s of e?.secondary ?? []) out[s] = (out[s] ?? 0) + n / 2;
+    }
+  return out;
+}
+
+export function formatDuration(sec: number): string {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.round(sec % 60);
+  if (h) return `${h}h ${m}min`;
+  if (m) return s ? `${m}min ${s}s` : `${m}min`;
+  return `${s}s`;
+}
+
 export function formatSet(s: WorkoutSet, ex?: Exercise): string {
   const tag = s.type === 'warmup' ? ' (calent.)' : s.type === 'drop' ? ' (drop)' : s.type === 'failure' ? ' (fallo)' : '';
-  if (ex?.kind === 'duration' || (s.durationSec && !s.reps)) return `${s.durationSec ?? 0}s${tag}`;
-  if (ex?.kind === 'distance' || (s.distanceM && !s.reps)) return `${s.distanceM ?? 0}m${s.durationSec ? ` en ${s.durationSec}s` : ''}${tag}`;
-  const w = s.weight ? `${s.weight}kg × ` : '';
   const rpe = s.rpe ? ` @RPE${s.rpe}` : '';
+  if (ex?.kind === 'duration' || (s.durationSec && !s.reps && !s.distanceM)) return `${formatDuration(s.durationSec ?? 0)}${s.weight ? ` con ${s.weight}kg` : ''}${tag}`;
+  if (ex?.kind === 'distance' || (s.distanceM && !s.reps)) return `${s.distanceM ?? 0}m${s.durationSec ? ` en ${formatDuration(s.durationSec)}` : ''}${tag}`;
+  if (ex?.kind === 'assisted') return `${s.reps ?? 0} reps${s.weight ? ` (asist. ${s.weight}kg)` : ''}${rpe}${tag}`;
+  const w = s.weight ? `${s.weight}kg × ` : '';
   return `${w}${s.reps ?? 0}${rpe}${tag}`;
 }
 
@@ -100,9 +233,16 @@ export function trainingSummary(data: WorkstationData, lastN = 10): string {
   const names = new Map(data.exercises.map((e) => [e.id, e]));
   const recent = [...data.workouts].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, lastN);
   const lines: string[] = [];
-  lines.push(`Entrenamientos totales registrados: ${data.workouts.length}.`);
+  lines.push(`Entrenamientos totales registrados: ${data.workouts.length}. Objetivo semanal: ${data.settings?.weeklyGoal ?? 3} entrenos.`);
   const lastBw = [...data.measurements].sort((a, b) => b.date.localeCompare(a.date)).find((m) => m.bodyweight);
   if (lastBw) lines.push(`Peso corporal más reciente: ${lastBw.bodyweight} kg (${lastBw.date.slice(0, 10)}).`);
+  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString();
+  const ms = muscleSets(data, data.workouts.filter((w) => w.startedAt >= monthAgo), false);
+  const msTxt = Object.entries(ms)
+    .sort((a, b) => b[1] - a[1])
+    .map(([m, n]) => `${MUSCLE_LABELS[m as MuscleGroup]} ${n}`)
+    .join(', ');
+  if (msTxt) lines.push(`Series por músculo (últimos 30 días): ${msTxt}.`);
   lines.push('', `Últimos ${recent.length} entrenamientos:`);
   for (const w of recent) {
     lines.push(`- ${w.startedAt.slice(0, 10)} "${w.name}" (${workoutDurationMin(w)} min, volumen ${workoutVolume(w)} kg)`);

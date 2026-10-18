@@ -1,0 +1,13 @@
+{
+  "name": "workstation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "build": "npm --prefix app run build && npm --prefix mcp run build",
+    "catalog": "node scripts/build-catalog.mjs"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.5"
+  }
+}

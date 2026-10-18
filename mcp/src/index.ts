@@ -6,11 +6,13 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { findOrCreateExercise, routineFromDraft } from '../../shared/data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts } from '../../shared/hevy';
+import { period, periodReport, reportToText, weekStreak } from '../../shared/reports';
+import { PROGRAMS, instantiateProgram } from '../../shared/templates';
 import { exerciseHistory, formatSet, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from '../../shared/stats';
 import { uid, type Workout } from '../../shared/types';
 import { dataPath, loadData, saveData } from './store';
 
-const server = new McpServer({ name: 'workstation', version: '0.1.0' });
+const server = new McpServer({ name: 'workstation', version: '0.2.0' });
 
 const text = (t: string) => ({ content: [{ type: 'text' as const, text: t }] });
 const json = (v: unknown) => text(JSON.stringify(v, null, 2));
@@ -65,6 +67,40 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  'period_report',
+  {
+    description: 'Informe semanal, mensual o anual: entrenos, duración, volumen, series, récords batidos, series por músculo y comparación con el periodo anterior.',
+    inputSchema: { period: z.enum(['week', 'month', 'year']).describe('Tipo de periodo'), offset: z.number().int().max(0).optional().describe('0 = actual, -1 = anterior, …') },
+  },
+  async ({ period: kind, offset }) => {
+    const data = loadData();
+    const r = periodReport(data, period(kind, offset ?? 0, data.settings.weekStartsMonday));
+    return text(`${reportToText(r)}\nRacha actual: ${weekStreak(data, data.settings.weekStartsMonday)} semanas seguidas entrenando.`);
+  },
+);
+
+server.registerTool(
+  'list_programs',
+  { description: 'Programas predefinidos disponibles (Full body, 5x5, Torso/Pierna, PPL, Arnold, casa, glúteo).', inputSchema: {} },
+  async () => json(PROGRAMS.map((p) => ({ id: p.id, name: p.name, level: p.level, daysPerWeek: p.daysPerWeek, goal: p.goal, routines: p.routines.map((r) => r.name) }))),
+);
+
+server.registerTool(
+  'add_program',
+  { description: 'Guarda un programa predefinido en las rutinas del usuario (crea una carpeta).', inputSchema: { id: z.string() } },
+  async ({ id }) => {
+    const p = PROGRAMS.find((x) => x.id === id);
+    if (!p) return text(`Programa desconocido: ${id}`);
+    const data = loadData();
+    const { folder, routines } = instantiateProgram(p);
+    data.folders.push(folder);
+    data.routines.push(...routines);
+    saveData(data);
+    return text(`Programa "${p.name}" guardado (${routines.length} rutinas).`);
+  },
+);
+
 server.registerTool('personal_records', { description: 'Récords personales por ejercicio.', inputSchema: {} }, async () => json(personalRecords(loadData())));
 
 server.registerTool(
@@ -86,7 +122,7 @@ server.registerTool(
     inputSchema: {
       name: z.string(),
       notes: z.string().optional(),
-      exercises: z.array(z.object({ name: z.string(), sets: z.number().int().min(1).max(20), reps: z.number().optional(), weight: z.number().optional(), durationSec: z.number().optional(), restSec: z.number().optional(), notes: z.string().optional() })).min(1),
+      exercises: z.array(z.object({ name: z.string(), sets: z.number().int().min(1).max(20), reps: z.number().optional(), weight: z.number().optional(), durationSec: z.number().optional(), restSec: z.number().optional(), notes: z.string().optional(), superset: z.string().optional().describe('Mismo valor en ejercicios consecutivos = superserie') })).min(1),
     },
   },
   async (draft) => {

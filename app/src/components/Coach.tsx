@@ -1,18 +1,21 @@
 import { useRef, useState } from 'react';
 import { chat, COACH_SYSTEM_PROMPT, extractJsonBlock, type ChatMessage } from '../../../shared/ai';
 import { routineFromDraft, type RoutineDraft } from '../../../shared/data';
+import { period, periodReport, reportToText } from '../../../shared/reports';
 import { trainingSummary } from '../../../shared/stats';
+import { uid } from '../../../shared/types';
 import { useStore } from '../store';
 
 const QUICK = [
   'Analiza mis últimas semanas: ¿qué estoy haciendo bien y qué debería mejorar?',
+  'Hazme el resumen de esta semana y dime qué priorizar en la siguiente.',
   'Crea una rutina Torso/Pierna de 4 días adaptada a mis marcas actuales.',
   '¿Qué pesos debería usar en mi próximo entrenamiento para progresar?',
   '¿Tengo algún grupo muscular descompensado por volumen?',
 ];
 
 export default function Coach({ goSettings }: { goSettings: () => void }) {
-  const { data, ai, update } = useStore();
+  const { data, ai, update, settings } = useStore();
   const [msgs, setMsgs] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,7 +33,7 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
     setErr('');
     abort.current = new AbortController();
     try {
-      const system: ChatMessage = { role: 'system', content: `${COACH_SYSTEM_PROMPT}\n\nFecha de hoy: ${new Date().toISOString().slice(0, 10)}\n\nDATOS DEL USUARIO:\n${trainingSummary(data, 15)}` };
+      const system: ChatMessage = { role: 'system', content: `${COACH_SYSTEM_PROMPT}\n\nFecha de hoy: ${new Date().toISOString().slice(0, 10)}\n\nDATOS DEL USUARIO:\n${trainingSummary(data, 15)}\n\n${reportToText(periodReport(data, period('week', 0, settings.weekStartsMonday)))}\n\n${reportToText(periodReport(data, period('month', 0, settings.weekStartsMonday)))}\n\nEjercicios disponibles en su biblioteca: ${data.exercises.filter((e) => !e.id.startsWith('db-')).map((e) => e.name).join(', ')}` };
       const reply = await chat(ai, [system, ...next], abort.current.signal);
       setMsgs([...next, { role: 'assistant', content: reply }]);
     } catch (e) {
@@ -40,10 +43,14 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
     }
   };
 
-  const saveRoutine = (draft: RoutineDraft) => {
+  const saveRoutines = (drafts: RoutineDraft[], program?: string) => {
     try {
-      update((d) => void d.routines.push(routineFromDraft(d, draft)));
-      alert(`Rutina "${draft.name}" guardada en Rutinas.`);
+      update((d) => {
+        const folderId = program ? uid() : undefined;
+        if (program && folderId) d.folders.push({ id: folderId, name: program });
+        for (const dr of drafts) d.routines.push(routineFromDraft(d, dr, folderId));
+      });
+      alert(program ? `Programa "${program}" guardado (${drafts.length} rutinas).` : `Rutina "${drafts[0].name}" guardada en Entrenar.`);
     } catch (e) {
       alert((e as Error).message);
     }
@@ -81,13 +88,18 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
         </div>
       )}
       {msgs.map((m, i) => {
-        const json = m.role === 'assistant' ? (extractJsonBlock(m.content) as RoutineDraft | undefined) : undefined;
+        const json = m.role === 'assistant' ? (extractJsonBlock(m.content) as (RoutineDraft & { program?: string; routines?: RoutineDraft[] }) | undefined) : undefined;
         return (
           <div key={i} className={`bubble ${m.role}`}>
             <div className="pre">{m.content.replace(/```json[\s\S]*?```/g, '').trim()}</div>
             {json?.exercises && (
-              <button className="primary" onClick={() => saveRoutine(json)}>
+              <button className="primary" onClick={() => saveRoutines([json])}>
                 💾 Guardar rutina “{json.name}”
+              </button>
+            )}
+            {Array.isArray(json?.routines) && (
+              <button className="primary" onClick={() => saveRoutines(json.routines!, json.program ?? 'Programa del coach')}>
+                💾 Guardar programa “{json.program}” ({json.routines.length} rutinas)
               </button>
             )}
           </div>

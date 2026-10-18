@@ -1,268 +1,423 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { workoutFromRoutine } from '../../../shared/data';
-import { estimate1RM, exerciseHistory, personalRecords, workoutVolume } from '../../../shared/stats';
-import type { Exercise, SetType, Workout, WorkoutSet } from '../../../shared/types';
+import { weekStreak } from '../../../shared/reports';
+import type { Routine, RoutineExercise, SetType, Workout } from '../../../shared/types';
 import { uid } from '../../../shared/types';
-import { useStore } from '../store';
+import { PROGRAMS, instantiateProgram, type ProgramTemplate } from '../../../shared/templates';
+import { rest } from '../rest';
+import { clock, useStore } from '../store';
 import ExercisePicker from './ExercisePicker';
+import { Back, ExerciseMedia, Sheet } from './ui';
+import WorkoutDetail from './WorkoutDetail';
+import WorkoutLogger from './WorkoutLogger';
 
-export default function Train() {
-  const { active } = useStore();
-  return active ? <ActiveWorkout /> : <StartScreen />;
+export default function Train({ onExercise }: { onExercise: (id: string) => void }) {
+  const { active, setActive, update } = useStore();
+  const [finished, setFinished] = useState<string | null>(null);
+  const [view, setView] = useState<'home' | 'explore'>('home');
+  const [editing, setEditing] = useState<Routine | null>(null);
+
+  if (finished) return <WorkoutDetail id={finished} justFinished onBack={() => setFinished(null)} onExercise={onExercise} />;
+
+  if (active)
+    return (
+      <WorkoutLogger
+        workout={active}
+        mode="live"
+        edit={(fn) =>
+          setActive((cur) => {
+            const n = structuredClone(cur);
+            fn(n);
+            return n;
+          })
+        }
+        onExercise={onExercise}
+        onDiscard={() => (rest.stop(), setActive(null))}
+        onFinish={() => {
+          const pending = active.exercises.some((e) => e.sets.some((s) => !s.done && (s.weight !== undefined || s.reps !== undefined)));
+          if (pending && !confirm('Hay series con datos sin marcar como completadas. Se descartarán. ¿Terminar igualmente?')) return;
+          const done: Workout = { ...active, endedAt: new Date().toISOString(), exercises: active.exercises.map((e) => ({ ...e, sets: e.sets.filter((s) => s.done) })).filter((e) => e.sets.length) };
+          if (!done.exercises.length) {
+            if (confirm('No hay series completadas. ¿Descartar el entrenamiento?')) (rest.stop(), setActive(null));
+            return;
+          }
+          update((d) => void d.workouts.push(done));
+          rest.stop();
+          setActive(null);
+          setFinished(done.id);
+        }}
+      />
+    );
+
+  if (editing) return <RoutineEditor initial={editing} onClose={() => setEditing(null)} />;
+  if (view === 'explore') return <Explore onBack={() => setView('home')} />;
+  return <Home onNewRoutine={(folderId) => setEditing({ id: uid(), name: 'Nueva rutina', folderId, exercises: [] })} onEdit={setEditing} onExplore={() => setView('explore')} />;
 }
 
-function StartScreen() {
-  const { data, setActive } = useStore();
-  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
-  const week = data.workouts.filter((w) => w.startedAt >= weekAgo);
+function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: string) => void; onEdit: (r: Routine) => void; onExplore: () => void }) {
+  const { data, settings, setActive, update } = useStore();
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [menu, setMenu] = useState<Routine | null>(null);
+  const streak = weekStreak(data, settings.weekStartsMonday);
+  const weekStart = new Date();
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - (settings.weekStartsMonday ? (weekStart.getDay() + 6) % 7 : weekStart.getDay()));
+  const thisWeek = data.workouts.filter((w) => Date.parse(w.startedAt) >= weekStart.getTime()).length;
+
+  const groups: { id?: string; name: string; routines: Routine[] }[] = [
+    ...data.folders.map((f) => ({ id: f.id, name: f.name, routines: data.routines.filter((r) => r.folderId === f.id) })),
+    { name: 'Mis rutinas', routines: data.routines.filter((r) => !r.folderId || !data.folders.some((f) => f.id === r.folderId)) },
+  ];
+  const exName = new Map(data.exercises.map((e) => [e.id, e.name]));
+
   return (
     <section>
       <h1>Entrenar</h1>
-      <div className="stats">
-        <div>
-          <b>{week.length}</b>
-          <small>entrenos esta semana</small>
+      <div className="goal card">
+        <div className="row">
+          <div className="grow">
+            <b>
+              {thisWeek} / {settings.weeklyGoal}
+            </b>{' '}
+            <span className="muted small">entrenos esta semana</span>
+          </div>
+          <span title="Semanas seguidas entrenando">🔥 {streak} sem.</span>
         </div>
-        <div>
-          <b>{week.reduce((v, w) => v + workoutVolume(w), 0).toLocaleString('es-ES')}</b>
-          <small>kg de volumen</small>
-        </div>
-        <div>
-          <b>{data.workouts.length}</b>
-          <small>en total</small>
+        <div className="progress">
+          <div style={{ width: `${Math.min(100, (thisWeek / Math.max(1, settings.weeklyGoal)) * 100)}%` }} />
         </div>
       </div>
       <button className="primary big" onClick={() => setActive({ id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] })}>
         + Empezar entrenamiento vacío
       </button>
-      {data.routines.length > 0 && <h2>Empezar desde rutina</h2>}
-      {data.routines.map((r) => (
-        <div key={r.id} className="card row">
-          <div className="grow">
-            <b>{r.name}</b>
-            <small className="muted"> · {r.exercises.length} ejercicios</small>
+
+      <div className="row">
+        <h2 className="grow">Rutinas</h2>
+        <button
+          className="ghost small"
+          onClick={() => {
+            const name = prompt('Nombre de la carpeta');
+            if (name) update((d) => void d.folders.push({ id: uid(), name }));
+          }}
+        >
+          + Carpeta
+        </button>
+      </div>
+      <div className="row">
+        <button className="card grow tile" onClick={() => onNewRoutine()}>
+          📋 Nueva rutina
+        </button>
+        <button className="card grow tile" onClick={onExplore}>
+          🔎 Explorar programas
+        </button>
+      </div>
+
+      {groups.map((g) =>
+        !g.id && !g.routines.length ? null : (
+          <div key={g.id ?? 'root'}>
+            <div className="row folder">
+              <button className="plain grow left" onClick={() => setCollapsed((s) => (s.has(g.name) ? (s.delete(g.name), new Set(s)) : new Set(s.add(g.name))))}>
+                {collapsed.has(g.name) ? '▸' : '▾'} <b>{g.name}</b> <span className="muted small">({g.routines.length})</span>
+              </button>
+              {g.id && (
+                <>
+                  <button className="ghost small" onClick={() => onNewRoutine(g.id)}>
+                    +
+                  </button>
+                  <button
+                    className="ghost small"
+                    onClick={() => {
+                      const name = prompt('Renombrar carpeta (vacío = borrar carpeta; las rutinas se conservan)', g.name);
+                      if (name === null) return;
+                      update((d) => {
+                        if (name.trim()) d.folders.find((f) => f.id === g.id)!.name = name.trim();
+                        else {
+                          d.folders = d.folders.filter((f) => f.id !== g.id);
+                          d.routines.forEach((r) => r.folderId === g.id && (r.folderId = undefined));
+                        }
+                      });
+                    }}
+                  >
+                    ✎
+                  </button>
+                </>
+              )}
+            </div>
+            {!collapsed.has(g.name) &&
+              g.routines.map((r) => (
+                <div key={r.id} className="card routine">
+                  <div className="row">
+                    <b className="grow" onClick={() => onEdit(r)}>
+                      {r.name}
+                    </b>
+                    <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
+                      ⋯
+                    </button>
+                  </div>
+                  <p className="muted small" onClick={() => onEdit(r)}>
+                    {r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}
+                  </p>
+                  <button className="primary full" onClick={() => setActive(workoutFromRoutine(r))} disabled={!r.exercises.length}>
+                    Empezar rutina
+                  </button>
+                </div>
+              ))}
           </div>
-          <button className="primary" onClick={() => setActive(workoutFromRoutine(r))}>
-            Empezar
-          </button>
-        </div>
-      ))}
+        ),
+      )}
+      {!data.routines.length && <p className="muted small">Crea una rutina, guarda un programa desde Explorar o pídesela al Coach IA.</p>}
+
+      {menu && (
+        <Sheet title={menu.name} onClose={() => setMenu(null)}>
+          <div className="list">
+            <button className="item" onClick={() => (onEdit(menu), setMenu(null))}>
+              ✎ Editar rutina
+            </button>
+            <button className="item" onClick={() => (update((d) => void d.routines.push({ ...structuredClone(menu), id: uid(), name: `${menu.name} (copia)` })), setMenu(null))}>
+              ⧉ Duplicar
+            </button>
+            <label>
+              Mover a carpeta
+              <select value={menu.folderId ?? ''} onChange={(e) => (update((d) => void (d.routines.find((r) => r.id === menu.id)!.folderId = e.target.value || undefined)), setMenu(null))}>
+                <option value="">Mis rutinas (sin carpeta)</option>
+                {data.folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="item"
+              onClick={() => {
+                const txt = `${menu.name}\n${menu.exercises.map((e) => `- ${exName.get(e.exerciseId)}: ${e.sets.length}×${e.sets[0]?.reps ?? e.sets[0]?.durationSec + 's'}${e.sets[0]?.weight ? ` @ ${e.sets[0].weight}kg` : ''}`).join('\n')}`;
+                navigator.share ? navigator.share({ title: menu.name, text: txt }).catch(() => {}) : navigator.clipboard.writeText(txt).then(() => alert('Copiado al portapapeles'));
+                setMenu(null);
+              }}
+            >
+              📤 Compartir como texto
+            </button>
+            <button className="item danger" onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}>
+              🗑 Borrar rutina
+            </button>
+          </div>
+        </Sheet>
+      )}
     </section>
   );
 }
 
-const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
-const SET_LABEL: Record<SetType, string> = { normal: '', warmup: 'C', drop: 'D', failure: 'F' };
-
-function useNow(ms = 1000) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms);
-    return () => clearInterval(t);
-  }, [ms]);
-  return now;
+function Explore({ onBack }: { onBack: () => void }) {
+  const { data, update } = useStore();
+  const [sel, setSel] = useState<ProgramTemplate | null>(null);
+  const exMap = new Map(data.exercises.map((e) => [e.id, e]));
+  if (sel) {
+    return (
+      <section>
+        <Back onClick={() => setSel(null)} />
+        <h1>{sel.name}</h1>
+        <p className="muted small">
+          {sel.level} · {sel.daysPerWeek} días/semana · {sel.goal} · {sel.equipment}
+        </p>
+        <p>{sel.description}</p>
+        {sel.routines.map((r) => (
+          <div key={r.name} className="card">
+            <b>{r.name}</b>
+            {r.exercises.map(([id, sets, reps]) => (
+              <div key={id} className="row small exline">
+                <ExerciseMedia exercise={exMap.get(id)} size="thumb" />
+                <span className="grow">{exMap.get(id)?.name ?? id}</span>
+                <span className="muted">
+                  {sets} × {reps}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+        <button
+          className="primary full"
+          onClick={() => {
+            const { folder, routines } = instantiateProgram(sel);
+            update((d) => {
+              d.folders.push(folder);
+              d.routines.push(...routines);
+            });
+            alert(`Programa guardado en la carpeta "${folder.name}".`);
+            onBack();
+          }}
+        >
+          Guardar programa en mis rutinas
+        </button>
+        <p className="muted small">Después ajusta los pesos en cada rutina o simplemente empieza: la app recordará lo que levantes.</p>
+      </section>
+    );
+  }
+  return (
+    <section>
+      <Back onClick={onBack} />
+      <h1>Explorar programas</h1>
+      {PROGRAMS.map((p) => (
+        <button key={p.id} className="card full left" onClick={() => setSel(p)}>
+          <b>{p.name}</b>
+          <div className="muted small">
+            {p.level} · {p.daysPerWeek} días/semana · {p.goal}
+          </div>
+          <div className="small">{p.routines.map((r) => r.name).join(' · ')}</div>
+        </button>
+      ))}
+      <p className="muted small">¿Quieres algo a medida? Pídeselo al Coach IA: «créame un programa de 4 días para ganar fuerza en banca».</p>
+    </section>
+  );
 }
 
-const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, '0')}`;
-
-function ActiveWorkout() {
-  const { data, active, setActive, update } = useStore();
-  const w = active!;
-  const now = useNow();
-  const [picking, setPicking] = useState(false);
-  const [restEnd, setRestEnd] = useState<number | null>(null);
-  const [restSec, setRestSec] = useState(90);
-  const exMap = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
-  const routine = data.routines.find((r) => r.id === w.routineId);
-
-  const restLeft = restEnd ? Math.round((restEnd - now) / 1000) : 0;
-  useEffect(() => {
-    if (restEnd && restLeft <= 0) {
-      navigator.vibrate?.([200, 100, 200]);
-      setRestEnd(null);
-    }
-  }, [restEnd, restLeft]);
-
-  const edit = (fn: (w: Workout) => void) =>
-    setActive((cur) => {
+function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => void }) {
+  const { data, update, settings } = useStore();
+  const [r, setR] = useState<Routine>(structuredClone(initial));
+  const [picker, setPicker] = useState<{ replace?: number } | null>(null);
+  const ex = new Map(data.exercises.map((e) => [e.id, e]));
+  const edit = (fn: (r: Routine) => void) =>
+    setR((cur) => {
       const n = structuredClone(cur);
       fn(n);
       return n;
     });
+  const num = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
+  const exists = data.routines.some((x) => x.id === r.id);
 
-  const setField = (ei: number, si: number, patch: Partial<WorkoutSet>) => edit((n) => Object.assign(n.exercises[ei].sets[si], patch));
-
-  const toggleDone = (ei: number, si: number) => {
-    const s = w.exercises[ei].sets[si];
-    const prev = previousSets(w.exercises[ei].exerciseId)[si];
-    // Si el usuario no escribió nada, usa los valores de la sesión anterior (como placeholder).
-    const patch: Partial<WorkoutSet> = { done: !s.done };
-    if (!s.done && prev) {
-      if (s.weight === undefined && prev.weight !== undefined) patch.weight = prev.weight;
-      if (s.reps === undefined && prev.reps !== undefined) patch.reps = prev.reps;
-      if (s.durationSec === undefined && prev.durationSec !== undefined) patch.durationSec = prev.durationSec;
-    }
-    setField(ei, si, patch);
-    if (!s.done) {
-      const rr = routine?.exercises.find((e) => e.exerciseId === w.exercises[ei].exerciseId)?.restSec ?? restSec;
-      setRestEnd(Date.now() + rr * 1000);
-    }
+  const save = () => {
+    if (!r.name.trim()) return alert('Ponle un nombre a la rutina');
+    update((d) => {
+      const i = d.routines.findIndex((x) => x.id === r.id);
+      if (i >= 0) d.routines[i] = r;
+      else d.routines.push(r);
+    });
+    onClose();
   };
 
-  const previousSets = (exerciseId: string): WorkoutSet[] => {
-    const h = exerciseHistory(data, exerciseId);
-    return h.length ? h[h.length - 1].sets : [];
-  };
-
-  const finish = () => {
-    const done: Workout = {
-      ...w,
-      endedAt: new Date().toISOString(),
-      exercises: w.exercises.map((e) => ({ ...e, sets: e.sets.filter((s) => s.done) })).filter((e) => e.sets.length),
-    };
-    if (!done.exercises.length) {
-      if (confirm('No hay series completadas. ¿Descartar entrenamiento?')) setActive(null);
-      return;
-    }
-    const before = new Map(personalRecords(data).map((p) => [p.exerciseId, p.best1RM]));
-    const newPrs = done.exercises
-      .map((e) => ({ e, best: Math.max(...e.sets.map((s) => estimate1RM(s.weight ?? 0, s.reps ?? 0))) }))
-      .filter(({ e, best }) => best > 0 && best > (before.get(e.exerciseId) ?? 0) && before.has(e.exerciseId))
-      .map(({ e, best }) => `${exMap.get(e.exerciseId)?.name}: ${best} kg e1RM`);
-    update((d) => void d.workouts.push(done));
-    setActive(null);
-    alert(`¡Entrenamiento guardado! Volumen: ${workoutVolume(done)} kg${newPrs.length ? `\n\n🏆 Nuevos récords:\n${newPrs.join('\n')}` : ''}`);
+  const newEx = (exerciseId: string, supersetId?: string): RoutineExercise => {
+    const kind = ex.get(exerciseId)?.kind;
+    const set = kind === 'duration' ? { type: 'normal' as SetType, durationSec: 60 } : { type: 'normal' as SetType, reps: 10 };
+    return { exerciseId, restSec: settings.defaultRestSec, supersetId, sets: [{ ...set }, { ...set }, { ...set }] };
   };
 
   return (
-    <section className="active">
-      <div className="row sticky">
-        <input className="title" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
-        <span className="timer">{clock(Math.round((now - Date.parse(w.startedAt)) / 1000))}</span>
-        <button className="primary" onClick={finish}>
-          Terminar
-        </button>
-      </div>
-
-      {w.exercises.map((we, ei) => {
-        const ex = exMap.get(we.exerciseId);
-        const prev = previousSets(we.exerciseId);
-        return (
-          <div key={ei} className="card">
-            <div className="row">
-              <b className="grow accent-text">{ex?.name ?? we.exerciseId}</b>
-              <button className="ghost" onClick={() => edit((n) => void n.exercises.splice(ei, 1))} title="Quitar ejercicio">
-                🗑
-              </button>
-            </div>
-            <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value))} />
-            <div className="sets">
-              <div className="set head">
-                <span>Serie</span>
-                <span>Anterior</span>
-                <span>{kindLabels(ex)[0]}</span>
-                <span>{kindLabels(ex)[1]}</span>
-                <span>✓</span>
-              </div>
-              {we.sets.map((s, si) => (
-                <SetRow key={si} n={si + 1} s={s} prev={prev[si]} ex={ex} onChange={(p) => setField(ei, si, p)} onToggle={() => toggleDone(ei, si)} onRemove={() => edit((n) => void n.exercises[ei].sets.splice(si, 1))} />
-              ))}
-            </div>
-            <button
-              className="ghost full"
-              onClick={() =>
-                edit((n) => {
-                  const last = n.exercises[ei].sets.at(-1);
-                  n.exercises[ei].sets.push({ type: 'normal', weight: last?.weight, reps: last?.reps, durationSec: last?.durationSec, done: false });
-                })
-              }
-            >
-              + Añadir serie
-            </button>
-          </div>
-        );
-      })}
-
-      <button className="primary full" onClick={() => setPicking(true)}>
-        + Añadir ejercicio
-      </button>
-      <button className="danger full" onClick={() => confirm('¿Descartar este entrenamiento?') && setActive(null)}>
-        Descartar entrenamiento
-      </button>
-
-      {restEnd && (
-        <div className="rest">
-          <span>Descanso</span>
-          <b>{clock(restLeft)}</b>
-          <button onClick={() => setRestEnd(restEnd - 15000)}>-15</button>
-          <button onClick={() => setRestEnd(restEnd + 15000)}>+15</button>
-          <button onClick={() => setRestEnd(null)}>Saltar</button>
-        </div>
-      )}
-      {!restEnd && (
-        <label className="muted small">
-          Descanso por defecto:{' '}
-          <select value={restSec} onChange={(e) => setRestSec(Number(e.target.value))}>
-            {[30, 60, 90, 120, 150, 180, 240, 300].map((s) => (
-              <option key={s} value={s}>
-                {clock(s)}
+    <section>
+      <Back onClick={() => (JSON.stringify(r) === JSON.stringify(initial) || confirm('¿Salir sin guardar?')) && onClose()} label="Cancelar" right={<button className="primary" onClick={save}>Guardar</button>} />
+      <input className="title" value={r.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} placeholder="Nombre de la rutina" />
+      <textarea placeholder="Notas de la rutina" value={r.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
+      {data.folders.length > 0 && (
+        <label>
+          Carpeta
+          <select value={r.folderId ?? ''} onChange={(e) => edit((n) => void (n.folderId = e.target.value || undefined))}>
+            <option value="">Sin carpeta</option>
+            {data.folders.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
               </option>
             ))}
           </select>
         </label>
       )}
-
-      {picking && (
+      {r.exercises.map((e, i) => {
+        const kind = ex.get(e.exerciseId)?.kind ?? 'weight_reps';
+        const dur = kind === 'duration';
+        const ssPrev = i > 0 && e.supersetId && r.exercises[i - 1].supersetId === e.supersetId;
+        return (
+          <div key={i} className={`card ${e.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''}`}>
+            {e.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
+            <div className="row">
+              <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
+              <b className="grow accent-text">{ex.get(e.exerciseId)?.name}</b>
+              <button className="ghost small" disabled={i === 0} onClick={() => edit((n) => void n.exercises.splice(i - 1, 0, ...n.exercises.splice(i, 1)))}>
+                ↑
+              </button>
+              <button className="ghost small" disabled={i === r.exercises.length - 1} onClick={() => edit((n) => void n.exercises.splice(i + 1, 0, ...n.exercises.splice(i, 1)))}>
+                ↓
+              </button>
+              <button className="ghost small" onClick={() => edit((n) => void n.exercises.splice(i, 1))}>
+                🗑
+              </button>
+            </div>
+            <div className="row small">
+              <label className="grow">
+                Descanso
+                <select value={e.restSec} onChange={(ev) => edit((n) => void (n.exercises[i].restSec = Number(ev.target.value)))}>
+                  {[0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map((s) => (
+                    <option key={s} value={s}>
+                      {s ? clock(s) : 'Off'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {i < r.exercises.length - 1 && (
+                <button
+                  className="ghost small"
+                  onClick={() =>
+                    edit((n) => {
+                      const a = n.exercises[i],
+                        b = n.exercises[i + 1];
+                      if (a.supersetId && a.supersetId === b.supersetId) b.supersetId = undefined;
+                      else a.supersetId = b.supersetId = a.supersetId ?? b.supersetId ?? uid();
+                    })
+                  }
+                >
+                  {e.supersetId && r.exercises[i + 1].supersetId === e.supersetId ? '✂️ Separar' : '🔗 Superserie con siguiente'}
+                </button>
+              )}
+              <button className="ghost small" onClick={() => setPicker({ replace: i })}>
+                🔄
+              </button>
+            </div>
+            <div className="rset head small muted">
+              <span>Serie</span>
+              <span>{dur ? '' : 'kg'}</span>
+              <span>{dur ? 'Seg' : 'Reps'}</span>
+              <span />
+            </div>
+            {e.sets.map((s, si) => (
+              <div key={si} className="rset">
+                <button className={`settype ${s.type}`} onClick={() => edit((n) => void (n.exercises[i].sets[si].type = (['normal', 'warmup', 'drop', 'failure'] as SetType[])[((['normal', 'warmup', 'drop', 'failure'] as SetType[]).indexOf(s.type) + 1) % 4]))}>
+                  {{ normal: si + 1, warmup: 'C', drop: 'D', failure: 'F' }[s.type]}
+                </button>
+                {dur ? <span /> : <input inputMode="decimal" value={s.weight ?? ''} placeholder="-" onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].weight = num(ev.target.value)))} />}
+                {dur ? (
+                  <input inputMode="numeric" value={s.durationSec ?? ''} onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].durationSec = num(ev.target.value)))} />
+                ) : (
+                  <input inputMode="numeric" value={s.reps ?? ''} placeholder="-" onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].reps = num(ev.target.value)))} />
+                )}
+                <button className="ghost small" onClick={() => edit((n) => void n.exercises[i].sets.splice(si, 1))} disabled={e.sets.length === 1}>
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button className="ghost full small" onClick={() => edit((n) => void n.exercises[i].sets.push({ ...(n.exercises[i].sets.at(-1) ?? { type: 'normal' }) }))}>
+              + Añadir serie
+            </button>
+          </div>
+        );
+      })}
+      <button className="primary full" onClick={() => setPicker({})}>
+        + Añadir ejercicio
+      </button>
+      {exists && (
+        <button className="danger full" onClick={() => confirm('¿Borrar esta rutina?') && (update((d) => void (d.routines = d.routines.filter((x) => x.id !== r.id))), onClose())}>
+          Borrar rutina
+        </button>
+      )}
+      {picker && (
         <ExercisePicker
-          onClose={() => setPicking(false)}
-          onPick={(e) => {
-            const prev = previousSets(e.id);
-            edit((n) =>
-              void n.exercises.push({
-                exerciseId: e.id,
-                sets: (prev.length ? prev : [{ type: 'normal' as SetType, done: false }, { type: 'normal' as SetType, done: false }, { type: 'normal' as SetType, done: false }]).map((p) => ({ type: p.type, done: false })),
-              }),
-            );
-            setPicking(false);
+          single={picker.replace !== undefined}
+          onClose={() => setPicker(null)}
+          onPick={(es, ss) => {
+            const sid = ss ? uid() : undefined;
+            edit((n) => {
+              if (picker.replace !== undefined) n.exercises[picker.replace] = { ...n.exercises[picker.replace], exerciseId: es[0].id };
+              else n.exercises.push(...es.map((x) => newEx(x.id, sid)));
+            });
+            setPicker(null);
           }}
         />
       )}
     </section>
-  );
-}
-
-function kindLabels(ex?: Exercise): [string, string] {
-  if (ex?.kind === 'duration') return ['', 'Seg'];
-  if (ex?.kind === 'distance') return ['Metros', 'Seg'];
-  if (ex?.kind === 'reps') return ['+kg', 'Reps'];
-  return ['kg', 'Reps'];
-}
-
-function SetRow({ n, s, prev, ex, onChange, onToggle, onRemove }: { n: number; s: WorkoutSet; prev?: WorkoutSet; ex?: Exercise; onChange: (p: Partial<WorkoutSet>) => void; onToggle: () => void; onRemove: () => void }) {
-  const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
-  const kind = ex?.kind ?? 'weight_reps';
-  const prevTxt = prev ? (kind === 'duration' ? `${prev.durationSec ?? '-'}s` : kind === 'distance' ? `${prev.distanceM ?? '-'}m` : `${prev.weight ?? 0}×${prev.reps ?? 0}`) : '—';
-  return (
-    <div className={`set ${s.done ? 'done' : ''}`}>
-      <button className={`settype ${s.type}`} onClick={() => onChange({ type: SET_CYCLE[(SET_CYCLE.indexOf(s.type) + 1) % SET_CYCLE.length] })} onDoubleClick={onRemove} title="Toca para cambiar tipo (C=calentamiento, D=drop, F=fallo). Doble toque para borrar.">
-        {SET_LABEL[s.type] || n}
-      </button>
-      <span className="muted small">{prevTxt}</span>
-      {kind === 'duration' ? (
-        <span />
-      ) : kind === 'distance' ? (
-        <input inputMode="decimal" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM ?? ''} onChange={(e) => onChange({ distanceM: numVal(e.target.value) })} />
-      ) : (
-        <input inputMode="decimal" placeholder={prev?.weight?.toString() ?? ''} value={s.weight ?? ''} onChange={(e) => onChange({ weight: numVal(e.target.value) })} />
-      )}
-      {kind === 'duration' || kind === 'distance' ? (
-        <input inputMode="numeric" placeholder={prev?.durationSec?.toString() ?? ''} value={s.durationSec ?? ''} onChange={(e) => onChange({ durationSec: numVal(e.target.value) })} />
-      ) : (
-        <input inputMode="numeric" placeholder={prev?.reps?.toString() ?? ''} value={s.reps ?? ''} onChange={(e) => onChange({ reps: numVal(e.target.value) })} />
-      )}
-      <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle}>
-        ✓
-      </button>
-    </div>
   );
 }

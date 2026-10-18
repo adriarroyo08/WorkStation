@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { AI_PROVIDERS, chat } from '../../../shared/ai';
 import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { importHevyCsv } from '../../../shared/hevy';
-import { uid } from '../../../shared/types';
-import { downloadFile, fmtDate, useStore } from '../store';
+import { clock, downloadFile, useStore } from '../store';
+import { Back, Toggle } from './ui';
 
-export default function Settings() {
-  const { data, ai, setAi, update, replace } = useStore();
+export default function Settings({ onBack }: { onBack: () => void }) {
+  const { data, ai, settings, setAi, setSettings, replace } = useStore();
   const [cfg, setCfg] = useState(ai);
   const [test, setTest] = useState('');
-  const [bw, setBw] = useState('');
   const provider = AI_PROVIDERS.find((p) => p.id === cfg.providerId);
 
   const readFile = (accept: string, cb: (text: string) => void) => {
@@ -31,11 +30,73 @@ export default function Settings() {
     }
   };
 
-  const measurements = [...data.measurements].sort((a, b) => b.date.localeCompare(a.date));
+  const exportCsv = () => {
+    const ex = new Map(data.exercises.map((e) => [e.id, e.name]));
+    const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = [['title', 'start_time', 'end_time', 'description', 'exercise_title', 'superset_id', 'exercise_notes', 'set_index', 'set_type', 'weight_kg', 'reps', 'distance_km', 'duration_seconds', 'rpe'].join(',')];
+    for (const w of [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)))
+      for (const e of w.exercises)
+        e.sets.forEach((s, i) =>
+          rows.push([w.name, w.startedAt, w.endedAt, w.notes, ex.get(e.exerciseId) ?? e.exerciseId, e.supersetId, e.notes, i, s.type === 'drop' ? 'dropset' : s.type, s.weight, s.reps, s.distanceM !== undefined ? s.distanceM / 1000 : '', s.durationSec, s.rpe].map(q).join(',')),
+        );
+    downloadFile(`workstation-${new Date().toISOString().slice(0, 10)}.csv`, rows.join('\n'), 'text/csv');
+  };
 
   return (
     <section>
+      <Back onClick={onBack} />
       <h1>Ajustes</h1>
+
+      <h2>🏋️ Entrenamiento</h2>
+      <div className="card">
+        <label>
+          Descanso por defecto
+          <select value={settings.defaultRestSec} onChange={(e) => setSettings({ defaultRestSec: Number(e.target.value) })}>
+            {[0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map((s) => (
+              <option key={s} value={s}>
+                {s ? clock(s) : 'Desactivado'}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Objetivo semanal (entrenos)
+          <select value={settings.weeklyGoal} onChange={(e) => setSettings({ weeklyGoal: Number(e.target.value) })}>
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <option key={n}>{n}</option>
+            ))}
+          </select>
+        </label>
+        <Toggle label="Mostrar columna RPE" checked={settings.showRpe} onChange={(v) => setSettings({ showRpe: v })} />
+        <Toggle label="Sonido al terminar el descanso" checked={settings.sound} onChange={(v) => setSettings({ sound: v })} />
+        <Toggle label="Vibrar al terminar el descanso" checked={settings.vibrate} onChange={(v) => setSettings({ vibrate: v })} />
+        <Toggle label="Mantener pantalla encendida" checked={settings.keepAwake} onChange={(v) => setSettings({ keepAwake: v })} />
+        <Toggle label="La semana empieza en lunes" checked={settings.weekStartsMonday} onChange={(v) => setSettings({ weekStartsMonday: v })} />
+        <label>
+          Tema
+          <select value={settings.theme} onChange={(e) => setSettings({ theme: e.target.value as typeof settings.theme })}>
+            <option value="auto">Automático</option>
+            <option value="dark">Oscuro</option>
+            <option value="light">Claro</option>
+          </select>
+        </label>
+      </div>
+
+      <h2>🧮 Calculadora de discos</h2>
+      <div className="card">
+        <label>
+          Peso de la barra (kg)
+          <input inputMode="decimal" value={settings.barKg} onChange={(e) => setSettings({ barKg: Number(e.target.value.replace(',', '.')) || 0 })} />
+        </label>
+        <label>Discos disponibles (kg)</label>
+        <div className="chips">
+          {[50, 25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5].map((p) => (
+            <button key={p} className={settings.platesKg.includes(p) ? 'on' : ''} onClick={() => setSettings({ platesKg: settings.platesKg.includes(p) ? settings.platesKg.filter((x) => x !== p) : [...settings.platesKg, p].sort((a, b) => b - a) })}>
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <h2>🤖 Inteligencia artificial</h2>
       <div className="card">
@@ -76,9 +137,9 @@ export default function Settings() {
           API key
           <input type="password" value={cfg.apiKey} placeholder={provider?.needsKey ? 'Pega tu clave aquí' : 'Opcional'} onChange={(e) => setCfg({ ...cfg, apiKey: e.target.value })} />
         </label>
-        <p className="small muted">La clave se guarda solo en este dispositivo.</p>
+        <p className="small muted">La clave se guarda solo en este dispositivo y no se incluye en los backups.</p>
         <div className="row">
-          <button className="primary" onClick={() => setAi(cfg)}>
+          <button className="primary" onClick={() => (setAi(cfg), setTest('Guardado'))}>
             Guardar
           </button>
           <button className="ghost" onClick={testAi}>
@@ -88,44 +149,23 @@ export default function Settings() {
         {test && <p className="small">{test}</p>}
       </div>
 
-      <h2>⚖️ Peso corporal</h2>
-      <div className="card">
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const v = Number(bw.replace(',', '.'));
-            if (!v) return;
-            update((d) => void d.measurements.push({ id: uid(), date: new Date().toISOString(), bodyweight: v }));
-            setBw('');
-          }}
-        >
-          <input inputMode="decimal" placeholder="kg" value={bw} onChange={(e) => setBw(e.target.value)} />
-          <button className="primary">Añadir</button>
-        </form>
-        <ul className="small">
-          {measurements.slice(0, 5).map((m) => (
-            <li key={m.id}>
-              {fmtDate(m.date)}: {m.bodyweight} kg
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <h2>💾 Datos</h2>
       <div className="card">
         <p className="small muted">
-          {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios. Todo se guarda en este navegador.
+          {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios · {data.measurements.length} medidas. Todo se guarda en este navegador: exporta backups a menudo.
         </p>
         <button className="primary full" onClick={() => downloadFile(`workstation-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ ...data, exportedAt: new Date().toISOString() }, null, 2))}>
           Exportar backup (JSON)
+        </button>
+        <button className="ghost full" onClick={exportCsv}>
+          Exportar entrenamientos (CSV, formato compatible con Hevy)
         </button>
         <button
           className="ghost full"
           onClick={() =>
             readFile('.json,application/json', (t) => {
               try {
-                replace(mergeData(data, normalizeData(JSON.parse(t))));
+                replace(normalizeData(mergeData(data, normalizeData(JSON.parse(t)))));
                 alert('Datos importados y fusionados.');
               } catch (e) {
                 alert(`Error: ${(e as Error).message}`);
@@ -149,7 +189,7 @@ export default function Settings() {
           Importar CSV exportado de Hevy
         </button>
         <p className="small muted">En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos.</p>
-        <button className="danger full" onClick={() => confirm('¿Borrar TODOS los datos? Exporta un backup antes.') && replace(emptyData())}>
+        <button className="danger full" onClick={() => confirm('¿Borrar TODOS los datos? Exporta un backup antes.') && confirm('¿Seguro? No se puede deshacer.') && replace(emptyData())}>
           Borrar todos los datos
         </button>
       </div>
@@ -157,8 +197,13 @@ export default function Settings() {
       <h2>🔌 MCP</h2>
       <div className="card small">
         <p>
-          Para que Claude Desktop, Cursor, LM Studio u otro cliente MCP lea y edite tus entrenamientos, usa el servidor <code>mcp/</code> del repositorio. Trabaja sobre un fichero JSON con el mismo formato que el backup: exporta aquí, guárdalo como <code>~/.workstation/data.json</code> y vuelve a importarlo cuando la IA cree rutinas.
+          Para que Claude Desktop, Cursor, LM Studio u otro cliente MCP lea y edite tus entrenamientos, usa el servidor <code>mcp/</code> del repositorio. Trabaja sobre un fichero JSON con el mismo formato que el backup: exporta aquí, guárdalo en la ruta de <code>WORKSTATION_DATA</code> y vuelve a importarlo cuando la IA cree rutinas o registre entrenos.
         </p>
+      </div>
+
+      <h2>ℹ️ Acerca de</h2>
+      <div className="card small muted">
+        <p>Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
       </div>
     </section>
   );
