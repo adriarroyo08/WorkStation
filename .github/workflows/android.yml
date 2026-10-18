@@ -1,0 +1,53 @@
+name: Android (móvil + Wear OS)
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'shared/**', 'android/**', '.github/workflows/android.yml']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Web (se empaqueta dentro del APK del móvil)
+        run: npm ci && npm run build
+        working-directory: app
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Compilar APKs
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 0.3.${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :phone:assembleRelease :wear:assembleRelease
+          mkdir -p ../apk
+          cp phone/build/outputs/apk/release/phone-release.apk ../apk/workstation-phone.apk
+          cp wear/build/outputs/apk/release/wear-release.apk ../apk/workstation-wear.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workstation-apks
+          path: apk/*.apk
+
+      - name: Publicar release (solo en tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apk/*.apk

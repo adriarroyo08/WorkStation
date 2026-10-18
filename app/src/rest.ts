@@ -27,6 +27,7 @@ function emit(next: RestState) {
 }
 
 export const rest = {
+  get: () => state,
   start: (sec: number) => emit({ end: Date.now() + sec * 1000, total: sec }),
   add: (sec: number) => state.end && emit({ end: Math.max(Date.now(), state.end + sec * 1000), total: Math.max(1, state.total + sec) }),
   stop: () => emit({ end: null, total: 0 }),

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { workoutFromRoutine } from '../../../shared/data';
 import { weekStreak } from '../../../shared/reports';
-import type { Routine, RoutineExercise, SetType, Workout } from '../../../shared/types';
+import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { PROGRAMS, instantiateProgram, type ProgramTemplate } from '../../../shared/templates';
-import { rest } from '../rest';
+import { hasPendingData } from '../../../shared/session';
+import { discardActive, finishActive, startEmpty, startWorkout, summary, useSummary } from '../controller';
 import { clock, useStore } from '../store';
 import ExercisePicker from './ExercisePicker';
 import { Back, ExerciseMedia, Sheet } from './ui';
@@ -12,12 +13,13 @@ import WorkoutDetail from './WorkoutDetail';
 import WorkoutLogger from './WorkoutLogger';
 
 export default function Train({ onExercise }: { onExercise: (id: string) => void }) {
-  const { active, setActive, update } = useStore();
-  const [finished, setFinished] = useState<string | null>(null);
+  const store = useStore();
+  const { active, setActive } = store;
+  const finished = useSummary();
   const [view, setView] = useState<'home' | 'explore'>('home');
   const [editing, setEditing] = useState<Routine | null>(null);
 
-  if (finished) return <WorkoutDetail id={finished} justFinished onBack={() => setFinished(null)} onExercise={onExercise} />;
+  if (finished) return <WorkoutDetail id={finished} justFinished onBack={summary.clear} onExercise={onExercise} />;
 
   if (active)
     return (
@@ -32,19 +34,10 @@ export default function Train({ onExercise }: { onExercise: (id: string) => void
           })
         }
         onExercise={onExercise}
-        onDiscard={() => (rest.stop(), setActive(null))}
+        onDiscard={() => discardActive(store)}
         onFinish={() => {
-          const pending = active.exercises.some((e) => e.sets.some((s) => !s.done && (s.weight !== undefined || s.reps !== undefined)));
-          if (pending && !confirm('Hay series con datos sin marcar como completadas. Se descartarán. ¿Terminar igualmente?')) return;
-          const done: Workout = { ...active, endedAt: new Date().toISOString(), exercises: active.exercises.map((e) => ({ ...e, sets: e.sets.filter((s) => s.done) })).filter((e) => e.sets.length) };
-          if (!done.exercises.length) {
-            if (confirm('No hay series completadas. ¿Descartar el entrenamiento?')) (rest.stop(), setActive(null));
-            return;
-          }
-          update((d) => void d.workouts.push(done));
-          rest.stop();
-          setActive(null);
-          setFinished(done.id);
+          if (hasPendingData(active) && !confirm('Hay series con datos sin marcar como completadas. Se descartarán. ¿Terminar igualmente?')) return;
+          if (!finishActive(store) && confirm('No hay series completadas. ¿Descartar el entrenamiento?')) discardActive(store);
         }}
       />
     );
@@ -55,7 +48,8 @@ export default function Train({ onExercise }: { onExercise: (id: string) => void
 }
 
 function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: string) => void; onEdit: (r: Routine) => void; onExplore: () => void }) {
-  const { data, settings, setActive, update } = useStore();
+  const store = useStore();
+  const { data, settings, update } = store;
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<Routine | null>(null);
   const streak = weekStreak(data, settings.weekStartsMonday);
@@ -87,7 +81,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           <div style={{ width: `${Math.min(100, (thisWeek / Math.max(1, settings.weeklyGoal)) * 100)}%` }} />
         </div>
       </div>
-      <button className="primary big" onClick={() => setActive({ id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] })}>
+      <button className="primary big" onClick={() => startEmpty(store)}>
         + Empezar entrenamiento vacío
       </button>
 
@@ -157,7 +151,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                   <p className="muted small" onClick={() => onEdit(r)}>
                     {r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}
                   </p>
-                  <button className="primary full" onClick={() => setActive(workoutFromRoutine(r))} disabled={!r.exercises.length}>
+                  <button className="primary full" onClick={() => startWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
                     Empezar rutina
                   </button>
                 </div>

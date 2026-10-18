@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
+import { toggleSet } from '../../../shared/session';
 import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, lastSessionSets } from '../../../shared/stats';
 import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { rest, useRest } from '../rest';
-import { beep, clock, useNow, useStore, useWakeLock } from '../store';
+import { useHeartRate } from '../hr';
+import { clock, useNow, useStore, useWakeLock } from '../store';
+import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
 import { ExerciseMedia, Sheet } from './ui';
 
@@ -30,13 +33,8 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
   useWakeLock(mode === 'live' && settings.keepAwake);
 
   const restLeft = restState.end ? Math.ceil((restState.end - now) / 1000) : 0;
-  useEffect(() => {
-    if (mode === 'live' && restState.end && restLeft <= 0) {
-      if (settings.vibrate) navigator.vibrate?.([200, 100, 200]);
-      if (settings.sound) beep();
-      rest.stop();
-    }
-  }, [restState.end, restLeft, mode, settings.vibrate, settings.sound]);
+  const hr = useHeartRate();
+  const [devices, setDevices] = useState(false);
 
   // Historial previo (excluye el propio entrenamiento si se está editando).
   const history = useMemo(() => {
@@ -52,25 +50,9 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
   const setField = (ei: number, si: number, patch: Partial<WorkoutSet>) => edit((n) => void Object.assign(n.exercises[ei].sets[si], patch));
 
   const toggleDone = (ei: number, si: number) => {
-    const we = w.exercises[ei];
-    const s = we.sets[si];
-    const prev = alignPrevious(we.sets, history.get(we.exerciseId)?.prev ?? [])[si];
-    const patch: Partial<WorkoutSet> = { done: !s.done };
-    // Como en Hevy: si no escribiste nada, se usan los valores de la sesión anterior.
-    if (!s.done && prev) {
-      if (s.weight === undefined && prev.weight !== undefined) patch.weight = prev.weight;
-      if (s.reps === undefined && prev.reps !== undefined) patch.reps = prev.reps;
-      if (s.durationSec === undefined && prev.durationSec !== undefined) patch.durationSec = prev.durationSec;
-      if (s.distanceM === undefined && prev.distanceM !== undefined) patch.distanceM = prev.distanceM;
-    }
-    setField(ei, si, patch);
-    if (!s.done && mode === 'live') {
-      // En superseries el descanso empieza tras el último ejercicio del bloque.
-      const next = w.exercises[ei + 1];
-      const inSupersetChain = we.supersetId && next?.supersetId === we.supersetId;
-      const sec = we.restSec ?? settings.defaultRestSec;
-      if (!inSupersetChain && sec > 0) rest.start(sec);
-    }
+    const r = toggleSet(data, w, ei, si);
+    edit((n) => void Object.assign(n, structuredClone(r.workout)));
+    if (mode === 'live' && r.restSec > 0) rest.start(r.restSec);
   };
 
   const isPr = (we: WorkoutExercise, s: WorkoutSet, ex?: Exercise) => {
@@ -118,8 +100,14 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
         </div>
         <div className="row live-stats small muted">
           {mode === 'live' && <span>⏱ {formatDuration(elapsed)}</span>}
+          {mode === 'live' && hr.live && <span className="hr-live">❤️ {hr.bpm}</span>}
           <span>🏋️ {Math.round(totals.volume).toLocaleString('es-ES')} kg</span>
           <span>✅ {totals.sets} series</span>
+          {mode === 'live' && (
+            <button className="ghost small devices-btn" onClick={() => setDevices(true)} aria-label="Reloj y sensores">
+              ⌚
+            </button>
+          )}
         </div>
       </div>
 
@@ -236,6 +224,7 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
       )}
       {menu !== null && w.exercises[menu] && <ExerciseMenu w={w} ei={menu} edit={edit} onClose={() => setMenu(null)} onReplace={() => (setPicker({ replace: menu }), setMenu(null))} />}
       {plates !== null && <PlateCalculator initial={plates} onClose={() => setPlates(null)} />}
+      {devices && <DevicesSheet onClose={() => setDevices(false)} />}
     </section>
   );
 }

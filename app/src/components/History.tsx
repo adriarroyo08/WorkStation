@@ -87,6 +87,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                 <span>⏱ {workoutDurationMin(w)} min</span>
                 <span>🏋️ {fmtNum(workoutVolume(w))} kg</span>
                 <span>✅ {workoutSetCount(w)} series</span>
+                {w.heartRate && <span>❤️ {w.heartRate.avg}</span>}
               </div>
               <div className="small exsum">
                 {w.exercises.slice(0, 4).map((e, i) => (

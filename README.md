@@ -9,7 +9,9 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 | --- | --- |
 | `app/` | PWA (React + Vite). Funciona offline, se instala en el móvil ("Añadir a pantalla de inicio"). Datos en el navegador (IndexedDB). |
 | `mcp/` | Servidor MCP (stdio) para que Claude Desktop, Cursor, LM Studio, etc. lean y editen tus entrenamientos. |
-| `shared/` | Modelo de datos, estadísticas (1RM de Epley, récords, volumen), importadores de Hevy y cliente IA. |
+| `shared/` | Modelo de datos, estadísticas (1RM de Epley, récords, volumen), lógica del entreno en curso, protocolo del reloj, importadores de Hevy y cliente IA. |
+| `android/phone` | App Android: la misma web empaquetada en un WebView, más puente nativo (reloj, alarma de descanso, notificación en curso, guardar/compartir archivos). |
+| `android/wear` | App Wear OS (Compose for Wear OS): serie actual, completar series, descanso con vibración, pulso del reloj y empezar/terminar desde la muñeca. |
 
 ### Funciones de la app
 
@@ -54,6 +56,53 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 **Ajustes**: descanso por defecto, objetivo semanal, RPE, sonido/vibración, pantalla encendida, inicio de semana, tema claro/oscuro, barra y discos, IA, backups JSON, exportación CSV compatible con Hevy e importación del CSV de Hevy.
 
 Funciona sin conexión: el catálogo y las imágenes vistas quedan en caché.
+
+## ⌚ Android y Wear OS
+
+```
+ Reloj Wear OS ──comandos (MessageClient)──▶ App Android (WebView + puente) ──▶ la web (misma app)
+      ▲                                              │
+      └──────────estado del entreno (Data Layer)─────┘   + alarma de descanso y notificación en curso
+```
+
+**En el reloj:**
+- Ver el ejercicio y la serie actual, con el peso y las reps de la sesión anterior.
+- Ajustar kg/reps con − / + y completar la serie (✓).
+- Navegar entre series (◀ ▶).
+- Pantalla de descanso con cuenta atrás circular, −15/+15/saltar y vibración al terminar.
+- Pulso del sensor del reloj: se envía al móvil y se guarda en el entreno (media, máxima, mínima y gráfica).
+- Empezar una rutina o un entreno vacío desde la muñeca, y terminar y guardar el entreno.
+
+**En el móvil (app Android):**
+- Todo lo de la web.
+- Notificación fija con cronómetro (o cuenta atrás del descanso).
+- Alarma exacta de fin de descanso con la pantalla apagada (también vibra en el reloj).
+- Los backups, CSV e imágenes se guardan o comparten con el selector del sistema.
+
+**Sin la app Android:** la web acepta pulsómetros Bluetooth con perfil estándar *Heart Rate* (Chrome).
+
+### Conseguir las APKs
+El workflow `.github/workflows/android.yml` compila `workstation-phone.apk` y `workstation-wear.apk` en cada push a `main`:
+- **Actions → último run → Artifacts → workstation-apks**.
+- Si creas un tag `v0.3.0`, también se publican en **Releases**.
+
+Las dos APKs se firman con la misma clave (`android/keystore/workstation.jks`, de uso personal). Es un requisito para que el reloj y el móvil se hablen. Para usar tu propia clave define `WS_KEYSTORE`, `WS_KEYSTORE_PASSWORD`, `WS_KEY_ALIAS` y `WS_KEY_PASSWORD`.
+
+### Instalar
+1. **Móvil:** abre `workstation-phone.apk` y permite "instalar apps desconocidas". Acepta las notificaciones.
+2. **Reloj** (Wear OS 3+, p. ej. Pixel Watch o Galaxy Watch 4+):
+   1. Ajustes → Sistema → Información → toca 7 veces "Número de compilación".
+   2. Opciones de desarrollador → activa **Depuración ADB** y **Depuración inalámbrica**.
+   3. Desde un ordenador en la misma Wi-Fi:
+      ```bash
+      adb pair IP_DEL_RELOJ:PUERTO_DE_EMPAREJAMIENTO   # código que muestra el reloj
+      adb connect IP_DEL_RELOJ:PUERTO
+      adb install workstation-wear.apk
+      ```
+   Alternativa sin ordenador: apps tipo "Bugjaeger" o "Wear Installer" desde el móvil.
+3. Abre Workstation en el móvil, empieza un entreno y abre Workstation en el reloj (o pulsa ⌚ → "Abrir Workstation en el reloj"). Al empezar el primer entreno, el reloj pide permiso para leer el pulso.
+
+> La app Android guarda sus datos aparte de la web del navegador. Para pasarte, exporta el backup JSON en la web e impórtalo en la app.
 
 ## Desarrollo
 

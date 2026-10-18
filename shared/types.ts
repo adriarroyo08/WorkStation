@@ -71,6 +71,8 @@ export interface Workout {
   notes?: string;
   routineId?: string;
   exercises: WorkoutExercise[];
+  // Frecuencia cardiaca (reloj Wear OS o pulsómetro Bluetooth). samples: [segundos desde el inicio, ppm].
+  heartRate?: { avg: number; max: number; min: number; samples?: [number, number][] };
 }
 
 export interface RoutineExercise {

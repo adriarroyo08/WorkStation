@@ -1,0 +1,140 @@
+// Controlador global del entrenamiento en curso: fin de descansos, sincronización con el reloj,
+// notificación de Android, comandos que llegan del reloj y pulso.
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { workoutFromRoutine } from '../../shared/data';
+import { buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
+import type { Workout } from '../../shared/types';
+import { uid } from '../../shared/types';
+import { clearSamples, pushHeartRate, takeSamples } from './hr';
+import { native, onWatchCommand } from './native';
+import { rest, useRest } from './rest';
+import { beep, useNow, useStore } from './store';
+
+type Store = ReturnType<typeof useStore>;
+
+// Pantalla de resumen pendiente de mostrar (tras terminar desde el móvil o el reloj).
+let summaryId: string | null = null;
+const subs = new Set<() => void>();
+export const summary = {
+  show: (id: string) => ((summaryId = id), subs.forEach((f) => f())),
+  clear: () => ((summaryId = null), subs.forEach((f) => f())),
+};
+export const useSummary = () =>
+  useSyncExternalStore(
+    (f) => (subs.add(f), () => subs.delete(f)),
+    () => summaryId,
+  );
+
+export function startWorkout(store: Store, w: Workout) {
+  clearSamples();
+  rest.stop();
+  store.setActive(w);
+}
+
+export function startEmpty(store: Store) {
+  startWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
+}
+
+export function discardActive(store: Store) {
+  clearSamples();
+  rest.stop();
+  native.workoutEnded();
+  store.setActive(null);
+}
+
+// Guarda el entrenamiento en curso. Devuelve false si no había ninguna serie completada.
+export function finishActive(store: Store): boolean {
+  const a = store.active;
+  if (!a) return false;
+  const done = finishWorkout(a);
+  if (!done) return false;
+  const hr = summarizeHeartRate(Date.parse(a.startedAt), takeSamples());
+  if (hr) done.heartRate = hr;
+  store.update((d) => void d.workouts.push(done));
+  rest.stop();
+  native.workoutEnded();
+  store.setActive(null);
+  summary.show(done.id);
+  return true;
+}
+
+export function completeSet(store: Store, w: Workout, ei: number, si: number, overrides = {}, forceDone?: boolean) {
+  const { workout, restSec } = toggleSet(store.data, w, ei, si, overrides, forceDone);
+  store.setActive(workout);
+  if (restSec > 0) rest.start(restSec);
+}
+
+export function useSessionController() {
+  const store = useStore();
+  const { data, active, settings } = store;
+  const r = useRest();
+  const now = useNow(500);
+  const ref = useRef(store);
+  ref.current = store;
+
+  // Fin del descanso (funciona en cualquier pestaña).
+  const left = r.end ? r.end - now : 0;
+  useEffect(() => {
+    if (!r.end || left > 0) return;
+    if (settings.vibrate) navigator.vibrate?.([300, 120, 300, 120, 300]);
+    if (settings.sound) beep();
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted')
+      navigator.serviceWorker?.getRegistration().then((reg) => reg?.showNotification('¡Descanso terminado!', { body: 'Siguiente serie 💪', tag: 'rest', icon: 'icon.svg' }));
+    rest.stop();
+  }, [r.end, left, settings.vibrate, settings.sound]);
+
+  // Estado → reloj (con un pequeño debounce) y notificación persistente de Android.
+  useEffect(() => {
+    const t = setTimeout(() => native.sendToWatch(JSON.stringify(buildWatchState(data, active, r))), 250);
+    return () => clearTimeout(t);
+  }, [data, active, r]);
+  useEffect(() => {
+    if (active) native.workoutOngoing(active.name, Date.parse(active.startedAt), r.end ?? 0);
+    else native.workoutEnded();
+  }, [active?.id, active?.name, active?.startedAt, r.end]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Alarma nativa para el fin del descanso (suena aunque la pantalla esté apagada).
+  useEffect(() => {
+    if (r.end && r.end > Date.now()) native.scheduleRest(r.end, ref.current.active?.name ?? 'Workstation');
+    else native.cancelRest();
+  }, [r.end]);
+
+  // Comandos del reloj.
+  useEffect(() => {
+    onWatchCommand((c: WatchCommand) => {
+      const s = ref.current;
+      switch (c.type) {
+        case 'hello':
+          native.sendToWatch(JSON.stringify(buildWatchState(s.data, s.active, rest.get())));
+          break;
+        case 'complete_set':
+          if (s.active) completeSet(s, s.active, c.ei, c.si, { weight: c.weight, reps: c.reps, durationSec: c.durationSec }, true);
+          break;
+        case 'uncomplete_set':
+          if (s.active) completeSet(s, s.active, c.ei, c.si, {}, false);
+          break;
+        case 'rest_add':
+          rest.add(c.sec);
+          break;
+        case 'rest_skip':
+          rest.stop();
+          break;
+        case 'start_routine': {
+          const routine = s.data.routines.find((x) => x.id === c.id);
+          if (routine && !s.active) startWorkout(s, workoutFromRoutine(routine));
+          break;
+        }
+        case 'start_empty':
+          if (!s.active) startEmpty(s);
+          break;
+        case 'finish':
+          if (!finishActive(s)) native.sendToWatch(JSON.stringify(buildWatchState(s.data, s.active, rest.get())));
+          break;
+        case 'hr':
+          pushHeartRate(c.bpm, 'watch');
+          break;
+      }
+    });
+    native.requestWatchStatus();
+  }, []);
+}

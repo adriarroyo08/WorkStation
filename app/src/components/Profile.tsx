@@ -5,6 +5,7 @@ import { muscleSets, personalRecords } from '../../../shared/stats';
 import type { MuscleGroup } from '../../../shared/types';
 import { cap, fmtNum, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
+import BodyMap from './BodyMap';
 import Measurements from './Measurements';
 import Reports from './Reports';
 import Settings from './Settings';
@@ -96,6 +97,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           <span className="grow">Por músculo (detallado)</span>
           <input type="checkbox" checked={detailed} onChange={(e) => setDetailed(e.target.checked)} />
         </label>
+        {muscleRows.length > 0 && <BodyMap sets={muscleSets(data, data.workouts.filter((w) => Date.parse(w.startedAt) >= since))} />}
         {muscleRows.length ? <HBars rows={muscleRows.sort((a, b) => b.value - a.value)} /> : <p className="muted small">Sin datos en este periodo.</p>}
       </div>
 

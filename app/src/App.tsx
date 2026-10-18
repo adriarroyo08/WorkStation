@@ -4,6 +4,7 @@ import ExercisesTab from './components/ExercisesTab';
 import History from './components/History';
 import Profile from './components/Profile';
 import Train from './components/Train';
+import { useSessionController } from './controller';
 import { useRest } from './rest';
 import { clock, useNow, useStore } from './store';
 
@@ -19,6 +20,7 @@ export type TabId = (typeof TABS)[number]['id'];
 
 export default function App() {
   const { active } = useStore();
+  useSessionController();
   const [tab, setTab] = useState<TabId>('train');
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   // Desde el entrenamiento en curso abrimos la ficha en una capa encima, sin perder el registro.

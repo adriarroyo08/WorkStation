@@ -3,15 +3,19 @@ import { MUSCLE_REGION } from '../../../shared/exercises';
 import { repeatWorkout, routineFromWorkout } from '../../../shared/data';
 import { formatDuration, formatSet, muscleSets, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import type { MuscleGroup, Workout } from '../../../shared/types';
+import { startWorkout } from '../controller';
 import { workoutImage } from '../share';
 import { fmtCompact, fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
+import BodyMap from './BodyMap';
+import LineChart from './LineChart';
 import { Back, ExerciseMedia, HBars, PrList, Stat } from './ui';
 import WorkoutLogger from './WorkoutLogger';
 
 // Detalle de un entrenamiento guardado. `justFinished` muestra la pantalla de "¡Buen trabajo!".
 export default function WorkoutDetail({ id, onBack, justFinished = false, onExercise, goTrain }: { id: string; onBack: () => void; justFinished?: boolean; onExercise?: (id: string) => void; goTrain?: () => void }) {
-  const { data, update, active, setActive } = useStore();
+  const store = useStore();
+  const { data, update, active } = store;
   const w = data.workouts.find((x) => x.id === id);
   const [editing, setEditing] = useState<Workout | null>(null);
   if (!w) return <Back onClick={onBack} />;
@@ -69,6 +73,17 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
         <Stat value={prs.length} label="récords" />
       </div>
       {w.notes && <p className="card small">{w.notes}</p>}
+      {w.heartRate && (
+        <div className="card">
+          <h3>❤️ Frecuencia cardiaca</h3>
+          <div className="stats">
+            <Stat value={w.heartRate.avg} label="ppm media" />
+            <Stat value={w.heartRate.max} label="ppm máx." />
+            <Stat value={w.heartRate.min} label="ppm mín." />
+          </div>
+          {w.heartRate.samples && w.heartRate.samples.length > 1 && <LineChart points={w.heartRate.samples.map(([t, b]) => ({ x: Date.parse(w.startedAt) + t * 1000, y: b }))} format={(v) => `${Math.round(v)}`} timeAxis />}
+        </div>
+      )}
 
       {prs.length > 0 && (
         <div className="card">
@@ -79,6 +94,7 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
 
       <div className="card">
         <h3>Distribución muscular</h3>
+        <BodyMap sets={muscleSets(data, [w])} />
         <HBars rows={[...regions.entries()].sort((a, b) => b[1] - a[1]).map(([label, v]) => ({ label, value: Math.round((v / totalSets) * 100) }))} format={(v) => `${v}%`} />
       </div>
 
@@ -114,7 +130,7 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
           className="ghost full"
           onClick={() => {
             if (active && !confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?')) return;
-            setActive(repeatWorkout(w));
+            startWorkout(store, repeatWorkout(w));
             goTrain?.();
           }}
         >

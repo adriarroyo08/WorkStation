@@ -1,5 +1,5 @@
 // Gráfico de línea SVG mínimo, sin dependencias.
-export default function LineChart({ points, format = (v) => String(v) }: { points: { x: number; y: number }[]; format?: (v: number) => string }) {
+export default function LineChart({ points, format = (v) => String(v), timeAxis = false }: { points: { x: number; y: number }[]; format?: (v: number) => string; timeAxis?: boolean }) {
   if (points.length < 2) return <p className="muted small chart-empty">Necesitas al menos 2 sesiones para ver la gráfica.</p>;
   const W = 340, H = 170, P = 30;
   const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
@@ -9,7 +9,7 @@ export default function LineChart({ points, format = (v) => String(v) }: { point
   const sy = (y: number) => H - P - ((y - y0) / (y1 - y0 || 1)) * (H - 2 * P);
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' ');
   const area = `${d} L${sx(x1)},${H - P} L${sx(x0)},${H - P} Z`;
-  const date = (t: number) => new Date(t).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  const date = (t: number) => (timeAxis ? new Date(t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : new Date(t).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
   const last = points[points.length - 1];
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Progresión">

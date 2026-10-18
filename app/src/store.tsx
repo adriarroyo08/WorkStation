@@ -4,6 +4,7 @@ import type { AiConfig } from '../../shared/ai';
 import { AI_PROVIDERS } from '../../shared/ai';
 import { emptyData, normalizeData } from '../../shared/data';
 import type { Settings, Workout, WorkstationData } from '../../shared/types';
+import { isNative, native } from './native';
 
 // Todo se guarda en el navegador (IndexedDB). Nada sale del dispositivo salvo las llamadas a la IA que tú configures.
 interface Store {
@@ -98,7 +99,10 @@ export async function compressImage(file: File, maxSide = 1280, quality = 0.8): 
 
 // --- Utilidades de UI ---
 export function downloadFile(name: string, content: string | Blob, type = 'application/json') {
-  const url = URL.createObjectURL(content instanceof Blob ? content : new Blob([content], { type }));
+  const blob = content instanceof Blob ? content : new Blob([content], { type });
+  // En la app Android no hay descargas de blobs: se guarda/comparte con el selector del sistema.
+  if (isNative()) return void native.saveFile(name, blob);
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = name;

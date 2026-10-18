@@ -3,6 +3,7 @@ import { chat } from '../../../shared/ai';
 import { period, periodReport, reportToText, type PeriodKind } from '../../../shared/reports';
 import { formatDuration } from '../../../shared/stats';
 import { fmtCompact, fmtNum, useStore } from '../store';
+import BodyMap from './BodyMap';
 import { Back, BarChart, Delta, HBars, PrList } from './ui';
 
 export default function Reports({ onBack }: { onBack: () => void }) {
@@ -108,6 +109,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       {r.muscles.length > 0 && (
         <div className="card">
           <h3>Series por músculo</h3>
+          <BodyMap sets={Object.fromEntries(r.muscles.map((m) => [m.muscle, m.sets]))} />
           <HBars rows={r.muscles.map((m) => ({ label: m.label, value: m.sets, previous: m.previous }))} />
         </div>
       )}

@@ -3,6 +3,7 @@ import { AI_PROVIDERS, chat } from '../../../shared/ai';
 import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { importHevyCsv } from '../../../shared/hevy';
 import { clock, downloadFile, useStore } from '../store';
+import { DevicesPanel } from './DevicesSheet';
 import { Back, Toggle } from './ui';
 
 export default function Settings({ onBack }: { onBack: () => void }) {
@@ -81,6 +82,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           </select>
         </label>
       </div>
+
+      <h2>⌚ Reloj y sensores</h2>
+      <DevicesPanel />
 
       <h2>🧮 Calculadora de discos</h2>
       <div className="card">
