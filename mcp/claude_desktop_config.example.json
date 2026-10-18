@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "workstation": {
+      "command": "node",
+      "args": ["/RUTA/A/workstation/mcp/dist/index.js"],
+      "env": {
+        "WORKSTATION_DATA": "/RUTA/A/tu/data.json",
+        "HEVY_API_KEY": "opcional-solo-si-tienes-hevy-pro"
+      }
+    }
+  }
+}
