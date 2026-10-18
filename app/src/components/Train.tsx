@@ -4,6 +4,7 @@ import { weekStreak } from '../../../shared/reports';
 import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { PROGRAMS, instantiateProgram, type ProgramTemplate } from '../../../shared/templates';
+import { importHevyCsv } from '../../../shared/hevy';
 import { hasPendingData } from '../../../shared/session';
 import { discardActive, finishActive, startEmpty, startWorkout, summary, useSummary } from '../controller';
 import { clock, useStore } from '../store';
@@ -81,6 +82,41 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           <div style={{ width: `${Math.min(100, (thisWeek / Math.max(1, settings.weeklyGoal)) * 100)}%` }} />
         </div>
       </div>
+      {!data.workouts.length && !data.routines.length && (
+        <div className="card welcome">
+          <h3>👋 Bienvenido a Workstation</h3>
+          <p className="small muted">Tres formas de empezar:</p>
+          <div className="list">
+            <button className="item" onClick={onExplore}>
+              <b>🔎 Elegir un programa</b>
+              <small className="muted">Full body, 5×5, PPL, Torso/Pierna…</small>
+            </button>
+            <button
+              className="item"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv,text/csv';
+                input.onchange = () =>
+                  input.files?.[0]?.text().then((t) => {
+                    const d = structuredClone(data);
+                    const n = importHevyCsv(d, t);
+                    store.replace(d);
+                    alert(`Importados ${n} entrenamientos desde Hevy.`);
+                  });
+                input.click();
+              }}
+            >
+              <b>📥 Importar mi historial de Hevy</b>
+              <small className="muted">Hevy → Perfil → Ajustes → Exportar entrenamientos (CSV)</small>
+            </button>
+            <button className="item" onClick={() => startEmpty(store)}>
+              <b>⚡ Entrenar ya</b>
+              <small className="muted">Empieza vacío y añade ejercicios sobre la marcha</small>
+            </button>
+          </div>
+        </div>
+      )}
       <button className="primary big" onClick={() => startEmpty(store)}>
         + Empezar entrenamiento vacío
       </button>

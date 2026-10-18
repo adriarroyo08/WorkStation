@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
-import { toggleSet } from '../../../shared/session';
+import { nextPendingSet, toggleSet } from '../../../shared/session';
 import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, lastSessionSets } from '../../../shared/stats';
 import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
@@ -53,7 +53,21 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
     const r = toggleSet(data, w, ei, si);
     edit((n) => void Object.assign(n, structuredClone(r.workout)));
     if (mode === 'live' && r.restSec > 0) rest.start(r.restSec);
+    // Lleva la vista a la siguiente serie pendiente.
+    const nx = nextPendingSet(r.workout);
+    if (mode === 'live' && nx && !w.exercises[ei].sets[si].done)
+      setTimeout(() => document.getElementById(`set-${nx.ei}-${nx.si}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
   };
+  const cursor = mode === 'live' ? nextPendingSet(w) : null;
+  const nextLabel = (() => {
+    if (!cursor) return '';
+    const we = w.exercises[cursor.ei];
+    const s = we.sets[cursor.si];
+    const prev = alignPrevious(we.sets, history.get(we.exerciseId)?.prev ?? [])[cursor.si];
+    const wt = s.weight ?? prev?.weight;
+    const reps = s.reps ?? prev?.reps;
+    return `${exMap.get(we.exerciseId)?.name ?? ''}${wt || reps ? ` · ${wt ? `${wt} kg × ` : ''}${reps ?? ''}` : ''}`;
+  })();
 
   const isPr = (we: WorkoutExercise, s: WorkoutSet, ex?: Exercise) => {
     const h = history.get(we.exerciseId);
@@ -157,6 +171,8 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
               {we.sets.map((s, si) => (
                 <SetRow
                   key={si}
+                  id={`set-${ei}-${si}`}
+                  isNext={cursor?.ei === ei && cursor.si === si}
                   n={we.sets.slice(0, si + 1).filter((x) => x.type !== 'warmup').length}
                   s={s}
                   prev={aligned[si]}
@@ -202,8 +218,11 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
       {mode === 'live' && restState.end && restLeft > 0 && (
         <div className="rest">
           <div className="rest-progress" style={{ width: `${(restLeft / Math.max(1, restState.total)) * 100}%` }} />
-          <span>Descanso</span>
-          <b>{clock(restLeft)}</b>
+          <div className="rest-main">
+            <span>Descanso</span>
+            <b>{clock(restLeft)}</b>
+            {nextLabel && <small className="rest-next">Siguiente: {nextLabel}</small>}
+          </div>
           <button onClick={() => rest.add(-15)}>-15</button>
           <button onClick={() => rest.add(15)}>+15</button>
           <button onClick={rest.stop}>Saltar</button>
@@ -365,8 +384,8 @@ export function PlateCalculator({ initial, onClose }: { initial: number; onClose
   );
 }
 
-function SetRow(props: { n: number; s: WorkoutSet; prev?: WorkoutSet; ex?: Exercise; pr: boolean; showRpe: boolean; running?: number; onStopwatch: () => void; onChange: (p: Partial<WorkoutSet>) => void; onToggle: () => void; onRemove: () => void; onPlates: () => void }) {
-  const { n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
+function SetRow(props: { id: string; isNext: boolean; n: number; s: WorkoutSet; prev?: WorkoutSet; ex?: Exercise; pr: boolean; showRpe: boolean; running?: number; onStopwatch: () => void; onChange: (p: Partial<WorkoutSet>) => void; onToggle: () => void; onRemove: () => void; onPlates: () => void }) {
+  const { id, isNext, n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
   const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const kind = ex?.kind ?? 'weight_reps';
@@ -375,7 +394,7 @@ function SetRow(props: { n: number; s: WorkoutSet; prev?: WorkoutSet; ex?: Exerc
     <input inputMode="decimal" placeholder={prev?.weight?.toString() ?? ''} value={s.weight ?? ''} onChange={(e) => onChange({ weight: numVal(e.target.value) })} onDoubleClick={kind === 'weight_reps' ? onPlates : undefined} />
   );
   return (
-    <div className={`set ${s.done ? 'done' : ''} ${showRpe ? 'rpe' : ''}`}>
+    <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`}>
       <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
         {SET_LABEL[s.type] || n}
         {pr && <span className="pr-badge">🏆</span>}
