@@ -7,6 +7,7 @@ import { cap, fmtNum, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
 import Achievements from './Achievements';
+import { Award, FileBarChart, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
 import YearHeatmap from './YearHeatmap';
 import Measurements from './Measurements';
@@ -18,7 +19,7 @@ type Metric = 'workouts' | 'durationMin' | 'volume' | 'sets' | 'reps';
 const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Duración', volume: 'Volumen', sets: 'Series', reps: 'Reps' };
 
 export default function Profile({ onExercise }: { onExercise: (id: string) => void }) {
-  const { data, settings } = useStore();
+  const { data, settings, setSettings } = useStore();
   const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements'>('home');
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
@@ -56,8 +57,19 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
     <section>
       <div className="row">
         <h1 className="grow">Perfil</h1>
-        <button className="ghost" onClick={() => setView('settings')} aria-label="Ajustes">
-          ⚙️ Ajustes
+        <button
+          className="ghost icon-btn"
+          aria-label="Cambiar tema"
+          title="Tema claro / oscuro"
+          onClick={() => {
+            const dark = settings.theme === 'dark' || (settings.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+            setSettings({ theme: dark ? 'light' : 'dark' });
+          }}
+        >
+          {settings.theme === 'light' || (settings.theme === 'auto' && !matchMedia('(prefers-color-scheme: dark)').matches) ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+        <button className="ghost icon-btn" onClick={() => setView('settings')} aria-label="Ajustes">
+          <SettingsIcon size={20} /> Ajustes
         </button>
       </div>
       <div className="stats four">
@@ -69,17 +81,17 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
 
       <div className="row tiles">
         <button className="card grow tile" onClick={() => setView('reports')}>
-          📊 Informes
+          <FileBarChart size={20} className="tile-ico" /> Informes
           <small className="muted">semanal · mensual · anual</small>
         </button>
         <button className="card grow tile" onClick={() => setView('measures')}>
-          📏 Medidas
+          <Ruler size={20} className="tile-ico" /> Medidas
           <small className="muted">peso · cuerpo · fotos</small>
         </button>
       </div>
       <button className="card full tile achievements-tile" onClick={() => setView('achievements')}>
         <span>
-          🏅 Logros <small className="muted">{unlocked.length} de {allAch.length}</small>
+          <Award size={18} className="tile-ico inline" /> Logros <small className="muted">{unlocked.length} de {allAch.length}</small>
         </span>
         <span className="badge-row">{unlocked.slice(-6).map((a) => <span key={a.id} title={a.title}>{a.icon}</span>)}</span>
       </button>

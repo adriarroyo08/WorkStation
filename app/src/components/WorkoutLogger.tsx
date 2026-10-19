@@ -1,3 +1,4 @@
+import { ListChecks, MoreHorizontal, Plus, Timer, Watch, Weight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
@@ -116,13 +117,13 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
           </button>
         </div>
         <div className="row live-stats small muted">
-          {mode === 'live' && <span>⏱ {formatDuration(elapsed)}</span>}
+          {mode === 'live' && <span className="icon-btn"><Timer size={14} /> {formatDuration(elapsed)}</span>}
           {mode === 'live' && hr.live && <span className="hr-live">❤️ {hr.bpm}</span>}
-          <span>🏋️ {Math.round(totals.volume).toLocaleString('es-ES')} kg</span>
-          <span>✅ {totals.sets} series</span>
+          <span className="icon-btn"><Weight size={14} /> {Math.round(totals.volume).toLocaleString('es-ES')} kg</span>
+          <span className="icon-btn"><ListChecks size={14} /> {totals.sets} series</span>
           {mode === 'live' && (
             <button className="ghost small devices-btn" onClick={() => setDevices(true)} aria-label="Reloj y sensores">
-              ⌚
+              <Watch size={18} />
             </button>
           )}
         </div>
@@ -152,7 +153,7 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
                 {ex?.name ?? we.exerciseId}
               </b>
               <button className="ghost" onClick={() => setMenu(ei)} aria-label="Opciones">
-                ⋯
+                <MoreHorizontal size={20} />
               </button>
             </div>
             {ex?.stickyNote && <p className="sticky-note small">📌 {ex.stickyNote}</p>}
@@ -202,7 +203,7 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
               ))}
             </div>
             <button
-              className="ghost full"
+              className="ghost full icon-btn"
               onClick={() =>
                 edit((n) => {
                   const last = n.exercises[ei].sets.at(-1);
@@ -210,14 +211,14 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
                 })
               }
             >
-              + Añadir serie
+              <Plus size={16} /> Añadir serie
             </button>
           </div>
         );
       })}
 
-      <button className="primary full" onClick={() => setPicker({})}>
-        + Añadir ejercicio
+      <button className="primary full icon-btn" onClick={() => setPicker({})}>
+        <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>
       <button className="danger full" onClick={() => confirm(mode === 'live' ? '¿Descartar este entrenamiento?' : '¿Descartar los cambios?') && onDiscard()}>
         {mode === 'live' ? 'Descartar entrenamiento' : 'Descartar cambios'}

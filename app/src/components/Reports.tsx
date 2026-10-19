@@ -81,7 +81,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
         ))}
       </div>
       <p className="muted small center-text">
-        Comparado con {prevLabel} · {t.daysTrained} días entrenados · {t.reps.toLocaleString('es-ES')} repeticiones
+        Comparado con {prevLabel} · {t.daysTrained} {t.daysTrained === 1 ? 'día entrenado' : 'días entrenados'} · {t.reps.toLocaleString('es-ES')} repeticiones
       </p>
 
       <div className="card">

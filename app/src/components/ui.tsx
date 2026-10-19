@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import { mediaUrls } from '../../../shared/exercises';
 import { PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
@@ -20,6 +20,7 @@ export function Sheet({ title, onClose, children }: { title?: string; onClose: (
 }
 
 export function Back({ onClick, label = 'Volver', right }: { onClick: () => void; label?: string; right?: ReactNode }) {
+  useScrollTop();
   return (
     <div className="row topbar">
       <button className="ghost" onClick={onClick}>
@@ -167,4 +168,38 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
       ))}
     </ul>
   );
+}
+
+// Anillo de progreso con degradado (objetivo semanal, etc.).
+export function ProgressRing({ value, max, size = 92, label, sub }: { value: number; max: number; size?: number; label: string; sub?: string }) {
+  const r = (size - 12) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, max ? value / max : 0));
+  return (
+    <svg className="ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub ?? ''}`}>
+      <defs>
+        <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--accent)" />
+          <stop offset="100%" stopColor="var(--accent-2)" />
+        </linearGradient>
+      </defs>
+      <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} />
+      <circle className="ring-val" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      <text x="50%" y={sub ? '47%' : '53%'} textAnchor="middle" dominantBaseline="middle">
+        {label}
+      </text>
+      {sub && (
+        <text className="ring-sub" x="50%" y="66%" textAnchor="middle" dominantBaseline="middle">
+          {sub}
+        </text>
+      )}
+    </svg>
+  );
+}
+
+// Cada pantalla nueva empieza arriba (como al navegar en una app nativa).
+export function useScrollTop(key?: unknown) {
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [key]);
 }

@@ -1,3 +1,4 @@
+import { BookmarkPlus, RefreshCw, Repeat, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { MUSCLE_REGION } from '../../../shared/exercises';
 import { repeatWorkout, routineFromWorkout } from '../../../shared/data';
@@ -137,22 +138,22 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
       <p className="muted small">Repeticiones totales: {workoutReps(w)}</p>
 
       <div className="actions">
-        <button className="primary full" onClick={share}>
-          📤 Compartir imagen
+        <button className="primary full icon-btn" onClick={share}>
+          <Share2 size={18} /> Compartir imagen
         </button>
         <button
-          className="ghost full"
+          className="ghost full icon-btn"
           onClick={() => {
             if (active && !confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?')) return;
             startWorkout(store, repeatWorkout(w));
             goTrain?.();
           }}
         >
-          🔁 Repetir entrenamiento
+          <Repeat size={18} /> Repetir entrenamiento
         </button>
         {routine ? (
           <button
-            className="ghost full"
+            className="ghost full icon-btn"
             onClick={() => {
               if (!confirm(`¿Actualizar la rutina "${routine.name}" con los ejercicios, series y pesos de hoy?`)) return;
               update((d) => {
@@ -162,11 +163,11 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
               alert('Rutina actualizada.');
             }}
           >
-            📋 Actualizar rutina “{routine.name}”
+            <RefreshCw size={18} /> Actualizar rutina “{routine.name}”
           </button>
         ) : null}
         <button
-          className="ghost full"
+          className="ghost full icon-btn"
           onClick={() => {
             const name = prompt('Nombre de la nueva rutina', w.name);
             if (!name) return;
@@ -174,7 +175,7 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
             alert('Rutina guardada.');
           }}
         >
-          ➕ Guardar como nueva rutina
+          <BookmarkPlus size={18} /> Guardar como nueva rutina
         </button>
         <button
           className="danger full"

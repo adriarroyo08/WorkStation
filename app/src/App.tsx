@@ -1,20 +1,24 @@
-import { useCallback, useState } from 'react';
-import Coach from './components/Coach';
-import ExercisesTab from './components/ExercisesTab';
-import History from './components/History';
-import Profile from './components/Profile';
+import { BarChart3, CalendarDays, Dumbbell, Library, Sparkles } from 'lucide-react';
+import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import Train from './components/Train';
+
+// El resto de pestañas se cargan bajo demanda: el arranque solo descarga "Entrenar".
+const Coach = lazy(() => import('./components/Coach'));
+const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
+const History = lazy(() => import('./components/History'));
+const Profile = lazy(() => import('./components/Profile'));
+import { useScrollTop } from './components/ui';
 import { useSessionController } from './controller';
 import { useRest } from './rest';
 import { toast, useToast } from './toast';
 import { clock, useNow, useStore } from './store';
 
 const TABS = [
-  { id: 'train', label: 'Entrenar', icon: '🏋️' },
-  { id: 'history', label: 'Historial', icon: '📅' },
-  { id: 'exercises', label: 'Ejercicios', icon: '💪' },
-  { id: 'profile', label: 'Perfil', icon: '📊' },
-  { id: 'coach', label: 'Coach IA', icon: '🤖' },
+  { id: 'train', label: 'Entrenar', Icon: Dumbbell },
+  { id: 'history', label: 'Historial', Icon: CalendarDays },
+  { id: 'exercises', label: 'Ejercicios', Icon: Library },
+  { id: 'profile', label: 'Perfil', Icon: BarChart3 },
+  { id: 'coach', label: 'Coach', Icon: Sparkles },
 ] as const;
 
 export type TabId = (typeof TABS)[number]['id'];
@@ -28,16 +32,23 @@ export default function App() {
   const [overlayExercise, setOverlayExercise] = useState<string | null>(null);
   const goExercise = useCallback(
     (id: string) => {
-      if (tab === 'train') setOverlayExercise(id);
+      if (tab === 'train') ((savedScroll.current = window.scrollY), setOverlayExercise(id));
       else (setOpenExercise(id), setTab('exercises'));
     },
     [tab],
   );
   const clearOpen = useCallback(() => setOpenExercise(null), []);
+  useScrollTop(tab);
+  // Al volver de la ficha abierta durante el entreno, recupera la posición del registro.
+  const savedScroll = useRef(0);
+  useLayoutEffect(() => {
+    if (!overlayExercise) window.scrollTo({ top: savedScroll.current, behavior: 'instant' as ScrollBehavior });
+  }, [overlayExercise]);
 
   return (
     <div className="app">
       <main>
+        <Suspense fallback={<Skeleton />}>
         {overlayExercise ? (
           <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
         ) : (
@@ -51,13 +62,14 @@ export default function App() {
             {tab === 'coach' && <Coach goSettings={() => setTab('profile')} />}
           </>
         )}
+        </Suspense>
       </main>
       <ToastView />
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setOverlayExercise(null), setTab(t.id))}>
-            <span>{t.icon}</span>
+            <t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 1.9} aria-hidden />
             {t.label}
           </button>
         ))}
@@ -98,5 +110,15 @@ function ToastView() {
         </button>
       )}
     </div>
+  );
+}
+
+function Skeleton() {
+  return (
+    <section aria-busy="true">
+      <div className="skeleton" style={{ height: 36, width: '50%' }} />
+      <div className="skeleton" />
+      <div className="skeleton" />
+    </section>
   );
 }

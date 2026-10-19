@@ -68,8 +68,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const theme = state?.data.settings.theme;
   useEffect(() => {
-    if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
-    else if (theme) document.documentElement.setAttribute('data-theme', theme);
+    const root = document.documentElement;
+    root.classList.add('theme-anim');
+    if (theme === 'auto') root.removeAttribute('data-theme');
+    else if (theme) root.setAttribute('data-theme', theme);
+    const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b0d12' : '#f4f6fb');
+    const t = setTimeout(() => root.classList.remove('theme-anim'), 400);
+    return () => clearTimeout(t);
   }, [theme]);
 
   if (!state) return <div className="center muted">Cargando…</div>;

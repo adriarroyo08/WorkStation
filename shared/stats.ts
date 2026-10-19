@@ -45,7 +45,24 @@ export interface ExerciseSession {
   maxDistance: number;
 }
 
+// Caché por versión de los datos: el store sustituye `workouts`/`exercises` por copias nuevas en cada cambio,
+// así que la identidad de esos arrays (y la longitud, por si se muta in situ) sirve de clave.
+const memoStore = new WeakMap<object, { len: number; exercises: unknown; values: Map<string, unknown> }>();
+function memo<T>(data: WorkstationData, key: string, compute: () => T): T {
+  let entry = memoStore.get(data.workouts);
+  if (!entry || entry.len !== data.workouts.length || entry.exercises !== data.exercises) {
+    entry = { len: data.workouts.length, exercises: data.exercises, values: new Map() };
+    memoStore.set(data.workouts, entry);
+  }
+  if (!entry.values.has(key)) entry.values.set(key, compute());
+  return entry.values.get(key) as T;
+}
+
 export function exerciseHistory(data: WorkstationData, exerciseId: string): ExerciseSession[] {
+  return memo(data, `h:${exerciseId}`, () => computeExerciseHistory(data, exerciseId));
+}
+
+function computeExerciseHistory(data: WorkstationData, exerciseId: string): ExerciseSession[] {
   const out: ExerciseSession[] = [];
   for (const w of data.workouts) {
     for (const ex of w.exercises) {
@@ -105,6 +122,10 @@ export interface PersonalRecord {
 }
 
 export function personalRecords(data: WorkstationData): PersonalRecord[] {
+  return memo(data, 'prs', () => computePersonalRecords(data));
+}
+
+function computePersonalRecords(data: WorkstationData): PersonalRecord[] {
   const names = new Map(data.exercises.map((e) => [e.id, e.name]));
   const ids = new Set(data.workouts.flatMap((w) => w.exercises.map((e) => e.exerciseId)));
   const prs: PersonalRecord[] = [];
@@ -166,6 +187,10 @@ function setMetrics(s: WorkoutSet, ex?: Exercise): Partial<Record<PrKind, number
 // Recorre el historial en orden y devuelve cada vez que se batió un récord.
 // La primera sesión de un ejercicio no cuenta como récord (no hay con qué comparar).
 export function prEvents(data: WorkstationData, extra?: Workout): PrEvent[] {
+  return extra ? computePrEvents(data, extra) : memo(data, 'pre', () => computePrEvents(data));
+}
+
+function computePrEvents(data: WorkstationData, extra?: Workout): PrEvent[] {
   const ex = new Map(data.exercises.map((e) => [e.id, e]));
   const bests = new Map<string, Partial<Record<PrKind, number>>>();
   const events: PrEvent[] = [];

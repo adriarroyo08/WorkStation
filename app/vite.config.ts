@@ -14,13 +14,15 @@ export default defineConfig({
         name: 'Workstation',
         short_name: 'Workstation',
         description: 'Tu app personal de entrenamiento con coach IA',
-        theme_color: '#0f1115',
-        background_color: '#0f1115',
+        theme_color: '#0b0d12',
+        background_color: '#0b0d12',
         display: 'standalone',
         start_url: '.',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: {
+        // App completa + fuente latina disponibles sin conexión desde la primera visita.
+        globPatterns: ['**/*.{js,css,html,svg,webmanifest}', 'assets/inter-latin-*.woff2'],
         // Catálogo e imágenes de ejercicios disponibles sin conexión una vez vistos.
         runtimeCaching: [
           { urlPattern: /catalog\.json$/, handler: 'StaleWhileRevalidate', options: { cacheName: 'catalog' } },

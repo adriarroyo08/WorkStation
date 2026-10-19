@@ -1,3 +1,4 @@
+import { ListChecks, Timer, Weight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import { cap, fmtDate, fmtNum, useStore } from '../store';
@@ -11,6 +12,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [day, setDay] = useState<string | null>(null);
   const [q, setQ] = useState('');
+  const [limit, setLimit] = useState(30);
   const ex = new Map(data.exercises.map((e) => [e.id, e]));
   const prCount = useMemo(() => {
     const m = new Map<string, number>();
@@ -29,9 +31,10 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
   if (q) list = list.filter((w) => w.name.toLowerCase().includes(q.toLowerCase()) || w.exercises.some((e) => ex.get(e.exerciseId)?.name.toLowerCase().includes(q.toLowerCase())));
   if (mode === 'calendar') list = list.filter((w) => (day ? new Date(w.startedAt).toDateString() === day : new Date(w.startedAt).getMonth() === month.getMonth() && new Date(w.startedAt).getFullYear() === month.getFullYear()));
 
-  // Agrupar por mes como en Hevy.
+  // Agrupar por mes como en Hevy (solo los primeros `limit`, para listas largas).
+  const total = list.length;
   const groups: { label: string; items: typeof list }[] = [];
-  for (const w of list) {
+  for (const w of list.slice(0, limit)) {
     const label = cap(new Date(w.startedAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }));
     if (groups.at(-1)?.label !== label) groups.push({ label, items: [] });
     groups.at(-1)!.items.push(w);
@@ -84,9 +87,9 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                 {prCount.get(w.id) ? <span className="pr-pill">🏆 {prCount.get(w.id)}</span> : null}
               </div>
               <div className="row small muted wstats">
-                <span>⏱ {workoutDurationMin(w)} min</span>
-                <span>🏋️ {fmtNum(workoutVolume(w))} kg</span>
-                <span>✅ {workoutSetCount(w)} series</span>
+                <span className="icon-btn"><Timer size={14} /> {workoutDurationMin(w)} min</span>
+                <span className="icon-btn"><Weight size={14} /> {fmtNum(workoutVolume(w))} kg</span>
+                <span className="icon-btn"><ListChecks size={14} /> {workoutSetCount(w)} series</span>
                 {w.heartRate && <span>❤️ {w.heartRate.avg}</span>}
               </div>
               <div className="small exsum">
@@ -101,6 +104,11 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
           ))}
         </div>
       ))}
+      {total > limit && (
+        <button className="ghost full" onClick={() => setLimit(limit + 30)}>
+          Ver más ({total - limit} restantes)
+        </button>
+      )}
     </section>
   );
 }
