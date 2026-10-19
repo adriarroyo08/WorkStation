@@ -7,3 +7,4 @@ android/.gradle/
 android/local.properties
 apk/
 android/keystore/
+video/out/

@@ -112,6 +112,19 @@ Sin el secret, el workflow genera una clave temporal en cada build. Funciona, pe
 
 > La app Android guarda sus datos aparte de la web del navegador. Para pasarte, exporta el backup JSON en la web e impórtalo en la app.
 
+## 🎬 Vídeo promocional
+
+`video/` es un proyecto de [Remotion](https://www.remotion.dev/) (vídeo hecho con React). Usa capturas reales de la app en modo oscuro y claro, con escenas animadas para cada función, el reloj Wear OS y un cierre con llamada a la acción.
+
+```bash
+cd video && npm install
+npm run studio        # editor visual en el navegador
+npm run render        # vertical 1080×1920 (reels/stories) → out/workstation-promo.mp4
+npm run render:wide   # horizontal 1920×1080 (YouTube/web) → out/workstation-promo-wide.mp4
+```
+
+Para regenerar las capturas: arranca la app (`npm --prefix app run build && npx --prefix app vite preview`) y ejecuta el script de capturas con Playwright. Remotion es gratis para uso personal y empresas pequeñas (ver su licencia).
+
 ## Desarrollo
 
 ```bash
