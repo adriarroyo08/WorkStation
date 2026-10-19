@@ -17,7 +17,19 @@ import { Back, ExerciseMedia, HBars, PrList, Stat } from './ui';
 import WorkoutLogger from './WorkoutLogger';
 
 // Detalle de un entrenamiento guardado. `justFinished` muestra la pantalla de "¡Buen trabajo!".
-export default function WorkoutDetail({ id, onBack, justFinished = false, onExercise, goTrain }: { id: string; onBack: () => void; justFinished?: boolean; onExercise?: (id: string) => void; goTrain?: () => void }) {
+export default function WorkoutDetail({
+  id,
+  onBack,
+  justFinished = false,
+  onExercise,
+  goTrain,
+}: {
+  id: string;
+  onBack: () => void;
+  justFinished?: boolean;
+  onExercise?: (id: string) => void;
+  goTrain?: () => void;
+}) {
   const store = useStore();
   const { data, update, active } = store;
   const w = data.workouts.find((x) => x.id === id);
@@ -58,7 +70,15 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
 
   return (
     <section>
-      <Back onClick={onBack} label={justFinished ? 'Listo' : 'Volver'} right={<button className="ghost" onClick={() => setEditing(structuredClone(w))}>Editar</button>} />
+      <Back
+        onClick={onBack}
+        label={justFinished ? 'Listo' : 'Volver'}
+        right={
+          <button className="ghost" onClick={() => setEditing(structuredClone(w))}>
+            Editar
+          </button>
+        }
+      />
       {justFinished && (
         <div className="congrats">
           <div className="big-emoji">💪</div>
@@ -66,7 +86,9 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
           <p className="muted">Este es tu entrenamiento nº {count}.</p>
           {unlockedNow.length > 0 && (
             <div className="card new-badges">
-              <b>🎖️ ¡Logro{unlockedNow.length > 1 ? 's' : ''} desbloqueado{unlockedNow.length > 1 ? 's' : ''}!</b>
+              <b>
+                🎖️ ¡Logro{unlockedNow.length > 1 ? 's' : ''} desbloqueado{unlockedNow.length > 1 ? 's' : ''}!
+              </b>
               <div className="badges">
                 {unlockedNow.map((a) => (
                   <AchievementBadge key={a.id} a={a} />
@@ -96,7 +118,9 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
             <Stat value={w.heartRate.max} label="ppm máx." />
             <Stat value={w.heartRate.min} label="ppm mín." />
           </div>
-          {w.heartRate.samples && w.heartRate.samples.length > 1 && <LineChart points={w.heartRate.samples.map(([t, b]) => ({ x: Date.parse(w.startedAt) + t * 1000, y: b }))} format={(v) => `${Math.round(v)}`} timeAxis />}
+          {w.heartRate.samples && w.heartRate.samples.length > 1 && (
+            <LineChart points={w.heartRate.samples.map(([t, b]) => ({ x: Date.parse(w.startedAt) + t * 1000, y: b }))} format={(v) => `${Math.round(v)}`} timeAxis />
+          )}
         </div>
       )}
 

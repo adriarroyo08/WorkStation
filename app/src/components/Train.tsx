@@ -73,9 +73,17 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
       <div className="card hero">
         <ProgressRing value={thisWeek} max={settings.weeklyGoal} label={`${thisWeek}/${settings.weeklyGoal}`} sub="semana" />
         <div className="grow">
-          <h3>{thisWeek >= settings.weeklyGoal ? '¡Objetivo semanal cumplido!' : thisWeek ? `Te faltan ${settings.weeklyGoal - thisWeek} entreno${settings.weeklyGoal - thisWeek === 1 ? '' : 's'}` : 'A por la semana'}</h3>
+          <h3>
+            {thisWeek >= settings.weeklyGoal
+              ? '¡Objetivo semanal cumplido!'
+              : thisWeek
+                ? `Te faltan ${settings.weeklyGoal - thisWeek} entreno${settings.weeklyGoal - thisWeek === 1 ? '' : 's'}`
+                : 'A por la semana'}
+          </h3>
           <p className="muted small" style={{ margin: '0 0 8px' }}>
-            {data.workouts.length ? `Último: ${new Date([...data.workouts].sort((x, y) => y.startedAt.localeCompare(x.startedAt))[0].startedAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}` : 'Tu primer entreno te espera'}
+            {data.workouts.length
+              ? `Último: ${new Date([...data.workouts].sort((x, y) => y.startedAt.localeCompare(x.startedAt))[0].startedAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}`
+              : 'Tu primer entreno te espera'}
           </p>
           <span className={`chip ${streak ? 'warm' : ''}`} title="Semanas seguidas entrenando">
             <Flame size={13} /> {streak} {streak === 1 ? 'semana' : 'semanas'} de racha
@@ -332,7 +340,15 @@ function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => 
 
   return (
     <section>
-      <Back onClick={() => (JSON.stringify(r) === JSON.stringify(initial) || confirm('¿Salir sin guardar?')) && onClose()} label="Cancelar" right={<button className="primary" onClick={save}>Guardar</button>} />
+      <Back
+        onClick={() => (JSON.stringify(r) === JSON.stringify(initial) || confirm('¿Salir sin guardar?')) && onClose()}
+        label="Cancelar"
+        right={
+          <button className="primary" onClick={save}>
+            Guardar
+          </button>
+        }
+      />
       <input className="title" value={r.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} placeholder="Nombre de la rutina" />
       <textarea placeholder="Notas de la rutina" value={r.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
       {data.folders.length > 0 && (
@@ -406,7 +422,15 @@ function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => 
             </div>
             {e.sets.map((s, si) => (
               <div key={si} className="rset">
-                <button className={`settype ${s.type}`} onClick={() => edit((n) => void (n.exercises[i].sets[si].type = (['normal', 'warmup', 'drop', 'failure'] as SetType[])[((['normal', 'warmup', 'drop', 'failure'] as SetType[]).indexOf(s.type) + 1) % 4]))}>
+                <button
+                  className={`settype ${s.type}`}
+                  onClick={() =>
+                    edit(
+                      (n) =>
+                        void (n.exercises[i].sets[si].type = (['normal', 'warmup', 'drop', 'failure'] as SetType[])[((['normal', 'warmup', 'drop', 'failure'] as SetType[]).indexOf(s.type) + 1) % 4]),
+                    )
+                  }
+                >
                   {{ normal: si + 1, warmup: 'C', drop: 'D', failure: 'F' }[s.type]}
                 </button>
                 {dur ? <span /> : <input inputMode="decimal" value={s.weight ?? ''} placeholder="-" onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].weight = num(ev.target.value)))} />}

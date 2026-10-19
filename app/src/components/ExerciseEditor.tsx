@@ -55,7 +55,11 @@ export default function ExerciseEditor({ initial, initialName = '', onSaved }: {
         {(Object.keys(MUSCLE_LABELS) as MuscleGroup[])
           .filter((m) => m !== e.muscle)
           .map((m) => (
-            <button key={m} className={e.secondary?.includes(m) ? 'on' : ''} onClick={() => setE({ ...e, secondary: e.secondary?.includes(m) ? e.secondary.filter((x) => x !== m) : [...(e.secondary ?? []), m] })}>
+            <button
+              key={m}
+              className={e.secondary?.includes(m) ? 'on' : ''}
+              onClick={() => setE({ ...e, secondary: e.secondary?.includes(m) ? e.secondary.filter((x) => x !== m) : [...(e.secondary ?? []), m] })}
+            >
               {MUSCLE_LABELS[m]}
             </button>
           ))}

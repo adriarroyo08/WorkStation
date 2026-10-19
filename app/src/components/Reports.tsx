@@ -23,7 +23,11 @@ export default function Reports({ onBack }: { onBack: () => void }) {
     setBusy(true);
     try {
       const txt = await chat(ai, [
-        { role: 'system', content: 'Eres un entrenador personal. Analiza el informe de entrenamiento en español: puntos fuertes, puntos a mejorar (volumen por músculo, constancia, progresión) y 3 recomendaciones concretas para el siguiente periodo. Máximo 200 palabras.' },
+        {
+          role: 'system',
+          content:
+            'Eres un entrenador personal. Analiza el informe de entrenamiento en español: puntos fuertes, puntos a mejorar (volumen por músculo, constancia, progresión) y 3 recomendaciones concretas para el siguiente periodo. Máximo 200 palabras.',
+        },
         { role: 'user', content: reportToText(r) },
       ]);
       setAnalysis((a) => ({ ...a, [key]: txt }));
@@ -45,7 +49,14 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 
   return (
     <section className="report">
-      <Back onClick={onBack} right={<button className="ghost no-print" onClick={() => window.print()}>🖨 PDF</button>} />
+      <Back
+        onClick={onBack}
+        right={
+          <button className="ghost no-print" onClick={() => window.print()}>
+            🖨 PDF
+          </button>
+        }
+      />
       <h1>Informes</h1>
       <div className="segmented no-print">
         {(['week', 'month', 'year'] as const).map((k) => (
@@ -151,7 +162,10 @@ export default function Reports({ onBack }: { onBack: () => void }) {
           )}
         </div>
       )}
-      <button className="ghost full no-print" onClick={() => navigator.clipboard.writeText(reportToText(r) + (analysis[key] ? `\n\nANÁLISIS:\n${analysis[key]}` : '')).then(() => alert('Informe copiado'))}>
+      <button
+        className="ghost full no-print"
+        onClick={() => navigator.clipboard.writeText(reportToText(r) + (analysis[key] ? `\n\nANÁLISIS:\n${analysis[key]}` : '')).then(() => alert('Informe copiado'))}
+      >
         📋 Copiar informe como texto
       </button>
     </section>

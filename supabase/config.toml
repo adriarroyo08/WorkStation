@@ -1,0 +1,4 @@
+# Configuración de la Supabase CLI para Workstation.
+# La función "mcp" valida sus propias API keys (ws_…), así que no usa el JWT de Supabase.
+[functions.mcp]
+verify_jwt = false

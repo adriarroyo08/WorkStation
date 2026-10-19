@@ -14,7 +14,8 @@ export interface Achievement {
 
 const bestLift = (data: WorkstationData, ids: string[]) => {
   let best = 0;
-  for (const w of data.workouts) for (const e of w.exercises) if (ids.includes(e.exerciseId)) for (const s of e.sets) if (s.done && s.type !== 'warmup' && (s.reps ?? 0) >= 1) best = Math.max(best, s.weight ?? 0);
+  for (const w of data.workouts)
+    for (const e of w.exercises) if (ids.includes(e.exerciseId)) for (const s of e.sets) if (s.done && s.type !== 'warmup' && (s.reps ?? 0) >= 1) best = Math.max(best, s.weight ?? 0);
   return best;
 };
 
@@ -31,7 +32,14 @@ export function achievements(data: WorkstationData, now = new Date()): Achieveme
   const dead = bestLift(data, ['peso-muerto', 'peso-muerto-sumo', 'peso-muerto-hexagonal']);
   const bw = [...data.measurements].sort((a, b) => b.date.localeCompare(a.date)).find((m) => m.bodyweight)?.bodyweight;
 
-  const count = (id: string, icon: string, title: string, target: number, value: number, desc: string): Achievement => ({ id, icon, title, desc, unlocked: value >= target, progress: [Math.min(value, target), target] });
+  const count = (id: string, icon: string, title: string, target: number, value: number, desc: string): Achievement => ({
+    id,
+    icon,
+    title,
+    desc,
+    unlocked: value >= target,
+    progress: [Math.min(value, target), target],
+  });
 
   const list: Achievement[] = [
     count('w1', '🎉', 'Primer paso', 1, n, 'Registra tu primer entrenamiento'),
@@ -61,6 +69,10 @@ export function achievements(data: WorkstationData, now = new Date()): Achieveme
 
 // Logros que se desbloquean con un entrenamiento concreto (para celebrarlo al terminar).
 export function newlyUnlocked(data: WorkstationData, workoutId: string, now = new Date()): Achievement[] {
-  const before = new Set(achievements({ ...data, workouts: data.workouts.filter((w) => w.id !== workoutId) }, now).filter((a) => a.unlocked).map((a) => a.id));
+  const before = new Set(
+    achievements({ ...data, workouts: data.workouts.filter((w) => w.id !== workoutId) }, now)
+      .filter((a) => a.unlocked)
+      .map((a) => a.id),
+  );
   return achievements(data, now).filter((a) => a.unlocked && !before.has(a.id));
 }

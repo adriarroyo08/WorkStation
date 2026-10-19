@@ -34,7 +34,14 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
 
   return (
     <section>
-      <Back onClick={onBack} right={<button className="primary" onClick={() => setAdding(true)}>+ Registrar</button>} />
+      <Back
+        onClick={onBack}
+        right={
+          <button className="primary" onClick={() => setAdding(true)}>
+            + Registrar
+          </button>
+        }
+      />
       <h1>Medidas</h1>
       <div className="segmented">
         <button className={tab === 'charts' ? 'on' : ''} onClick={() => setTab('charts')}>

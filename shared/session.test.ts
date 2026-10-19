@@ -8,8 +8,24 @@ const base = (): Workout => ({
   name: 'Hoy',
   startedAt: '2026-10-18T10:00:00Z',
   exercises: [
-    { exerciseId: 'press-banca', restSec: 120, supersetId: 's', sets: [{ type: 'normal', done: false }, { type: 'normal', done: false }] },
-    { exerciseId: 'remo-barra', restSec: 90, supersetId: 's', sets: [{ type: 'normal', done: false }, { type: 'normal', done: false }] },
+    {
+      exerciseId: 'press-banca',
+      restSec: 120,
+      supersetId: 's',
+      sets: [
+        { type: 'normal', done: false },
+        { type: 'normal', done: false },
+      ],
+    },
+    {
+      exerciseId: 'remo-barra',
+      restSec: 90,
+      supersetId: 's',
+      sets: [
+        { type: 'normal', done: false },
+        { type: 'normal', done: false },
+      ],
+    },
     { exerciseId: 'curl-barra', sets: [{ type: 'normal', done: false }] },
   ],
 });
@@ -56,6 +72,20 @@ describe('sesión en curso', () => {
   });
   it('resumen de pulso', () => {
     const t0 = Date.parse('2026-10-18T10:00:00Z');
-    expect(summarizeHeartRate(t0, [{ t: t0 + 5000, bpm: 100 }, { t: t0 + 10000, bpm: 140 }, { t: t0 + 15000, bpm: 300 }])).toMatchObject({ avg: 120, max: 140, min: 100, samples: [[5, 100], [10, 140]] });
+    expect(
+      summarizeHeartRate(t0, [
+        { t: t0 + 5000, bpm: 100 },
+        { t: t0 + 10000, bpm: 140 },
+        { t: t0 + 15000, bpm: 300 },
+      ]),
+    ).toMatchObject({
+      avg: 120,
+      max: 140,
+      min: 100,
+      samples: [
+        [5, 100],
+        [10, 140],
+      ],
+    });
   });
 });

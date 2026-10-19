@@ -24,7 +24,21 @@ const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 type Edit = (fn: (w: Workout) => void) => void;
 
 // Registro de un entrenamiento. mode="live": en curso (cronómetro, descansos). mode="edit": editar uno ya guardado.
-export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDiscard, onExercise }: { workout: Workout; edit: Edit; mode: 'live' | 'edit'; onFinish: () => void; onDiscard: () => void; onExercise?: (id: string) => void }) {
+export default function WorkoutLogger({
+  workout: w,
+  edit,
+  mode,
+  onFinish,
+  onDiscard,
+  onExercise,
+}: {
+  workout: Workout;
+  edit: Edit;
+  mode: 'live' | 'edit';
+  onFinish: () => void;
+  onDiscard: () => void;
+  onExercise?: (id: string) => void;
+}) {
   const { data, settings } = useStore();
   const now = useNow();
   const restState = useRest();
@@ -45,7 +59,12 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
     const out = new Map<string, { prev: WorkoutSet[]; best1RM: number; bestWeight: number; maxReps: number }>();
     for (const id of new Set(w.exercises.map((e) => e.exerciseId))) {
       const h = exerciseHistory(others, id);
-      out.set(id, { prev: lastSessionSets(data, id, w.startedAt, w.id), best1RM: Math.max(0, ...h.map((s) => s.best1RM)), bestWeight: Math.max(0, ...h.map((s) => s.bestWeight)), maxReps: Math.max(0, ...h.map((s) => s.maxReps)) });
+      out.set(id, {
+        prev: lastSessionSets(data, id, w.startedAt, w.id),
+        best1RM: Math.max(0, ...h.map((s) => s.best1RM)),
+        bestWeight: Math.max(0, ...h.map((s) => s.bestWeight)),
+        maxReps: Math.max(0, ...h.map((s) => s.maxReps)),
+      });
     }
     return out;
   }, [data, w.id, w.startedAt, w.exercises]);
@@ -59,8 +78,7 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
     if (mode === 'live' && r.restSec > 0) rest.start(r.restSec);
     // Lleva la vista a la siguiente serie pendiente.
     const nx = nextPendingSet(r.workout);
-    if (mode === 'live' && nx && !w.exercises[ei].sets[si].done)
-      setTimeout(() => document.getElementById(`set-${nx.ei}-${nx.si}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+    if (mode === 'live' && nx && !w.exercises[ei].sets[si].done) setTimeout(() => document.getElementById(`set-${nx.ei}-${nx.si}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
   };
   const cursor = mode === 'live' ? nextPendingSet(w) : null;
   const nextLabel = (() => {
@@ -92,7 +110,8 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
     });
   };
 
-  const replaceExercise = (ei: number, e: Exercise) => edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id, sets: n.exercises[ei].sets.map((s) => ({ type: s.type, done: false })) }));
+  const replaceExercise = (ei: number, e: Exercise) =>
+    edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id, sets: n.exercises[ei].sets.map((s) => ({ type: s.type, done: false })) }));
 
   const elapsed = Math.round((now - Date.parse(w.startedAt)) / 1000);
   const totals = w.exercises.reduce(
@@ -117,10 +136,18 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
           </button>
         </div>
         <div className="row live-stats small muted">
-          {mode === 'live' && <span className="icon-btn"><Timer size={14} /> {formatDuration(elapsed)}</span>}
+          {mode === 'live' && (
+            <span className="icon-btn">
+              <Timer size={14} /> {formatDuration(elapsed)}
+            </span>
+          )}
           {mode === 'live' && hr.live && <span className="hr-live">❤️ {hr.bpm}</span>}
-          <span className="icon-btn"><Weight size={14} /> {Math.round(totals.volume).toLocaleString('es-ES')} kg</span>
-          <span className="icon-btn"><ListChecks size={14} /> {totals.sets} series</span>
+          <span className="icon-btn">
+            <Weight size={14} /> {Math.round(totals.volume).toLocaleString('es-ES')} kg
+          </span>
+          <span className="icon-btn">
+            <ListChecks size={14} /> {totals.sets} series
+          </span>
           {mode === 'live' && (
             <button className="ghost small devices-btn" onClick={() => setDevices(true)} aria-label="Reloj y sensores">
               <Watch size={18} />
@@ -141,7 +168,8 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
         const ssPrev = ei > 0 && we.supersetId && w.exercises[ei - 1].supersetId === we.supersetId;
         const ssNext = we.supersetId && w.exercises[ei + 1]?.supersetId === we.supersetId;
         const kind = ex?.kind ?? 'weight_reps';
-        const [c1, c2] = kind === 'duration' ? ['kg', 'Tiempo'] : kind === 'distance' ? ['Metros', 'Tiempo'] : kind === 'reps' ? ['+kg', 'Reps'] : kind === 'assisted' ? ['-kg', 'Reps'] : ['kg', 'Reps'];
+        const [c1, c2] =
+          kind === 'duration' ? ['kg', 'Tiempo'] : kind === 'distance' ? ['Metros', 'Tiempo'] : kind === 'reps' ? ['+kg', 'Reps'] : kind === 'assisted' ? ['-kg', 'Reps'] : ['kg', 'Reps'];
         return (
           <div key={ei} className={`card excard ${we.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''} ${ssNext ? 'ss-next' : ''}`}>
             {we.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
@@ -157,11 +185,13 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
               </button>
             </div>
             {ex?.stickyNote && <p className="sticky-note small">📌 {ex.stickyNote}</p>}
-            {mode === 'live' && <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />}
+            {mode === 'live' && (
+              <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />
+            )}
             <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))} />
             {mode === 'live' && (
               <button className="ghost small rest-chip" onClick={() => setMenu(ei)}>
-                ⏲ Descanso: {we.restSec ?? settings.defaultRestSec ? clock(we.restSec ?? settings.defaultRestSec) : 'off'}
+                ⏲ Descanso: {(we.restSec ?? settings.defaultRestSec) ? clock(we.restSec ?? settings.defaultRestSec) : 'off'}
               </button>
             )}
             <div className={`sets ${settings.showRpe ? 'rpe' : ''}`}>
@@ -207,7 +237,14 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
               onClick={() =>
                 edit((n) => {
                   const last = n.exercises[ei].sets.at(-1);
-                  n.exercises[ei].sets.push({ type: last?.type === 'warmup' ? 'normal' : (last?.type ?? 'normal'), weight: last?.weight, reps: last?.reps, durationSec: last?.durationSec, distanceM: last?.distanceM, done: false });
+                  n.exercises[ei].sets.push({
+                    type: last?.type === 'warmup' ? 'normal' : (last?.type ?? 'normal'),
+                    weight: last?.weight,
+                    reps: last?.reps,
+                    durationSec: last?.durationSec,
+                    distanceM: last?.distanceM,
+                    done: false,
+                  });
                 })
               }
             >
@@ -267,11 +304,18 @@ function EditTimes({ w, edit }: { w: Workout; edit: Edit }) {
     <div className="row">
       <label className="grow">
         Fecha y hora
-        <input type="datetime-local" value={local(w.startedAt)} onChange={(e) => e.target.value && edit((n) => {
-          const start = new Date(e.target.value);
-          n.startedAt = start.toISOString();
-          n.endedAt = new Date(start.getTime() + dur * 60000).toISOString();
-        })} />
+        <input
+          type="datetime-local"
+          value={local(w.startedAt)}
+          onChange={(e) =>
+            e.target.value &&
+            edit((n) => {
+              const start = new Date(e.target.value);
+              n.startedAt = start.toISOString();
+              n.endedAt = new Date(start.getTime() + dur * 60000).toISOString();
+            })
+          }
+        />
       </label>
       <label>
         Duración (min)
@@ -401,14 +445,41 @@ export function PlateCalculator({ initial, onClose }: { initial: number; onClose
   );
 }
 
-function SetRow(props: { id: string; isNext: boolean; n: number; s: WorkoutSet; prev?: WorkoutSet; ex?: Exercise; pr: boolean; showRpe: boolean; running?: number; onStopwatch: () => void; onChange: (p: Partial<WorkoutSet>) => void; onToggle: () => void; onRemove: () => void; onPlates: () => void }) {
+function SetRow(props: {
+  id: string;
+  isNext: boolean;
+  n: number;
+  s: WorkoutSet;
+  prev?: WorkoutSet;
+  ex?: Exercise;
+  pr: boolean;
+  showRpe: boolean;
+  running?: number;
+  onStopwatch: () => void;
+  onChange: (p: Partial<WorkoutSet>) => void;
+  onToggle: () => void;
+  onRemove: () => void;
+  onPlates: () => void;
+}) {
   const { id, isNext, n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
   const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const kind = ex?.kind ?? 'weight_reps';
-  const prevTxt = prev ? (kind === 'duration' ? formatDuration(prev.durationSec ?? 0) : kind === 'distance' ? `${prev.distanceM ?? '-'}m` : `${prev.weight ? `${prev.weight}×` : ''}${prev.reps ?? 0}`) : '—';
+  const prevTxt = prev
+    ? kind === 'duration'
+      ? formatDuration(prev.durationSec ?? 0)
+      : kind === 'distance'
+        ? `${prev.distanceM ?? '-'}m`
+        : `${prev.weight ? `${prev.weight}×` : ''}${prev.reps ?? 0}`
+    : '—';
   const weightInput = (
-    <input inputMode="decimal" placeholder={prev?.weight?.toString() ?? ''} value={s.weight ?? ''} onChange={(e) => onChange({ weight: numVal(e.target.value) })} onDoubleClick={kind === 'weight_reps' ? onPlates : undefined} />
+    <input
+      inputMode="decimal"
+      placeholder={prev?.weight?.toString() ?? ''}
+      value={s.weight ?? ''}
+      onChange={(e) => onChange({ weight: numVal(e.target.value) })}
+      onDoubleClick={kind === 'weight_reps' ? onPlates : undefined}
+    />
   );
   return (
     <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`}>
@@ -419,10 +490,19 @@ function SetRow(props: { id: string; isNext: boolean; n: number; s: WorkoutSet; 
       <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
         {prevTxt}
       </span>
-      {kind === 'distance' ? <input inputMode="decimal" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM ?? ''} onChange={(e) => onChange({ distanceM: numVal(e.target.value) })} /> : weightInput}
+      {kind === 'distance' ? (
+        <input inputMode="decimal" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM ?? ''} onChange={(e) => onChange({ distanceM: numVal(e.target.value) })} />
+      ) : (
+        weightInput
+      )}
       {kind === 'duration' || kind === 'distance' ? (
         <div className="dur">
-          <input inputMode="numeric" placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'} value={running ?? s.durationSec ?? ''} onChange={(e) => onChange({ durationSec: numVal(e.target.value) })} />
+          <input
+            inputMode="numeric"
+            placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'}
+            value={running ?? s.durationSec ?? ''}
+            onChange={(e) => onChange({ durationSec: numVal(e.target.value) })}
+          />
           <button className={`plain sw ${running !== undefined ? 'on' : ''}`} onClick={onStopwatch} aria-label="Cronómetro">
             {running !== undefined ? '■' : '▶'}
           </button>
@@ -474,14 +554,20 @@ function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: E
   const sug = suggestNext(prev, ex, pending[0].reps);
   if (!sug) return null;
   const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${sug.weight} kg × ` : ''}${sug.reps ?? ''}${sug.weight || sug.reps ? '' : ''}`;
-  const applied = pending.every((s) => (sug.weight === undefined || s.weight === sug.weight) && (sug.reps === undefined || s.reps === sug.reps) && (sug.durationSec === undefined || s.durationSec === sug.durationSec));
+  const applied = pending.every(
+    (s) => (sug.weight === undefined || s.weight === sug.weight) && (sug.reps === undefined || s.reps === sug.reps) && (sug.durationSec === undefined || s.durationSec === sug.durationSec),
+  );
   return (
     <div className={`suggestion ${sug.action}`}>
       <button className="plain grow left" onClick={() => setOpen(!open)}>
         {sug.action === 'up' ? '📈' : '💡'} Hoy: <b>{label}</b>
         {open && <div className="small muted">{sug.reason}</div>}
       </button>
-      <button className="ghost small" disabled={applied} onClick={() => (onApply({ weight: sug.weight, reps: sug.reps, durationSec: sug.durationSec }), toast.show('Sugerencia aplicada a las series pendientes'))}>
+      <button
+        className="ghost small"
+        disabled={applied}
+        onClick={() => (onApply({ weight: sug.weight, reps: sug.reps, durationSec: sug.durationSec }), toast.show('Sugerencia aplicada a las series pendientes'))}
+      >
         {applied ? '✓' : 'Aplicar'}
       </button>
     </div>

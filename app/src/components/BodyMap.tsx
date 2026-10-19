@@ -5,7 +5,8 @@ import type { MuscleGroup } from '../../../shared/types';
 type Shape = { m: MuscleGroup | null; d: string };
 
 const e = (cx: number, cy: number, rx: number, ry: number) => `M${cx - rx},${cy}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 ${-rx * 2},0`;
-const r = (x: number, y: number, w: number, h: number, rad = 3) => `M${x + rad},${y}h${w - 2 * rad}a${rad},${rad} 0 0 1 ${rad},${rad}v${h - 2 * rad}a${rad},${rad} 0 0 1 ${-rad},${rad}h${-(w - 2 * rad)}a${rad},${rad} 0 0 1 ${-rad},${-rad}v${-(h - 2 * rad)}a${rad},${rad} 0 0 1 ${rad},${-rad}z`;
+const r = (x: number, y: number, w: number, h: number, rad = 3) =>
+  `M${x + rad},${y}h${w - 2 * rad}a${rad},${rad} 0 0 1 ${rad},${rad}v${h - 2 * rad}a${rad},${rad} 0 0 1 ${-rad},${rad}h${-(w - 2 * rad)}a${rad},${rad} 0 0 1 ${-rad},${-rad}v${-(h - 2 * rad)}a${rad},${rad} 0 0 1 ${rad},${-rad}z`;
 const pair = (m: MuscleGroup, cx: number, dx: number, cy: number, rx: number, ry: number): Shape[] => [
   { m, d: e(cx - dx, cy, rx, ry) },
   { m, d: e(cx + dx, cy, rx, ry) },
@@ -69,11 +70,7 @@ export default function BodyMap({ sets }: { sets: Partial<Record<MuscleGroup, nu
           Trasera
         </text>
       </svg>
-      {top.length > 0 && (
-        <p className="muted small center-text">
-          Más trabajado: {top.map(([m, v]) => `${MUSCLE_LABELS[m]} (${Math.round(v)})`).join(' · ')}
-        </p>
-      )}
+      {top.length > 0 && <p className="muted small center-text">Más trabajado: {top.map(([m, v]) => `${MUSCLE_LABELS[m]} (${Math.round(v)})`).join(' · ')}</p>}
     </div>
   );
 }

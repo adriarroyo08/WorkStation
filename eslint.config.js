@@ -4,7 +4,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'android/**', 'video/out/**', '**/*.config.*'] },
+  { ignores: ['supabase/functions/**', '**/dist/**', '**/node_modules/**', 'android/**', 'video/out/**', '**/*.config.*'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

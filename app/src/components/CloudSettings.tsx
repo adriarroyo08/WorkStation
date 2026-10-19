@@ -59,7 +59,9 @@ export default function CloudSettings() {
           <button className="primary" disabled={busy || !url || !key} onClick={() => run(() => cloud.configure({ url, anonKey: key }))}>
             Conectar con Supabase
           </button>
-          <p className="small muted">En Supabase: Project Settings → API. Antes, ejecuta una vez el SQL de <code>supabase/migrations/001_records.sql</code> en el SQL Editor.</p>
+          <p className="small muted">
+            En Supabase: Project Settings → API. Antes, ejecuta una vez el SQL de <code>supabase/migrations/001_records.sql</code> en el SQL Editor.
+          </p>
         </>
       )}
 

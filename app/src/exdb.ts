@@ -43,7 +43,7 @@ const urls = new Map<string, string>();
 const pending = new Map<string, Promise<string>>();
 const queue: (() => void)[] = [];
 let running = 0;
-const runQueued = <T,>(job: () => Promise<T>) =>
+const runQueued = <T>(job: () => Promise<T>) =>
   new Promise<T>((resolve, reject) => {
     const start = () => {
       running++;
@@ -80,12 +80,13 @@ export function gifUrl(id: string, cachedOnly = false): Promise<string> {
   if (hit) return Promise.resolve(hit);
   const inflight = pending.get(key);
   if (inflight) return inflight;
-  if (cachedOnly) return readCached(key).then((b) => {
-    if (!b) throw new Error('No está en caché');
-    const url = URL.createObjectURL(b);
-    urls.set(key, url);
-    return url;
-  });
+  if (cachedOnly)
+    return readCached(key).then((b) => {
+      if (!b) throw new Error('No está en caché');
+      const url = URL.createObjectURL(b);
+      urls.set(key, url);
+      return url;
+    });
   const p = (async () => {
     let blob = await readCached(key);
     if (!blob) {

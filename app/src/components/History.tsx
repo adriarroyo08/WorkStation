@@ -29,7 +29,10 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
 
   let list = [...data.workouts].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   if (q) list = list.filter((w) => w.name.toLowerCase().includes(q.toLowerCase()) || w.exercises.some((e) => ex.get(e.exerciseId)?.name.toLowerCase().includes(q.toLowerCase())));
-  if (mode === 'calendar') list = list.filter((w) => (day ? new Date(w.startedAt).toDateString() === day : new Date(w.startedAt).getMonth() === month.getMonth() && new Date(w.startedAt).getFullYear() === month.getFullYear()));
+  if (mode === 'calendar')
+    list = list.filter((w) =>
+      day ? new Date(w.startedAt).toDateString() === day : new Date(w.startedAt).getMonth() === month.getMonth() && new Date(w.startedAt).getFullYear() === month.getFullYear(),
+    );
 
   // Agrupar por mes como en Hevy (solo los primeros `limit`, para listas largas).
   const total = list.length;
@@ -87,9 +90,15 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                 {prCount.get(w.id) ? <span className="pr-pill">🏆 {prCount.get(w.id)}</span> : null}
               </div>
               <div className="row small muted wstats">
-                <span className="icon-btn"><Timer size={14} /> {workoutDurationMin(w)} min</span>
-                <span className="icon-btn"><Weight size={14} /> {fmtNum(workoutVolume(w))} kg</span>
-                <span className="icon-btn"><ListChecks size={14} /> {workoutSetCount(w)} series</span>
+                <span className="icon-btn">
+                  <Timer size={14} /> {workoutDurationMin(w)} min
+                </span>
+                <span className="icon-btn">
+                  <Weight size={14} /> {fmtNum(workoutVolume(w))} kg
+                </span>
+                <span className="icon-btn">
+                  <ListChecks size={14} /> {workoutSetCount(w)} series
+                </span>
                 {w.heartRate && <span>❤️ {w.heartRate.avg}</span>}
               </div>
               <div className="small exsum">

@@ -8,8 +8,8 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 | Carpeta | Qué es |
 | --- | --- |
 | `app/` | PWA (React + Vite). Funciona offline, se instala en el móvil ("Añadir a pantalla de inicio"). Datos en el navegador (IndexedDB). |
-| `mcp/` | Servidor MCP (stdio) para que Claude Desktop, Cursor, LM Studio, etc. lean y editen tus entrenamientos. |
-| `supabase/` | Esquema SQL (tabla `records` con RLS y tiempo real) para la sincronización opcional. |
+| `mcp/` | Servidor MCP local (stdio) y fuente de la función MCP remota (`src/edge.ts`). |
+| `supabase/` | Esquema SQL (sincronización y API keys) y la Edge Function `mcp` (servidor MCP remoto, generado con `npm --prefix mcp run build:edge`). |
 | `shared/` | Modelo de datos, estadísticas (1RM de Epley, récords, volumen), lógica del entreno en curso, protocolo del reloj, importadores de Hevy y cliente IA. |
 | `android/phone` | App Android: la misma web empaquetada en un WebView, más puente nativo (reloj, alarma de descanso, notificación en curso, guardar/compartir archivos). |
 | `android/wear` | App Wear OS (Compose for Wear OS): serie actual, completar series, descanso con vibración, pulso del reloj y empezar/terminar desde la muñeca. |
@@ -172,30 +172,42 @@ En la app: **Ajustes → Inteligencia artificial**. Proveedores con nivel gratui
 
 Los límites y nombres de modelos gratuitos cambian; si uno falla, cambia el modelo en Ajustes. La key se guarda solo en tu dispositivo y las llamadas van directas del navegador al proveedor.
 
-## MCP
+## 🔌 Conectar una IA a tus datos (MCP + API key)
 
-```bash
-cd mcp && npm install && npm run build
-```
+La app genera **API keys personales** (`ws_…`) para que una IA (Claude, Cursor, ChatGPT con MCP…) lea, y si quieres escriba, tus entrenamientos. Requiere la cuenta de Supabase de la sección anterior.
 
-Añade a la config de tu cliente MCP (en Claude Desktop: *Ajustes → Desarrollador → Editar config*), ver `mcp/claude_desktop_config.example.json`:
+**1. Prepara Supabase (una vez)**
+- En el SQL Editor, ejecuta `supabase/migrations/002_api_keys.sql`. Crea la tabla `api_keys` (solo guarda hashes) y las funciones seguras `api_records` / `api_upsert`.
+- Para el MCP remoto, despliega la función `supabase/functions/mcp`. Tienes dos formas:
+  - Con la CLI: `npx supabase login && npx supabase functions deploy mcp --project-ref TU_REF --no-verify-jwt`
+  - Automática: añade los secrets `SUPABASE_ACCESS_TOKEN` y `SUPABASE_PROJECT_REF` al repo, y el workflow `supabase.yml` la desplegará en cada cambio.
 
-```json
-{
-  "mcpServers": {
-    "workstation": {
-      "command": "node",
-      "args": ["/RUTA/A/workstation/mcp/dist/index.js"],
-      "env": { "WORKSTATION_DATA": "/RUTA/A/data.json", "HEVY_API_KEY": "opcional" }
+**2. Genera la key en la app**
+*Perfil → Ajustes → 🔌 Acceso para IA (MCP) → Generar API key*. Elige "solo lectura" o "lectura y escritura". La key se muestra una vez, junto con la configuración lista para copiar. Puedes revocarla cuando quieras y ver cuándo se usó por última vez.
+
+**3. Conecta tu IA**
+- **MCP remoto** (HTTP): `https://TU_PROYECTO.supabase.co/functions/v1/mcp` con la cabecera `Authorization: Bearer ws_…`.
+  - Claude Code: `claude mcp add --transport http workstation https://TU_PROYECTO.supabase.co/functions/v1/mcp --header "Authorization: Bearer ws_…"`
+  - Clientes que solo aceptan una URL (p. ej. conectores personalizados): `…/functions/v1/mcp?key=ws_…`. La key queda en la URL, así que trátala como una contraseña.
+- **MCP local** (Claude Desktop, Cursor, LM Studio): `cd mcp && npm install && npm run build` y, en la configuración del cliente:
+  ```json
+  {
+    "mcpServers": {
+      "workstation": {
+        "command": "node",
+        "args": ["/RUTA/A/WorkStation/mcp/dist/index.js"],
+        "env": {
+          "WORKSTATION_API_KEY": "ws_…",
+          "WORKSTATION_SUPABASE_URL": "https://TU_PROYECTO.supabase.co",
+          "WORKSTATION_SUPABASE_ANON_KEY": "eyJ…"
+        }
+      }
     }
   }
-}
-```
+  ```
+  Sin cuenta en la nube, el servidor local también funciona con un fichero: `WORKSTATION_DATA=/ruta/backup.json`, el backup exportado desde la app.
 
-Herramientas: `training_summary`, `period_report` (informe semanal/mensual/anual), `list_workouts`, `get_workout`, `exercise_history`, `personal_records`, `list_exercises`, `list_routines`, `create_routine` (con superseries), `list_programs`, `add_program`, `log_workout`, `log_measurement`, `achievements`, `suggest_next`, `import_from_hevy`.
-
-**Sincronización app ↔ MCP:** el servidor trabaja sobre un fichero JSON con el mismo formato que el backup de la app.
-Exporta el backup desde la app → guárdalo en la ruta de `WORKSTATION_DATA` → pide a la IA lo que quieras (p. ej. "créame una rutina de pierna") → importa ese fichero de nuevo en la app (se fusiona sin duplicar).
+Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
 
 ## Importar desde Hevy
 

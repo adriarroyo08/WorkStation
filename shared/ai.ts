@@ -11,9 +11,23 @@ export interface AiProvider {
 }
 
 export const AI_PROVIDERS: AiProvider[] = [
-  { id: 'gemini', label: 'Google Gemini (gratis con límites)', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', defaultModel: 'gemini-2.5-flash', keyUrl: 'https://aistudio.google.com/apikey', needsKey: true },
+  {
+    id: 'gemini',
+    label: 'Google Gemini (gratis con límites)',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    defaultModel: 'gemini-2.5-flash',
+    keyUrl: 'https://aistudio.google.com/apikey',
+    needsKey: true,
+  },
   { id: 'groq', label: 'Groq (gratis con límites)', baseUrl: 'https://api.groq.com/openai/v1', defaultModel: 'llama-3.3-70b-versatile', keyUrl: 'https://console.groq.com/keys', needsKey: true },
-  { id: 'openrouter', label: 'OpenRouter (modelos :free)', baseUrl: 'https://openrouter.ai/api/v1', defaultModel: 'meta-llama/llama-3.3-70b-instruct:free', keyUrl: 'https://openrouter.ai/keys', needsKey: true },
+  {
+    id: 'openrouter',
+    label: 'OpenRouter (modelos :free)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    keyUrl: 'https://openrouter.ai/keys',
+    needsKey: true,
+  },
   { id: 'ollama', label: 'Ollama (local, 100% gratis)', baseUrl: 'http://localhost:11434/v1', defaultModel: 'llama3.2', needsKey: false },
   { id: 'custom', label: 'Otro (compatible OpenAI)', baseUrl: '', defaultModel: '', needsKey: false },
 ];

@@ -88,7 +88,15 @@ export function Stat({ value, label, extra }: { value: ReactNode; label: string;
   );
 }
 
-export function BarChart({ bars, highlightLast = true, format = (v: number) => String(Math.round(v)) }: { bars: { label: string; value: number }[]; highlightLast?: boolean; format?: (v: number) => string }) {
+export function BarChart({
+  bars,
+  highlightLast = true,
+  format = (v: number) => String(Math.round(v)),
+}: {
+  bars: { label: string; value: number }[];
+  highlightLast?: boolean;
+  format?: (v: number) => string;
+}) {
   const max = Math.max(1, ...bars.map((b) => b.value));
   return (
     <div className="bars" role="img" aria-label="Gráfico de barras">
@@ -171,9 +179,7 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
       {[...groups.entries()].map(([name, items]) => (
         <li key={name}>
           <b>{name}</b>
-          <div className="muted">
-            {items.map((p) => `${PR_LABELS[p.kind]} ${p.value.toLocaleString('es-ES')} (antes ${p.previous.toLocaleString('es-ES')})`).join(' · ')}
-          </div>
+          <div className="muted">{items.map((p) => `${PR_LABELS[p.kind]} ${p.value.toLocaleString('es-ES')} (antes ${p.previous.toLocaleString('es-ES')})`).join(' · ')}</div>
         </li>
       ))}
     </ul>
@@ -194,7 +200,18 @@ export function ProgressRing({ value, max, size = 92, label, sub }: { value: num
         </linearGradient>
       </defs>
       <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} />
-      <circle className="ring-val" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      <circle
+        className="ring-val"
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        strokeWidth={9}
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - pct)}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
       <text x="50%" y={sub ? '47%' : '53%'} textAnchor="middle" dominantBaseline="middle">
         {label}
       </text>

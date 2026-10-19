@@ -54,15 +54,24 @@ export function ExerciseRow({ e, right, onClick, selected }: { e: Exercise; righ
 }
 
 // Selector: un toque añade; con "Selección múltiple" puedes añadir varios o como superserie.
-export default function ExercisePicker({ onPick, onClose, title = 'Añadir ejercicio', single = false }: { onPick: (es: Exercise[], superset: boolean) => void; onClose: () => void; title?: string; single?: boolean }) {
+export default function ExercisePicker({
+  onPick,
+  onClose,
+  title = 'Añadir ejercicio',
+  single = false,
+}: {
+  onPick: (es: Exercise[], superset: boolean) => void;
+  onClose: () => void;
+  title?: string;
+  single?: boolean;
+}) {
   const { data } = useStore();
   const [sel, setSel] = useState<string[]>([]);
   const [multi, setMulti] = useState(false);
   const [creating, setCreating] = useState(false);
   const recent = useMemo(() => {
     const seen: string[] = [];
-    for (const w of [...data.workouts].sort((a, b) => b.startedAt.localeCompare(a.startedAt)))
-      for (const e of w.exercises) if (!seen.includes(e.exerciseId)) seen.push(e.exerciseId);
+    for (const w of [...data.workouts].sort((a, b) => b.startedAt.localeCompare(a.startedAt))) for (const e of w.exercises) if (!seen.includes(e.exerciseId)) seen.push(e.exerciseId);
     return seen;
   }, [data.workouts]);
   const sorted = useMemo(() => {
@@ -75,7 +84,12 @@ export default function ExercisePicker({ onPick, onClose, title = 'Añadir ejerc
   const { q, list, filters } = useExerciseFilter(sorted);
   const byId = new Map(data.exercises.map((e) => [e.id, e]));
 
-  if (creating) return <Sheet title="Nuevo ejercicio" onClose={() => setCreating(false)}><ExerciseEditor initialName={q} onSaved={(e) => onPick([e], false)} /></Sheet>;
+  if (creating)
+    return (
+      <Sheet title="Nuevo ejercicio" onClose={() => setCreating(false)}>
+        <ExerciseEditor initialName={q} onSaved={(e) => onPick([e], false)} />
+      </Sheet>
+    );
 
   return (
     <Sheet title={title} onClose={onClose}>
@@ -105,11 +119,27 @@ export default function ExercisePicker({ onPick, onClose, title = 'Añadir ejerc
       </div>
       {multi && sel.length > 0 && (
         <div className="row picker-actions">
-          <button className="primary grow" onClick={() => onPick(sel.map((id) => byId.get(id)!), false)}>
+          <button
+            className="primary grow"
+            onClick={() =>
+              onPick(
+                sel.map((id) => byId.get(id)!),
+                false,
+              )
+            }
+          >
             Añadir {sel.length}
           </button>
           {sel.length > 1 && (
-            <button className="primary grow" onClick={() => onPick(sel.map((id) => byId.get(id)!), true)}>
+            <button
+              className="primary grow"
+              onClick={() =>
+                onPick(
+                  sel.map((id) => byId.get(id)!),
+                  true,
+                )
+              }
+            >
               Como superserie
             </button>
           )}

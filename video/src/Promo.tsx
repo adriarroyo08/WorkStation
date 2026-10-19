@@ -73,7 +73,16 @@ function ThemeScene() {
       <Background hue={interpolate(p, [0, 1], [0, 30])} />
       <AbsoluteFill style={land ? { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 120, padding: '0 120px' } : { alignItems: 'center', paddingTop: 170 }}>
         <div style={{ flex: land ? 1 : undefined }}>
-          <Headline kicker="Modo claro y oscuro" title={<>Bonita <Grad>de día y de noche</Grad></>} sub="Se adapta a tu sistema o elige tú. Con transiciones suaves en toda la app." align={land ? 'left' : 'center'} />
+          <Headline
+            kicker="Modo claro y oscuro"
+            title={
+              <>
+                Bonita <Grad>de día y de noche</Grad>
+              </>
+            }
+            sub="Se adapta a tu sistema o elige tú. Con transiciones suaves en toda la app."
+            align={land ? 'left' : 'center'}
+          />
         </div>
         <div style={{ marginTop: land ? 0 : 70 }}>
           <Phone src="shots/dark-home.png" width={w} delay={4}>
@@ -101,10 +110,35 @@ function Watch() {
       {/* correa */}
       <div style={{ position: 'absolute', left: 105, right: 105, top: 0, bottom: 0, borderRadius: 60, background: 'linear-gradient(180deg,#1b1f27,#2b303b,#1b1f27)' }} />
       {/* caja */}
-      <div style={{ position: 'absolute', left: 30, top: 150, width: size, height: size, borderRadius: '50%', background: '#000', boxShadow: `0 0 0 14px #2a2f3a, 0 0 0 16px #444, 0 40px 100px -20px rgba(0,0,0,.9), 0 0 100px -30px ${C.accent}`, display: 'grid', placeItems: 'center', fontFamily: FONT }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: 30,
+          top: 150,
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: '#000',
+          boxShadow: `0 0 0 14px #2a2f3a, 0 0 0 16px #444, 0 40px 100px -20px rgba(0,0,0,.9), 0 0 100px -30px ${C.accent}`,
+          display: 'grid',
+          placeItems: 'center',
+          fontFamily: FONT,
+        }}
+      >
         <svg width={size} height={size} style={{ position: 'absolute', inset: 0 }}>
           <circle cx={size / 2} cy={size / 2} r={r} stroke="#1d222c" strokeWidth={14} fill="none" />
-          <circle cx={size / 2} cy={size / 2} r={r} stroke={C.accent} strokeWidth={14} fill="none" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            stroke={C.accent}
+            strokeWidth={14}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - pct)}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
         </svg>
         <div style={{ textAlign: 'center', color: '#fff' }}>
           <div style={{ fontSize: 26, color: '#aab' }}>Descanso</div>
@@ -126,7 +160,16 @@ function WatchScene() {
       <Background hue={-20} />
       <AbsoluteFill style={land ? { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 140, padding: '0 140px' } : { alignItems: 'center', paddingTop: 170, gap: 60 }}>
         <div style={{ flex: land ? 1 : undefined }}>
-          <Headline kicker="Wear OS" title={<>Tu reloj, <Grad>tu mando</Grad></>} sub="Completa series, controla el descanso y registra tu pulso sin tocar el móvil." align={land ? 'left' : 'center'} />
+          <Headline
+            kicker="Wear OS"
+            title={
+              <>
+                Tu reloj, <Grad>tu mando</Grad>
+              </>
+            }
+            sub="Completa series, controla el descanso y registra tu pulso sin tocar el móvil."
+            align={land ? 'left' : 'center'}
+          />
         </div>
         <Watch />
       </AbsoluteFill>
@@ -145,18 +188,51 @@ function Outro() {
       <Background />
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', gap: 44, fontFamily: FONT, padding: 80 }}>
         <Logo size={land ? 170 : 200} />
-        <Headline title={<>Entrena con <Grad>Workstation</Grad></>} delay={8} />
+        <Headline
+          title={
+            <>
+              Entrena con <Grad>Workstation</Grad>
+            </>
+          }
+          delay={8}
+        />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'center', maxWidth: 950 }}>
           {pills.map((p, i) => {
             const s = spring({ frame: f - 22 - i * 5, fps, config: { damping: 14 } });
             return (
-              <div key={p} style={{ transform: `scale(${s})`, padding: '16px 30px', borderRadius: 99, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: C.text, fontSize: land ? 30 : 36, fontWeight: 650 }}>
+              <div
+                key={p}
+                style={{
+                  transform: `scale(${s})`,
+                  padding: '16px 30px',
+                  borderRadius: 99,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: C.text,
+                  fontSize: land ? 30 : 36,
+                  fontWeight: 650,
+                }}
+              >
                 {p}
               </div>
             );
           })}
         </div>
-        <div style={{ marginTop: 20, transform: `scale(${cta})`, padding: '26px 54px', borderRadius: 30, background: GRAD, color: '#fff', fontSize: land ? 36 : 42, fontWeight: 800, boxShadow: `0 30px 80px -20px ${C.accent}` }}>github.com/adriarroyo08/WorkStation</div>
+        <div
+          style={{
+            marginTop: 20,
+            transform: `scale(${cta})`,
+            padding: '26px 54px',
+            borderRadius: 30,
+            background: GRAD,
+            color: '#fff',
+            fontSize: land ? 36 : 42,
+            fontWeight: 800,
+            boxShadow: `0 30px 80px -20px ${C.accent}`,
+          }}
+        >
+          github.com/adriarroyo08/WorkStation
+        </div>
       </AbsoluteFill>
     </AbsoluteFill>
   );
@@ -165,13 +241,82 @@ function Outro() {
 export function Promo() {
   ensureFont();
   const features = [
-    { kicker: 'Entrena', title: <>Cada serie, <Grad>al instante</Grad></>, sub: 'Peso, reps, RPE y la marca de tu última sesión siempre a la vista.', shot: 'shots/dark-active.png', badge: <Floating>🏆 ¡Nuevo récord!</Floating> },
-    { kicker: 'Progresa', title: <>Sabe qué <Grad>levantar hoy</Grad></>, sub: 'Sugerencias de sobrecarga progresiva y calculadora de discos.', shot: 'shots/dark-plates.png', badge: <Floating>📈 Hoy: 90 kg × 8</Floating>, tilt: 8 },
-    { kicker: 'Analiza', title: <>Tu progreso, <Grad>en gráficas</Grad></>, sub: '1RM estimado, mejores series y récords por repeticiones de cada ejercicio.', shot: 'shots/dark-exercise-detail.png' },
-    { kicker: 'Resume', title: <>Cada entreno <Grad>cuenta</Grad></>, sub: 'Resumen con récords, mapa corporal e imagen para compartir.', shot: 'shots/dark-summary.png', tilt: 8 },
-    { kicker: 'Informes', title: <>Semanal, mensual <Grad>y anual</Grad></>, sub: 'Compara periodos, vigila tu volumen por músculo y deja que la IA te lo analice.', shot: 'shots/dark-report.png' },
-    { kicker: 'Motívate', title: <>Rachas y <Grad>logros</Grad></>, sub: '21 logros que desbloquear, racha semanal y mapa de actividad del año.', shot: 'shots/dark-achievements.png', badge: <Floating>🔥 6 semanas seguidas</Floating>, tilt: 8 },
-    { kicker: 'Coach IA', title: <>Un entrenador <Grad>gratis</Grad></>, sub: 'Conecta Gemini, Groq, OpenRouter u Ollama y pídele rutinas a tu medida.', shot: 'shots/dark-coach.png' },
+    {
+      kicker: 'Entrena',
+      title: (
+        <>
+          Cada serie, <Grad>al instante</Grad>
+        </>
+      ),
+      sub: 'Peso, reps, RPE y la marca de tu última sesión siempre a la vista.',
+      shot: 'shots/dark-active.png',
+      badge: <Floating>🏆 ¡Nuevo récord!</Floating>,
+    },
+    {
+      kicker: 'Progresa',
+      title: (
+        <>
+          Sabe qué <Grad>levantar hoy</Grad>
+        </>
+      ),
+      sub: 'Sugerencias de sobrecarga progresiva y calculadora de discos.',
+      shot: 'shots/dark-plates.png',
+      badge: <Floating>📈 Hoy: 90 kg × 8</Floating>,
+      tilt: 8,
+    },
+    {
+      kicker: 'Analiza',
+      title: (
+        <>
+          Tu progreso, <Grad>en gráficas</Grad>
+        </>
+      ),
+      sub: '1RM estimado, mejores series y récords por repeticiones de cada ejercicio.',
+      shot: 'shots/dark-exercise-detail.png',
+    },
+    {
+      kicker: 'Resume',
+      title: (
+        <>
+          Cada entreno <Grad>cuenta</Grad>
+        </>
+      ),
+      sub: 'Resumen con récords, mapa corporal e imagen para compartir.',
+      shot: 'shots/dark-summary.png',
+      tilt: 8,
+    },
+    {
+      kicker: 'Informes',
+      title: (
+        <>
+          Semanal, mensual <Grad>y anual</Grad>
+        </>
+      ),
+      sub: 'Compara periodos, vigila tu volumen por músculo y deja que la IA te lo analice.',
+      shot: 'shots/dark-report.png',
+    },
+    {
+      kicker: 'Motívate',
+      title: (
+        <>
+          Rachas y <Grad>logros</Grad>
+        </>
+      ),
+      sub: '21 logros que desbloquear, racha semanal y mapa de actividad del año.',
+      shot: 'shots/dark-achievements.png',
+      badge: <Floating>🔥 6 semanas seguidas</Floating>,
+      tilt: 8,
+    },
+    {
+      kicker: 'Coach IA',
+      title: (
+        <>
+          Un entrenador <Grad>gratis</Grad>
+        </>
+      ),
+      sub: 'Conecta Gemini, Groq, OpenRouter u Ollama y pídele rutinas a tu medida.',
+      shot: 'shots/dark-coach.png',
+    },
   ];
   // Las presentaciones tienen props distintas; se tratan como genéricas para alternarlas.
   const transitions = [slide({ direction: 'from-right' }), slide({ direction: 'from-bottom' }), fade(), wipe({ direction: 'from-left' })] as TransitionPresentation<Record<string, unknown>>[];

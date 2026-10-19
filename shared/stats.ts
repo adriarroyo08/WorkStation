@@ -164,7 +164,14 @@ export function repRecords(data: WorkstationData, exerciseId: string, maxReps = 
 }
 
 export type PrKind = 'weight' | '1rm' | 'setVolume' | 'reps' | 'duration' | 'distance';
-export const PR_LABELS: Record<PrKind, string> = { weight: 'Peso máximo', '1rm': '1RM estimado', setVolume: 'Mejor serie (volumen)', reps: 'Más repeticiones', duration: 'Más tiempo', distance: 'Más distancia' };
+export const PR_LABELS: Record<PrKind, string> = {
+  weight: 'Peso máximo',
+  '1rm': '1RM estimado',
+  setVolume: 'Mejor serie (volumen)',
+  reps: 'Más repeticiones',
+  duration: 'Más tiempo',
+  distance: 'Más distancia',
+};
 
 export interface PrEvent {
   workoutId: string;
@@ -262,7 +269,11 @@ export function trainingSummary(data: WorkstationData, lastN = 10): string {
   const lastBw = [...data.measurements].sort((a, b) => b.date.localeCompare(a.date)).find((m) => m.bodyweight);
   if (lastBw) lines.push(`Peso corporal más reciente: ${lastBw.bodyweight} kg (${lastBw.date.slice(0, 10)}).`);
   const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString();
-  const ms = muscleSets(data, data.workouts.filter((w) => w.startedAt >= monthAgo), false);
+  const ms = muscleSets(
+    data,
+    data.workouts.filter((w) => w.startedAt >= monthAgo),
+    false,
+  );
   const msTxt = Object.entries(ms)
     .sort((a, b) => b[1] - a[1])
     .map(([m, n]) => `${MUSCLE_LABELS[m as MuscleGroup]} ${n}`)
@@ -273,11 +284,16 @@ export function trainingSummary(data: WorkstationData, lastN = 10): string {
     lines.push(`- ${w.startedAt.slice(0, 10)} "${w.name}" (${workoutDurationMin(w)} min, volumen ${workoutVolume(w)} kg)`);
     for (const ex of w.exercises) {
       const e = names.get(ex.exerciseId);
-      const sets = ex.sets.filter((s) => s.done).map((s) => formatSet(s, e)).join(', ');
+      const sets = ex.sets
+        .filter((s) => s.done)
+        .map((s) => formatSet(s, e))
+        .join(', ');
       lines.push(`    ${e?.name ?? ex.exerciseId}: ${sets}`);
     }
   }
-  const prs = personalRecords(data).filter((p) => p.best1RM > 0).slice(0, 30);
+  const prs = personalRecords(data)
+    .filter((p) => p.best1RM > 0)
+    .slice(0, 30);
   if (prs.length) {
     lines.push('', 'Récords (1RM estimado / peso máximo):');
     for (const p of prs) lines.push(`- ${p.exerciseName}: ${p.best1RM} kg e1RM, ${p.bestWeight} kg máx.`);

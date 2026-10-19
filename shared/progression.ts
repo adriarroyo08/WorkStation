@@ -37,7 +37,12 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
     const best = Math.max(...work.map((s) => s.reps ?? 0));
     if (!best) return null;
     const allMax = work.every((s) => (s.reps ?? 0) >= best);
-    return { reps: best + 1, weight: work.find((s) => (s.reps ?? 0) === best)?.weight, action: 'reps', reason: allMax ? 'Todas las series al máximo: suma una repetición.' : `Mejor serie: ${best} reps. Busca ${best + 1}.` };
+    return {
+      reps: best + 1,
+      weight: work.find((s) => (s.reps ?? 0) === best)?.weight,
+      action: 'reps',
+      reason: allMax ? 'Todas las series al máximo: suma una repetición.' : `Mejor serie: ${best} reps. Busca ${best + 1}.`,
+    };
   }
   if (kind === 'distance') return null;
 
@@ -51,7 +56,8 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
   const step = weightStep(ex);
   // Siguiente peso cargable: múltiplo del incremento por encima del actual (47 → 50, 80 → 82,5).
   const next = Math.ceil((top + step / 2) / step) * step;
-  if (hitAll && !hard) return { weight: Math.round(next * 100) / 100, reps: goal, action: 'up', reason: `Completaste ${atTop.length}×${goal} con ${top} kg: sube a ${Math.round(next * 100) / 100} kg.` };
+  if (hitAll && !hard)
+    return { weight: Math.round(next * 100) / 100, reps: goal, action: 'up', reason: `Completaste ${atTop.length}×${goal} con ${top} kg: sube a ${Math.round(next * 100) / 100} kg.` };
   if (hitAll && hard) return { weight: top, reps: goal + 1, action: 'reps', reason: `Muy exigente (RPE alto): mantén ${top} kg y busca una rep más.` };
   return { weight: top, reps: goal, action: 'repeat', reason: `Te faltaron reps con ${top} kg: repite el peso hasta completar ${goal}.` };
 }

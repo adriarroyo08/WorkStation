@@ -4,6 +4,7 @@ import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { importHevyCsv } from '../../../shared/hevy';
 import { clock, downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
+import ApiKeys from './ApiKeys';
 import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
 import { Back, Toggle } from './ui';
@@ -36,11 +37,47 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const exportCsv = () => {
     const ex = new Map(data.exercises.map((e) => [e.id, e.name]));
     const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = [['title', 'start_time', 'end_time', 'description', 'exercise_title', 'superset_id', 'exercise_notes', 'set_index', 'set_type', 'weight_kg', 'reps', 'distance_km', 'duration_seconds', 'rpe'].join(',')];
+    const rows = [
+      [
+        'title',
+        'start_time',
+        'end_time',
+        'description',
+        'exercise_title',
+        'superset_id',
+        'exercise_notes',
+        'set_index',
+        'set_type',
+        'weight_kg',
+        'reps',
+        'distance_km',
+        'duration_seconds',
+        'rpe',
+      ].join(','),
+    ];
     for (const w of [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)))
       for (const e of w.exercises)
         e.sets.forEach((s, i) =>
-          rows.push([w.name, w.startedAt, w.endedAt, w.notes, ex.get(e.exerciseId) ?? e.exerciseId, e.supersetId, e.notes, i, s.type === 'drop' ? 'dropset' : s.type, s.weight, s.reps, s.distanceM !== undefined ? s.distanceM / 1000 : '', s.durationSec, s.rpe].map(q).join(',')),
+          rows.push(
+            [
+              w.name,
+              w.startedAt,
+              w.endedAt,
+              w.notes,
+              ex.get(e.exerciseId) ?? e.exerciseId,
+              e.supersetId,
+              e.notes,
+              i,
+              s.type === 'drop' ? 'dropset' : s.type,
+              s.weight,
+              s.reps,
+              s.distanceM !== undefined ? s.distanceM / 1000 : '',
+              s.durationSec,
+              s.rpe,
+            ]
+              .map(q)
+              .join(','),
+          ),
         );
     downloadFile(`workstation-${new Date().toISOString().slice(0, 10)}.csv`, rows.join('\n'), 'text/csv');
   };
@@ -52,6 +89,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
 
       <h2>☁️ Cuenta y sincronización</h2>
       <CloudSettings />
+
+      <h2>🔌 Acceso para IA (MCP)</h2>
+      <ApiKeys />
 
       <h2>🏋️ Entrenamiento</h2>
       <div className="card">
@@ -103,7 +143,11 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <label>Discos disponibles (kg)</label>
         <div className="chips">
           {[50, 25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5].map((p) => (
-            <button key={p} className={settings.platesKg.includes(p) ? 'on' : ''} onClick={() => setSettings({ platesKg: settings.platesKg.includes(p) ? settings.platesKg.filter((x) => x !== p) : [...settings.platesKg, p].sort((a, b) => b - a) })}>
+            <button
+              key={p}
+              className={settings.platesKg.includes(p) ? 'on' : ''}
+              onClick={() => setSettings({ platesKg: settings.platesKg.includes(p) ? settings.platesKg.filter((x) => x !== p) : [...settings.platesKg, p].sort((a, b) => b - a) })}
+            >
               {p}
             </button>
           ))}
@@ -164,9 +208,13 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h2>💾 Datos</h2>
       <div className="card">
         <p className="small muted">
-          {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios · {data.measurements.length} medidas. Todo se guarda en este navegador: exporta backups a menudo.
+          {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios · {data.measurements.length} medidas. Todo se guarda en este navegador: exporta
+          backups a menudo.
         </p>
-        <button className="primary full" onClick={() => downloadFile(`workstation-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ ...data, exportedAt: new Date().toISOString() }, null, 2))}>
+        <button
+          className="primary full"
+          onClick={() => downloadFile(`workstation-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ ...data, exportedAt: new Date().toISOString() }, null, 2))}
+        >
           Exportar backup (JSON)
         </button>
         <button className="ghost full" onClick={exportCsv}>
@@ -209,7 +257,8 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h2>🔌 MCP</h2>
       <div className="card small">
         <p>
-          Para que Claude Desktop, Cursor, LM Studio u otro cliente MCP lea y edite tus entrenamientos, usa el servidor <code>mcp/</code> del repositorio. Trabaja sobre un fichero JSON con el mismo formato que el backup: exporta aquí, guárdalo en la ruta de <code>WORKSTATION_DATA</code> y vuelve a importarlo cuando la IA cree rutinas o registre entrenos.
+          Para que Claude Desktop, Cursor, LM Studio u otro cliente MCP lea y edite tus entrenamientos, usa el servidor <code>mcp/</code> del repositorio. Trabaja sobre un fichero JSON con el mismo
+          formato que el backup: exporta aquí, guárdalo en la ruta de <code>WORKSTATION_DATA</code> y vuelve a importarlo cuando la IA cree rutinas o registre entrenos.
         </p>
       </div>
 

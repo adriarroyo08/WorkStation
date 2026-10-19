@@ -59,7 +59,12 @@ export function Phone({ src, width, delay = 0, tilt = 0, children }: { src?: str
       }}
     >
       <div style={{ width: '100%', height: '100%', borderRadius: radius * 0.8, overflow: 'hidden', position: 'relative', background: '#0b0d12' }}>
-        {src && <Img src={staticFile(src)} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${interpolate(f - delay, [0, 150], [1.04, 1], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' })})` }} />}
+        {src && (
+          <Img
+            src={staticFile(src)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${interpolate(f - delay, [0, 150], [1.04, 1], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' })})` }}
+          />
+        )}
         {children}
       </div>
       {/* isla de la cámara */}
@@ -77,7 +82,21 @@ export function Headline({ kicker, title, sub, delay = 0, align = 'center' }: { 
   return (
     <div style={{ fontFamily: FONT, color: C.text, textAlign: align, maxWidth: land ? 760 : 940 }}>
       {kicker && (
-        <div style={{ ...line(0), display: 'inline-block', padding: '10px 26px', borderRadius: 99, background: 'rgba(91,140,255,0.16)', color: '#a9c1ff', fontWeight: 700, fontSize: land ? 28 : 34, letterSpacing: 1, marginBottom: 28, textTransform: 'uppercase' }}>
+        <div
+          style={{
+            ...line(0),
+            display: 'inline-block',
+            padding: '10px 26px',
+            borderRadius: 99,
+            background: 'rgba(91,140,255,0.16)',
+            color: '#a9c1ff',
+            fontWeight: 700,
+            fontSize: land ? 28 : 34,
+            letterSpacing: 1,
+            marginBottom: 28,
+            textTransform: 'uppercase',
+          }}
+        >
           {kicker}
         </div>
       )}

@@ -152,7 +152,11 @@ export function useWakeLock(enabled: boolean) {
   const lock = useRef<WakeLockSentinel | null>(null);
   useEffect(() => {
     if (!enabled || !('wakeLock' in navigator)) return;
-    const acquire = () => navigator.wakeLock.request('screen').then((l) => (lock.current = l)).catch(() => {});
+    const acquire = () =>
+      navigator.wakeLock
+        .request('screen')
+        .then((l) => (lock.current = l))
+        .catch(() => {});
     acquire();
     const onVis = () => document.visibilityState === 'visible' && acquire();
     document.addEventListener('visibilitychange', onVis);

@@ -44,7 +44,23 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
       <div className="list">
         {list.map((e) => {
           const pr = prs.get(e.id);
-          return <ExerciseRow key={e.id} e={e} onClick={() => setSel(e.id)} right={pr ? <small className="muted right">🏆 {pr.best1RM || pr.maxReps}{pr.best1RM ? ' kg' : ' reps'}<br />{pr.sessions} ses.</small> : undefined} />;
+          return (
+            <ExerciseRow
+              key={e.id}
+              e={e}
+              onClick={() => setSel(e.id)}
+              right={
+                pr ? (
+                  <small className="muted right">
+                    🏆 {pr.best1RM || pr.maxReps}
+                    {pr.best1RM ? ' kg' : ' reps'}
+                    <br />
+                    {pr.sessions} ses.
+                  </small>
+                ) : undefined
+              }
+            />
+          );
         })}
       </div>
       {creating && (
@@ -79,7 +95,17 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
   useEffect(() => {
     loadCatalog().then(setItems, (e) => setErr(String(e)));
   }, []);
-  const asExercise = (c: CatalogItem): Exercise => ({ id: `db-${c.id}`, name: c.name, muscle: c.muscle, secondary: c.secondary, equipment: c.equipment, kind: c.kind, media: c.id, instructions: c.instructions, custom: true });
+  const asExercise = (c: CatalogItem): Exercise => ({
+    id: `db-${c.id}`,
+    name: c.name,
+    muscle: c.muscle,
+    secondary: c.secondary,
+    equipment: c.equipment,
+    kind: c.kind,
+    media: c.id,
+    instructions: c.instructions,
+    custom: true,
+  });
   const { list, filters } = useExerciseFilter((items ?? []).map(asExercise));
   const have = new Set(data.exercises.map((e) => e.id));
   const libraryByMedia = new Map(data.exercises.filter((e) => e.media).map((e) => [e.media!, e.id]));
@@ -102,7 +128,12 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
       <p className="muted small">{list.length} resultados</p>
       <div className="list">
         {list.slice(0, 150).map((e) => (
-          <ExerciseRow key={e.id} e={e} onClick={() => setPreview(items!.find((c) => c.id === e.media)!)} right={libraryByMedia.has(e.media!) || have.has(e.id) ? <small className="accent-text">✓ en tu biblioteca</small> : undefined} />
+          <ExerciseRow
+            key={e.id}
+            e={e}
+            onClick={() => setPreview(items!.find((c) => c.id === e.media)!)}
+            right={libraryByMedia.has(e.media!) || have.has(e.id) ? <small className="accent-text">✓ en tu biblioteca</small> : undefined}
+          />
         ))}
         {list.length > 150 && <p className="muted small">Mostrando 150. Afina la búsqueda para ver más.</p>}
       </div>
@@ -127,7 +158,16 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
 }
 
 type Metric = 'best1RM' | 'bestWeight' | 'bestSetVolume' | 'volume' | 'maxReps' | 'totalReps' | 'maxDuration' | 'maxDistance';
-const METRICS: Record<Metric, string> = { best1RM: '1RM estimado', bestWeight: 'Peso máximo', bestSetVolume: 'Mejor serie', volume: 'Volumen sesión', maxReps: 'Reps máx.', totalReps: 'Reps sesión', maxDuration: 'Tiempo máx.', maxDistance: 'Distancia máx.' };
+const METRICS: Record<Metric, string> = {
+  best1RM: '1RM estimado',
+  bestWeight: 'Peso máximo',
+  bestSetVolume: 'Mejor serie',
+  volume: 'Volumen sesión',
+  maxReps: 'Reps máx.',
+  totalReps: 'Reps sesión',
+  maxDuration: 'Tiempo máx.',
+  maxDistance: 'Distancia máx.',
+};
 const METRICS_BY_KIND: Record<ExerciseKind, Metric[]> = {
   weight_reps: ['best1RM', 'bestWeight', 'bestSetVolume', 'volume', 'totalReps'],
   reps: ['maxReps', 'totalReps', 'bestWeight'],
@@ -167,7 +207,12 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
     if (!instructions?.length) return;
     setTranslating(true);
     try {
-      const r = await chat(ai, [{ role: 'user', content: `Traduce al español estas instrucciones de ejercicio. Devuelve solo una lista numerada, un paso por línea, sin introducción:\n${instructions.map((s, i) => `${i + 1}. ${s}`).join('\n')}` }]);
+      const r = await chat(ai, [
+        {
+          role: 'user',
+          content: `Traduce al español estas instrucciones de ejercicio. Devuelve solo una lista numerada, un paso por línea, sin introducción:\n${instructions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`,
+        },
+      ]);
       const steps = r
         .split('\n')
         .map((l) => l.replace(/^\s*\d+[.)]\s*/, '').trim())
@@ -183,7 +228,14 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
   return (
     <section>
-      <Back onClick={onBack} right={<button className="ghost" onClick={() => setEditing(true)}>Editar</button>} />
+      <Back
+        onClick={onBack}
+        right={
+          <button className="ghost" onClick={() => setEditing(true)}>
+            Editar
+          </button>
+        }
+      />
       <h1>{e.name}</h1>
       <p className="muted small">
         {MUSCLE_LABELS[e.muscle]}
@@ -245,7 +297,10 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
               </button>
             ))}
           </div>
-          <LineChart points={h.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof ExerciseSession] as number) * 10) / 10 }))} format={(v) => fmtMetric(m, v)} />
+          <LineChart
+            points={h.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof ExerciseSession] as number) * 10) / 10 }))}
+            format={(v) => fmtMetric(m, v)}
+          />
           {e.stickyNote && <p className="sticky-note">📌 {e.stickyNote}</p>}
         </>
       )}
@@ -286,7 +341,11 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
           )}
           <label>
             📌 Nota fija (aparece cada vez que hagas este ejercicio)
-            <textarea value={e.stickyNote ?? ''} placeholder="Ej.: asiento en posición 4, agarre medio" onChange={(ev) => update((d) => void (d.exercises.find((x) => x.id === id)!.stickyNote = ev.target.value || undefined))} />
+            <textarea
+              value={e.stickyNote ?? ''}
+              placeholder="Ej.: asiento en posición 4, agarre medio"
+              onChange={(ev) => update((d) => void (d.exercises.find((x) => x.id === id)!.stickyNote = ev.target.value || undefined))}
+            />
           </label>
         </>
       )}
@@ -333,15 +392,42 @@ function Records({ id, e }: { id: string; e: Exercise }) {
           <tbody>
             {e.kind === 'weight_reps' && (
               <>
-                <tr><td>Peso máximo</td><td>{pr.bestWeight} kg</td></tr>
-                <tr><td>1RM estimado</td><td>{pr.best1RM} kg</td></tr>
-                <tr><td>Mejor serie (peso × reps)</td><td>{pr.bestSetVolume} kg</td></tr>
-                <tr><td>Mejor volumen en una sesión</td><td>{pr.bestVolumeSession} kg</td></tr>
+                <tr>
+                  <td>Peso máximo</td>
+                  <td>{pr.bestWeight} kg</td>
+                </tr>
+                <tr>
+                  <td>1RM estimado</td>
+                  <td>{pr.best1RM} kg</td>
+                </tr>
+                <tr>
+                  <td>Mejor serie (peso × reps)</td>
+                  <td>{pr.bestSetVolume} kg</td>
+                </tr>
+                <tr>
+                  <td>Mejor volumen en una sesión</td>
+                  <td>{pr.bestVolumeSession} kg</td>
+                </tr>
               </>
             )}
-            {pr.maxReps > 0 && <tr><td>Más repeticiones</td><td>{pr.maxReps}</td></tr>}
-            {pr.maxDuration > 0 && <tr><td>Más tiempo</td><td>{formatDuration(pr.maxDuration)}</td></tr>}
-            {pr.maxDistance > 0 && <tr><td>Más distancia</td><td>{pr.maxDistance} m</td></tr>}
+            {pr.maxReps > 0 && (
+              <tr>
+                <td>Más repeticiones</td>
+                <td>{pr.maxReps}</td>
+              </tr>
+            )}
+            {pr.maxDuration > 0 && (
+              <tr>
+                <td>Más tiempo</td>
+                <td>{formatDuration(pr.maxDuration)}</td>
+              </tr>
+            )}
+            {pr.maxDistance > 0 && (
+              <tr>
+                <td>Más distancia</td>
+                <td>{pr.maxDistance} m</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -350,11 +436,19 @@ function Records({ id, e }: { id: string; e: Exercise }) {
           <h3>Mejor peso por repeticiones</h3>
           <table className="table">
             <thead>
-              <tr><th>Reps</th><th>Peso</th><th>Fecha</th></tr>
+              <tr>
+                <th>Reps</th>
+                <th>Peso</th>
+                <th>Fecha</th>
+              </tr>
             </thead>
             <tbody>
               {reps.map((r) => (
-                <tr key={r.reps}><td>{r.reps}</td><td>{r.weight} kg</td><td className="muted">{fmtDate(r.date)}</td></tr>
+                <tr key={r.reps}>
+                  <td>{r.reps}</td>
+                  <td>{r.weight} kg</td>
+                  <td className="muted">{fmtDate(r.date)}</td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -365,13 +459,23 @@ function Records({ id, e }: { id: string; e: Exercise }) {
           <h3>Porcentajes de tu 1RM ({pr.best1RM} kg)</h3>
           <table className="table small">
             <thead>
-              <tr><th>%</th><th>Peso</th><th>Reps aprox.</th></tr>
+              <tr>
+                <th>%</th>
+                <th>Peso</th>
+                <th>Reps aprox.</th>
+              </tr>
             </thead>
             <tbody>
               {[100, 95, 90, 85, 80, 75, 70, 65, 60, 50].map((p) => {
                 const wgt = Math.round((pr.best1RM * p) / 100 / 2.5) * 2.5;
                 const reps = p === 100 ? 1 : Math.max(1, Math.round(30 * (100 / p - 1)));
-                return <tr key={p}><td>{p}%</td><td>{wgt} kg</td><td>{reps}</td></tr>;
+                return (
+                  <tr key={p}>
+                    <td>{p}%</td>
+                    <td>{wgt} kg</td>
+                    <td>{reps}</td>
+                  </tr>
+                );
               })}
             </tbody>
           </table>
@@ -381,10 +485,26 @@ function Records({ id, e }: { id: string; e: Exercise }) {
         <h3>Totales de por vida</h3>
         <table className="table">
           <tbody>
-            <tr><td>Sesiones</td><td>{pr.sessions}</td></tr>
-            <tr><td>Series</td><td>{h.reduce((v, s) => v + s.sets.length, 0)}</td></tr>
-            {totalReps > 0 && <tr><td>Repeticiones</td><td>{totalReps.toLocaleString('es-ES')}</td></tr>}
-            {totalVol > 0 && <tr><td>Volumen</td><td>{Math.round(totalVol).toLocaleString('es-ES')} kg</td></tr>}
+            <tr>
+              <td>Sesiones</td>
+              <td>{pr.sessions}</td>
+            </tr>
+            <tr>
+              <td>Series</td>
+              <td>{h.reduce((v, s) => v + s.sets.length, 0)}</td>
+            </tr>
+            {totalReps > 0 && (
+              <tr>
+                <td>Repeticiones</td>
+                <td>{totalReps.toLocaleString('es-ES')}</td>
+              </tr>
+            )}
+            {totalVol > 0 && (
+              <tr>
+                <td>Volumen</td>
+                <td>{Math.round(totalVol).toLocaleString('es-ES')} kg</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

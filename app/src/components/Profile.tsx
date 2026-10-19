@@ -36,10 +36,16 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   const streak = weekStreak(data, settings.weekStartsMonday);
 
   const since = Date.now() - muscleRange * 864e5;
-  const ms = muscleSets(data, data.workouts.filter((w) => Date.parse(w.startedAt) >= since), false);
+  const ms = muscleSets(
+    data,
+    data.workouts.filter((w) => Date.parse(w.startedAt) >= since),
+    false,
+  );
   const muscleRows = detailed
     ? Object.entries(ms).map(([m, v]) => ({ label: MUSCLE_LABELS[m as MuscleGroup], value: Math.round(v) }))
-    : [...Object.entries(ms).reduce((acc, [m, v]) => acc.set(MUSCLE_REGION[m as MuscleGroup], (acc.get(MUSCLE_REGION[m as MuscleGroup]) ?? 0) + v), new Map<string, number>())].map(([label, value]) => ({ label, value: Math.round(value) }));
+    : [...Object.entries(ms).reduce((acc, [m, v]) => acc.set(MUSCLE_REGION[m as MuscleGroup], (acc.get(MUSCLE_REGION[m as MuscleGroup]) ?? 0) + v), new Map<string, number>())].map(
+        ([label, value]) => ({ label, value: Math.round(value) }),
+      );
 
   const prs = personalRecords(data);
   const allAch = useMemo(() => achievements(data), [data]);
@@ -51,7 +57,8 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
   if (view === 'settings') return <Settings onBack={() => setView('home')} />;
 
-  const fmt = (v: number) => (metric === 'volume' ? (v >= 1000 ? `${Math.round(v / 100) / 10}k` : String(Math.round(v))) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v)));
+  const fmt = (v: number) =>
+    metric === 'volume' ? (v >= 1000 ? `${Math.round(v / 100) / 10}k` : String(Math.round(v))) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v));
 
   return (
     <section>
@@ -91,9 +98,18 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
       </div>
       <button className="card full tile achievements-tile" onClick={() => setView('achievements')}>
         <span>
-          <Award size={18} className="tile-ico inline" /> Logros <small className="muted">{unlocked.length} de {allAch.length}</small>
+          <Award size={18} className="tile-ico inline" /> Logros{' '}
+          <small className="muted">
+            {unlocked.length} de {allAch.length}
+          </small>
         </span>
-        <span className="badge-row">{unlocked.slice(-6).map((a) => <span key={a.id} title={a.title}>{a.icon}</span>)}</span>
+        <span className="badge-row">
+          {unlocked.slice(-6).map((a) => (
+            <span key={a.id} title={a.title}>
+              {a.icon}
+            </span>
+          ))}
+        </span>
       </button>
 
       <div className="card">
@@ -121,7 +137,14 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           <span className="grow">Por músculo (detallado)</span>
           <input type="checkbox" checked={detailed} onChange={(e) => setDetailed(e.target.checked)} />
         </label>
-        {muscleRows.length > 0 && <BodyMap sets={muscleSets(data, data.workouts.filter((w) => Date.parse(w.startedAt) >= since))} />}
+        {muscleRows.length > 0 && (
+          <BodyMap
+            sets={muscleSets(
+              data,
+              data.workouts.filter((w) => Date.parse(w.startedAt) >= since),
+            )}
+          />
+        )}
         {muscleRows.length ? <HBars rows={muscleRows.sort((a, b) => b.value - a.value)} /> : <p className="muted small">Sin datos en este periodo.</p>}
       </div>
 

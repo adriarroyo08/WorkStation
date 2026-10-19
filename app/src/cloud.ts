@@ -186,6 +186,7 @@ export const cloud = {
     await client?.auth.signOut();
   },
   syncNow: () => flush(),
+  client: () => client,
 };
 
 // Engancha el store: cada cambio local se encola; los cambios remotos se aplican sin volver a subirse.

@@ -56,19 +56,19 @@ export default function App() {
     <div className="app">
       <main>
         <Suspense fallback={<Skeleton />}>
-        {overlayExercise ? (
-          <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
-        ) : (
-          <>
-            <div hidden={tab !== 'train'}>
-              <Train onExercise={goExercise} />
-            </div>
-            {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
-            {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
-            {tab === 'profile' && <Profile onExercise={goExercise} />}
-            {tab === 'coach' && <Coach goSettings={() => setTab('profile')} />}
-          </>
-        )}
+          {overlayExercise ? (
+            <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
+          ) : (
+            <>
+              <div hidden={tab !== 'train'}>
+                <Train onExercise={goExercise} />
+              </div>
+              {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
+              {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
+              {tab === 'profile' && <Profile onExercise={goExercise} />}
+              {tab === 'coach' && <Coach goSettings={() => setTab('profile')} />}
+            </>
+          )}
         </Suspense>
       </main>
       <ToastView />

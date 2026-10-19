@@ -30,7 +30,9 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, { 
           <div className="big-emoji">🛠️</div>
           <h1>Algo ha fallado</h1>
           <p className="muted">Tus datos están a salvo en este dispositivo. Descarga una copia y recarga la app.</p>
-          <pre className="small muted" style={{ whiteSpace: 'pre-wrap' }}>{this.state.error.message}</pre>
+          <pre className="small muted" style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error.message}
+          </pre>
           <button className="primary full" onClick={() => this.downloadBackup()}>
             Descargar mis datos (JSON)
           </button>

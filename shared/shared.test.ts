@@ -24,20 +24,35 @@ describe('stats', () => {
     expect(estimate1RM(80, 8)).toBe(101.3);
   });
   it('detecta récords sin contar la primera sesión', () => {
-    const d = withWorkouts(w('a', '2026-10-01T10:00:00Z', 'press-banca', [[80, 8]]), w('b', '2026-10-05T10:00:00Z', 'press-banca', [[85, 8]]), w('c', '2026-10-08T10:00:00Z', 'press-banca', [[70, 5]]));
+    const d = withWorkouts(
+      w('a', '2026-10-01T10:00:00Z', 'press-banca', [[80, 8]]),
+      w('b', '2026-10-05T10:00:00Z', 'press-banca', [[85, 8]]),
+      w('c', '2026-10-08T10:00:00Z', 'press-banca', [[70, 5]]),
+    );
     const ev = prEvents(d);
     expect(ev.every((e) => e.workoutId === 'b')).toBe(true);
     expect(ev.find((e) => e.kind === 'weight')).toMatchObject({ value: 85, previous: 80 });
   });
   it('récords por número de reps', () => {
-    const d = withWorkouts(w('a', '2026-10-01T10:00:00Z', 'sentadilla', [[100, 5], [110, 3]]), w('b', '2026-10-02T10:00:00Z', 'sentadilla', [[105, 5]]));
+    const d = withWorkouts(
+      w('a', '2026-10-01T10:00:00Z', 'sentadilla', [
+        [100, 5],
+        [110, 3],
+      ]),
+      w('b', '2026-10-02T10:00:00Z', 'sentadilla', [[105, 5]]),
+    );
     expect(repRecords(d, 'sentadilla')).toEqual([
       { reps: 3, weight: 110, date: '2026-10-01T10:00:00Z' },
       { reps: 5, weight: 105, date: '2026-10-02T10:00:00Z' },
     ]);
   });
   it('series por músculo con secundarios a 0,5', () => {
-    const d = withWorkouts(w('a', '2026-10-01T10:00:00Z', 'press-banca', [[80, 8], [80, 8]]));
+    const d = withWorkouts(
+      w('a', '2026-10-01T10:00:00Z', 'press-banca', [
+        [80, 8],
+        [80, 8],
+      ]),
+    );
     expect(muscleSets(d, d.workouts)).toMatchObject({ pecho: 2, triceps: 1, hombros: 1 });
   });
 });
@@ -69,13 +84,24 @@ describe('calculadoras', () => {
     expect(platesFor(61, 20)).toMatchObject({ perSide: [20], remainder: 1 });
   });
   it('calentamiento', () => {
-    expect(warmupSets(100, 20)).toEqual([{ weight: 20, reps: 10 }, { weight: 40, reps: 10 }, { weight: 60, reps: 5 }, { weight: 80, reps: 3 }]);
+    expect(warmupSets(100, 20)).toEqual([
+      { weight: 20, reps: 10 },
+      { weight: 40, reps: 10 },
+      { weight: 60, reps: 5 },
+      { weight: 80, reps: 3 },
+    ]);
   });
 });
 
 describe('datos', () => {
   it('migra datos antiguos y refresca la biblioteca base', () => {
-    const old = { version: 1, exercises: [{ id: 'press-banca', name: 'viejo', muscle: 'pecho', equipment: 'barra', kind: 'weight_reps', stickyNote: 'agarre medio' }], routines: [], workouts: [], measurements: [] };
+    const old = {
+      version: 1,
+      exercises: [{ id: 'press-banca', name: 'viejo', muscle: 'pecho', equipment: 'barra', kind: 'weight_reps', stickyNote: 'agarre medio' }],
+      routines: [],
+      workouts: [],
+      measurements: [],
+    };
     const d = normalizeData(old);
     const pb = d.exercises.find((e) => e.id === 'press-banca')!;
     expect(pb.name).toBe('Press de banca (barra)');
@@ -94,7 +120,8 @@ describe('datos', () => {
     expect(repeatWorkout(src).exercises[0].sets[0].done).toBe(false);
   });
   it('CSV de Hevy', () => {
-    const csv = '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n"Push","10 Oct 2026, 18:00","10 Oct 2026, 19:05","","Press de banca (barra)","","",0,"warmup",40,10,"","",""\n"Push","10 Oct 2026, 18:00","10 Oct 2026, 19:05","","Press de banca (barra)","","",1,"normal",80,8,"","",8';
+    const csv =
+      '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n"Push","10 Oct 2026, 18:00","10 Oct 2026, 19:05","","Press de banca (barra)","","",0,"warmup",40,10,"","",""\n"Push","10 Oct 2026, 18:00","10 Oct 2026, 19:05","","Press de banca (barra)","","",1,"normal",80,8,"","",8';
     expect(parseCsv(csv)).toHaveLength(2);
     const d = emptyData();
     expect(importHevyCsv(d, csv)).toBe(1);

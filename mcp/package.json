@@ -1,6 +1,6 @@
 {
   "name": "workstation-mcp",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "Servidor MCP para que cualquier IA lea y escriba tus datos de entrenamiento de Workstation",
@@ -10,7 +10,8 @@
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/index.js --packages=external --banner:js=\"#!/usr/bin/env node\"",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:edge": "esbuild src/edge.ts --bundle --platform=neutral --format=esm --target=es2022 --main-fields=module,main --minify --outfile=../supabase/functions/mcp/index.ts --banner:js=\"// @ts-nocheck \u2014 Generado con 'npm --prefix mcp run build:edge' a partir de mcp/src/edge.ts. No editar a mano.\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

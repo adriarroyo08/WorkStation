@@ -33,7 +33,13 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
     setErr('');
     abort.current = new AbortController();
     try {
-      const system: ChatMessage = { role: 'system', content: `${COACH_SYSTEM_PROMPT}\n\nFecha de hoy: ${new Date().toISOString().slice(0, 10)}\n\nDATOS DEL USUARIO:\n${trainingSummary(data, 15)}\n\n${reportToText(periodReport(data, period('week', 0, settings.weekStartsMonday)))}\n\n${reportToText(periodReport(data, period('month', 0, settings.weekStartsMonday)))}\n\nEjercicios disponibles en su biblioteca: ${data.exercises.filter((e) => !e.id.startsWith('db-')).map((e) => e.name).join(', ')}` };
+      const system: ChatMessage = {
+        role: 'system',
+        content: `${COACH_SYSTEM_PROMPT}\n\nFecha de hoy: ${new Date().toISOString().slice(0, 10)}\n\nDATOS DEL USUARIO:\n${trainingSummary(data, 15)}\n\n${reportToText(periodReport(data, period('week', 0, settings.weekStartsMonday)))}\n\n${reportToText(periodReport(data, period('month', 0, settings.weekStartsMonday)))}\n\nEjercicios disponibles en su biblioteca: ${data.exercises
+          .filter((e) => !e.id.startsWith('db-'))
+          .map((e) => e.name)
+          .join(', ')}`,
+      };
       const reply = await chat(ai, [system, ...next], abort.current.signal);
       setMsgs([...next, { role: 'assistant', content: reply }]);
     } catch (e) {

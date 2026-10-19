@@ -61,7 +61,14 @@ export function importHevyCsv(data: WorkstationData, csv: string): number {
     let w = byKey.get(key);
     if (!w) {
       const startedAt = parseHevyDate(r.start_time);
-      w = { id: `hevy-${Date.parse(startedAt).toString(36)}`, name: r.title || 'Entrenamiento', startedAt, endedAt: r.end_time ? parseHevyDate(r.end_time) : undefined, notes: r.description || undefined, exercises: [] };
+      w = {
+        id: `hevy-${Date.parse(startedAt).toString(36)}`,
+        name: r.title || 'Entrenamiento',
+        startedAt,
+        endedAt: r.end_time ? parseHevyDate(r.end_time) : undefined,
+        notes: r.description || undefined,
+        exercises: [],
+      };
       byKey.set(key, w);
     }
     const exId = findOrCreateExercise(data, r.exercise_title).id;
@@ -71,7 +78,15 @@ export function importHevyCsv(data: WorkstationData, csv: string): number {
       w.exercises.push(ex);
     }
     const km = num(r.distance_km);
-    ex.sets.push({ type: SET_TYPES[r.set_type] ?? 'normal', weight: num(r.weight_kg), reps: num(r.reps), rpe: num(r.rpe), durationSec: num(r.duration_seconds), distanceM: km !== undefined ? km * 1000 : undefined, done: true });
+    ex.sets.push({
+      type: SET_TYPES[r.set_type] ?? 'normal',
+      weight: num(r.weight_kg),
+      reps: num(r.reps),
+      rpe: num(r.rpe),
+      durationSec: num(r.duration_seconds),
+      distanceM: km !== undefined ? km * 1000 : undefined,
+      done: true,
+    });
   }
   return upsertWorkouts(data, [...byKey.values()]);
 }
@@ -82,7 +97,11 @@ interface HevyApiWorkout {
   description?: string;
   start_time: string;
   end_time?: string;
-  exercises: { title: string; notes?: string; sets: { type?: string; weight_kg?: number | null; reps?: number | null; distance_meters?: number | null; duration_seconds?: number | null; rpe?: number | null }[] }[];
+  exercises: {
+    title: string;
+    notes?: string;
+    sets: { type?: string; weight_kg?: number | null; reps?: number | null; distance_meters?: number | null; duration_seconds?: number | null; rpe?: number | null }[];
+  }[];
 }
 
 export function convertHevyApiWorkouts(data: WorkstationData, list: HevyApiWorkout[]): number {
@@ -95,7 +114,15 @@ export function convertHevyApiWorkouts(data: WorkstationData, list: HevyApiWorko
     exercises: hw.exercises.map((e) => ({
       exerciseId: findOrCreateExercise(data, e.title).id,
       notes: e.notes || undefined,
-      sets: e.sets.map((s) => ({ type: SET_TYPES[s.type ?? 'normal'] ?? 'normal', weight: num(s.weight_kg), reps: num(s.reps), rpe: num(s.rpe), durationSec: num(s.duration_seconds), distanceM: num(s.distance_meters), done: true })),
+      sets: e.sets.map((s) => ({
+        type: SET_TYPES[s.type ?? 'normal'] ?? 'normal',
+        weight: num(s.weight_kg),
+        reps: num(s.reps),
+        rpe: num(s.rpe),
+        durationSec: num(s.duration_seconds),
+        distanceM: num(s.distance_meters),
+        done: true,
+      })),
     })),
   }));
   return upsertWorkouts(data, workouts);
