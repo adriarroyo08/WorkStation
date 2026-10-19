@@ -6,6 +6,7 @@ import Profile from './components/Profile';
 import Train from './components/Train';
 import { useSessionController } from './controller';
 import { useRest } from './rest';
+import { toast, useToast } from './toast';
 import { clock, useNow, useStore } from './store';
 
 const TABS = [
@@ -51,6 +52,7 @@ export default function App() {
           </>
         )}
       </main>
+      <ToastView />
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
@@ -75,5 +77,26 @@ function ActiveBanner({ onClick }: { onClick: () => void }) {
       <span className="grow" />
       {left > 0 ? `Descanso ${clock(left)}` : clock((now - Date.parse(active!.startedAt)) / 1000)}
     </button>
+  );
+}
+
+function ToastView() {
+  const t = useToast();
+  if (!t) return null;
+  return (
+    <div className="toast" role="status" key={t.id}>
+      <span className="grow">{t.text}</span>
+      {t.action && (
+        <button
+          className="ghost"
+          onClick={() => {
+            t.action!.run();
+            toast.dismiss();
+          }}
+        >
+          {t.action.label}
+        </button>
+      )}
+    </div>
   );
 }

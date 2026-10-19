@@ -4,9 +4,12 @@ import { repeatWorkout, routineFromWorkout } from '../../../shared/data';
 import { formatDuration, formatSet, muscleSets, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import type { MuscleGroup, Workout } from '../../../shared/types';
 import { startWorkout } from '../controller';
+import { toast } from '../toast';
 import { workoutImage } from '../share';
 import { fmtCompact, fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
+import { newlyUnlocked } from '../../../shared/achievements';
+import { AchievementBadge } from './Achievements';
 import BodyMap from './BodyMap';
 import LineChart from './LineChart';
 import { Back, ExerciseMedia, HBars, PrList, Stat } from './ui';
@@ -47,6 +50,7 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
   for (const [m, n] of Object.entries(muscleSets(data, [w], false))) regions.set(MUSCLE_REGION[m as MuscleGroup], (regions.get(MUSCLE_REGION[m as MuscleGroup]) ?? 0) + n);
   const totalSets = [...regions.values()].reduce((a, b) => a + b, 0) || 1;
   const routine = data.routines.find((r) => r.id === w.routineId);
+  const unlockedNow = justFinished ? newlyUnlocked(data, id) : [];
   const count = [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)).findIndex((x) => x.id === id) + 1;
 
   const share = async () => shareOrDownload(await workoutImage(data, w), `entreno-${w.startedAt.slice(0, 10)}.png`, w.name);
@@ -59,6 +63,16 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
           <div className="big-emoji">💪</div>
           <h1>¡Buen trabajo!</h1>
           <p className="muted">Este es tu entrenamiento nº {count}.</p>
+          {unlockedNow.length > 0 && (
+            <div className="card new-badges">
+              <b>🎖️ ¡Logro{unlockedNow.length > 1 ? 's' : ''} desbloqueado{unlockedNow.length > 1 ? 's' : ''}!</b>
+              <div className="badges">
+                {unlockedNow.map((a) => (
+                  <AchievementBadge key={a.id} a={a} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
       {!justFinished && <h1>{w.name}</h1>}
@@ -162,7 +176,16 @@ export default function WorkoutDetail({ id, onBack, justFinished = false, onExer
         >
           ➕ Guardar como nueva rutina
         </button>
-        <button className="danger full" onClick={() => confirm('¿Borrar este entrenamiento?') && (update((d) => void (d.workouts = d.workouts.filter((x) => x.id !== id))), onBack())}>
+        <button
+          className="danger full"
+          onClick={() => {
+            if (!confirm('¿Borrar este entrenamiento?')) return;
+            const snap = structuredClone(w);
+            update((d) => void (d.workouts = d.workouts.filter((x) => x.id !== id)));
+            toast.undo('Entrenamiento borrado', () => update((d) => void d.workouts.push(snap)));
+            onBack();
+          }}
+        >
           Borrar entrenamiento
         </button>
       </div>

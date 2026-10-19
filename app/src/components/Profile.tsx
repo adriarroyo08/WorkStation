@@ -5,7 +5,10 @@ import { muscleSets, personalRecords } from '../../../shared/stats';
 import type { MuscleGroup } from '../../../shared/types';
 import { cap, fmtNum, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
+import { achievements } from '../../../shared/achievements';
+import Achievements from './Achievements';
 import BodyMap from './BodyMap';
+import YearHeatmap from './YearHeatmap';
 import Measurements from './Measurements';
 import Reports from './Reports';
 import Settings from './Settings';
@@ -16,7 +19,7 @@ const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Du
 
 export default function Profile({ onExercise }: { onExercise: (id: string) => void }) {
   const { data, settings } = useStore();
-  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings'>('home');
+  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements'>('home');
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
   const [detailed, setDetailed] = useState(false);
@@ -38,9 +41,12 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
     : [...Object.entries(ms).reduce((acc, [m, v]) => acc.set(MUSCLE_REGION[m as MuscleGroup], (acc.get(MUSCLE_REGION[m as MuscleGroup]) ?? 0) + v), new Map<string, number>())].map(([label, value]) => ({ label, value: Math.round(value) }));
 
   const prs = personalRecords(data);
+  const allAch = useMemo(() => achievements(data), [data]);
+  const unlocked = allAch.filter((a) => a.unlocked);
   const main = [...prs].sort((a, b) => b.sessions - a.sessions).slice(0, 6);
 
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
+  if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
   if (view === 'settings') return <Settings onBack={() => setView('home')} />;
 
@@ -71,6 +77,12 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           <small className="muted">peso · cuerpo · fotos</small>
         </button>
       </div>
+      <button className="card full tile achievements-tile" onClick={() => setView('achievements')}>
+        <span>
+          🏅 Logros <small className="muted">{unlocked.length} de {allAch.length}</small>
+        </span>
+        <span className="badge-row">{unlocked.slice(-6).map((a) => <span key={a.id} title={a.title}>{a.icon}</span>)}</span>
+      </button>
 
       <div className="card">
         <h3>Últimas 12 semanas</h3>
@@ -112,6 +124,10 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           </button>
         </div>
         <MonthCalendar month={month} trained={trained} mondayFirst={settings.weekStartsMonday} />
+      </div>
+      <div className="card">
+        <h3>Último año</h3>
+        <YearHeatmap workouts={data.workouts} mondayFirst={settings.weekStartsMonday} />
       </div>
 
       {main.length > 0 && (

@@ -6,7 +6,9 @@ import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { rest, useRest } from '../rest';
+import { suggestNext } from '../../../shared/progression';
 import { useHeartRate } from '../hr';
+import { toast } from '../toast';
 import { clock, useNow, useStore, useWakeLock } from '../store';
 import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
@@ -50,6 +52,7 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
   const setField = (ei: number, si: number, patch: Partial<WorkoutSet>) => edit((n) => void Object.assign(n.exercises[ei].sets[si], patch));
 
   const toggleDone = (ei: number, si: number) => {
+    if (!w.exercises[ei].sets[si].done && settings.vibrate) navigator.vibrate?.(25);
     const r = toggleSet(data, w, ei, si);
     edit((n) => void Object.assign(n, structuredClone(r.workout)));
     if (mode === 'live' && r.restSec > 0) rest.start(r.restSec);
@@ -153,6 +156,7 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
               </button>
             </div>
             {ex?.stickyNote && <p className="sticky-note small">📌 {ex.stickyNote}</p>}
+            {mode === 'live' && <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />}
             <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))} />
             {mode === 'live' && (
               <button className="ghost small rest-chip" onClick={() => setMenu(ei)}>
@@ -188,7 +192,11 @@ export default function WorkoutLogger({ workout: w, edit, mode, onFinish, onDisc
                   }}
                   onChange={(p) => setField(ei, si, p)}
                   onToggle={() => toggleDone(ei, si)}
-                  onRemove={() => edit((n) => void n.exercises[ei].sets.splice(si, 1))}
+                  onRemove={() => {
+                    const snap = structuredClone(w);
+                    edit((n) => void n.exercises[ei].sets.splice(si, 1));
+                    toast.undo('Serie borrada', () => edit((n) => void Object.assign(n, snap)));
+                  }}
                   onPlates={() => setPlates(s.weight ?? aligned[si]?.weight ?? 0)}
                 />
               ))}
@@ -335,7 +343,15 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace }: { w: Workout; ei: num
         <button className="item" disabled={ei === w.exercises.length - 1} onClick={() => (move(1), onClose())}>
           ⬇️ Bajar
         </button>
-        <button className="item danger" onClick={() => (edit((n) => void n.exercises.splice(ei, 1)), onClose())}>
+        <button
+          className="item danger"
+          onClick={() => {
+            const snap = structuredClone(w);
+            edit((n) => void n.exercises.splice(ei, 1));
+            toast.undo(`${ex?.name ?? 'Ejercicio'} quitado`, () => edit((n) => void Object.assign(n, snap)));
+            onClose();
+          }}
+        >
           🗑 Quitar ejercicio
         </button>
       </div>
@@ -445,6 +461,28 @@ function SetRow(props: { id: string; isNext: boolean; n: number; s: WorkoutSet; 
           </div>
         </Sheet>
       )}
+    </div>
+  );
+}
+
+// "💡 Hoy: 82,5 kg × 8" — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
+function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: Exercise; prev: WorkoutSet[]; onApply: (p: Partial<WorkoutSet>) => void }) {
+  const [open, setOpen] = useState(false);
+  const pending = we.sets.filter((s) => !s.done && s.type !== 'warmup');
+  if (!pending.length) return null;
+  const sug = suggestNext(prev, ex, pending[0].reps);
+  if (!sug) return null;
+  const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${sug.weight} kg × ` : ''}${sug.reps ?? ''}${sug.weight || sug.reps ? '' : ''}`;
+  const applied = pending.every((s) => (sug.weight === undefined || s.weight === sug.weight) && (sug.reps === undefined || s.reps === sug.reps) && (sug.durationSec === undefined || s.durationSec === sug.durationSec));
+  return (
+    <div className={`suggestion ${sug.action}`}>
+      <button className="plain grow left" onClick={() => setOpen(!open)}>
+        {sug.action === 'up' ? '📈' : '💡'} Hoy: <b>{label}</b>
+        {open && <div className="small muted">{sug.reason}</div>}
+      </button>
+      <button className="ghost small" disabled={applied} onClick={() => (onApply({ weight: sug.weight, reps: sug.reps, durationSec: sug.durationSec }), toast.show('Sugerencia aplicada a las series pendientes'))}>
+        {applied ? '✓' : 'Aplicar'}
+      </button>
     </div>
   );
 }

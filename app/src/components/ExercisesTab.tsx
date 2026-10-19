@@ -338,6 +338,23 @@ function Records({ id, e }: { id: string; e: Exercise }) {
           </table>
         </div>
       )}
+      {e.kind === 'weight_reps' && pr.best1RM > 0 && (
+        <div className="card">
+          <h3>Porcentajes de tu 1RM ({pr.best1RM} kg)</h3>
+          <table className="table small">
+            <thead>
+              <tr><th>%</th><th>Peso</th><th>Reps aprox.</th></tr>
+            </thead>
+            <tbody>
+              {[100, 95, 90, 85, 80, 75, 70, 65, 60, 50].map((p) => {
+                const wgt = Math.round((pr.best1RM * p) / 100 / 2.5) * 2.5;
+                const reps = p === 100 ? 1 : Math.max(1, Math.round(30 * (100 / p - 1)));
+                return <tr key={p}><td>{p}%</td><td>{wgt} kg</td><td>{reps}</td></tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       <div className="card">
         <h3>Totales de por vida</h3>
         <table className="table">

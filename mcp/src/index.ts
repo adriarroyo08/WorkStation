@@ -8,6 +8,9 @@ import { findOrCreateExercise, routineFromDraft } from '../../shared/data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts } from '../../shared/hevy';
 import { period, periodReport, reportToText, weekStreak } from '../../shared/reports';
 import { PROGRAMS, instantiateProgram } from '../../shared/templates';
+import { achievements } from '../../shared/achievements';
+import { suggestNext } from '../../shared/progression';
+import { lastSessionSets } from '../../shared/stats';
 import { exerciseHistory, formatSet, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from '../../shared/stats';
 import { uid, type Workout } from '../../shared/types';
 import { dataPath, loadData, saveData } from './store';
@@ -98,6 +101,22 @@ server.registerTool(
     data.routines.push(...routines);
     saveData(data);
     return text(`Programa "${p.name}" guardado (${routines.length} rutinas).`);
+  },
+);
+
+server.registerTool('achievements', { description: 'Logros del usuario (desbloqueados y progreso de los pendientes).', inputSchema: {} }, async () =>
+  json(achievements(loadData()).map((a) => ({ title: a.title, desc: a.desc, unlocked: a.unlocked, progress: a.progress }))),
+);
+
+server.registerTool(
+  'suggest_next',
+  { description: 'Sugerencia de sobrecarga progresiva para la próxima sesión de un ejercicio (peso/reps) según la última vez.', inputSchema: { exercise: z.string(), target_reps: z.number().int().optional() } },
+  async ({ exercise, target_reps }) => {
+    const data = loadData();
+    const e = resolveExercise(data, exercise);
+    if (!e) return text(`Ejercicio no encontrado: ${exercise}`);
+    const s = suggestNext(lastSessionSets(data, e.id), e, target_reps);
+    return s ? json({ exercise: e.name, ...s }) : text(`Sin datos previos de ${e.name}.`);
   },
 );
 

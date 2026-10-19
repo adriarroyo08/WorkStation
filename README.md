@@ -20,6 +20,9 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 - Tipos de serie: calentamiento, drop set y al fallo. RPE opcional.
 - Columna "Anterior" con la sesión previa (toca para copiarla; los calentamientos se emparejan con calentamientos).
 - 🏆 Récord en vivo al completar una serie que bate tu marca.
+- 📈 Sugerencia de progresión por ejercicio ("Hoy: 82,5 kg × 8") según tu última sesión. Un toque la aplica.
+- Siguiente serie resaltada, desplazamiento automático y "Siguiente: …" en la barra de descanso.
+- Deshacer al borrar series, ejercicios o entrenamientos.
 - Superseries, reordenar, reemplazar ejercicio y nota fija por ejercicio.
 - Temporizador de descanso por ejercicio, con sonido, vibración y barra de progreso. En superseries arranca tras el último ejercicio del bloque.
 - Generador de series de calentamiento y calculadora de discos (barra y discos configurables).
@@ -39,14 +42,15 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
   - Gráficas de 1RM estimado, peso máximo, mejor serie, volumen y reps, filtrables por rango.
   - Historial.
   - Cómo hacerlo (con traducción por IA).
-  - Récords: mejor peso por número de repeticiones y totales de por vida.
+  - Récords: mejor peso por número de repeticiones, tabla de porcentajes del 1RM y totales de por vida.
 
 **Historial**: lista agrupada por mes con buscador y calendario. Cada entrenamiento se puede editar (fecha, duración, series), repetir o borrar.
 
 **Perfil**
 - Totales y racha de semanas seguidas.
 - Gráfico de las últimas 12 semanas (entrenos, duración, volumen, series o reps).
-- Distribución muscular (30 días / 3 meses / 1 año), calendario y ejercicios principales.
+- Mapa corporal y distribución muscular (30 días / 3 meses / 1 año), calendario, mapa de actividad del último año y ejercicios principales.
+- 🏅 21 logros (constancia, rachas, toneladas, récords, clubs de 100/140/180 kg…), celebrados al terminar el entreno.
 - **Informes semanales, mensuales y anuales**:
   - Comparación con el periodo anterior y objetivo semanal cumplido.
   - Volumen por día, récords batidos, series por músculo y ejercicios más trabajados.
@@ -153,7 +157,7 @@ Añade a la config de tu cliente MCP (en Claude Desktop: *Ajustes → Desarrolla
 }
 ```
 
-Herramientas: `training_summary`, `period_report` (informe semanal/mensual/anual), `list_workouts`, `get_workout`, `exercise_history`, `personal_records`, `list_exercises`, `list_routines`, `create_routine` (con superseries), `list_programs`, `add_program`, `log_workout`, `log_measurement`, `import_from_hevy`.
+Herramientas: `training_summary`, `period_report` (informe semanal/mensual/anual), `list_workouts`, `get_workout`, `exercise_history`, `personal_records`, `list_exercises`, `list_routines`, `create_routine` (con superseries), `list_programs`, `add_program`, `log_workout`, `log_measurement`, `achievements`, `suggest_next`, `import_from_hevy`.
 
 **Sincronización app ↔ MCP:** el servidor trabaja sobre un fichero JSON con el mismo formato que el backup de la app.
 Exporta el backup desde la app → guárdalo en la ruta de `WORKSTATION_DATA` → pide a la IA lo que quieras (p. ej. "créame una rutina de pierna") → importa ese fichero de nuevo en la app (se fusiona sin duplicar).
