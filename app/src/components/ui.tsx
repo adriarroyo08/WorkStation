@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import { mediaUrls } from '../../../shared/exercises';
+import { ANIMATED } from '../../../shared/anim-index';
 import { useExdbGif } from '../exdb';
 import { PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
@@ -50,6 +51,14 @@ export function ExerciseMedia({ exercise, media, exdbId, size = 'large' }: { exe
     return (
       <div className={`media ${size} gif`}>
         <img src={gif} alt={exercise?.name ?? ''} />
+      </div>
+    );
+  // Animación propia (generada a partir del catálogo libre y servida con la app).
+  const own = media ?? exercise?.media;
+  if (own && ANIMATED.has(own) && !failed)
+    return (
+      <div className={`media ${size} gif`}>
+        <img src={`anim/${own}.webp`} alt={exercise?.name ?? ''} loading="lazy" decoding="async" onError={() => setFailed(true)} />
       </div>
     );
   if (!urls.length || failed)

@@ -26,6 +26,7 @@ export default defineConfig({
         // Catálogo e imágenes de ejercicios disponibles sin conexión una vez vistos.
         runtimeCaching: [
           { urlPattern: /catalog\.json$/, handler: 'StaleWhileRevalidate', options: { cacheName: 'catalog' } },
+          { urlPattern: /\/anim\/.+\.webp$/, handler: 'CacheFirst', options: { cacheName: 'anim', expiration: { maxEntries: 300 } } },
           {
             urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,
             handler: 'CacheFirst',

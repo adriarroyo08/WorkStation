@@ -38,6 +38,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 **Ejercicios**
 - 115 ejercicios en español con imágenes animadas (inicio/fin del movimiento) e instrucciones.
 - 🎞️ **GIFs animados de ExerciseDB** (1.300+ ejercicios) con tu propia API key de RapidAPI (hay plan gratuito): *Ajustes → GIFs de ejercicios → Guardar y vincular*. Se vinculan solos por nombre y puedes cambiar el GIF desde la ficha de cada ejercicio. La key y los GIFs se guardan solo en tu dispositivo, quedan en caché para usarlos sin conexión, y las miniaturas no gastan cuota.
+- 🎬 **Animaciones propias, gratis e ilimitadas**: 113 ejercicios de la biblioteca traen su propia animación WebP (generada a partir de las fotos de dominio público de free-exercise-db) que se sirve con la app y funciona sin conexión. Si tienes key de ExerciseDB, se usa primero su GIF. Para regenerarlas: `python3 scripts/build-anims.py` (requiere Pillow).
 - Catálogo completo de 870+ ejercicios de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público).
 - Ejercicios personalizados con músculos secundarios.
 - Ficha por ejercicio:
