@@ -36,6 +36,8 @@ export interface Exercise {
   kind: ExerciseKind;
   // Id en el catálogo libre free-exercise-db (imágenes + instrucciones).
   media?: string;
+  // Id en ExerciseDB (GIF animado, se carga con la API key del usuario).
+  exdbId?: string;
   instructions?: string[];
   // Nota fija que aparece cada vez que haces el ejercicio.
   stickyNote?: string;

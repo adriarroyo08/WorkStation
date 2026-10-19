@@ -1,4 +1,7 @@
+import { Film } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
+import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
 import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
@@ -140,6 +143,8 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [editing, setEditing] = useState(false);
   const [instructions, setInstructions] = useState<string[] | null>(e?.instructions ?? null);
   const [translating, setTranslating] = useState(false);
+  const [pickGif, setPickGif] = useState(false);
+  const exdbCfg = useExdbConfig();
 
   useEffect(() => {
     if (!instructions && e?.media)
@@ -193,6 +198,11 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {tab === 'summary' && (
         <>
           <ExerciseMedia exercise={e} />
+          {exdbCfg.key && (
+            <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
+              <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}
+            </button>
+          )}
           {pr && (
             <div className="stats">
               {e.kind === 'weight_reps' ? (
@@ -281,6 +291,16 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {tab === 'records' && <Records id={id} e={e} />}
 
+      {pickGif && (
+        <GifPicker
+          exercise={e}
+          onClose={() => setPickGif(false)}
+          onPick={(id) => {
+            update((d) => void (d.exercises.find((x) => x.id === e.id)!.exdbId = id));
+            setPickGif(false);
+          }}
+        />
+      )}
       {editing && (
         <Sheet title="Editar ejercicio" onClose={() => setEditing(false)}>
           <ExerciseEditor initial={e} onSaved={() => setEditing(false)} />
@@ -367,5 +387,45 @@ function Records({ id, e }: { id: string; e: Exercise }) {
         </table>
       </div>
     </>
+  );
+}
+
+// Buscador de GIFs de ExerciseDB para asignar a un ejercicio.
+function GifPicker({ exercise, onClose, onPick }: { exercise: Exercise; onClose: () => void; onPick: (id: string | undefined) => void }) {
+  const [list, setList] = useState<ExdbExercise[] | null>(null);
+  const [err, setErr] = useState('');
+  const [q, setQ] = useState(englishName(exercise).replace(/ - .*/, ''));
+  const [sel, setSel] = useState<string | undefined>(exercise.exdbId);
+  useEffect(() => {
+    loadExdbList().then(setList, (e) => setErr((e as Error).message));
+  }, []);
+  const results = list ? searchExdb(list, q, 40) : [];
+  return (
+    <Sheet title="Elegir GIF (ExerciseDB)" onClose={onClose}>
+      {sel && <ExerciseMedia exdbId={sel} />}
+      <input placeholder="Buscar en inglés (p. ej. bench press)" value={q} onChange={(ev) => setQ(ev.target.value)} />
+      {err && <p className="error small">{err}</p>}
+      {!list && !err && <p className="muted small">Cargando lista…</p>}
+      <div className="list">
+        {results.map((r) => (
+          <button key={r.id} className={`item ${sel === r.id ? 'accent' : ''}`} onClick={() => setSel(r.id)}>
+            <b>{r.name}</b>
+            <small className="muted">
+              {r.target} · {r.equipment}
+            </small>
+          </button>
+        ))}
+      </div>
+      <div className="row picker-actions">
+        <button className="primary grow" disabled={!sel} onClick={() => onPick(sel)}>
+          Usar este GIF
+        </button>
+        {exercise.exdbId && (
+          <button className="ghost" onClick={() => onPick(undefined)}>
+            Quitar GIF
+          </button>
+        )}
+      </div>
+    </Sheet>
   );
 }

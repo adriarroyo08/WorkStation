@@ -4,6 +4,7 @@ import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { importHevyCsv } from '../../../shared/hevy';
 import { clock, downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
+import ExdbSettings from './ExdbSettings';
 import { Back, Toggle } from './ui';
 
 export default function Settings({ onBack }: { onBack: () => void }) {
@@ -85,6 +86,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
 
       <h2>⌚ Reloj y sensores</h2>
       <DevicesPanel />
+
+      <h2>🎞️ GIFs de ejercicios</h2>
+      <ExdbSettings />
 
       <h2>🧮 Calculadora de discos</h2>
       <div className="card">

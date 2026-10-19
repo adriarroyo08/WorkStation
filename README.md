@@ -36,6 +36,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 
 **Ejercicios**
 - 115 ejercicios en español con imágenes animadas (inicio/fin del movimiento) e instrucciones.
+- 🎞️ **GIFs animados de ExerciseDB** (1.300+ ejercicios) con tu propia API key de RapidAPI (hay plan gratuito): *Ajustes → GIFs de ejercicios → Guardar y vincular*. Se vinculan solos por nombre y puedes cambiar el GIF desde la ficha de cada ejercicio. La key y los GIFs se guardan solo en tu dispositivo, quedan en caché para usarlos sin conexión, y las miniaturas no gastan cuota.
 - Catálogo completo de 870+ ejercicios de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público).
 - Ejercicios personalizados con músculos secundarios.
 - Ficha por ejercicio:

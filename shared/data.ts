@@ -18,7 +18,7 @@ export function normalizeData(input: unknown): WorkstationData {
   const exercises: Exercise[] = [
     ...stored.map((e) => {
       const def = defaults.get(e.id);
-      return def && !e.custom ? { ...structuredClone(def), ...(e.stickyNote ? { stickyNote: e.stickyNote } : {}) } : e;
+      return def && !e.custom ? { ...structuredClone(def), ...(e.stickyNote ? { stickyNote: e.stickyNote } : {}), ...(e.exdbId ? { exdbId: e.exdbId } : {}) } : e;
     }),
     ...DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id)).map((e) => structuredClone(e)),
   ];

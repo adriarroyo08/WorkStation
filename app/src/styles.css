@@ -400,3 +400,5 @@ main > section, main > div > section { animation: screen-in 0.32s var(--ease) bo
 button.full.icon-btn { display: flex; }
 .wstats .icon-btn, .live-stats .icon-btn { gap: 4px; }
 input[type='checkbox'] { accent-color: var(--accent); }
+.media.gif img { object-fit: contain; }
+.media.large.gif { background: #fff; }

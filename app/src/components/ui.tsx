@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import { mediaUrls } from '../../../shared/exercises';
+import { useExdbGif } from '../exdb';
 import { PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
 
@@ -33,7 +34,10 @@ export function Back({ onClick, label = 'Volver', right }: { onClick: () => void
 }
 
 // "GIF" del ejercicio: alterna las dos imágenes (inicio/fin del movimiento) del catálogo libre.
-export function ExerciseMedia({ exercise, media, size = 'large' }: { exercise?: Exercise; media?: string; size?: 'thumb' | 'large' }) {
+// Si el ejercicio tiene GIF de ExerciseDB y hay API key, se muestra el GIF; si no, las dos fotos del catálogo libre.
+// Las miniaturas solo usan GIFs ya descargados (para no gastar la cuota de la API en listas).
+export function ExerciseMedia({ exercise, media, exdbId, size = 'large' }: { exercise?: Exercise; media?: string; exdbId?: string; size?: 'thumb' | 'large' }) {
+  const gif = useExdbGif(exdbId ?? exercise?.exdbId, size === 'thumb');
   const urls = mediaUrls(media ?? exercise?.media);
   const [frame, setFrame] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -42,6 +46,12 @@ export function ExerciseMedia({ exercise, media, size = 'large' }: { exercise?: 
     const t = setInterval(() => setFrame((f) => 1 - f), size === 'thumb' ? 1200 : 900);
     return () => clearInterval(t);
   }, [urls.length, size]);
+  if (gif)
+    return (
+      <div className={`media ${size} gif`}>
+        <img src={gif} alt={exercise?.name ?? ''} />
+      </div>
+    );
   if (!urls.length || failed)
     return (
       <div className={`media ${size} placeholder`} aria-hidden>
