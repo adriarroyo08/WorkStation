@@ -90,7 +90,11 @@ El workflow `.github/workflows/android.yml` compila `workstation-phone.apk` y `w
 - **Actions → último run → Artifacts → workstation-apks**.
 - Si creas un tag `v0.3.0`, también se publican en **Releases**.
 
-Las dos APKs se firman con la misma clave (`android/keystore/workstation.jks`, de uso personal). Es un requisito para que el reloj y el móvil se hablen. Para usar tu propia clave define `WS_KEYSTORE`, `WS_KEYSTORE_PASSWORD`, `WS_KEY_ALIAS` y `WS_KEY_PASSWORD`.
+Las dos APKs se firman con la misma clave, que es lo que permite que el reloj y el móvil se hablen. **La clave no está en el repo** (es público): guárdala como secrets del repositorio en *Settings → Secrets and variables → Actions*:
+- `WS_KEYSTORE_B64`: el `.jks` en base64 (`base64 -w0 workstation.jks`).
+- `WS_KEYSTORE_PASSWORD`, `WS_KEY_ALIAS` y `WS_KEY_PASSWORD` (si no los defines, se usa `workstation`).
+
+Sin el secret, el workflow genera una clave temporal en cada build. Funciona, pero para actualizar habría que desinstalar, y se perderían los datos de la app. En local la clave se busca en `android/keystore/workstation.jks`, que está ignorado por git.
 
 ### Instalar
 1. **Móvil:** abre `workstation-phone.apk` y permite "instalar apps desconocidas". Acepta las notificaciones.

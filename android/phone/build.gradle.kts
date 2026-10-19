@@ -17,8 +17,8 @@ android {
 
     signingConfigs {
         // Firma compartida con el reloj: el Data Layer de Wear OS solo conecta apps con el mismo
-        // applicationId y la misma firma. Clave de uso personal incluida en el repo privado;
-        // para usar la tuya define WS_KEYSTORE / WS_KEYSTORE_PASSWORD / WS_KEY_ALIAS / WS_KEY_PASSWORD.
+        // applicationId y la misma firma. La clave NO está en el repo: CI la recibe del secret
+        // WS_KEYSTORE_B64 (ver README) y en local se busca en android/keystore/workstation.jks.
         create("shared") {
             storeFile = rootProject.file(System.getenv("WS_KEYSTORE") ?: "keystore/workstation.jks")
             storePassword = System.getenv("WS_KEYSTORE_PASSWORD") ?: "workstation"

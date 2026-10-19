@@ -29,11 +29,31 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
 
+      # Clave de firma desde secrets (Settings → Secrets and variables → Actions):
+      #   WS_KEYSTORE_B64 = base64 del .jks · WS_KEYSTORE_PASSWORD · WS_KEY_ALIAS · WS_KEY_PASSWORD
+      # Sin secret se genera una clave temporal: funciona, pero cada build tendrá firma distinta
+      # (habría que desinstalar para actualizar y se perderían los datos de la app).
+      - name: Clave de firma
+        working-directory: android
+        env:
+          WS_KEYSTORE_B64: ${{ secrets.WS_KEYSTORE_B64 }}
+        run: |
+          mkdir -p keystore
+          if [ -n "$WS_KEYSTORE_B64" ]; then
+            echo "$WS_KEYSTORE_B64" | base64 -d > keystore/workstation.jks
+          else
+            echo "::warning::Sin secret WS_KEYSTORE_B64: se usa una clave temporal (las actualizaciones requerirán reinstalar)."
+            keytool -genkeypair -keystore keystore/workstation.jks -storepass workstation -keypass workstation -alias workstation -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Workstation"
+          fi
+
       - name: Compilar APKs
         working-directory: android
         env:
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: 0.3.${{ github.run_number }}
+          WS_KEYSTORE_PASSWORD: ${{ secrets.WS_KEYSTORE_PASSWORD || 'workstation' }}
+          WS_KEY_ALIAS: ${{ secrets.WS_KEY_ALIAS || 'workstation' }}
+          WS_KEY_PASSWORD: ${{ secrets.WS_KEY_PASSWORD || 'workstation' }}
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon :phone:assembleRelease :wear:assembleRelease
