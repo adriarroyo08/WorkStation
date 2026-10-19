@@ -9,6 +9,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 | --- | --- |
 | `app/` | PWA (React + Vite). Funciona offline, se instala en el móvil ("Añadir a pantalla de inicio"). Datos en el navegador (IndexedDB). |
 | `mcp/` | Servidor MCP (stdio) para que Claude Desktop, Cursor, LM Studio, etc. lean y editen tus entrenamientos. |
+| `supabase/` | Esquema SQL (tabla `records` con RLS y tiempo real) para la sincronización opcional. |
 | `shared/` | Modelo de datos, estadísticas (1RM de Epley, récords, volumen), lógica del entreno en curso, protocolo del reloj, importadores de Hevy y cliente IA. |
 | `android/phone` | App Android: la misma web empaquetada en un WebView, más puente nativo (reloj, alarma de descanso, notificación en curso, guardar/compartir archivos). |
 | `android/wear` | App Wear OS (Compose for Wear OS): serie actual, completar series, descanso con vibración, pulso del reloj y empezar/terminar desde la muñeca. |
@@ -61,6 +62,22 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 **Ajustes**: descanso por defecto, objetivo semanal, RPE, sonido/vibración, pantalla encendida, inicio de semana, tema claro/oscuro, barra y discos, IA, backups JSON, exportación CSV compatible con Hevy e importación del CSV de Hevy.
 
 Funciona sin conexión: el catálogo y las imágenes vistas quedan en caché.
+
+## ☁️ Cuenta y sincronización (Supabase, opcional)
+
+Sin cuenta, todo se guarda solo en tu dispositivo. Con Supabase (plan gratuito) tus datos se sincronizan entre móvil, web y app Android, y quedan copiados en tu propia base de datos.
+
+1. Crea un proyecto en https://supabase.com.
+2. En **SQL Editor**, pega y ejecuta `supabase/migrations/001_records.sql`. Crea la tabla `records`, con seguridad por usuario (RLS) y tiempo real.
+3. En **Project Settings → API**, copia la *Project URL* y la *anon public key*.
+4. En la app, ve a *Perfil → Ajustes → ☁️ Cuenta y sincronización*, pega los dos valores, crea tu cuenta e inicia sesión. Supabase te enviará un email de confirmación; puedes desactivarlo en *Authentication → Providers → Email*.
+
+Cómo funciona:
+- Cada entreno, rutina, carpeta, ejercicio, medida y tus ajustes es una fila. Se suben solo los cambios.
+- Si dos dispositivos cambian lo mismo, gana el cambio más reciente.
+- Sin conexión, los cambios esperan en cola y se suben al volver la red. El resto de dispositivos se actualiza en tiempo real.
+- No se sincronizan el entreno en curso, las API keys ni las fotos de progreso.
+- La *anon key* es pública por diseño: la seguridad la ponen las políticas RLS. Si prefieres que la app ya venga configurada, puedes definirla en el build con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
 ## ⌚ Android y Wear OS
 

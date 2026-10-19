@@ -4,6 +4,7 @@ import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { importHevyCsv } from '../../../shared/hevy';
 import { clock, downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
+import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
 import { Back, Toggle } from './ui';
 
@@ -48,6 +49,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
     <section>
       <Back onClick={onBack} />
       <h1>Ajustes</h1>
+
+      <h2>☁️ Cuenta y sincronización</h2>
+      <CloudSettings />
 
       <h2>🏋️ Entrenamiento</h2>
       <div className="card">

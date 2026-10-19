@@ -8,6 +8,7 @@ const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
 const Profile = lazy(() => import('./components/Profile'));
 import { useScrollTop } from './components/ui';
+import { useCloudSync } from './cloud';
 import { useSessionController } from './controller';
 import { useRest } from './rest';
 import { toast, useToast } from './toast';
@@ -26,6 +27,7 @@ export type TabId = (typeof TABS)[number]['id'];
 export default function App() {
   const { active } = useStore();
   useSessionController();
+  useCloudSync();
   const [tab, setTab] = useState<TabId>('train');
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   // Desde el entrenamiento en curso abrimos la ficha en una capa encima, sin perder el registro.
