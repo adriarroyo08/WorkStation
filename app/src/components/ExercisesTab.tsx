@@ -18,7 +18,9 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
   const [catalog, setCatalog] = useState(false);
   const [creating, setCreating] = useState(false);
   useEffect(() => {
-    if (openId) (setSel(openId), onOpened?.());
+    if (!openId) return;
+    setSel(openId);
+    onOpened?.();
   }, [openId, onOpened]);
   const prs = new Map(personalRecords(data).map((p) => [p.exerciseId, p]));
   const sorted = [...data.exercises].sort((a, b) => Number(prs.has(b.id)) - Number(prs.has(a.id)) || a.name.localeCompare(b.name));

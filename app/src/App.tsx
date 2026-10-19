@@ -34,8 +34,13 @@ export default function App() {
   const [overlayExercise, setOverlayExercise] = useState<string | null>(null);
   const goExercise = useCallback(
     (id: string) => {
-      if (tab === 'train') ((savedScroll.current = window.scrollY), setOverlayExercise(id));
-      else (setOpenExercise(id), setTab('exercises'));
+      if (tab === 'train') {
+        savedScroll.current = window.scrollY;
+        setOverlayExercise(id);
+      } else {
+        setOpenExercise(id);
+        setTab('exercises');
+      }
     },
     [tab],
   );

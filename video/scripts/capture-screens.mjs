@@ -1,3 +1,4 @@
+/* global window */
 // Capturas de pantallas clave (oscuro y claro) con datos de ejemplo, para el vídeo.
 // Uso (con la app en http://localhost:4173): node scripts/capture-screens.mjs [dir-salida] [csv]
 // CHROMIUM=/ruta/a/chrome para usar un navegador concreto.

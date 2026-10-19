@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories: ['/', '/app', '/mcp', '/video']
+    schedule: { interval: weekly }
+    groups:
+      minor-y-parches:
+        update-types: [minor, patch]
+  - package-ecosystem: gradle
+    directory: /android
+    schedule: { interval: monthly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

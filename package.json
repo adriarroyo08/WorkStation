@@ -5,9 +5,20 @@
   "scripts": {
     "test": "vitest run",
     "build": "npm --prefix app run build && npm --prefix mcp run build",
-    "catalog": "node scripts/build-catalog.mjs"
+    "catalog": "node scripts/build-catalog.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write \"app/src/**/*.{ts,tsx,css}\" \"shared/**/*.ts\" \"mcp/src/**/*.ts\" \"video/src/**/*.tsx\"",
+    "typecheck": "tsc --noEmit -p app && tsc --noEmit -p mcp && tsc --noEmit -p video",
+    "check": "npm run lint && npm run typecheck && npm test && npm --prefix app run build"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.5"
   }
 }
