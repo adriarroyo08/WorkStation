@@ -44,7 +44,7 @@ android {
     }
 
     // La web (app/dist) se empaqueta dentro del APK y se sirve con WebViewAssetLoader.
-    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/webassets"))
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/webassets").get().asFile)
 }
 
 val copyWebApp = tasks.register<Copy>("copyWebApp") {
