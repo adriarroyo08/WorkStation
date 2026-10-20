@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.workstation.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.workstation.app"

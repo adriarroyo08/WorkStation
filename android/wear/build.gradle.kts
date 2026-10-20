@@ -6,7 +6,7 @@ plugins {
 android {
     // Mismo applicationId y firma que la app del móvil: requisito del Data Layer de Wear OS.
     namespace = "com.workstation.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.workstation.app"
