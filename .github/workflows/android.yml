@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths: ['app/**', 'shared/**', 'android/**', '.github/workflows/android.yml']
     tags: ['v*']
+  # Las PR que tocan Android (p. ej. Dependabot) compilan los APK antes de fusionarse.
+  pull_request:
+    paths: ['android/**', '.github/workflows/android.yml']
   workflow_dispatch:
 
 permissions:
