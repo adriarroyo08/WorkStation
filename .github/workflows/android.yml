@@ -59,7 +59,7 @@ jobs:
           set -o pipefail
           # Si falla, el motivo se publica como anotación para verlo sin abrir el log.
           if ! ./gradlew --no-daemon :phone:assembleRelease :wear:assembleRelease 2>&1 | tee gradle.log; then
-            { grep -E -A4 "What went wrong" gradle.log | head -20; grep -E "^e: |error:" gradle.log | head -15; } | grep -v "^--$" | while IFS= read -r l; do echo "::error title=Gradle::$l"; done
+            { grep -E -A14 "What went wrong" gradle.log | head -30; grep -E "^e: |error:" gradle.log | head -15; } | grep -v "^--$" | while IFS= read -r l; do echo "::error title=Gradle::$l"; done
             exit 1
           fi
           mkdir -p ../apk
