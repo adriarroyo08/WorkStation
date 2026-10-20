@@ -1,22 +1,25 @@
 /* ===== Sistema de diseño ===== */
 :root {
-  --bg: #0b0d12;
-  --bg-elev: #11141b;
-  --card: #151921;
-  --card2: #1c212b;
-  --line: rgba(255, 255, 255, 0.07);
-  --line-strong: rgba(255, 255, 255, 0.13);
-  --text: #eef1f6;
-  --muted: #8d95a3;
-  --accent: #5b8cff;
-  --accent-2: #8b5cf6;
-  --ok: #22c55e;
-  --warn: #f59e0b;
-  --danger: #ef4444;
-  --purple: #a78bfa;
-  --glass: rgba(14, 17, 23, 0.86);
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -12px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.75);
+  --bg: #0c0a09;
+  --bg-elev: #141110;
+  --card: #1a1614;
+  --card2: #241e1b;
+  --line: rgba(255, 236, 224, 0.07);
+  --line-strong: rgba(255, 236, 224, 0.14);
+  --text: #f8f4f1;
+  --muted: #a3968e;
+  /* Paleta "Energía": brasa → potencia, con volt para lo conseguido */
+  --accent: #ff5f1f;
+  --accent-2: #ff2d6f;
+  --on-accent: #ffffff;
+  --ok: #c6f34a;
+  --on-ok: #141a05;
+  --warn: #ffb224;
+  --danger: #ff4545;
+  --purple: #b18cff;
+  --glass: rgba(16, 13, 12, 0.86);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -12px rgba(0, 0, 0, 0.65);
+  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
   --grad: linear-gradient(135deg, var(--accent), var(--accent-2));
   --radius: 18px;
   --radius-sm: 12px;
@@ -27,36 +30,46 @@
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #f4f6fb;
+    --bg: #fbf8f5;
     --bg-elev: #ffffff;
     --card: #ffffff;
-    --card2: #eef1f7;
-    --line: rgba(15, 23, 42, 0.08);
-    --line-strong: rgba(15, 23, 42, 0.14);
-    --text: #0f172a;
-    --muted: #64748b;
-    --accent: #3b6cf6;
-    --accent-2: #7c3aed;
+    --card2: #f5efea;
+    --line: rgba(60, 30, 10, 0.08);
+    --line-strong: rgba(60, 30, 10, 0.15);
+    --text: #1d1512;
+    --muted: #7a6b62;
+    --accent: #f2550c;
+    --accent-2: #e8175d;
+    --ok: #5a9a08;
+    --on-ok: #ffffff;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --purple: #7c4dff;
     --glass: rgba(255, 255, 255, 0.88);
-    --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 28px -14px rgba(15, 23, 42, 0.18);
-    --shadow-lg: 0 24px 60px -20px rgba(15, 23, 42, 0.35);
+    --shadow: 0 1px 2px rgba(60, 30, 10, 0.05), 0 12px 28px -14px rgba(60, 30, 10, 0.2);
+    --shadow-lg: 0 24px 60px -20px rgba(60, 30, 10, 0.35);
     color-scheme: light;
   }
 }
 :root[data-theme='light'] {
-  --bg: #f4f6fb;
+  --bg: #fbf8f5;
   --bg-elev: #ffffff;
   --card: #ffffff;
-  --card2: #eef1f7;
-  --line: rgba(15, 23, 42, 0.08);
-  --line-strong: rgba(15, 23, 42, 0.14);
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #3b6cf6;
-  --accent-2: #7c3aed;
+  --card2: #f5efea;
+  --line: rgba(60, 30, 10, 0.08);
+  --line-strong: rgba(60, 30, 10, 0.15);
+  --text: #1d1512;
+  --muted: #7a6b62;
+  --accent: #f2550c;
+  --accent-2: #e8175d;
+  --ok: #5a9a08;
+  --on-ok: #ffffff;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --purple: #7c4dff;
   --glass: rgba(255, 255, 255, 0.88);
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 28px -14px rgba(15, 23, 42, 0.18);
-  --shadow-lg: 0 24px 60px -20px rgba(15, 23, 42, 0.35);
+  --shadow: 0 1px 2px rgba(60, 30, 10, 0.05), 0 12px 28px -14px rgba(60, 30, 10, 0.2);
+  --shadow-lg: 0 24px 60px -20px rgba(60, 30, 10, 0.35);
   color-scheme: light;
 }
 * {
@@ -212,7 +225,7 @@ button:disabled {
 }
 button.primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 button.ghost {
@@ -357,7 +370,7 @@ button.card {
 .chips button.on,
 .segmented button.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .chips.small button {
   padding: 3px 8px;
@@ -484,7 +497,7 @@ button.card {
   margin: 0 auto;
   bottom: calc(66px + env(safe-area-inset-bottom));
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -571,7 +584,7 @@ button.card {
 }
 .exrow.selected .checkmark {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .picker-actions {
   position: sticky;
@@ -687,7 +700,7 @@ button.card {
 }
 .check.on {
   background: var(--ok);
-  color: #fff;
+  color: var(--on-ok);
 }
 .dur {
   position: relative;
@@ -711,7 +724,7 @@ button.card {
   max-width: 696px;
   margin: 0 auto;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 14px;
   padding: 10px 14px;
   display: flex;
@@ -780,6 +793,26 @@ button.card {
   padding: 10px 0;
   overflow-x: auto;
 }
+/* Colores de disco de competición (IWF): 25 rojo, 20 azul, 15 amarillo, 10 verde, ≤5 blanco */
+.plate.p25 {
+  background: #e5262b;
+}
+.plate.p20 {
+  background: #1f6fd6;
+}
+.plate.p15 {
+  background: #f4c20d;
+  color: #1d1512;
+}
+.plate.p10 {
+  background: #2e9e44;
+}
+.plate.p5,
+.plate.p2,
+.plate.p1 {
+  background: #ece8e4;
+  color: #1d1512;
+}
 .barbell {
   width: 60px;
   height: 12px;
@@ -789,7 +822,7 @@ button.card {
 .plate {
   width: 30px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 4px;
   display: grid;
   place-items: center;
@@ -977,7 +1010,7 @@ button.card {
 }
 .cal-d.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 700;
 }
 .cal-d.today {
@@ -1061,7 +1094,7 @@ button.card {
 }
 .bubble.user {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   margin-left: auto;
 }
 .bubble.assistant {
@@ -1567,7 +1600,7 @@ main > div > section {
 
 /* Gráficos */
 .bar {
-  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: linear-gradient(to top, color-mix(in srgb, var(--accent-2) 40%, transparent), color-mix(in srgb, var(--accent) 70%, transparent));
   transition: height 0.6s var(--ease);
 }
 .bar.on {

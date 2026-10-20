@@ -1,15 +1,15 @@
 import { continueRender, delayRender, staticFile } from 'remotion';
 
 export const C = {
-  bg: '#07090d',
-  card: '#151921',
-  text: '#eef1f6',
-  muted: '#8d95a3',
-  accent: '#5b8cff',
-  accent2: '#8b5cf6',
-  ok: '#22c55e',
-  warn: '#f59e0b',
-  danger: '#ef4444',
+  bg: '#0a0807',
+  card: '#1a1614',
+  text: '#f8f4f1',
+  muted: '#a3968e',
+  accent: '#ff5f1f',
+  accent2: '#ff2d6f',
+  ok: '#c6f34a',
+  warn: '#ffb224',
+  danger: '#ff4545',
 };
 
 export const GRAD = `linear-gradient(135deg, ${C.accent}, ${C.accent2})`;

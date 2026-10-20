@@ -64,6 +64,8 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
   - Análisis del coach IA, impresión a PDF y copia como texto.
 - **Medidas**: peso, % de grasa y 11 perímetros con gráficas, más fotos de progreso con comparador (las fotos se quedan en el dispositivo).
 
+**Diseño**: paleta "Energía" — naranja brasa `#FF5F1F` → rosa potencia `#FF2D6F` para la acción, verde volt `#C6F34A` para series completadas y logros, y fondos cálidos en modo claro y oscuro. La calculadora de discos usa los colores de competición (rojo 25, azul 20, amarillo 15, verde 10).
+
 **Ajustes**: descanso por defecto, objetivo semanal, RPE, sonido/vibración, pantalla encendida, inicio de semana, tema claro/oscuro, barra y discos, IA, backups JSON, exportación CSV compatible con Hevy e importación del CSV de Hevy.
 
 Funciona sin conexión: el catálogo y las imágenes vistas quedan en caché.

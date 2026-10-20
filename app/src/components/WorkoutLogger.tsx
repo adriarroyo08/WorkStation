@@ -430,7 +430,7 @@ export function PlateCalculator({ initial, onClose }: { initial: number; onClose
       <div className="plates">
         <div className="barbell" />
         {r.perSide.map((p, i) => (
-          <div key={i} className="plate" style={{ height: `${40 + p * 3}px` }}>
+          <div key={i} className={`plate p${p >= 25 ? 25 : p >= 20 ? 20 : p >= 15 ? 15 : p >= 10 ? 10 : p >= 5 ? 5 : p >= 2 ? 2 : 1}`} style={{ height: `${40 + p * 3}px` }}>
             {p}
           </div>
         ))}

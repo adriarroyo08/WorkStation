@@ -108,7 +108,7 @@ function Watch() {
   return (
     <div style={{ transform: `scale(${s}) rotate(${interpolate(s, [0, 1], [12, 0])}deg)`, position: 'relative', width: size + 60, height: size + 300 }}>
       {/* correa */}
-      <div style={{ position: 'absolute', left: 105, right: 105, top: 0, bottom: 0, borderRadius: 60, background: 'linear-gradient(180deg,#1b1f27,#2b303b,#1b1f27)' }} />
+      <div style={{ position: 'absolute', left: 105, right: 105, top: 0, bottom: 0, borderRadius: 60, background: 'linear-gradient(180deg,#1f1a17,#302823,#1f1a17)' }} />
       {/* caja */}
       <div
         style={{
@@ -119,14 +119,14 @@ function Watch() {
           height: size,
           borderRadius: '50%',
           background: '#000',
-          boxShadow: `0 0 0 14px #2a2f3a, 0 0 0 16px #444, 0 40px 100px -20px rgba(0,0,0,.9), 0 0 100px -30px ${C.accent}`,
+          boxShadow: `0 0 0 14px #2e2622, 0 0 0 16px #4a3f39, 0 40px 100px -20px rgba(0,0,0,.9), 0 0 100px -30px ${C.accent}`,
           display: 'grid',
           placeItems: 'center',
           fontFamily: FONT,
         }}
       >
         <svg width={size} height={size} style={{ position: 'absolute', inset: 0 }}>
-          <circle cx={size / 2} cy={size / 2} r={r} stroke="#1d222c" strokeWidth={14} fill="none" />
+          <circle cx={size / 2} cy={size / 2} r={r} stroke="#2a221e" strokeWidth={14} fill="none" />
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -141,7 +141,7 @@ function Watch() {
           />
         </svg>
         <div style={{ textAlign: 'center', color: '#fff' }}>
-          <div style={{ fontSize: 26, color: '#aab' }}>Descanso</div>
+          <div style={{ fontSize: 26, color: '#bfb1a8' }}>Descanso</div>
           <div style={{ fontSize: 96, fontWeight: 800, letterSpacing: -3 }}>
             {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
           </div>

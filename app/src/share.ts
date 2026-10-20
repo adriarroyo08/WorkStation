@@ -14,19 +14,19 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
   c.height = H;
   const g = c.getContext('2d')!;
   const grad = g.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, '#11141b');
-  grad.addColorStop(1, '#1b2436');
+  grad.addColorStop(0, '#1a1210');
+  grad.addColorStop(1, '#2a1018');
   g.fillStyle = grad;
   g.fillRect(0, 0, W, H);
   const font = (size: number, weight = 400) => (g.font = `${weight} ${size}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`);
 
-  g.fillStyle = '#4f8cff';
+  g.fillStyle = '#ff5f1f';
   font(34, 700);
   g.fillText('WORKSTATION', 70, 100);
   g.fillStyle = '#ffffff';
   font(64, 800);
   g.fillText(w.name.slice(0, 26), 70, 185);
-  g.fillStyle = '#8b919c';
+  g.fillStyle = '#b3a59c';
   font(32);
   g.fillText(new Date(w.startedAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), 70, 238);
 
@@ -41,12 +41,12 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
     g.fillStyle = '#ffffff';
     font(46, 800);
     g.fillText(v, x, 340);
-    g.fillStyle = '#8b919c';
+    g.fillStyle = '#b3a59c';
     font(28);
     g.fillText(l, x, 382);
   });
 
-  g.fillStyle = '#262a33';
+  g.fillStyle = '#3a2a26';
   g.fillRect(70, 430, W - 140, 2);
   let y = 500;
   for (const we of rows) {
@@ -55,13 +55,13 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
     g.fillStyle = '#ffffff';
     font(36, 600);
     g.fillText(`${we.sets.filter((s) => s.done).length} × ${(e?.name ?? we.exerciseId).slice(0, 32)}${pr ? '  🏆' : ''}`, 70, y);
-    g.fillStyle = '#8b919c';
+    g.fillStyle = '#b3a59c';
     font(28);
     g.fillText(bestSetText(we, e), 70, y + 36);
     y += 78;
   }
   if (w.exercises.length > 10) {
-    g.fillStyle = '#8b919c';
+    g.fillStyle = '#b3a59c';
     font(28);
     g.fillText(`+ ${w.exercises.length - 10} ejercicios más`, 70, y);
   }

@@ -42,11 +42,11 @@ import androidx.wear.compose.material.Colors
 import kotlinx.coroutines.delay
 import org.json.JSONObject
 
-private val Accent = Color(0xFF4F8CFF)
-private val Ok = Color(0xFF2FBF71)
-private val Warn = Color(0xFFF5A524)
-private val Danger = Color(0xFFE5484D)
-private val Purple = Color(0xFFA37CF0)
+private val Accent = Color(0xFFFF5F1F)
+private val Ok = Color(0xFFC6F34A)
+private val Warn = Color(0xFFFFB224)
+private val Danger = Color(0xFFFF4545)
+private val Purple = Color(0xFFB18CFF)
 
 @Composable
 fun WatchApp(
@@ -197,7 +197,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
                 CompactButton(onClick = { if (idx > 0) idx-- }, enabled = idx > 0, colors = ButtonDefaults.secondaryButtonColors()) { Text("◀") }
                 Button(
                     modifier = Modifier.size(ButtonDefaults.LargeButtonSize),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = if (set.done) Color.DarkGray else Ok),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = if (set.done) Color.DarkGray else Ok, contentColor = if (set.done) Color.White else Color(0xFF141A05)),
                     onClick = {
                         if (set.done) send(Cmd.uncompleteSet(cur.ei, cur.si))
                         else send(Cmd.completeSet(cur.ei, cur.si, if (usesWeight) weight else null, if (isTime) null else reps, if (isTime) secs else null))

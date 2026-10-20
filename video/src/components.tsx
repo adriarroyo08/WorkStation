@@ -30,7 +30,7 @@ export function Background({ hue = 0 }: { hue?: number }) {
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden', filter: `hue-rotate(${hue}deg)` }}>
       {blob(20, 15, 900, C.accent, 70, 0)}
       {blob(85, 70, 1000, C.accent2, 90, 40)}
-      {blob(50, 110, 700, '#0ea5e9', 110, 80)}
+      {blob(50, 110, 700, '#ffb224', 110, 80)}
       <AbsoluteFill style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)' }} />
     </AbsoluteFill>
   );
@@ -51,14 +51,14 @@ export function Phone({ src, width, delay = 0, tilt = 0, children }: { src?: str
         height,
         borderRadius: radius,
         padding: width * 0.03,
-        background: 'linear-gradient(160deg, #2a2f3a, #0d0f14)',
+        background: 'linear-gradient(160deg, #332b27, #0f0c0b)',
         boxShadow: `0 60px 120px -30px rgba(0,0,0,0.9), 0 0 0 2px rgba(255,255,255,0.08), 0 0 90px -20px ${C.accent}`,
         transform: `perspective(2200px) translateY(${interpolate(enter, [0, 1], [500, 0]) + float}px) rotateX(${interpolate(enter, [0, 1], [25, 0])}deg) rotateY(${tilt * (1 - enter * 0.6)}deg) scale(${interpolate(enter, [0, 1], [0.85, 1])})`,
         opacity: interpolate(enter, [0, 0.3], [0, 1], { extrapolateRight: 'clamp' }),
         position: 'relative',
       }}
     >
-      <div style={{ width: '100%', height: '100%', borderRadius: radius * 0.8, overflow: 'hidden', position: 'relative', background: '#0b0d12' }}>
+      <div style={{ width: '100%', height: '100%', borderRadius: radius * 0.8, overflow: 'hidden', position: 'relative', background: '#0c0a09' }}>
         {src && (
           <Img
             src={staticFile(src)}
@@ -88,8 +88,8 @@ export function Headline({ kicker, title, sub, delay = 0, align = 'center' }: { 
             display: 'inline-block',
             padding: '10px 26px',
             borderRadius: 99,
-            background: 'rgba(91,140,255,0.16)',
-            color: '#a9c1ff',
+            background: 'rgba(255,95,31,0.16)',
+            color: '#ffb08a',
             fontWeight: 700,
             fontSize: land ? 28 : 34,
             letterSpacing: 1,

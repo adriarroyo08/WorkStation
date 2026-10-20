@@ -73,7 +73,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (theme === 'auto') root.removeAttribute('data-theme');
     else if (theme) root.setAttribute('data-theme', theme);
     const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b0d12' : '#f4f6fb');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0c0a09' : '#fbf8f5');
     const t = setTimeout(() => root.classList.remove('theme-anim'), 400);
     return () => clearTimeout(t);
   }, [theme]);
