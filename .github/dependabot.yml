@@ -1,4 +1,6 @@
 version: 2
+# Agrupado para que las dependencias que deben subir juntas lleguen en un solo PR
+# (p. ej. eslint + @eslint/js, o Kotlin + su plugin de Compose).
 updates:
   - package-ecosystem: npm
     directories: ['/', '/app', '/mcp', '/video']
@@ -6,9 +8,23 @@ updates:
     groups:
       minor-y-parches:
         update-types: [minor, patch]
+      eslint:
+        patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'eslint-plugin-*']
+      remotion:
+        patterns: ['remotion', '@remotion/*']
   - package-ecosystem: gradle
     directory: /android
     schedule: { interval: monthly }
+    groups:
+      kotlin:
+        patterns: ['org.jetbrains.kotlin*', 'org.jetbrains.kotlinx*']
+      android-gradle-plugin:
+        patterns: ['com.android.*']
+      androidx:
+        patterns: ['androidx.*', 'com.google.android.*']
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions:
+        patterns: ['*']
