@@ -47,7 +47,7 @@ android {
     sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/webassets"))
 }
 
-val copyWebApp by tasks.registering(Copy::class) {
+val copyWebApp = tasks.register<Copy>("copyWebApp") {
     val dist = rootProject.file("../app/dist")
     doFirst {
         if (!dist.exists()) throw GradleException("Falta app/dist: ejecuta antes `npm --prefix app run build`")
