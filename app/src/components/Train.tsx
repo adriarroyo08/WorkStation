@@ -6,10 +6,13 @@ import { uid } from '../../../shared/types';
 import { PROGRAMS, instantiateProgram, type ProgramTemplate } from '../../../shared/templates';
 import { importHevyCsv } from '../../../shared/hevy';
 import { hasPendingData } from '../../../shared/session';
+import { MUSCLE_LABELS } from '../../../shared/exercises';
+import { muscleRecovery, nextRoutine } from '../../../shared/planning';
 import { discardActive, finishActive, startEmpty, startWorkout, summary, useSummary } from '../controller';
 import { clock, useStore } from '../store';
 import ExercisePicker from './ExercisePicker';
-import { ClipboardList, Compass, Flame, FolderPlus, MoreHorizontal, Play, Plus } from 'lucide-react';
+import { BatteryCharging, CalendarCheck, ClipboardList, Compass, Flame, FolderPlus, MoreHorizontal, Play, Plus } from 'lucide-react';
+import BodyMap from './BodyMap';
 import { Back, ExerciseMedia, ProgressRing, Sheet, useScrollTop } from './ui';
 import WorkoutDetail from './WorkoutDetail';
 import WorkoutLogger from './WorkoutLogger';
@@ -48,6 +51,83 @@ export default function Train({ onExercise }: { onExercise: (id: string) => void
   if (editing) return <RoutineEditor initial={editing} onClose={() => setEditing(null)} />;
   if (view === 'explore') return <Explore onBack={() => setView('home')} />;
   return <Home onNewRoutine={(folderId) => setEditing({ id: uid(), name: 'Nueva rutina', folderId, exercises: [] })} onEdit={setEditing} onExplore={() => setView('explore')} />;
+}
+
+const ago = (iso: string) => {
+  const days = Math.round((Date.now() - Date.parse(iso)) / 86400_000);
+  return days <= 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`;
+};
+
+// "Hoy toca": siguiente rutina del programa y estado de recuperación de cada músculo.
+function Today() {
+  const store = useStore();
+  const { data } = store;
+  const [showRecovery, setShowRecovery] = useState(false);
+  const next = nextRoutine(data);
+  const recovery = muscleRecovery(data);
+  const folder = next && data.folders.find((f) => f.id === next.routine.folderId);
+  if (!next && !recovery.length) return null;
+  const tired = recovery.filter((r) => r.recovery < 0.6);
+  return (
+    <>
+      {next && (
+        <div className="card today">
+          <div className="row">
+            <CalendarCheck size={18} className="tile-ico" />
+            <span className="muted small grow">Hoy toca{folder ? ` · ${folder.name}` : ''}</span>
+            {next.last && <span className="muted small">Última vez {ago(next.last.startedAt)}</span>}
+          </div>
+          <h3>{next.routine.name}</h3>
+          <button className="primary full icon-btn" onClick={() => startWorkout(store, workoutFromRoutine(next.routine))}>
+            <Play size={16} fill="currentColor" /> Empezar
+          </button>
+        </div>
+      )}
+      {recovery.length > 0 && (
+        <button className="card recovery-row" onClick={() => setShowRecovery(true)}>
+          <BatteryCharging size={18} className="tile-ico" />
+          <span className="grow left small">
+            {tired.length ? (
+              <>
+                En recuperación:{' '}
+                <b>
+                  {tired
+                    .slice(0, 3)
+                    .map((r) => MUSCLE_LABELS[r.muscle])
+                    .join(', ')}
+                </b>
+                {tired.length > 3 ? ` y ${tired.length - 3} más` : ''}
+              </>
+            ) : (
+              'Músculos casi recuperados: buen momento para entrenar fuerte'
+            )}
+          </span>
+          <span className="muted small">Ver</span>
+        </button>
+      )}
+      {showRecovery && (
+        <Sheet title="Recuperación muscular" onClose={() => setShowRecovery(false)}>
+          <BodyMap fatigue sets={Object.fromEntries(recovery.map((r) => [r.muscle, 1 - r.recovery]))} />
+          <div className="list">
+            {recovery.map((r) => (
+              <div key={r.muscle} className="recovery-item">
+                <div className="row">
+                  <b className="grow">{MUSCLE_LABELS[r.muscle]}</b>
+                  <span className="small muted">
+                    {Math.round(r.recovery * 100)}% · hace {Math.round(r.hoursSince)} h
+                  </span>
+                </div>
+                <div className="progress thin">
+                  <div style={{ width: `${r.recovery * 100}%`, background: r.recovery < 0.5 ? 'var(--warn)' : r.recovery < 0.85 ? 'var(--accent)' : 'var(--ok)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="muted small">Estimación según las series efectivas de los últimos 3 días (36–72 h por músculo). Escucha a tu cuerpo.</p>
+        </Sheet>
+      )}
+    </>
+  );
 }
 
 function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: string) => void; onEdit: (r: Routine) => void; onExplore: () => void }) {
@@ -90,6 +170,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           </span>
         </div>
       </div>
+      <Today />
       {!data.workouts.length && !data.routines.length && (
         <div className="card welcome">
           <h3>👋 Bienvenido a Workstation</h3>

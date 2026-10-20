@@ -20,4 +20,6 @@ export default tseslint.config(
     },
   },
   { files: ['**/*.mjs', 'scripts/**'], languageOptions: { globals: globals.node } },
+  // Los fixtures de Playwright usan un parámetro llamado `use` que no es un hook de React.
+  { files: ['e2e/**'], rules: { 'react-hooks/rules-of-hooks': 'off' } },
 );

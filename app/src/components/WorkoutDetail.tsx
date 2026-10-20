@@ -13,7 +13,8 @@ import { newlyUnlocked } from '../../../shared/achievements';
 import { AchievementBadge } from './Achievements';
 import BodyMap from './BodyMap';
 import LineChart from './LineChart';
-import { Back, ExerciseMedia, HBars, PrList, Stat } from './ui';
+import { Back, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
+import { compareWithPrevious } from '../../../shared/planning';
 import WorkoutLogger from './WorkoutLogger';
 
 // Detalle de un entrenamiento guardado. `justFinished` muestra la pantalla de "¡Buen trabajo!".
@@ -64,6 +65,7 @@ export default function WorkoutDetail({
   const totalSets = [...regions.values()].reduce((a, b) => a + b, 0) || 1;
   const routine = data.routines.find((r) => r.id === w.routineId);
   const unlockedNow = justFinished ? newlyUnlocked(data, id) : [];
+  const cmp = compareWithPrevious(data, id);
   const count = [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)).findIndex((x) => x.id === id) + 1;
 
   const share = async () => shareOrDownload(await workoutImage(data, w), `entreno-${w.startedAt.slice(0, 10)}.png`, w.name);
@@ -109,6 +111,18 @@ export default function WorkoutDetail({
         <Stat value={workoutSetCount(w)} label="series" />
         <Stat value={prs.length} label="récords" />
       </div>
+      {cmp && (
+        <div className="card vs-last">
+          <h3>Frente a la última vez</h3>
+          <p className="muted small">{fmtDate(cmp.previous.startedAt)}</p>
+          <div className="stats four">
+            <Stat value={fmtCompact(cmp.volume[0])} label="kg volumen" extra={<Delta cur={cmp.volume[0]} prev={cmp.volume[1]} unit=" kg" />} />
+            <Stat value={cmp.sets[0]} label="series" extra={<Delta cur={cmp.sets[0]} prev={cmp.sets[1]} />} />
+            <Stat value={cmp.reps[0]} label="reps" extra={<Delta cur={cmp.reps[0]} prev={cmp.reps[1]} />} />
+            <Stat value={formatDuration(cmp.durationMin[0] * 60)} label="duración" extra={<Delta cur={cmp.durationMin[0]} prev={cmp.durationMin[1]} unit=" min" />} />
+          </div>
+        </div>
+      )}
       {w.notes && <p className="card small">{w.notes}</p>}
       {w.heartRate && (
         <div className="card">

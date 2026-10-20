@@ -6,9 +6,15 @@ import { PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
 
 export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
+  // Escape cierra la hoja (teclado, mandos y lectores de pantalla).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
     <div className="modal" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="row sheet-head">
           <b className="grow">{title}</b>
           <button className="ghost" onClick={onClose} aria-label="Cerrar">

@@ -8,3 +8,5 @@ android/local.properties
 apk/
 android/keystore/
 video/out/
+test-results/
+playwright-report/

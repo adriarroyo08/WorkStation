@@ -48,18 +48,19 @@ function figure(cx: number, back: boolean): Shape[] {
 
 const SHAPES = [...figure(50, false), ...figure(150, true)];
 
-export default function BodyMap({ sets }: { sets: Partial<Record<MuscleGroup, number>> }) {
-  const max = Math.max(1, ...Object.values(sets).map((v) => v ?? 0));
+// fatigue: valores 0..1 de fatiga (1 = recién entrenado); se pinta en naranja y sin leyenda de series.
+export default function BodyMap({ sets, fatigue = false }: { sets: Partial<Record<MuscleGroup, number>>; fatigue?: boolean }) {
+  const max = fatigue ? 1 : Math.max(1, ...Object.values(sets).map((v) => v ?? 0));
   const top = (Object.entries(sets) as [MuscleGroup, number][]).sort((a, b) => b[1] - a[1]).slice(0, 3);
   return (
     <div className="bodymap">
-      <svg viewBox="0 0 200 180" role="img" aria-label="Mapa de músculos trabajados">
+      <svg viewBox="0 0 200 180" role="img" aria-label={fatigue ? 'Mapa de recuperación muscular' : 'Mapa de músculos trabajados'}>
         {SHAPES.map((s, i) => {
           const v = s.m ? (sets[s.m] ?? 0) : 0;
           const ratio = v / max;
           return (
-            <path key={i} d={s.d} className={s.m ? 'bm-muscle' : 'bm-base'} style={s.m && v ? { fill: 'var(--accent)', fillOpacity: 0.25 + 0.75 * ratio } : undefined}>
-              {s.m && <title>{`${MUSCLE_LABELS[s.m]}: ${Math.round(v * 10) / 10} series`}</title>}
+            <path key={i} d={s.d} className={s.m ? 'bm-muscle' : 'bm-base'} style={s.m && v ? { fill: fatigue ? 'var(--warn)' : 'var(--accent)', fillOpacity: 0.25 + 0.75 * ratio } : undefined}>
+              {s.m && <title>{fatigue ? `${MUSCLE_LABELS[s.m]}: ${Math.round((1 - v) * 100)}% recuperado` : `${MUSCLE_LABELS[s.m]}: ${Math.round(v * 10) / 10} series`}</title>}
             </path>
           );
         })}
@@ -70,7 +71,7 @@ export default function BodyMap({ sets }: { sets: Partial<Record<MuscleGroup, nu
           Trasera
         </text>
       </svg>
-      {top.length > 0 && <p className="muted small center-text">Más trabajado: {top.map(([m, v]) => `${MUSCLE_LABELS[m]} (${Math.round(v)})`).join(' · ')}</p>}
+      {!fatigue && top.length > 0 && <p className="muted small center-text">Más trabajado: {top.map(([m, v]) => `${MUSCLE_LABELS[m]} (${Math.round(v)})`).join(' · ')}</p>}
     </div>
   );
 }

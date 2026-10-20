@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { achievements } from './achievements';
 import { findOrCreateExercise, routineFromDraft } from './data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts } from './hevy';
+import { muscleRecovery, nextRoutine } from './planning';
 import { suggestNext } from './progression';
 import { period, periodReport, reportToText, weekStreak } from './reports';
 import { exerciseHistory, formatSet, lastSessionSets, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from './stats';
@@ -133,6 +134,20 @@ export const TOOLS: ToolDef[] = [
       if (!e) return `Ejercicio no encontrado: ${exercise}`;
       const s = suggestNext(lastSessionSets(data, e.id), e, target_reps);
       return s ? json({ exercise: e.name, ...s }) : `Sin datos previos de ${e.name}.`;
+    },
+  }),
+  tool({
+    name: 'today_plan',
+    description: 'Qué rutina toca hoy (siguiente del programa) y recuperación estimada de cada músculo (0-100 %) según los últimos 3 días.',
+    shape: {},
+    run: async (src) => {
+      const data = await src.load();
+      const next = nextRoutine(data);
+      const ex = new Map(data.exercises.map((e) => [e.id, e.name]));
+      return json({
+        next_routine: next && { id: next.routine.id, name: next.routine.name, exercises: next.routine.exercises.map((e) => ex.get(e.exerciseId) ?? e.exerciseId), last_done: next.last?.startedAt },
+        recovery: muscleRecovery(data).map((r) => ({ muscle: r.muscle, recovered_pct: Math.round(r.recovery * 100), hours_since: Math.round(r.hoursSince), last_sets: r.sets })),
+      });
     },
   }),
   tool({
