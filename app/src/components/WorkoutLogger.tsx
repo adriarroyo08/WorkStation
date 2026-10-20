@@ -338,7 +338,7 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace }: { w: Workout; ei: num
       <p className="muted small">{ex && MUSCLE_LABELS[ex.muscle]}</p>
       <label>
         ⏲ Temporizador de descanso
-        <select value={we.restSec ?? settings.defaultRestSec} onChange={(e) => edit((n) => void (n.exercises[ei].restSec = Number(e.target.value)))}>
+        <select aria-label="Descanso" value={we.restSec ?? settings.defaultRestSec} onChange={(e) => edit((n) => void (n.exercises[ei].restSec = Number(e.target.value)))}>
           {REST_OPTIONS.map((s) => (
             <option key={s} value={s}>
               {s ? clock(s) : 'Desactivado'}
@@ -511,7 +511,7 @@ function SetRow(props: {
         <input inputMode="numeric" placeholder={prev?.reps?.toString() ?? ''} value={s.reps ?? ''} onChange={(e) => onChange({ reps: numVal(e.target.value) })} />
       )}
       {showRpe && (
-        <select className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
+        <select aria-label="RPE" className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
           <option value="">–</option>
           {RPE_OPTIONS.map((r) => (
             <option key={r} value={r}>

@@ -27,7 +27,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       # Clave de firma desde secrets (Settings → Secrets and variables → Actions):
       #   WS_KEYSTORE_B64 = base64 del .jks · WS_KEYSTORE_PASSWORD · WS_KEY_ALIAS · WS_KEY_PASSWORD
@@ -56,7 +56,12 @@ jobs:
           WS_KEY_PASSWORD: ${{ secrets.WS_KEY_PASSWORD || 'workstation' }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon :phone:assembleRelease :wear:assembleRelease
+          set -o pipefail
+          # Si falla, el motivo se publica como anotación para verlo sin abrir el log.
+          if ! ./gradlew --no-daemon :phone:assembleRelease :wear:assembleRelease 2>&1 | tee gradle.log; then
+            grep -E "^e: |What went wrong|error:|Could not|> " gradle.log | head -25 | while IFS= read -r l; do echo "::error title=Gradle::$l"; done
+            exit 1
+          fi
           mkdir -p ../apk
           cp phone/build/outputs/apk/release/phone-release.apk ../apk/workstation-phone.apk
           cp wear/build/outputs/apk/release/wear-release.apk ../apk/workstation-wear.apk

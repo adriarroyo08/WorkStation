@@ -18,7 +18,7 @@ export function useExerciseFilter(exercises: Exercise[]) {
     <>
       <input placeholder="Buscar ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="row">
-        <select value={muscle} onChange={(e) => setMuscle(e.target.value as MuscleGroup | '')}>
+        <select aria-label="Filtrar por músculo" value={muscle} onChange={(e) => setMuscle(e.target.value as MuscleGroup | '')}>
           <option value="">Todos los músculos</option>
           {Object.entries(MUSCLE_LABELS).map(([k, v]) => (
             <option key={k} value={k}>
@@ -26,7 +26,7 @@ export function useExerciseFilter(exercises: Exercise[]) {
             </option>
           ))}
         </select>
-        <select value={equipment} onChange={(e) => setEquipment(e.target.value)}>
+        <select aria-label="Filtrar por material" value={equipment} onChange={(e) => setEquipment(e.target.value)}>
           <option value="">Todo el material</option>
           {EQUIPMENT.map((k) => (
             <option key={k}>{k}</option>

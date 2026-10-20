@@ -11,16 +11,23 @@
   /* Paleta "Energía": brasa → potencia, con volt para lo conseguido */
   --accent: #ff5f1f;
   --accent-2: #ff2d6f;
+  /* Variantes con contraste AA: texto de acento y rellenos con texto blanco encima */
+  --accent-ink: var(--accent);
+  --accent-fill: #d4400c;
+  --accent-2-fill: #e0195a;
   --on-accent: #ffffff;
   --ok: #c6f34a;
   --on-ok: #141a05;
   --warn: #ffb224;
+  --warn-ink: var(--warn);
+  --ok-ink: var(--ok);
   --danger: #ff4545;
   --purple: #b18cff;
   --glass: rgba(16, 13, 12, 0.86);
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -12px rgba(0, 0, 0, 0.65);
   --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
-  --grad: linear-gradient(135deg, var(--accent), var(--accent-2));
+  --grad: linear-gradient(135deg, var(--accent-fill), var(--accent-2-fill));
+  --grad-vivid: linear-gradient(135deg, var(--accent), var(--accent-2));
   --radius: 18px;
   --radius-sm: 12px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -40,9 +47,14 @@
     --muted: #7a6b62;
     --accent: #f2550c;
     --accent-2: #e8175d;
+    --accent-ink: #c2410c;
+    --accent-fill: #cc3d0a;
+    --accent-2-fill: #d6145a;
     --ok: #5a9a08;
+    --ok-ink: #3d6b04;
     --on-ok: #ffffff;
     --warn: #d97706;
+    --warn-ink: #92400e;
     --danger: #dc2626;
     --purple: #7c4dff;
     --glass: rgba(255, 255, 255, 0.88);
@@ -62,9 +74,14 @@
   --muted: #7a6b62;
   --accent: #f2550c;
   --accent-2: #e8175d;
+  --accent-ink: #c2410c;
+  --accent-fill: #cc3d0a;
+  --accent-2-fill: #d6145a;
   --ok: #5a9a08;
+  --ok-ink: #3d6b04;
   --on-ok: #ffffff;
   --warn: #d97706;
+  --warn-ink: #92400e;
   --danger: #dc2626;
   --purple: #7c4dff;
   --glass: rgba(255, 255, 255, 0.88);
@@ -124,7 +141,7 @@ h3 {
   margin: 2px 0 10px;
 }
 a {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 code {
   background: var(--line);
@@ -160,7 +177,7 @@ ul {
   min-height: 100dvh;
 }
 .accent-text {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .error {
   color: var(--danger);
@@ -224,13 +241,13 @@ button:disabled {
   cursor: default;
 }
 button.primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
 button.ghost {
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 button.danger,
 .item.danger {
@@ -292,7 +309,7 @@ button.card {
   gap: 2px;
 }
 .item.accent {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .tile {
   display: flex;
@@ -303,7 +320,7 @@ button.card {
   font-weight: 600;
 }
 .tile.on {
-  border-color: var(--accent);
+  border-color: var(--accent-ink);
 }
 .explore {
   text-align: left;
@@ -351,7 +368,7 @@ button.card {
   color: var(--muted);
 }
 .delta.up {
-  color: var(--ok);
+  color: var(--ok-ink);
 }
 .delta.down {
   color: var(--danger);
@@ -369,7 +386,7 @@ button.card {
 }
 .chips button.on,
 .segmented button.on {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
 }
 .chips.small button {
@@ -411,7 +428,7 @@ button.card {
   width: 20px;
   height: 20px;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--accent-ink);
 }
 .progress {
   height: 8px;
@@ -487,7 +504,7 @@ button.card {
   font-size: 20px;
 }
 .tabs button.on {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .active-banner {
   position: fixed;
@@ -496,7 +513,7 @@ button.card {
   max-width: 696px;
   margin: 0 auto;
   bottom: calc(66px + env(safe-area-inset-bottom));
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   display: flex;
   align-items: center;
@@ -570,7 +587,7 @@ button.card {
   flex-direction: column;
 }
 .exrow.selected {
-  border-color: var(--accent);
+  border-color: var(--accent-ink);
 }
 .checkmark {
   width: 24px;
@@ -580,10 +597,10 @@ button.card {
   display: grid;
   place-items: center;
   font-size: 12px;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .exrow.selected .checkmark {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
 }
 .picker-actions {
@@ -675,7 +692,7 @@ button.card {
 }
 .settype.warmup,
 .settype-item.warmup b {
-  color: var(--warn);
+  color: var(--warn-ink);
 }
 .settype.drop,
 .settype-item.drop b {
@@ -711,7 +728,7 @@ button.card {
   top: 50%;
   transform: translateY(-50%);
   font-size: 12px;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .dur .sw.on {
   color: var(--danger);
@@ -723,7 +740,7 @@ button.card {
   bottom: calc(70px + env(safe-area-inset-bottom));
   max-width: 696px;
   margin: 0 auto;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   border-radius: 14px;
   padding: 10px 14px;
@@ -821,7 +838,7 @@ button.card {
 }
 .plate {
   width: 30px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   border-radius: 4px;
   display: grid;
@@ -843,7 +860,7 @@ button.card {
   margin: 6px 0 0;
 }
 .setlist li.warmup {
-  color: var(--warn);
+  color: var(--warn-ink);
 }
 .setlist li.drop {
   color: var(--purple);
@@ -853,7 +870,7 @@ button.card {
 }
 .pr-pill {
   background: color-mix(in srgb, var(--warn) 20%, transparent);
-  color: var(--warn);
+  color: var(--warn-ink);
   border-radius: 99px;
   padding: 2px 8px;
   font-size: 13px;
@@ -1009,7 +1026,7 @@ button.card {
   opacity: 1;
 }
 .cal-d.on {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 700;
 }
@@ -1093,7 +1110,7 @@ button.card {
   max-width: 92%;
 }
 .bubble.user {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   margin-left: auto;
 }
@@ -1148,7 +1165,7 @@ button.card {
 }
 .pill.ok {
   background: color-mix(in srgb, var(--ok) 20%, transparent);
-  color: var(--ok);
+  color: var(--ok-ink);
 }
 .hr-live {
   color: var(--danger);
@@ -1207,7 +1224,7 @@ button.card {
   animation: toast-in 0.2s ease-out;
 }
 .toast button.ghost {
-  color: var(--accent);
+  color: var(--accent-ink);
   font-weight: 700;
   padding: 4px 8px;
 }
@@ -1276,7 +1293,7 @@ button.card {
 }
 .new-badges {
   text-align: left;
-  border-color: var(--warn);
+  border-color: var(--warn-ink);
 }
 .heatmap svg {
   width: 100%;
@@ -1330,7 +1347,7 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-ink);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
   background: var(--card);
 }
@@ -1576,7 +1593,7 @@ main > div > section {
 }
 .chip.warm {
   background: color-mix(in srgb, var(--warn) 16%, transparent);
-  color: var(--warn);
+  color: var(--warn-ink);
 }
 .icon-btn {
   display: inline-flex;
@@ -1604,14 +1621,14 @@ main > div > section {
   transition: height 0.6s var(--ease);
 }
 .bar.on {
-  background: var(--grad);
+  background: var(--grad-vivid);
 }
 .hbar-fill {
-  background: var(--grad);
+  background: var(--grad-vivid);
   transition: width 0.7s var(--ease);
 }
 .progress > div {
-  background: var(--grad);
+  background: var(--grad-vivid);
 }
 .media {
   box-shadow: var(--shadow);
@@ -1627,7 +1644,7 @@ main > div > section {
   }
 }
 .tile-ico {
-  color: var(--accent);
+  color: var(--accent-ink);
   margin-bottom: 4px;
 }
 .tile-ico.inline {
@@ -1647,7 +1664,7 @@ button.full.icon-btn {
   gap: 4px;
 }
 input[type='checkbox'] {
-  accent-color: var(--accent);
+  accent-color: var(--accent-ink);
 }
 .media.gif img {
   object-fit: contain;
@@ -1663,7 +1680,7 @@ input[type='checkbox'] {
   background: var(--card2);
 }
 .new-key {
-  border-color: var(--ok);
+  border-color: var(--ok-ink);
 }
 pre.code {
   background: var(--card2);
@@ -1695,7 +1712,7 @@ pre.code {
   color: var(--text);
 }
 .recovery-row .tile-ico {
-  color: var(--warn);
+  color: var(--warn-ink);
 }
 .recovery-item {
   padding: 8px 0;

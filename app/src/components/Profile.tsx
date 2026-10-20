@@ -127,7 +127,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
       <div className="card">
         <div className="row">
           <h3 className="grow">Distribución muscular (series)</h3>
-          <select className="inline" value={muscleRange} onChange={(e) => setMuscleRange(Number(e.target.value) as 30 | 90 | 365)}>
+          <select aria-label="Periodo" className="inline" value={muscleRange} onChange={(e) => setMuscleRange(Number(e.target.value) as 30 | 90 | 365)}>
             <option value={30}>30 días</option>
             <option value={90}>3 meses</option>
             <option value={365}>1 año</option>

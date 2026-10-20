@@ -297,7 +297,11 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             </button>
             <label>
               Mover a carpeta
-              <select value={menu.folderId ?? ''} onChange={(e) => (update((d) => void (d.routines.find((r) => r.id === menu.id)!.folderId = e.target.value || undefined)), setMenu(null))}>
+              <select
+                aria-label="Carpeta"
+                value={menu.folderId ?? ''}
+                onChange={(e) => (update((d) => void (d.routines.find((r) => r.id === menu.id)!.folderId = e.target.value || undefined)), setMenu(null))}
+              >
                 <option value="">Mis rutinas (sin carpeta)</option>
                 {data.folders.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -468,7 +472,7 @@ function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => 
             <div className="row small">
               <label className="grow">
                 Descanso
-                <select value={e.restSec} onChange={(ev) => edit((n) => void (n.exercises[i].restSec = Number(ev.target.value)))}>
+                <select aria-label="Descanso" value={e.restSec} onChange={(ev) => edit((n) => void (n.exercises[i].restSec = Number(ev.target.value)))}>
                   {[0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map((s) => (
                     <option key={s} value={s}>
                       {s ? clock(s) : 'Off'}
