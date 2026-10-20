@@ -1,11 +1,10 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.workstation.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.workstation.app"
@@ -43,7 +42,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 
     // La web (app/dist) se empaqueta dentro del APK y se sirve con WebViewAssetLoader.
     sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/webassets"))
@@ -60,8 +58,8 @@ val copyWebApp by tasks.registering(Copy::class) {
 tasks.named("preBuild") { dependsOn(copyWebApp) }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.core:core-ktx:1.19.1")
+    implementation("androidx.appcompat:appcompat:1.8.0")
     implementation("androidx.webkit:webkit:1.12.1")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
     implementation("androidx.wear:wear-remote-interactions:1.1.0")
