@@ -1,5 +1,5 @@
-import { ListChecks, MoreHorizontal, Plus, Timer, Watch, Weight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ListChecks, MoreHorizontal, Plus, Timer, Trash2, Watch, Weight } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
 import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, lastSessionSets } from '../../../shared/stats';
@@ -463,6 +463,7 @@ function SetRow(props: {
 }) {
   const { id, isNext, n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
+  const swipe = useSwipeToDelete(onRemove);
   const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const kind = ex?.kind ?? 'weight_reps';
   const prevTxt = prev
@@ -482,68 +483,127 @@ function SetRow(props: {
     />
   );
   return (
-    <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`}>
-      <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
-        {SET_LABEL[s.type] || n}
-        {pr && <span className="pr-badge">🏆</span>}
-      </button>
-      <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
-        {prevTxt}
-      </span>
-      {kind === 'distance' ? (
-        <input inputMode="decimal" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM ?? ''} onChange={(e) => onChange({ distanceM: numVal(e.target.value) })} />
-      ) : (
-        weightInput
-      )}
-      {kind === 'duration' || kind === 'distance' ? (
-        <div className="dur">
-          <input
-            inputMode="numeric"
-            placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'}
-            value={running ?? s.durationSec ?? ''}
-            onChange={(e) => onChange({ durationSec: numVal(e.target.value) })}
-          />
-          <button className={`plain sw ${running !== undefined ? 'on' : ''}`} onClick={onStopwatch} aria-label="Cronómetro">
-            {running !== undefined ? '■' : '▶'}
-          </button>
-        </div>
-      ) : (
-        <input inputMode="numeric" placeholder={prev?.reps?.toString() ?? ''} value={s.reps ?? ''} onChange={(e) => onChange({ reps: numVal(e.target.value) })} />
-      )}
-      {showRpe && (
-        <select aria-label="RPE" className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
-          <option value="">–</option>
-          {RPE_OPTIONS.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      )}
-      <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle} aria-label="Completar serie">
-        ✓
-      </button>
-      {typeMenu && (
-        <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
-          <div className="list">
-            {SET_CYCLE.map((t) => (
-              <button key={t} className={`item settype-item ${t}`} onClick={() => (onChange({ type: t }), setTypeMenu(false))}>
-                <b>{SET_LABEL[t] || '1'}</b> {SET_NAMES[t]}
-              </button>
-            ))}
-            {kind === 'weight_reps' && (
-              <button className="item" onClick={() => (setTypeMenu(false), onPlates())}>
-                🧮 Calculadora de discos
-              </button>
-            )}
-            <button className="item danger" onClick={() => (onRemove(), setTypeMenu(false))}>
-              🗑 Borrar serie
+    <div className={`swipe ${swipe.armed ? 'armed' : ''}`}>
+      <div className="swipe-bg" aria-hidden="true">
+        <Trash2 size={18} /> Borrar
+      </div>
+      <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`} {...swipe.handlers} style={swipe.style}>
+        <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
+          {SET_LABEL[s.type] || n}
+          {pr && <span className="pr-badge">🏆</span>}
+        </button>
+        <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
+          {prevTxt}
+        </span>
+        {kind === 'distance' ? (
+          <input inputMode="decimal" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM ?? ''} onChange={(e) => onChange({ distanceM: numVal(e.target.value) })} />
+        ) : (
+          weightInput
+        )}
+        {kind === 'duration' || kind === 'distance' ? (
+          <div className="dur">
+            <input
+              inputMode="numeric"
+              placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'}
+              value={running ?? s.durationSec ?? ''}
+              onChange={(e) => onChange({ durationSec: numVal(e.target.value) })}
+            />
+            <button className={`plain sw ${running !== undefined ? 'on' : ''}`} onClick={onStopwatch} aria-label="Cronómetro">
+              {running !== undefined ? '■' : '▶'}
             </button>
           </div>
-        </Sheet>
-      )}
+        ) : (
+          <input inputMode="numeric" placeholder={prev?.reps?.toString() ?? ''} value={s.reps ?? ''} onChange={(e) => onChange({ reps: numVal(e.target.value) })} />
+        )}
+        {showRpe && (
+          <select aria-label="RPE" className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
+            <option value="">–</option>
+            {RPE_OPTIONS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        )}
+        <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle} aria-label="Completar serie">
+          ✓
+        </button>
+        {typeMenu && (
+          <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
+            <div className="list">
+              {SET_CYCLE.map((t) => (
+                <button key={t} className={`item settype-item ${t}`} onClick={() => (onChange({ type: t }), setTypeMenu(false))}>
+                  <b>{SET_LABEL[t] || '1'}</b> {SET_NAMES[t]}
+                </button>
+              ))}
+              {kind === 'weight_reps' && (
+                <button className="item" onClick={() => (setTypeMenu(false), onPlates())}>
+                  🧮 Calculadora de discos
+                </button>
+              )}
+              <button className="item danger" onClick={() => (onRemove(), setTypeMenu(false))}>
+                🗑 Borrar serie
+              </button>
+            </div>
+          </Sheet>
+        )}
+      </div>
     </div>
   );
+}
+
+// Deslizar una serie hacia la izquierda la borra (como en Hevy). Solo actúa en gestos horizontales,
+// así que el scroll vertical y escribir en los campos siguen funcionando igual.
+const SWIPE_DELETE_PX = 96;
+function useSwipeToDelete(onDelete: () => void) {
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const g = useRef<{ x: number; y: number; id: number; active: boolean } | null>(null);
+  const swiped = useRef(false);
+  const armed = dx <= -SWIPE_DELETE_PX;
+  useEffect(() => {
+    if (armed) navigator.vibrate?.(12);
+  }, [armed]);
+  const end = () => {
+    const active = g.current?.active;
+    g.current = null;
+    if (!active) return;
+    setDragging(false);
+    swiped.current = true;
+    setTimeout(() => (swiped.current = false), 50);
+    if (armed) {
+      setDx(-window.innerWidth);
+      setTimeout(() => (onDelete(), setDx(0)), 180);
+    } else setDx(0);
+  };
+  return {
+    armed,
+    style: dx ? { transform: `translateX(${dx}px)`, transition: dragging ? 'none' : 'transform 0.18s var(--ease)' } : undefined,
+    handlers: {
+      onPointerDown: (e: React.PointerEvent) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        g.current = { x: e.clientX, y: e.clientY, id: e.pointerId, active: false };
+      },
+      onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+        const st = g.current;
+        if (!st || st.id !== e.pointerId) return;
+        const mx = e.clientX - st.x;
+        const my = e.clientY - st.y;
+        if (!st.active) {
+          if (Math.abs(my) > 10) return void (g.current = null); // es scroll vertical
+          if (mx > -12 || Math.abs(mx) < Math.abs(my) * 1.5) return;
+          st.active = true;
+          setDragging(true);
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }
+        setDx(Math.min(0, mx));
+      },
+      onPointerUp: end,
+      onPointerCancel: end,
+      // Tras deslizar no se dispara el clic del botón o campo donde empezó el gesto.
+      onClickCapture: (e: React.MouseEvent) => swiped.current && e.stopPropagation(),
+    },
+  };
 }
 
 // "💡 Hoy: 82,5 kg × 8" — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.

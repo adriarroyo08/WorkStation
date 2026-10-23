@@ -78,3 +78,22 @@ test('resumen anual en historias', async ({ page, errors }) => {
   await page.keyboard.press('Escape');
   await expect(story).toBeHidden();
 });
+
+test('deslizar una serie a la izquierda la borra y se puede deshacer', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  const rows = page.locator('.swipe');
+  await rows.first().waitFor();
+  await page.waitForTimeout(600); // deja terminar el desplazamiento automático a la siguiente serie
+  const before = await rows.count();
+  const box = (await rows.first().locator('.prev').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  for (let k = 1; k <= 8; k++) await page.mouse.move(box.x + box.width / 2 - k * 20, box.y + box.height / 2);
+  await expect(rows.first()).toHaveClass(/armed/);
+  await page.mouse.up();
+  await expect(rows).toHaveCount(before - 1);
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await expect(rows).toHaveCount(before);
+});

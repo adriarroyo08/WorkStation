@@ -2056,3 +2056,42 @@ pre.code {
     animation: none;
   }
 }
+
+/* Deslizar para borrar una serie */
+.swipe {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.swipe-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-right: 16px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--danger) 70%, var(--card));
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+}
+.swipe:has(> .set[style]) .swipe-bg {
+  opacity: 1;
+}
+.swipe.armed .swipe-bg {
+  background: var(--danger);
+}
+.swipe > .set:not(.head) {
+  position: relative;
+  touch-action: pan-y;
+  background-color: var(--card);
+}
+.swipe > .set.done {
+  background: linear-gradient(color-mix(in srgb, var(--ok) 15%, transparent), color-mix(in srgb, var(--ok) 15%, transparent)), var(--card);
+}

@@ -23,7 +23,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 - 🏆 Récord en vivo al completar una serie que bate tu marca.
 - 📈 Sugerencia de progresión por ejercicio ("Hoy: 82,5 kg × 8") según tu última sesión. Un toque la aplica.
 - Siguiente serie resaltada, desplazamiento automático y "Siguiente: …" en la barra de descanso.
-- Deshacer al borrar series, ejercicios o entrenamientos.
+- Desliza una serie hacia la izquierda para borrarla (con vibración al llegar al punto de borrado). Deshacer al borrar series, ejercicios o entrenamientos.
 - Superseries, reordenar, reemplazar ejercicio y nota fija por ejercicio.
 - Temporizador de descanso por ejercicio, con sonido, vibración y barra de progreso. En superseries arranca tras el último ejercicio del bloque.
 - Generador de series de calentamiento y calculadora de discos (barra y discos configurables).
