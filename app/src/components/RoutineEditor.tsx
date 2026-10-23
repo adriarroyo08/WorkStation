@@ -1,16 +1,18 @@
 // Editor de rutinas serie a serie (se carga bajo demanda).
 import { useState } from 'react';
+import { ReorderSheet, moveItem } from './Reorder';
 import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { clock, useStore } from '../store';
 import ExercisePicker from './ExercisePicker';
-import { Plus } from 'lucide-react';
+import { ArrowUpDown, Plus } from 'lucide-react';
 import { Back, ExerciseMedia } from './ui';
 
 export default function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => void }) {
   const { data, update, settings } = useStore();
   const [r, setR] = useState<Routine>(structuredClone(initial));
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
+  const [reorder, setReorder] = useState(false);
   const ex = new Map(data.exercises.map((e) => [e.id, e]));
   const edit = (fn: (r: Routine) => void) =>
     setR((cur) => {
@@ -63,6 +65,31 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
           </select>
         </label>
       )}
+      {r.exercises.length > 1 && (
+        <button className="ghost small icon-btn" onClick={() => setReorder(true)}>
+          <ArrowUpDown size={15} /> Reordenar ejercicios
+        </button>
+      )}
+      {reorder && (
+        <ReorderSheet
+          items={r.exercises}
+          keyOf={(e, i) => `${e.exerciseId}-${r.exercises.slice(0, i).filter((x) => x.exerciseId === e.exerciseId).length}`}
+          render={(e) => (
+            <span className="row">
+              <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
+              <span className="grow">
+                <b>{ex.get(e.exerciseId)?.name ?? e.exerciseId}</b>
+                <small className="muted">
+                  {' '}
+                  · {e.sets.length} {e.sets.length === 1 ? 'serie' : 'series'}
+                </small>
+              </span>
+            </span>
+          )}
+          onMove={(from, to) => edit((n) => void (n.exercises = moveItem(n.exercises, from, to)))}
+          onClose={() => setReorder(false)}
+        />
+      )}
       {r.exercises.map((e, i) => {
         const kind = ex.get(e.exerciseId)?.kind ?? 'weight_reps';
         const dur = kind === 'duration';
@@ -73,12 +100,6 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
             <div className="row">
               <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
               <b className="grow accent-text">{ex.get(e.exerciseId)?.name}</b>
-              <button className="ghost small" disabled={i === 0} onClick={() => edit((n) => void n.exercises.splice(i - 1, 0, ...n.exercises.splice(i, 1)))}>
-                ↑
-              </button>
-              <button className="ghost small" disabled={i === r.exercises.length - 1} onClick={() => edit((n) => void n.exercises.splice(i + 1, 0, ...n.exercises.splice(i, 1)))}>
-                ↓
-              </button>
               <button className="ghost small" onClick={() => edit((n) => void n.exercises.splice(i, 1))}>
                 🗑
               </button>

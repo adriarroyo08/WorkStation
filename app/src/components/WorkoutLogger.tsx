@@ -14,6 +14,7 @@ import { clock, useNow, useStore, useWakeLock } from '../store';
 import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
 import { ExerciseMedia, Sheet } from './ui';
+import { ReorderSheet, moveItem } from './Reorder';
 
 const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
 const SET_LABEL: Record<SetType, string> = { normal: '', warmup: 'C', drop: 'D', failure: 'F' };
@@ -44,6 +45,7 @@ export default function WorkoutLogger({
   const restState = useRest();
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
   const [menu, setMenu] = useState<number | null>(null);
+  const [reorder, setReorder] = useState(false);
   const [plates, setPlates] = useState<number | null>(null);
   const [stopwatch, setStopwatch] = useState<{ ei: number; si: number; start: number } | null>(null);
   const exMap = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
@@ -287,7 +289,32 @@ export default function WorkoutLogger({
           }}
         />
       )}
-      {menu !== null && w.exercises[menu] && <ExerciseMenu w={w} ei={menu} edit={edit} onClose={() => setMenu(null)} onReplace={() => (setPicker({ replace: menu }), setMenu(null))} />}
+      {menu !== null && w.exercises[menu] && (
+        <ExerciseMenu w={w} ei={menu} edit={edit} onClose={() => setMenu(null)} onReplace={() => (setPicker({ replace: menu }), setMenu(null))} onReorder={() => (setMenu(null), setReorder(true))} />
+      )}
+      {reorder && (
+        <ReorderSheet
+          items={w.exercises}
+          keyOf={(we, i) => `${we.exerciseId}-${w.exercises.slice(0, i).filter((x) => x.exerciseId === we.exerciseId).length}`}
+          render={(we) => {
+            const e = data.exercises.find((x) => x.id === we.exerciseId);
+            return (
+              <span className="row">
+                <ExerciseMedia exercise={e} size="thumb" />
+                <span className="grow">
+                  <b>{e?.name ?? we.exerciseId}</b>
+                  <small className="muted">
+                    {' '}
+                    · {we.sets.length} {we.sets.length === 1 ? 'serie' : 'series'}
+                  </small>
+                </span>
+              </span>
+            );
+          }}
+          onMove={(from, to) => edit((n) => void (n.exercises = moveItem(n.exercises, from, to)))}
+          onClose={() => setReorder(false)}
+        />
+      )}
       {plates !== null && <PlateCalculator initial={plates} onClose={() => setPlates(null)} />}
       {devices && <DevicesSheet onClose={() => setDevices(false)} />}
     </section>
@@ -325,14 +352,13 @@ function EditTimes({ w, edit }: { w: Workout; edit: Edit }) {
   );
 }
 
-function ExerciseMenu({ w, ei, edit, onClose, onReplace }: { w: Workout; ei: number; edit: Edit; onClose: () => void; onReplace: () => void }) {
+function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Workout; ei: number; edit: Edit; onClose: () => void; onReplace: () => void; onReorder: () => void }) {
   const { data, settings } = useStore();
   const we = w.exercises[ei];
   const ex = data.exercises.find((e) => e.id === we.exerciseId);
   const next = w.exercises[ei + 1];
   const work = we.sets.find((s) => s.type !== 'warmup');
   const workWeight = work?.weight ?? exerciseHistory(data, we.exerciseId).at(-1)?.bestWeight ?? 0;
-  const move = (d: number) => edit((n) => void n.exercises.splice(ei + d, 0, ...n.exercises.splice(ei, 1)));
   return (
     <Sheet title={ex?.name} onClose={onClose}>
       <p className="muted small">{ex && MUSCLE_LABELS[ex.muscle]}</p>
@@ -382,11 +408,8 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace }: { w: Workout; ei: num
         <button className="item" onClick={onReplace}>
           🔄 Reemplazar ejercicio
         </button>
-        <button className="item" disabled={ei === 0} onClick={() => (move(-1), onClose())}>
-          ⬆️ Subir
-        </button>
-        <button className="item" disabled={ei === w.exercises.length - 1} onClick={() => (move(1), onClose())}>
-          ⬇️ Bajar
+        <button className="item" disabled={w.exercises.length < 2} onClick={onReorder}>
+          ↕️ Reordenar ejercicios
         </button>
         <button
           className="item danger"

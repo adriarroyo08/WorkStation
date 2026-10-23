@@ -113,3 +113,31 @@ test('copia automática diaria: borrar todo y restaurar', async ({ page, errors 
   await panel.locator('.backup-row', { hasText: 'diaria' }).getByRole('button', { name: 'Restaurar' }).click();
   await expect(page.getByText(/^3 entrenamientos/)).toBeVisible();
 });
+
+test('reordenar ejercicios arrastrando y con teclado', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  await page.getByRole('button', { name: 'Opciones' }).first().click();
+  await page.getByRole('button', { name: 'Reordenar ejercicios' }).click();
+  const names = page.locator('.reorder-row b');
+  await expect(names).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
+  const handle = page.locator('.reorder-handle').first();
+  await page.waitForTimeout(500); // la hoja termina de subir
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  for (let k = 1; k <= 6; k++) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + k * 15);
+  await page.mouse.up();
+  await expect(names).toHaveText(['Curl femoral tumbado', 'Sentadilla (barra)']);
+  await page.locator('.reorder-handle').nth(1).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(names).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
+  await page.getByRole('button', { name: 'Listo' }).click();
+  await expect(
+    page
+      .locator('.excard, .card')
+      .filter({ has: page.locator('.accent-text') })
+      .first(),
+  ).toContainText('Sentadilla');
+});
