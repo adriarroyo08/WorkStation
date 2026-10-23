@@ -70,6 +70,8 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 
 **Ajustes**: descanso por defecto, objetivo semanal, RPE, sonido/vibración, pantalla encendida, inicio de semana, tema claro/oscuro, barra y discos, IA, backups JSON, exportación CSV compatible con Hevy e importación del CSV de Hevy.
 
+**Copias automáticas**: una al día y otra antes de importar, borrar o restaurar, guardadas en el dispositivo (las 7 últimas diarias y 5 más). Desde *Ajustes → Copias automáticas* puedes restaurarlas o descargarlas.
+
 Funciona sin conexión: el catálogo y las imágenes vistas quedan en caché.
 
 ## ☁️ Cuenta y sincronización (Supabase, opcional)

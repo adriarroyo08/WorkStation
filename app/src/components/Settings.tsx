@@ -5,6 +5,8 @@ import { importHevyCsv } from '../../../shared/hevy';
 import { clock, downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
 import ApiKeys from './ApiKeys';
+import AutoBackups from './AutoBackups';
+import { snapshot } from '../backups';
 import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
 import { Back, Toggle } from './ui';
@@ -223,8 +225,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <button
           className="ghost full"
           onClick={() =>
-            readFile('.json,application/json', (t) => {
+            readFile('.json,application/json', async (t) => {
               try {
+                await snapshot(data, 'antes de importar');
                 replace(normalizeData(mergeData(data, normalizeData(JSON.parse(t)))));
                 alert('Datos importados y fusionados.');
               } catch (e) {
@@ -238,7 +241,8 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <button
           className="ghost full"
           onClick={() =>
-            readFile('.csv,text/csv', (t) => {
+            readFile('.csv,text/csv', async (t) => {
+              await snapshot(data, 'antes de importar');
               const d = structuredClone(data);
               const n = importHevyCsv(d, t);
               replace(d);
@@ -249,10 +253,18 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           Importar CSV exportado de Hevy
         </button>
         <p className="small muted">En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos.</p>
-        <button className="danger full" onClick={() => confirm('¿Borrar TODOS los datos? Exporta un backup antes.') && confirm('¿Seguro? No se puede deshacer.') && replace(emptyData())}>
+        <button
+          className="danger full"
+          onClick={async () => {
+            if (!confirm('¿Borrar TODOS los datos? Se guardará antes una copia automática en este dispositivo.') || !confirm('¿Seguro?')) return;
+            await snapshot(data, 'antes de borrar');
+            replace(emptyData());
+          }}
+        >
           Borrar todos los datos
         </button>
       </div>
+      <AutoBackups />
 
       <h2>🔌 MCP</h2>
       <div className="card small">

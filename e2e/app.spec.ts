@@ -97,3 +97,19 @@ test('deslizar una serie a la izquierda la borra y se puede deshacer', async ({ 
   await page.getByRole('button', { name: 'Deshacer' }).click();
   await expect(rows).toHaveCount(before);
 });
+
+test('copia automática diaria: borrar todo y restaurar', async ({ page, errors }) => {
+  void errors;
+  page.on('dialog', (d) => d.accept());
+  await seed(page, SAMPLE);
+  await page.waitForTimeout(3500); // la copia diaria se crea unos segundos después de abrir
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: 'Ajustes' }).click();
+  const panel = page.locator('.card', { has: page.getByRole('heading', { name: 'Copias automáticas' }) });
+  await expect(panel.locator('.backup-row').first()).toContainText('diaria · 3 entrenos');
+  await page.getByRole('button', { name: 'Borrar todos los datos' }).click();
+  await expect(page.getByText(/^0 entrenamientos/)).toBeVisible();
+  await expect(panel.locator('.backup-row').first()).toContainText('antes de borrar');
+  await panel.locator('.backup-row', { hasText: 'diaria' }).getByRole('button', { name: 'Restaurar' }).click();
+  await expect(page.getByText(/^3 entrenamientos/)).toBeVisible();
+});

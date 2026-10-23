@@ -5,6 +5,7 @@ import { AI_PROVIDERS } from '../../shared/ai';
 import { emptyData, normalizeData } from '../../shared/data';
 import type { Settings, Workout, WorkstationData } from '../../shared/types';
 import { isNative, native } from './native';
+import { dailySnapshot } from './backups';
 
 // Todo se guarda en el navegador (IndexedDB). Nada sale del dispositivo salvo las llamadas a la IA que tú configures.
 interface Store {
@@ -31,6 +32,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const data = d ? normalizeData(d) : emptyData();
       set('data', data);
       setState({ data, active: a ?? null, ai: ai ?? defaultAi() });
+      // Copia diaria tras arrancar, cuando el navegador esté libre.
+      setTimeout(() => void dailySnapshot(data).catch(() => {}), 3000);
     });
     navigator.storage?.persist?.();
   }, []);

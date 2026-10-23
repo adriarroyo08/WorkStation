@@ -2095,3 +2095,11 @@ pre.code {
 .swipe > .set.done {
   background: linear-gradient(color-mix(in srgb, var(--ok) 15%, transparent), color-mix(in srgb, var(--ok) 15%, transparent)), var(--card);
 }
+
+.backup-row {
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.backup-row small {
+  white-space: nowrap;
+}
