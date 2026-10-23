@@ -6,7 +6,6 @@ import { formatDuration, formatSet, muscleSets, prEvents, workoutDurationMin, wo
 import type { MuscleGroup, Workout } from '../../../shared/types';
 import { startWorkout } from '../controller';
 import { toast } from '../toast';
-import { workoutImage } from '../share';
 import { fmtCompact, fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
 import { newlyUnlocked } from '../../../shared/achievements';
@@ -68,7 +67,7 @@ export default function WorkoutDetail({
   const cmp = compareWithPrevious(data, id);
   const count = [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)).findIndex((x) => x.id === id) + 1;
 
-  const share = async () => shareOrDownload(await workoutImage(data, w), `entreno-${w.startedAt.slice(0, 10)}.png`, w.name);
+  const share = async () => shareOrDownload(await (await import('../share')).workoutImage(data, w), `entreno-${w.startedAt.slice(0, 10)}.png`, w.name);
 
   return (
     <section>

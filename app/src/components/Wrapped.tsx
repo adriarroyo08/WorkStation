@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import { Share2, X } from 'lucide-react';
 import { yearWrapped, type YearWrapped } from '../../../shared/wrapped';
 import { shareOrDownload, useStore } from '../store';
-import { wrappedImage } from '../share';
 
 const SLIDE_MS = 5500;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -173,7 +172,7 @@ export default function Wrapped({ year, onClose }: { year: number; onClose: () =
   const y = yearWrapped(data, year);
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
-  const share = async () => shareOrDownload(await wrappedImage(y), `workstation-${y.year}.png`, `Mi ${y.year} en Workstation`);
+  const share = async () => shareOrDownload(await (await import('../share')).wrappedImage(y), `workstation-${y.year}.png`, `Mi ${y.year} en Workstation`);
   const list = slides(y, share);
   const last = list.length - 1;
   const held = useRef(0);

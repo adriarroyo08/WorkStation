@@ -45,7 +45,7 @@
     --line: rgba(60, 30, 10, 0.08);
     --line-strong: rgba(60, 30, 10, 0.15);
     --text: #1d1512;
-    --muted: #7a6b62;
+    --muted: #6f6158;
     --accent: #f2550c;
     --accent-2: #e8175d;
     --accent-ink: #c2410c;
@@ -74,7 +74,7 @@
   --line: rgba(60, 30, 10, 0.08);
   --line-strong: rgba(60, 30, 10, 0.15);
   --text: #1d1512;
-  --muted: #7a6b62;
+  --muted: #6f6158;
   --accent: #f2550c;
   --accent-2: #e8175d;
   --accent-ink: #c2410c;
@@ -1558,7 +1558,7 @@ main > div > section {
   padding: 18px;
   background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 22%, var(--card)) 0%, var(--card) 60%);
 }
-.hero h3 {
+.hero h2 {
   margin: 0 0 2px;
   font-size: 18px;
 }

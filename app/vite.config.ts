@@ -8,6 +8,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Registro del service worker sin bloquear el primer pintado.
+      injectRegister: 'script-defer',
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
