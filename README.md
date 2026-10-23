@@ -32,6 +32,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 
 - 📅 **Hoy toca**: la pantalla de inicio sugiere la siguiente rutina de tu programa (rota dentro de la carpeta) y la empiezas con un toque.
 - 🔋 **Recuperación muscular**: mapa corporal y porcentaje por músculo según las series de los últimos 3 días.
+- ✨ **Tu año en Workstation**: resumen anual en historias (entrenos, horas, toneladas con equivalencias, ejercicio y mes favoritos, mayor mejora de 1RM, racha) y una imagen vertical para compartir.
 - 🏋️ **Niveles de fuerza** (Principiante → Élite) en sentadilla, banca, peso muerto, press militar, remo, hip thrust, dominadas y fondos, con lo que te falta para el siguiente nivel. Estándares de hombre o mujer, según tu peso corporal.
 - ⚖️ **Frente a la última vez**: cada entreno se compara con la sesión anterior de la misma rutina (volumen, series, reps y duración).
 

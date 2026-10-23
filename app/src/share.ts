@@ -1,6 +1,7 @@
 // Genera una imagen (PNG) con el resumen del entrenamiento para compartir.
 import { bestSetText } from './summary';
 import type { Workout, WorkstationData } from '../../shared/types';
+import type { YearWrapped } from '../../shared/wrapped';
 import { formatDuration, prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../shared/stats';
 
 export async function workoutImage(data: WorkstationData, w: Workout): Promise<Blob> {
@@ -64,6 +65,59 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
     g.fillStyle = '#b3a59c';
     font(28);
     g.fillText(`+ ${w.exercises.length - 10} ejercicios más`, 70, y);
+  }
+  return new Promise((res) => c.toBlob((b) => res(b!), 'image/png'));
+}
+
+// Imagen vertical (formato historia, 1080×1920) del resumen anual.
+export async function wrappedImage(y: YearWrapped): Promise<Blob> {
+  const W = 1080;
+  const H = 1920;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d')!;
+  const bg = g.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#ff5f1f');
+  bg.addColorStop(0.55, '#ff2d6f');
+  bg.addColorStop(1, '#2a0a1a');
+  g.fillStyle = bg;
+  g.fillRect(0, 0, W, H);
+  const font = (size: number, weight = 400) => (g.font = `${weight} ${size}px Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif`);
+
+  g.fillStyle = 'rgba(255,255,255,0.85)';
+  font(40, 700);
+  g.fillText('WORKSTATION', 90, 170);
+  g.fillStyle = '#ffffff';
+  font(150, 900);
+  g.fillText(`Mi ${y.year}`, 90, 340);
+
+  const rows: [string, string][] = [
+    [String(y.workouts), 'entrenamientos'],
+    [`${y.hours.toLocaleString('es-ES')} h`, 'entrenando'],
+    [`${(y.volumeKg / 1000).toLocaleString('es-ES', { maximumFractionDigits: 1 })} t`, `levantadas (${y.equivalence})`],
+    [String(y.prs), 'récords batidos'],
+    [`${y.longestStreak} sem.`, 'de racha máxima'],
+  ];
+  rows.forEach(([v, l], i) => {
+    const top = 520 + i * 210;
+    g.fillStyle = '#ffffff';
+    font(120, 900);
+    g.fillText(v, 90, top);
+    g.fillStyle = 'rgba(255,255,255,0.82)';
+    font(40, 500);
+    g.fillText(l, 90, top + 60);
+  });
+  if (y.topExercise) {
+    g.fillStyle = '#c6f34a';
+    g.beginPath();
+    g.roundRect(90, 1600, W - 180, 150, 40);
+    g.fill();
+    g.fillStyle = '#141a05';
+    font(34, 600);
+    g.fillText('Mi ejercicio del año', 140, 1660);
+    font(52, 800);
+    g.fillText(y.topExercise.name.slice(0, 30), 140, 1722);
   }
   return new Promise((res) => c.toBlob((b) => res(b!), 'image/png'));
 }

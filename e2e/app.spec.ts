@@ -61,3 +61,20 @@ test('niveles de fuerza en la ficha y en el perfil', async ({ page, errors }) =>
   await card.getByRole('button', { name: 'Mujer' }).click();
   await expect(card.locator('.lvl-name')).toHaveText('Avanzado');
 });
+
+test('resumen anual en historias', async ({ page, errors }) => {
+  void errors;
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await seed(page, SAMPLE);
+  await tab(page, 'Perfil').click();
+  await page.locator('.wrapped-tile').click();
+  const story = page.getByRole('dialog', { name: /Resumen de \d{4}/ });
+  await expect(story).toContainText('Tu ');
+  await story.click({ position: { x: 300, y: 400 } });
+  await expect(story).toContainText('entrenamientos');
+  await expect(story.locator('.huge')).toHaveText('3');
+  for (let k = 0; k < 6; k++) await page.keyboard.press('ArrowRight');
+  await expect(story.getByRole('button', { name: 'Compartir mi año' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(story).toBeHidden();
+});

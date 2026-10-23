@@ -10,6 +10,7 @@ import Achievements from './Achievements';
 import { Award, FileBarChart, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { StrengthOverview } from './Strength';
+import Wrapped from './Wrapped';
 import YearHeatmap from './YearHeatmap';
 import Measurements from './Measurements';
 import Reports from './Reports';
@@ -25,6 +26,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
   const [detailed, setDetailed] = useState(false);
+  const [wrapped, setWrapped] = useState(false);
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
   const series = useMemo(() => weeklySeries(data, 12, settings.weekStartsMonday), [data, settings.weekStartsMonday]);
@@ -52,6 +54,10 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   const allAch = useMemo(() => achievements(data), [data]);
   const unlocked = allAch.filter((a) => a.unlocked);
   const main = [...prs].sort((a, b) => b.sessions - a.sessions).slice(0, 6);
+  // Año del resumen: el actual si ya has entrenado; en enero, el anterior si aún no.
+  const thisYear = new Date().getFullYear();
+  const trainedIn = (y: number) => data.workouts.some((w) => new Date(w.startedAt).getFullYear() === y);
+  const wrappedYear = trainedIn(thisYear) ? thisYear : trainedIn(thisYear - 1) ? thisYear - 1 : undefined;
 
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
@@ -97,6 +103,16 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           <small className="muted">peso · cuerpo · fotos</small>
         </button>
       </div>
+      {wrappedYear && (
+        <button className="card wrapped-tile" onClick={() => setWrapped(true)}>
+          <span className="w-emoji">✨</span>
+          <span className="grow">
+            <b>Tu {wrappedYear} en Workstation</b>
+            <small>Tus cifras del año, en historias para compartir</small>
+          </span>
+        </button>
+      )}
+      {wrapped && wrappedYear && <Wrapped year={wrappedYear} onClose={() => setWrapped(false)} />}
       <button className="card full tile achievements-tile" onClick={() => setView('achievements')}>
         <span>
           <Award size={18} className="tile-ico inline" /> Logros{' '}
