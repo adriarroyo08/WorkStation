@@ -24,7 +24,7 @@ const routine = (id: string, name: string, exercises: string[]) => ({
 export const SAMPLE = {
   version: 1,
   exercises: [],
-  measurements: [],
+  measurements: [{ id: 'm1', date: hoursAgo(300), bodyweight: 80 }],
   settings: {},
   folders: [{ id: 'f', name: 'Torso / Pierna' }],
   routines: [routine('ta', 'Torso A', ['press-banca', 'remo-barra']), routine('pa', 'Pierna A', ['sentadilla', 'curl-femoral'])],

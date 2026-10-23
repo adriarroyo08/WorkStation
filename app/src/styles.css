@@ -15,6 +15,7 @@
   --accent-ink: var(--accent);
   --accent-fill: #d4400c;
   --accent-2-fill: #e0195a;
+  --accent-2-ink: #ff5c8f;
   --on-accent: #ffffff;
   --ok: #c6f34a;
   --on-ok: #141a05;
@@ -50,6 +51,8 @@
     --accent-ink: #c2410c;
     --accent-fill: #cc3d0a;
     --accent-2-fill: #d6145a;
+    --accent-2-ink: #c81250;
+    --accent-2-ink: #c81250;
     --ok: #5a9a08;
     --ok-ink: #3d6b04;
     --on-ok: #ffffff;
@@ -77,6 +80,7 @@
   --accent-ink: #c2410c;
   --accent-fill: #cc3d0a;
   --accent-2-fill: #d6145a;
+  --accent-2-ink: #c81250;
   --ok: #5a9a08;
   --ok-ink: #3d6b04;
   --on-ok: #ffffff;
@@ -1734,4 +1738,118 @@ pre.code {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Niveles de fuerza: gris → ámbar → brasa → potencia → volt */
+.strength {
+  --l0: var(--muted);
+  --l1: var(--warn);
+  --l2: var(--accent);
+  --l3: var(--accent-2);
+  --l4: var(--ok);
+}
+.lvl-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 6px 0 10px;
+}
+.lvl-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.lvl-name.l0 {
+  color: var(--text);
+}
+.lvl-name.l1 {
+  color: var(--warn-ink);
+}
+.lvl-name.l2 {
+  color: var(--accent-ink);
+}
+.lvl-name.l3 {
+  color: var(--accent-2-ink);
+}
+.lvl-name.l4 {
+  color: var(--ok-ink);
+}
+.lvl-scale {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+.lvl-seg {
+  position: relative;
+  height: 10px;
+  border-radius: 99px;
+  background: var(--line-strong);
+  margin-bottom: 20px;
+}
+.lvl-seg small {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.lvl-seg.on.l0 {
+  background: var(--l0);
+}
+.lvl-seg.on.l1 {
+  background: var(--l1);
+}
+.lvl-seg.on.l2 {
+  background: var(--l2);
+}
+.lvl-seg.on.l3 {
+  background: var(--l3);
+}
+.lvl-seg.on.l4 {
+  background: var(--l4);
+  box-shadow: 0 0 12px -2px var(--ok);
+}
+.lvl-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--grad-vivid);
+  opacity: 0.75;
+  transition: width 0.8s var(--ease);
+}
+.lvl-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--card2);
+}
+.lvl-pill.l1 {
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--warn-ink);
+}
+.lvl-pill.l2 {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent-ink);
+}
+.lvl-pill.l3 {
+  background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+  color: var(--accent-2-ink);
+}
+.lvl-pill.l4 {
+  background: var(--ok);
+  color: var(--on-ok);
+}
+.segmented.mini {
+  margin: 0;
+}
+.segmented.mini button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.lvl-setup .row input {
+  flex: 1;
+  min-width: 0;
 }

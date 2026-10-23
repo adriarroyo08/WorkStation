@@ -47,3 +47,17 @@ for (const scheme of ['light', 'dark'] as const)
       await expect(page.locator('h1:visible').first()).toBeVisible();
     }
   });
+
+test('niveles de fuerza en la ficha y en el perfil', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await tab(page, 'Perfil').click();
+  const overview = page.locator('.card.strength');
+  await expect(overview.locator('.exline', { hasText: 'Press de banca (barra)' })).toContainText('Intermedio');
+  await overview.locator('.exline', { hasText: 'Press de banca (barra)' }).click();
+  const card = page.locator('.card.strength');
+  await expect(card.locator('.lvl-name')).toHaveText('Intermedio');
+  await expect(card).toContainText('para Avanzado');
+  await card.getByRole('button', { name: 'Mujer' }).click();
+  await expect(card.locator('.lvl-name')).toHaveText('Avanzado');
+});

@@ -6,6 +6,7 @@ import { findOrCreateExercise, routineFromDraft } from './data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts } from './hevy';
 import { muscleRecovery, nextRoutine } from './planning';
 import { suggestNext } from './progression';
+import { LEVELS, latestBodyweight, strengthLevels } from './strength';
 import { period, periodReport, reportToText, weekStreak } from './reports';
 import { exerciseHistory, formatSet, lastSessionSets, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from './stats';
 import { PROGRAMS, instantiateProgram } from './templates';
@@ -147,6 +148,26 @@ export const TOOLS: ToolDef[] = [
       return json({
         next_routine: next && { id: next.routine.id, name: next.routine.name, exercises: next.routine.exercises.map((e) => ex.get(e.exerciseId) ?? e.exerciseId), last_done: next.last?.startedAt },
         recovery: muscleRecovery(data).map((r) => ({ muscle: r.muscle, recovered_pct: Math.round(r.recovery * 100), hours_since: Math.round(r.hoursSince), last_sets: r.sets })),
+      });
+    },
+  }),
+  tool({
+    name: 'strength_levels',
+    description: 'Nivel de fuerza orientativo (Principiante → Élite) en los básicos: 1RM estimado frente al peso corporal, o repeticiones en dominadas y fondos.',
+    shape: {},
+    run: async (src) => {
+      const data = await src.load();
+      return json({
+        bodyweight: latestBodyweight(data) ?? null,
+        sex: data.settings.sex ?? 'm',
+        levels: strengthLevels(data).map((l) => ({
+          exercise: l.exerciseName,
+          value: l.value,
+          unit: l.unit,
+          ratio_bodyweight: l.ratio,
+          level: l.level < 0 ? 'Iniciándote' : LEVELS[l.level],
+          next: l.next,
+        })),
       });
     },
   }),

@@ -10,6 +10,7 @@ import { fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
+import { StrengthCard } from './Strength';
 import { Back, ExerciseMedia, Sheet, Stat } from './ui';
 
 export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: string | null; onOpened?: () => void; onClose?: () => void }) {
@@ -302,6 +303,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
             format={(v) => fmtMetric(m, v)}
           />
           {e.stickyNote && <p className="sticky-note">📌 {e.stickyNote}</p>}
+          <StrengthCard exerciseId={id} />
         </>
       )}
 

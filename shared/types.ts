@@ -115,6 +115,8 @@ export interface Settings {
   theme: 'auto' | 'dark' | 'light';
   barKg: number;
   platesKg: number[];
+  // Para los niveles de fuerza (los estándares difieren entre hombres y mujeres).
+  sex?: 'm' | 'f';
 }
 
 export const DEFAULT_SETTINGS: Settings = {

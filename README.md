@@ -32,6 +32,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 
 - 📅 **Hoy toca**: la pantalla de inicio sugiere la siguiente rutina de tu programa (rota dentro de la carpeta) y la empiezas con un toque.
 - 🔋 **Recuperación muscular**: mapa corporal y porcentaje por músculo según las series de los últimos 3 días.
+- 🏋️ **Niveles de fuerza** (Principiante → Élite) en sentadilla, banca, peso muerto, press militar, remo, hip thrust, dominadas y fondos, con lo que te falta para el siguiente nivel. Estándares de hombre o mujer, según tu peso corporal.
 - ⚖️ **Frente a la última vez**: cada entreno se compara con la sesión anterior de la misma rutina (volumen, series, reps y duración).
 
 **Rutinas**
@@ -215,7 +216,7 @@ La app genera **API keys personales** (`ws_…`) para que una IA (Claude, Cursor
   ```
   Sin cuenta en la nube, el servidor local también funciona con un fichero: `WORKSTATION_DATA=/ruta/backup.json`, el backup exportado desde la app.
 
-Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `today_plan`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
+Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `today_plan`, `strength_levels`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
 
 ## Importar desde Hevy
 

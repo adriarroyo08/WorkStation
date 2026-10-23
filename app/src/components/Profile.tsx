@@ -9,6 +9,7 @@ import { achievements } from '../../../shared/achievements';
 import Achievements from './Achievements';
 import { Award, FileBarChart, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
+import { StrengthOverview } from './Strength';
 import YearHeatmap from './YearHeatmap';
 import Measurements from './Measurements';
 import Reports from './Reports';
@@ -164,6 +165,8 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
         <h3>Último año</h3>
         <YearHeatmap workouts={data.workouts} mondayFirst={settings.weekStartsMonday} />
       </div>
+
+      <StrengthOverview onExercise={onExercise} />
 
       {main.length > 0 && (
         <div className="card">

@@ -12,7 +12,13 @@ for (const scheme of ['light', 'dark'] as const)
       await tab(page, name).click();
       await page.waitForTimeout(400);
       const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-      for (const v of r.violations) report.push(`${name} · ${v.id} (${v.impact}): ${v.nodes.slice(0, 4).map((n) => `${n.target.join(" ")} ${n.any[0]?.message ?? ""}`).join(" | ")}`);
+      for (const v of r.violations)
+        report.push(
+          `${name} · ${v.id} (${v.impact}): ${v.nodes
+            .slice(0, 4)
+            .map((n) => `${n.target.join(' ')} ${n.any[0]?.message ?? ''}`)
+            .join(' | ')}`,
+        );
     }
     expect(report).toEqual([]);
   });
