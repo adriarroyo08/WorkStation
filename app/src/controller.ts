@@ -31,6 +31,45 @@ export function startWorkout(store: Store, w: Workout) {
   store.setActive(w);
 }
 
+// Empezar desde la interfaz: la primera vez, y solo en Android con el permiso por pedir, se explica antes el
+// permiso de notificaciones (NotifGate). Desde el reloj se arranca directamente con startWorkout.
+const ASKED_KEY = 'ws:notifAsked';
+const askedBefore = () => {
+  try {
+    return !!localStorage.getItem(ASKED_KEY);
+  } catch {
+    return false;
+  }
+};
+export const markNotifAsked = () => {
+  try {
+    localStorage.setItem(ASKED_KEY, '1');
+  } catch {
+    /* almacenamiento bloqueado: se volverá a preguntar, sin más */
+  }
+};
+let pendingStart: (() => void) | null = null;
+const gateSubs = new Set<() => void>();
+export const usePendingStart = () =>
+  useSyncExternalStore(
+    (f) => (gateSubs.add(f), () => gateSubs.delete(f)),
+    () => pendingStart,
+  );
+export const resolvePendingStart = () => {
+  const go = pendingStart;
+  pendingStart = null;
+  gateSubs.forEach((f) => f());
+  go?.();
+};
+export function launchWorkout(store: Store, w: Workout) {
+  if (native.notificationsState() !== 'ask' || askedBefore()) return startWorkout(store, w);
+  markNotifAsked();
+  pendingStart = () => startWorkout(store, w);
+  gateSubs.forEach((f) => f());
+}
+export const launchEmpty = (store: Store) =>
+  launchWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
+
 export function startEmpty(store: Store) {
   startWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
 }

@@ -14,6 +14,8 @@ interface NativeApi {
   saveFile(name: string, mime: string, base64: string): void;
   openWatchApp(): void;
   setSystemBars?(dark: boolean): void; // desde la app 1.4
+  notificationsState?(): 'granted' | 'denied' | 'ask';
+  requestNotifications?(): void;
   shareText?(title: string, text: string): void; // desde la app 1.3
 }
 
@@ -33,13 +35,17 @@ export function useWatchStatus() {
 let handler: ((c: WatchCommand) => void) | null = null;
 export const onWatchCommand = (h: (c: WatchCommand) => void) => void (handler = h);
 
+const notifWaiters: ((granted: boolean) => void)[] = [];
+
 // Mensajes que llegan desde Android: {kind:'watch_cmd', payload:'<json>'} | {kind:'watch_status', nodes:[...]}
 (window as unknown as { __workstationFromNative: (raw: string) => void }).__workstationFromNative = (raw: string) => {
   try {
-    const msg = JSON.parse(raw) as { kind: string; payload?: string; nodes?: string[] };
+    const msg = JSON.parse(raw) as { kind: string; payload?: string; nodes?: string[]; granted?: boolean };
     if (msg.kind === 'watch_status') {
       watch = { nodes: msg.nodes ?? [], checkedAt: Date.now() };
       subs.forEach((f) => f());
+    } else if (msg.kind === 'notif_result') {
+      notifWaiters.splice(0).forEach((r) => r(!!msg.granted));
     } else if (msg.kind === 'watch_cmd' && msg.payload) {
       const c = parseWatchCommand(msg.payload);
       if (c) handler?.(c);
@@ -72,6 +78,15 @@ export const native = {
     a.shareText(title, text);
     return true;
   },
+  /** Permiso de notificaciones: 'unsupported' fuera de la app Android (o en versiones sin este puente). */
+  notificationsState: (): 'granted' | 'denied' | 'ask' | 'unsupported' => api()?.notificationsState?.() ?? 'unsupported',
+  requestNotifications: () =>
+    new Promise<boolean>((resolve) => {
+      const a = api();
+      if (!a?.requestNotifications) return resolve(false);
+      notifWaiters.push(resolve);
+      a.requestNotifications();
+    }),
   /** Iconos de las barras del sistema según el tema efectivo (Android). */
   setSystemBars: (dark: boolean) => api()?.setSystemBars?.(dark),
   sendToWatch: (json: string) => api()?.sendToWatch(json),

@@ -48,7 +48,9 @@ class MainActivity : AppCompatActivity() {
         fileCallback = null
     }
 
-    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        sendToWeb(JSONObject().put("kind", "notif_result").put("granted", granted))
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -135,9 +137,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         WatchBus.attach(this)
-        if (Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    /** "granted" | "denied" (rechazado antes) | "ask". Antes de Android 13 no hay permiso en tiempo de ejecución. */
+    fun notificationsState(): String = when {
+        Build.VERSION.SDK_INT < 33 ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> "granted"
+        shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> "denied"
+        else -> "ask"
+    }
+
+    /** Lanza el diálogo del sistema; el resultado vuelve a la web como notif_result. */
+    fun requestNotifications() = runOnUiThread {
+        if (Build.VERSION.SDK_INT < 33) sendToWeb(JSONObject().put("kind", "notif_result").put("granted", true))
+        else askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     /** Enlaces de rutinas compartidas (https://…/WorkStation/#rutina=…) se abren dentro de la app. */

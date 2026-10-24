@@ -77,6 +77,12 @@ class NativeBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun setSystemBars(dark: Boolean) = activity.setSystemBars(dark)
 
+    @JavascriptInterface
+    fun notificationsState(): String = activity.notificationsState()
+
+    @JavascriptInterface
+    fun requestNotifications() = activity.requestNotifications()
+
     /** Menú nativo de compartir (navigator.share no existe en el WebView). */
     @JavascriptInterface
     fun shareText(title: String, text: String) {

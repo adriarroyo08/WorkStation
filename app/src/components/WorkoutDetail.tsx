@@ -4,7 +4,7 @@ import { MUSCLE_REGION } from '../../../shared/exercises';
 import { repeatWorkout, routineFromWorkout } from '../../../shared/data';
 import { formatDuration, formatSet, muscleSets, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import type { MuscleGroup, Workout } from '../../../shared/types';
-import { startWorkout } from '../controller';
+import { launchWorkout } from '../controller';
 import { toast } from '../toast';
 import { fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
@@ -190,7 +190,7 @@ export default function WorkoutDetail({
           className="ghost full icon-btn"
           onClick={() => {
             if (active && !confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?')) return;
-            startWorkout(store, repeatWorkout(w));
+            launchWorkout(store, repeatWorkout(w));
             goTrain?.();
           }}
         >

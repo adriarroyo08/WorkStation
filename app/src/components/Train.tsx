@@ -5,7 +5,7 @@ import { uid } from '../../../shared/types';
 import { hasPendingData } from '../../../shared/session';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { muscleRecovery, nextRoutine } from '../../../shared/planning';
-import { discardActive, finishActive, startEmpty, startWorkout, summary, useSummary } from '../controller';
+import { discardActive, finishActive, launchEmpty, launchWorkout, summary, useSummary } from '../controller';
 import { useStore } from '../store';
 import { BatteryCharging, CalendarCheck, ChevronDown, ChevronRight, Copy, Download, FolderPlus, Link2, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2, Zap } from 'lucide-react';
 import BodyMap from './BodyMap';
@@ -105,7 +105,7 @@ function Today() {
               <h3>{next.routine.name}</h3>
               {next.last && <small className="muted">Última vez {ago(next.last.startedAt)}</small>}
             </div>
-            <button className="link" onClick={() => startWorkout(store, workoutFromRoutine(next.routine))}>
+            <button className="link" onClick={() => launchWorkout(store, workoutFromRoutine(next.routine))}>
               Empezar
             </button>
           </div>
@@ -219,7 +219,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             </span>
             <ChevronRight size={16} className="muted" />
           </button>
-          <button className="line" onClick={() => startEmpty(store)}>
+          <button className="line" onClick={() => launchEmpty(store)}>
             <Zap size={18} className="tile-ico" />
             <span className="grow left">
               <b>Entrenar ya</b>
@@ -229,7 +229,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           </button>
         </div>
       )}
-      <button className="primary big icon-btn" onClick={() => startEmpty(store)}>
+      <button className="primary big icon-btn" onClick={() => launchEmpty(store)}>
         <Plus size={20} strokeWidth={2.6} /> Empezar entrenamiento vacío
       </button>
       <div className="row actions">
@@ -293,7 +293,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                     <b>{r.name}</b>
                     <p className="muted small">{r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}</p>
                   </div>
-                  <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => startWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
+                  <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => launchWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
                     Empezar
                   </button>
                   <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">

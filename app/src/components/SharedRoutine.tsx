@@ -5,7 +5,7 @@ import { decodeRoutine, encodeRoutine, importSharedRoutine, type SharedRoutine }
 import type { Routine } from '../../../shared/types';
 import { workoutFromRoutine } from '../../../shared/data';
 import { fmtWeight } from '../../../shared/units';
-import { startWorkout } from '../controller';
+import { launchWorkout } from '../controller';
 import { useStore } from '../store';
 import { toast } from '../toast';
 import { native } from '../native';
@@ -55,7 +55,7 @@ export function SharedRoutineImport() {
     store.update((d) => void (saved = importSharedRoutine(d, shared)));
     setShared(null);
     toast.show(`Rutina "${shared.name}" guardada`);
-    if (start && saved) startWorkout(store, workoutFromRoutine(saved));
+    if (start && saved) launchWorkout(store, workoutFromRoutine(saved));
   };
   const exById = new Map(store.data.exercises.map((e) => [e.id, e]));
   return (
