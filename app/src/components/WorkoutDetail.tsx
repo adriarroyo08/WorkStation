@@ -165,7 +165,7 @@ export default function WorkoutDetail({
             <div className="row" onClick={() => onExercise?.(we.exerciseId)}>
               <ExerciseMedia exercise={e} size="thumb" />
               <div className="grow">
-                <b className="accent-text">{e?.name ?? we.exerciseId}</b>
+                <b>{e?.name ?? we.exerciseId}</b>
                 <div className="muted small">{bestSetText(we, e)}</div>
               </div>
             </div>

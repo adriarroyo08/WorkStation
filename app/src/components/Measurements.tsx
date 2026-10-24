@@ -84,7 +84,7 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
                   {MEASUREMENT_FIELDS.filter((f) => m[f] !== undefined)
                     .map((f) => `${MEASURE_LABELS[f].split(' (')[0]}: ${String(shown(f, m[f])).replace('.', ',')}`)
                     .join(' · ')}
-                  {photoIds(m).length ? ` · ${photoIds(m).length} fotos` : ''}
+                  {photoIds(m).length ? ` · ${photoIds(m).length} ${photoIds(m).length === 1 ? 'foto' : 'fotos'}` : ''}
                 </div>
               </div>
               <button

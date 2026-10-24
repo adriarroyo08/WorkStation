@@ -19,14 +19,17 @@ export default function CloudSettings() {
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [bad, setBad] = useState(false);
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
     setMsg('');
+    setBad(false);
     try {
       await fn();
     } catch (e) {
-      setMsg(`${(e as Error).message}`);
+      setMsg((e as Error).message);
+      setBad(true);
     } finally {
       setBusy(false);
     }
@@ -121,7 +124,7 @@ export default function CloudSettings() {
           </div>
         </>
       )}
-      {msg && <p className="small">{msg}</p>}
+      {msg && <p className={bad ? 'small error' : 'small'}>{msg}</p>}
     </div>
   );
 }

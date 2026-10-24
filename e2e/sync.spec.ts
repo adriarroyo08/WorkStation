@@ -93,7 +93,7 @@ test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuari
   await p2.goto('/');
   await signIn(p2, 'ana@example.com');
   await tab(p2, 'Historial').click();
-  await expect(p2.locator('button.card', { hasText: 'Torso A' })).toHaveCount(2);
+  await expect(p2.locator('button.hrow', { hasText: 'Torso A' })).toHaveCount(2);
   await ctx2.close();
 
   // En el primer dispositivo entra Bea: se ofrece empezar con sus datos y los de Ana no se suben a su cuenta.
@@ -102,7 +102,7 @@ test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuari
   await signIn(page, 'bea@example.com');
   await expect.poll(() => sb.count('user-bea', 'workouts')).toBe(0);
   await tab(page, 'Historial').click();
-  await expect(page.locator('button.card', { hasText: 'Torso A' })).toHaveCount(0);
+  await expect(page.locator('button.hrow', { hasText: 'Torso A' })).toHaveCount(0);
   expect(sb.count('user-ana', 'workouts')).toBe(3); // y la cuenta de Ana sigue intacta
 });
 

@@ -1,10 +1,8 @@
 /* ===== Sistema de diseño ===== */
 :root {
   --bg: #141414;
-  --bg-elev: #141414;
   --surface: #1f1f1f;
-  --card: var(--surface);
-  --card2: #2a2a2a;
+  --field: #2a2a2a;
   --line: #2a2a2a;
   --line-strong: #3a3a3a;
   --text: #f2f2f2;
@@ -32,10 +30,8 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
     --bg: #ffffff;
-    --bg-elev: #ffffff;
-    --surface: #f4f4f6;
-    --card: var(--surface);
-    --card2: #ececec;
+      --surface: #f4f4f6;
+      --field: #ececec;
     --line: #ececec;
     --line-strong: #dcdce0;
     --text: #111111;
@@ -56,10 +52,8 @@
 }
 :root[data-theme='light'] {
   --bg: #ffffff;
-  --bg-elev: #ffffff;
   --surface: #f4f4f6;
-  --card: var(--surface);
-  --card2: #ececec;
+  --field: #ececec;
   --line: #ececec;
   --line-strong: #dcdce0;
   --text: #111111;
@@ -192,7 +186,7 @@ select.inline {
 }
 textarea {
   min-height: 54px;
-  resize: vertical;
+  resize: none;
 }
 label {
   display: block;
@@ -276,7 +270,7 @@ button.card {
   margin: -4px 0 4px;
 }
 .card {
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px 14px;
@@ -290,7 +284,7 @@ button.card {
 }
 .item {
   text-align: left;
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -324,7 +318,7 @@ button.card {
   grid-template-columns: repeat(4, 1fr);
 }
 .stat {
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px;
@@ -383,7 +377,7 @@ button.card {
 }
 .segmented {
   display: flex;
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 3px;
@@ -469,8 +463,8 @@ button.card {
   left: 0;
   right: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  background: var(--card);
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--surface);
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 10;
@@ -550,7 +544,7 @@ button.card {
 .media.placeholder {
   display: grid;
   place-items: center;
-  background: var(--card2);
+  background: var(--field);
   color: var(--muted);
   font-weight: 700;
   font-size: 18px;
@@ -876,7 +870,7 @@ button.card {
 .chart {
   width: 100%;
   height: auto;
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
 }
@@ -910,7 +904,7 @@ button.card {
 .chart-empty {
   padding: 20px;
   text-align: center;
-  background: var(--card);
+  background: var(--surface);
   border-radius: 14px;
 }
 .bars {
@@ -1052,7 +1046,7 @@ button.card {
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border-radius: 10px;
-  background: var(--card2);
+  background: var(--field);
 }
 .compare {
   display: grid;
@@ -1143,7 +1137,7 @@ button.card {
   margin-left: auto;
 }
 .bubble.assistant {
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
 }
 .bubble .pre {
@@ -1217,7 +1211,7 @@ button.card {
   margin: 0 auto;
 }
 .bm-base {
-  fill: var(--card2);
+  fill: var(--field);
 }
 .bm-muscle {
   fill: var(--line);
@@ -1283,7 +1277,7 @@ button.card {
   margin-top: 10px;
 }
 .badge {
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px;
@@ -1362,7 +1356,7 @@ button.card {
 input,
 select,
 textarea {
-  background: var(--card2);
+  background: var(--field);
   border-color: transparent;
   border-radius: var(--radius-sm);
   transition:
@@ -1375,10 +1369,10 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--accent-ink);
-  background: var(--card);
+  background: var(--surface);
 }
 .set input {
-  background: var(--card2);
+  background: var(--field);
 }
 input.title,
 .notes {
@@ -1493,7 +1487,7 @@ main > div > section {
 
 /* Barra de pestañas translúcida con indicador */
 .tabs {
-  background: var(--bg-elev);
+  background: var(--bg);
   border-top: 1px solid var(--line);
 }
 .tabs button {
@@ -1573,7 +1567,7 @@ main > div > section {
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 99px;
-  background: var(--card2);
+  background: var(--field);
   color: var(--muted);
 }
 .chip.warm {
@@ -1589,7 +1583,7 @@ main > div > section {
 .skeleton {
   height: 120px;
   border-radius: var(--radius);
-  background: linear-gradient(90deg, var(--card) 0%, var(--card2) 50%, var(--card) 100%);
+  background: linear-gradient(90deg, var(--surface) 0%, var(--field) 50%, var(--surface) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.2s infinite;
   margin: 12px 0;
@@ -1662,13 +1656,13 @@ input[type='checkbox'] {
   word-break: break-all;
   padding: 8px 10px;
   border-radius: 10px;
-  background: var(--card2);
+  background: var(--field);
 }
 .new-key {
   border-color: var(--ok-ink);
 }
 pre.code {
-  background: var(--card2);
+  background: var(--field);
   padding: 10px 12px;
   border-radius: 12px;
   overflow-x: auto;
@@ -1694,10 +1688,10 @@ pre.code {
 }
 /* Niveles de fuerza: gris → ámbar → brasa → potencia → volt */
 .strength {
-  --l0: color-mix(in srgb, var(--text) 22%, var(--card2));
-  --l1: color-mix(in srgb, var(--text) 38%, var(--card2));
-  --l2: color-mix(in srgb, var(--text) 56%, var(--card2));
-  --l3: color-mix(in srgb, var(--text) 78%, var(--card2));
+  --l0: color-mix(in srgb, var(--text) 22%, var(--field));
+  --l1: color-mix(in srgb, var(--text) 38%, var(--field));
+  --l2: color-mix(in srgb, var(--text) 56%, var(--field));
+  --l3: color-mix(in srgb, var(--text) 78%, var(--field));
   --l4: var(--accent);
 }
 .lvl-head {
@@ -1775,12 +1769,12 @@ pre.code {
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 99px;
-  background: var(--card2);
+  background: var(--field);
 }
 .lvl-pill.l1,
 .lvl-pill.l2,
 .lvl-pill.l3 {
-  background: var(--card2);
+  background: var(--field);
   color: var(--text);
 }
 .lvl-pill.l4 {
@@ -2003,7 +1997,7 @@ pre.code {
   gap: 6px;
   padding-right: 16px;
   pointer-events: none;
-  background: color-mix(in srgb, var(--danger) 70%, var(--card));
+  background: color-mix(in srgb, var(--danger) 70%, var(--surface));
   color: #fff;
   font-weight: 700;
   font-size: 14px;
@@ -2021,10 +2015,10 @@ pre.code {
 .swipe > .set:not(.head) {
   position: relative;
   touch-action: pan-y;
-  background-color: var(--card);
+  background-color: var(--surface);
 }
 .swipe > .set.done {
-  background: color-mix(in srgb, var(--ok) 15%, var(--card));
+  background: color-mix(in srgb, var(--ok) 15%, var(--surface));
 }
 
 .backup-row {
@@ -2049,7 +2043,7 @@ pre.code {
   gap: 10px;
   padding: 8px 6px 8px 10px;
   border-radius: var(--radius-sm);
-  background: var(--card2);
+  background: var(--field);
   transition:
     transform 0.18s var(--ease),
     box-shadow 0.18s;
@@ -2060,7 +2054,7 @@ pre.code {
   box-shadow: var(--shadow-lg);
   outline: 2px solid var(--accent);
   outline-offset: -2px;
-  background: var(--card);
+  background: var(--surface);
 }
 .reorder-row > :first-child {
   flex: 1;
@@ -2091,7 +2085,7 @@ pre.code {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-lg);
   animation: w-in 0.5s var(--spring) both;
@@ -2169,7 +2163,7 @@ pre.code {
 .weekstrip-days i {
   flex: 1;
   height: 30px;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--line);
 }
 .weekstrip-days i.on {
@@ -2247,4 +2241,112 @@ button.outline {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* ===== Revisión pantalla por pantalla: superficies planas, listas con divisor ===== */
+.card,
+.stat,
+.badge {
+  border: 0;
+}
+.card .card,
+.card .stat,
+.card .badge,
+.card .item {
+  background: none;
+  border: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+.item {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.list {
+  gap: 0;
+}
+.lines {
+  margin: 8px 0;
+}
+.lines .line:last-child {
+  border-bottom: 0;
+}
+.lines .badge-row {
+  margin: 0;
+}
+.hrow {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 12px 0;
+  color: var(--text);
+}
+.hrow .wstats {
+  margin: 4px 0;
+}
+.tabs button::before {
+  width: 48px;
+}
+.excard {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 12px 0;
+  margin: 0;
+}
+.superset {
+  border-left: 3px solid var(--line-strong);
+  padding-left: 10px;
+}
+.ss-mid,
+.ss-next {
+  border-radius: 0;
+  margin-top: 0;
+}
+.swipe > .set:not(.head) {
+  background-color: var(--bg);
+}
+.swipe > .set.done {
+  background: color-mix(in srgb, var(--ok) 15%, var(--bg));
+}
+.notes {
+  resize: none;
+  field-sizing: content;
+  min-height: 0;
+}
+.sticky {
+  border-bottom: 1px solid var(--line);
+}
+.rest-main {
+  grid-template-columns: 1fr;
+  row-gap: 0;
+}
+.rest-main > span {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.rest button {
+  flex: none;
+}
+.icon-btn.gray,
+.ghost.gray {
+  color: var(--muted);
+}
+.bubble.assistant {
+  border: 0;
+}
+.chart {
+  border: 0;
+}
+.hr-big svg {
+  vertical-align: -5px;
+}
+button.ghost:has(> svg:only-child) {
+  color: var(--muted);
 }

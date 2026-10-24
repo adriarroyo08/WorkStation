@@ -98,9 +98,7 @@ function Today() {
     <>
       {next && (
         <div className="today">
-          <div className="sec">
-            Hoy toca{folder ? ` · ${folder.name}` : ''}
-          </div>
+          <div className="sec">Hoy toca{folder ? ` · ${folder.name}` : ''}</div>
           <div className="line">
             <CalendarCheck size={18} className="tile-ico" />
             <div className="grow">
@@ -265,11 +263,11 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
               </button>
               {g.id && (
                 <>
-                  <button className="ghost small icon-btn" aria-label="Nueva rutina en la carpeta" onClick={() => onNewRoutine(g.id)}>
+                  <button className="ghost small icon-btn gray" aria-label="Nueva rutina en la carpeta" onClick={() => onNewRoutine(g.id)}>
                     <Plus size={16} />
                   </button>
                   <button
-                    className="ghost small icon-btn"
+                    className="ghost small icon-btn gray"
                     aria-label="Renombrar carpeta"
                     onClick={() => {
                       const name = prompt('Renombrar carpeta (vacío = borrar carpeta; las rutinas se conservan)', g.name);
@@ -353,7 +351,10 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             >
               <Link2 size={16} /> Compartir enlace (se guarda con un toque)
             </button>
-            <button className="item danger icon-btn" onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}>
+            <button
+              className="item danger icon-btn"
+              onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}
+            >
               <Trash2 size={16} /> Borrar rutina
             </button>
           </div>

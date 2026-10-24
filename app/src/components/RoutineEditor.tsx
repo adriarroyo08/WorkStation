@@ -99,7 +99,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
             {e.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
             <div className="row">
               <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
-              <b className="grow accent-text">{ex.get(e.exerciseId)?.name}</b>
+              <b className="grow">{ex.get(e.exerciseId)?.name}</b>
               <button className="ghost small icon-btn" aria-label="Quitar ejercicio" onClick={() => edit((n) => void n.exercises.splice(i, 1))}>
                 <Trash2 size={16} />
               </button>

@@ -93,4 +93,9 @@ for (const scheme of ['dark', 'light'] as const)
     await page.getByRole('button', { name: 'Ajustes' }).click();
     await page.waitForTimeout(700);
     await overflow(page, p('16-settings'));
+    await page.getByRole('button', { name: 'Volver' }).first().click();
+    await tab(page, 'Entrenar').click();
+    await page.getByRole('button', { name: 'Nueva rutina' }).first().click();
+    await page.waitForTimeout(600);
+    await overflow(page, p('17-routine-editor'));
   });

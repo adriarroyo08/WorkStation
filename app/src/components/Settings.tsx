@@ -20,6 +20,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const [notes, setNotes] = useState(false);
   const [cfg, setCfg] = useState(ai);
   const [test, setTest] = useState('');
+  const [testBad, setTestBad] = useState(false);
   const provider = AI_PROVIDERS.find((p) => p.id === cfg.providerId);
 
   const readFile = (accept: string, cb: (text: string) => void) => {
@@ -33,11 +34,13 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const testAi = async () => {
     setAi(cfg);
     setTest('Probando…');
+    setTestBad(false);
     try {
       const r = await chat(cfg, [{ role: 'user', content: 'Responde solo: OK' }]);
       setTest(`Conectado: ${r.slice(0, 80)}`);
     } catch (e) {
-      setTest(`${(e as Error).message}`);
+      setTest((e as Error).message);
+      setTestBad(true);
     }
   };
 
@@ -94,13 +97,19 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <Back onClick={onBack} />
       <h1>Ajustes</h1>
 
-      <h2><Cloud size={16} className="ico" /> Cuenta y sincronización</h2>
+      <h2>
+        <Cloud size={16} className="ico" /> Cuenta y sincronización
+      </h2>
       <CloudSettings />
 
-      <h2><Plug size={16} className="ico" /> Acceso para IA (MCP)</h2>
+      <h2>
+        <Plug size={16} className="ico" /> Acceso para IA (MCP)
+      </h2>
       <ApiKeys />
 
-      <h2><Dumbbell size={16} className="ico" /> Entrenamiento</h2>
+      <h2>
+        <Dumbbell size={16} className="ico" /> Entrenamiento
+      </h2>
       <div className="card">
         <label>
           Descanso por defecto
@@ -142,13 +151,19 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         </label>
       </div>
 
-      <h2><Watch size={16} className="ico" /> Reloj y sensores</h2>
+      <h2>
+        <Watch size={16} className="ico" /> Reloj y sensores
+      </h2>
       <DevicesPanel />
 
-      <h2><Film size={16} className="ico" /> GIFs de ejercicios</h2>
+      <h2>
+        <Film size={16} className="ico" /> GIFs de ejercicios
+      </h2>
       <ExdbSettings />
 
-      <h2><Calculator size={16} className="ico" /> Calculadora de discos</h2>
+      <h2>
+        <Calculator size={16} className="ico" /> Calculadora de discos
+      </h2>
       <div className="card">
         {settings.unit === 'lb' ? (
           <>
@@ -196,7 +211,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
-      <h2><Bot size={16} className="ico" /> Inteligencia artificial</h2>
+      <h2>
+        <Bot size={16} className="ico" /> Inteligencia artificial
+      </h2>
       <div className="card">
         <label>
           Proveedor
@@ -244,10 +261,12 @@ export default function Settings({ onBack }: { onBack: () => void }) {
             Probar conexión
           </button>
         </div>
-        {test && <p className="small">{test}</p>}
+        {test && <p className={testBad ? 'small error' : 'small'}>{test}</p>}
       </div>
 
-      <h2><Save size={16} className="ico" /> Datos</h2>
+      <h2>
+        <Save size={16} className="ico" /> Datos
+      </h2>
       <div className="card">
         <p className="small muted">
           {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios · {data.measurements.length} medidas. Todo se guarda en este navegador: exporta
@@ -307,7 +326,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       </div>
       <AutoBackups />
 
-      <h2><Plug size={16} className="ico" /> MCP</h2>
+      <h2>
+        <Plug size={16} className="ico" /> MCP
+      </h2>
       <div className="card small">
         <p>
           Para que Claude Desktop, Cursor, LM Studio u otro cliente MCP lea y edite tus entrenamientos, usa el servidor <code>mcp/</code> del repositorio. Trabaja sobre un fichero JSON con el mismo
@@ -315,7 +336,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         </p>
       </div>
 
-      <h2><Info size={16} className="ico" /> Acerca de</h2>
+      <h2>
+        <Info size={16} className="ico" /> Acerca de
+      </h2>
       <div className="card small muted">
         <p>Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
         <button className="ghost small icon-btn" onClick={() => setNotes(true)}>

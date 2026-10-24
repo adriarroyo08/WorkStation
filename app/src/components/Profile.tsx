@@ -7,7 +7,7 @@ import { cap, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
 import Achievements, { AchievementIcon } from './Achievements';
-import { Award, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
+import { Award, Bot, ChevronRight, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { StrengthOverview } from './Strength';
 import Wrapped from './Wrapped';
@@ -25,6 +25,7 @@ const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Du
 export default function Profile({ onExercise }: { onExercise: (id: string) => void }) {
   const { data, settings, setSettings } = useStore();
   const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements' | 'coach'>('home');
+  const [settingsFromCoach, setSettingsFromCoach] = useState(false);
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
   const [detailed, setDetailed] = useState(false);
@@ -64,8 +65,25 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
-  if (view === 'coach') return <Coach onBack={() => setView('home')} goSettings={() => setView('settings')} />;
-  if (view === 'settings') return <Settings onBack={() => setView('home')} />;
+  if (view === 'coach')
+    return (
+      <Coach
+        onBack={() => setView('home')}
+        goSettings={() => {
+          setSettingsFromCoach(true);
+          setView('settings');
+        }}
+      />
+    );
+  if (view === 'settings')
+    return (
+      <Settings
+        onBack={() => {
+          setView(settingsFromCoach ? 'coach' : 'home');
+          setSettingsFromCoach(false);
+        }}
+      />
+    );
 
   const fmt = (v: number) =>
     metric === 'volume' ? ((x) => (x >= 1000 ? `${Math.round(x / 100) / 10}k` : String(Math.round(x))))(toUnit(v)) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v));
@@ -85,7 +103,14 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
         >
           {settings.theme === 'light' || (settings.theme === 'auto' && !matchMedia('(prefers-color-scheme: dark)').matches) ? <Moon size={20} /> : <Sun size={20} />}
         </button>
-        <button className="ghost icon-btn" onClick={() => setView('settings')} aria-label="Ajustes">
+        <button
+          className="ghost icon-btn"
+          onClick={() => {
+            setSettingsFromCoach(false);
+            setView('settings');
+          }}
+          aria-label="Ajustes"
+        >
           <SettingsIcon size={20} /> Ajustes
         </button>
       </div>
@@ -96,45 +121,60 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
         <Stat value={streak} label="sem. racha" />
       </div>
 
-      <div className="row tiles">
-        <button className="card grow tile" onClick={() => setView('reports')}>
-          <FileBarChart size={20} className="tile-ico" /> Informes
-          <small className="muted">semanal · mensual · anual</small>
+      <div className="lines">
+        <button className="line" onClick={() => setView('reports')}>
+          <FileBarChart size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Informes</b>
+            <small className="muted">semanal · mensual · anual</small>
+          </span>
+          <ChevronRight size={16} className="muted" />
         </button>
-        <button className="card grow tile" onClick={() => setView('measures')}>
-          <Ruler size={20} className="tile-ico" /> Medidas
-          <small className="muted">peso · cuerpo · fotos</small>
+        <button className="line" onClick={() => setView('measures')}>
+          <Ruler size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Medidas</b>
+            <small className="muted">peso · cuerpo · fotos</small>
+          </span>
+          <ChevronRight size={16} className="muted" />
+        </button>
+        <button className="line" onClick={() => setView('coach')}>
+          <Bot size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Coach IA</b>
+            <small className="muted">pregunta, analiza y crea rutinas</small>
+          </span>
+          <ChevronRight size={16} className="muted" />
+        </button>
+        {wrappedYear && (
+          <button className="line" onClick={() => setWrapped(true)}>
+            <Sparkles size={20} className="tile-ico" />
+            <span className="grow">
+              <b>Tu {wrappedYear} en Workstation</b>
+              <small className="muted">Tus cifras del año, en historias para compartir</small>
+            </span>
+            <ChevronRight size={16} className="muted" />
+          </button>
+        )}
+        <button className="line" onClick={() => setView('achievements')}>
+          <Award size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Logros</b>
+            <small className="muted">
+              {unlocked.length} de {allAch.length}
+            </small>
+          </span>
+          <span className="badge-row">
+            {unlocked.slice(-4).map((a) => (
+              <span key={a.id} title={a.title}>
+                <AchievementIcon name={a.icon} size={18} />
+              </span>
+            ))}
+          </span>
+          <ChevronRight size={16} className="muted" />
         </button>
       </div>
-      <button className="card full tile" onClick={() => setView('coach')}>
-        <Sparkles size={20} className="tile-ico" /> Coach IA
-        <small className="muted">pregunta, analiza y crea rutinas</small>
-      </button>
-      {wrappedYear && (
-        <button className="card wrapped-tile" onClick={() => setWrapped(true)}>
-          <Sparkles size={28} className="w-emoji" />
-          <span className="grow">
-            <b>Tu {wrappedYear} en Workstation</b>
-            <small>Tus cifras del año, en historias para compartir</small>
-          </span>
-        </button>
-      )}
       {wrapped && wrappedYear && <Wrapped year={wrappedYear} onClose={() => setWrapped(false)} />}
-      <button className="card full tile achievements-tile" onClick={() => setView('achievements')}>
-        <span>
-          <Award size={18} className="tile-ico inline" /> Logros{' '}
-          <small className="muted">
-            {unlocked.length} de {allAch.length}
-          </small>
-        </span>
-        <span className="badge-row">
-          {unlocked.slice(-6).map((a) => (
-            <span key={a.id} title={a.title}>
-              <AchievementIcon name={a.icon} size={18} />
-            </span>
-          ))}
-        </span>
-      </button>
 
       <div className="card">
         <h3>Últimas 12 semanas</h3>

@@ -25,12 +25,15 @@ test('la semana se muestra como 7 días', async ({ page, errors }) => {
   const days = page.locator('.weekstrip i');
   await expect(days).toHaveCount(7);
   // Días distintos de esta semana (lunes primero) con algún entreno, calculados en el navegador.
-  const expected = await page.evaluate((starts) => {
-    const mon = new Date();
-    mon.setHours(0, 0, 0, 0);
-    mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
-    return new Set(starts.filter((s) => Date.parse(s) >= mon.getTime()).map((s) => (new Date(s).getDay() + 6) % 7)).size;
-  }, SAMPLE.workouts.map((w) => w.startedAt));
+  const expected = await page.evaluate(
+    (starts) => {
+      const mon = new Date();
+      mon.setHours(0, 0, 0, 0);
+      mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+      return new Set(starts.filter((s) => Date.parse(s) >= mon.getTime()).map((s) => (new Date(s).getDay() + 6) % 7)).size;
+    },
+    SAMPLE.workouts.map((w) => w.startedAt),
+  );
   await expect(page.locator('.weekstrip i.on')).toHaveCount(expected);
 });
 
@@ -44,7 +47,7 @@ test('hoy toca, recuperación y comparación con la sesión anterior', async ({ 
   await page.keyboard.press('Escape');
 
   await tab(page, 'Historial').click();
-  await page.locator('button.card', { hasText: 'Torso A' }).first().click();
+  await page.locator('button.hrow', { hasText: 'Torso A' }).first().click();
   const vs = page.locator('.vs-last');
   await expect(vs).toContainText('Frente a la última vez');
   await expect(vs.locator('.delta.up').first()).toBeVisible();
@@ -93,7 +96,7 @@ test('resumen anual en historias', async ({ page, errors }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page, SAMPLE);
   await tab(page, 'Perfil').click();
-  await page.locator('.wrapped-tile').click();
+  await page.getByRole('button', { name: /Tu \d{4} en Workstation/ }).click();
   const story = page.getByRole('dialog', { name: /Resumen de \d{4}/ });
   await expect(story).toContainText('Tu ');
   await story.click({ position: { x: 300, y: 400 } });
@@ -160,12 +163,7 @@ test('reordenar ejercicios arrastrando y con teclado', async ({ page, errors }) 
   await page.keyboard.press('ArrowUp');
   await expect(names).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
   await page.getByRole('button', { name: 'Listo' }).click();
-  await expect(
-    page
-      .locator('.excard, .card')
-      .filter({ has: page.locator('.accent-text') })
-      .first(),
-  ).toContainText('Sentadilla');
+  await expect(page.locator('.excard').first()).toContainText('Sentadilla');
 });
 
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
@@ -204,7 +202,7 @@ test('unidades en libras: escribir, calculadora de discos e historial', async ({
   page.on('dialog', (d) => d.accept());
   await seed(page, { ...SAMPLE, settings: { unit: 'lb' } });
   await tab(page, 'Historial').click();
-  await expect(page.locator('button.card', { hasText: 'Torso A' }).first()).toContainText('lb');
+  await expect(page.locator('button.hrow', { hasText: 'Torso A' }).first()).toContainText('lb');
   await tab(page, 'Entrenar').click();
   await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
   const row = page.locator('.swipe .set').first();
@@ -258,7 +256,7 @@ test('editar un entreno pasado: series nuevas sin ✓ se guardan y deshacer tras
   void errors;
   await seed(page, SAMPLE);
   await tab(page, 'Historial').click();
-  await page.locator('button.card', { hasText: 'Pierna A' }).first().click();
+  await page.locator('button.hrow', { hasText: 'Pierna A' }).first().click();
   await page.getByRole('button', { name: 'Editar' }).click();
   await page.getByRole('button', { name: 'Añadir serie' }).first().click();
   const last = page.locator('.swipe .set').last();

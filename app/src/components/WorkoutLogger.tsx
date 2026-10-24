@@ -1,4 +1,25 @@
-import { Lightbulb, Play, Square, TrendingUp, ArrowUpDown, Calculator, Flame, Heart, Link2, ListChecks, MoreHorizontal, Pin, Plus, RefreshCw, Scissors, Timer, Trash2, Trophy, Watch, Weight } from 'lucide-react';
+import {
+  Lightbulb,
+  Play,
+  Square,
+  TrendingUp,
+  ArrowUpDown,
+  Calculator,
+  Flame,
+  Heart,
+  Link2,
+  ListChecks,
+  MoreHorizontal,
+  Pin,
+  Plus,
+  RefreshCw,
+  Scissors,
+  Timer,
+  Trash2,
+  Trophy,
+  Watch,
+  Weight,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
@@ -148,7 +169,11 @@ export default function WorkoutLogger({
               <Timer size={14} /> {formatDuration(elapsed)}
             </span>
           )}
-          {mode === 'live' && hr.live && <span className="hr-live"><Heart size={16} className="ico" /> {hr.bpm}</span>}
+          {mode === 'live' && hr.live && (
+            <span className="hr-live">
+              <Heart size={16} className="ico" /> {hr.bpm}
+            </span>
+          )}
           <span className="icon-btn">
             <Weight size={14} /> {fmtMass(totals.volume)}
           </span>
@@ -164,7 +189,7 @@ export default function WorkoutLogger({
       </div>
 
       {mode === 'edit' && <EditTimes w={w} edit={edit} />}
-      <textarea className="notes" placeholder="Notas del entrenamiento…" value={w.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
+      <textarea className="notes" rows={1} placeholder="Notas del entrenamiento…" value={w.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
 
       {!w.exercises.length && <p className="muted center-text">Añade tu primer ejercicio para empezar.</p>}
 
@@ -184,14 +209,18 @@ export default function WorkoutLogger({
               <button className="plain" onClick={() => onExercise?.(we.exerciseId)}>
                 <ExerciseMedia exercise={ex} size="thumb" />
               </button>
-              <b className="grow accent-text" onClick={() => onExercise?.(we.exerciseId)}>
+              <b className="grow" onClick={() => onExercise?.(we.exerciseId)}>
                 {ex?.name ?? we.exerciseId}
               </b>
               <button className="ghost" onClick={() => setMenu(ei)} aria-label="Opciones">
                 <MoreHorizontal size={20} />
               </button>
             </div>
-            {ex?.stickyNote && <p className="sticky-note small"><Pin size={16} className="ico" /> {ex.stickyNote}</p>}
+            {ex?.stickyNote && (
+              <p className="sticky-note small">
+                <Pin size={16} className="ico" /> {ex.stickyNote}
+              </p>
+            )}
             {mode === 'live' && (
               <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />
             )}
@@ -543,7 +572,11 @@ function SetRow(props: {
       <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`} {...swipe.handlers} style={swipe.style}>
         <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
           {SET_LABEL[s.type] || n}
-          {pr && <span className="pr-badge"><Trophy size={16} className="ico" /></span>}
+          {pr && (
+            <span className="pr-badge">
+              <Trophy size={16} className="ico" />
+            </span>
+          )}
         </button>
         <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
           {prevTxt}
