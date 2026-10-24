@@ -306,7 +306,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           </div>
         ),
       )}
-      {!data.routines.length && <p className="muted small">Crea una rutina, guarda un programa desde Explorar o pídesela al Coach IA.</p>}
+      {!data.routines.length && <p className="muted small">Crea una rutina, guarda un programa desde Explorar o pídesela al Coach IA (Perfil → Coach IA).</p>}
 
       {menu && (
         <Sheet title={menu.name} onClose={() => setMenu(null)}>

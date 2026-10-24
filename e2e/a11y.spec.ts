@@ -9,7 +9,8 @@ for (const scheme of ['light', 'dark'] as const)
     await seed(page, SAMPLE);
     const report: string[] = [];
     for (const name of ['Entrenar', 'Historial', 'Ejercicios', 'Perfil', 'Coach']) {
-      await tab(page, name).click();
+      await tab(page, name === 'Coach' ? 'Perfil' : name).click();
+      if (name === 'Coach') await page.getByRole('button', { name: /Coach IA/ }).click();
       await page.waitForTimeout(400);
       const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
       for (const v of r.violations)

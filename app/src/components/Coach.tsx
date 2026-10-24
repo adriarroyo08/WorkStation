@@ -6,6 +6,7 @@ import { period, periodReport, reportToText } from '../../../shared/reports';
 import { trainingSummary } from '../../../shared/stats';
 import { uid } from '../../../shared/types';
 import { useStore } from '../store';
+import { Back } from './ui';
 
 const QUICK = [
   'Analiza mis últimas semanas: ¿qué estoy haciendo bien y qué debería mejorar?',
@@ -15,7 +16,7 @@ const QUICK = [
   '¿Tengo algún grupo muscular descompensado por volumen?',
 ];
 
-export default function Coach({ goSettings }: { goSettings: () => void }) {
+export default function Coach({ goSettings, onBack }: { goSettings: () => void; onBack: () => void }) {
   const { data, ai, update, settings } = useStore();
   const [msgs, setMsgs] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -66,6 +67,7 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
   if (!configured)
     return (
       <section>
+        <Back onClick={onBack} />
         <h1>Coach IA</h1>
         <p>Conecta una IA gratuita (Gemini, Groq, OpenRouter u Ollama) con tu API key en Ajustes.</p>
         <button className="primary" onClick={goSettings}>
@@ -76,6 +78,7 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
 
   return (
     <section className="coach">
+      <Back onClick={onBack} />
       <h1>Coach IA</h1>
       <p className="muted small">
         {ai.model} · tus datos se envían solo al proveedor que configuraste.

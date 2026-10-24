@@ -13,7 +13,7 @@ test('sin degradados ni brillos de color', async ({ page, errors }) => {
   void errors;
   await seed(page, SAMPLE);
   const bad: string[] = [];
-  for (const name of ['Entrenar', 'Historial', 'Ejercicios', 'Perfil', 'Coach']) {
+  for (const name of ['Entrenar', 'Historial', 'Ejercicios', 'Perfil']) {
     await tab(page, name).click();
     // Con la hoja abierta se ejercita .modal (fondo difuminado)
     const sheet = name === 'Entrenar' ? page.locator('.recovery-row') : null;
@@ -36,6 +36,10 @@ test('sin degradados ni brillos de color', async ({ page, errors }) => {
     bad.push(...found.map((f) => `${name}: ${f}`));
     if (sheet) await page.keyboard.press('Escape');
   }
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: /Coach IA/ }).click();
+  const found = await page.evaluate(() => Array.from(document.querySelectorAll('body *')).filter((el) => getComputedStyle(el).backgroundImage.includes('gradient') && !el.closest('.skeleton')).map((el) => el.className));
+  bad.push(...found.map((f) => `Coach: ${f}`));
   expect(bad).toEqual([]);
 });
 
@@ -51,10 +55,13 @@ test('sin emojis en la interfaz', async ({ page, errors }) => {
     const found = await emojis(page);
     if (found) bad.push(`${where}: ${found}`);
   };
-  for (const name of ['Entrenar', 'Historial', 'Ejercicios', 'Perfil', 'Coach']) {
+  for (const name of ['Entrenar', 'Historial', 'Ejercicios', 'Perfil']) {
     await tab(page, name).click();
     await check(name);
   }
+  await page.getByRole('button', { name: /Coach IA/ }).click();
+  await check('Coach');
+  await page.locator('.topbar > button:first-child').click();
   // Hoja de Logros y Ajustes
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: /Logros/ }).click();

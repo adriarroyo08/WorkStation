@@ -1,9 +1,8 @@
-import { BarChart3, CalendarDays, Dumbbell, Library, Sparkles } from 'lucide-react';
+import { BarChart3, CalendarDays, Dumbbell, Library } from 'lucide-react';
 import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import Train from './components/Train';
 
 // El resto de pestañas se cargan bajo demanda: el arranque solo descarga "Entrenar".
-const Coach = lazy(() => import('./components/Coach'));
 const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
 const Profile = lazy(() => import('./components/Profile'));
@@ -21,7 +20,6 @@ const TABS = [
   { id: 'history', label: 'Historial', Icon: CalendarDays },
   { id: 'exercises', label: 'Ejercicios', Icon: Library },
   { id: 'profile', label: 'Perfil', Icon: BarChart3 },
-  { id: 'coach', label: 'Coach', Icon: Sparkles },
 ] as const;
 
 export type TabId = (typeof TABS)[number]['id'];
@@ -68,7 +66,6 @@ export default function App() {
               {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
               {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
               {tab === 'profile' && <Profile onExercise={goExercise} />}
-              {tab === 'coach' && <Coach goSettings={() => setTab('profile')} />}
             </>
           )}
         </Suspense>

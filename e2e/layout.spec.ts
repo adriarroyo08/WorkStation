@@ -59,12 +59,15 @@ for (const scheme of ['dark', 'light'] as const)
       ['07', 'Historial'],
       ['08', 'Ejercicios'],
       ['09', 'Perfil'],
-      ['10', 'Coach'],
     ] as const) {
       await tab(page, name).click();
       await page.waitForTimeout(700);
       await overflow(page, p(`${i}-${name}`));
     }
+    await tab(page, 'Perfil').click();
+    await page.getByRole('button', { name: /Coach IA/ }).click();
+    await page.waitForTimeout(700);
+    await overflow(page, p('10-Coach'));
     await tab(page, 'Ejercicios').click();
     await page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first().click();
     await page.waitForTimeout(700);

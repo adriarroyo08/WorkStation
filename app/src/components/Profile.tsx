@@ -15,6 +15,7 @@ import YearHeatmap from './YearHeatmap';
 import Measurements from './Measurements';
 import Reports from './Reports';
 import Settings from './Settings';
+import Coach from './Coach';
 import { BarChart, HBars, MonthCalendar, Stat } from './ui';
 import { fmtMass, fmtWeight, toUnit } from '../../../shared/units';
 
@@ -23,7 +24,7 @@ const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Du
 
 export default function Profile({ onExercise }: { onExercise: (id: string) => void }) {
   const { data, settings, setSettings } = useStore();
-  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements'>('home');
+  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements' | 'coach'>('home');
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
   const [detailed, setDetailed] = useState(false);
@@ -63,6 +64,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
+  if (view === 'coach') return <Coach onBack={() => setView('home')} goSettings={() => setView('settings')} />;
   if (view === 'settings') return <Settings onBack={() => setView('home')} />;
 
   const fmt = (v: number) =>
@@ -104,6 +106,10 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           <small className="muted">peso · cuerpo · fotos</small>
         </button>
       </div>
+      <button className="card full tile" onClick={() => setView('coach')}>
+        <Sparkles size={20} className="tile-ico" /> Coach IA
+        <small className="muted">pregunta, analiza y crea rutinas</small>
+      </button>
       {wrappedYear && (
         <button className="card wrapped-tile" onClick={() => setWrapped(true)}>
           <Sparkles size={28} className="w-emoji" />

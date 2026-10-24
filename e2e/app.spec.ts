@@ -57,11 +57,22 @@ for (const scheme of ['light', 'dark'] as const)
     await seed(page, SAMPLE);
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(bg).toBe(scheme === 'dark' ? 'rgb(20, 20, 20)' : 'rgb(255, 255, 255)');
-    for (const name of ['Historial', 'Ejercicios', 'Perfil', 'Coach', 'Entrenar']) {
+    for (const name of ['Historial', 'Ejercicios', 'Perfil', 'Entrenar']) {
       await tab(page, name).click();
       await expect(page.locator('h1:visible').first()).toBeVisible();
     }
   });
+
+test('cuatro pestañas y Coach IA dentro de Perfil', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await expect(page.locator('nav.tabs button')).toHaveText(['Entrenar', 'Historial', 'Ejercicios', 'Perfil']);
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: /Coach IA/ }).click();
+  await expect(page.locator('h1:visible').first()).toHaveText('Coach IA');
+  await page.locator('.topbar > button:first-child').click();
+  await expect(page.locator('h1:visible').first()).toHaveText('Perfil');
+});
 
 test('niveles de fuerza en la ficha y en el perfil', async ({ page, errors }) => {
   void errors;
