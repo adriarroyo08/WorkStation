@@ -13,6 +13,7 @@ import { useSessionController } from './controller';
 import { useRest } from './rest';
 import { toast, useToast } from './toast';
 import { UpdateBanner, WhatsNewOnUpdate } from './components/WhatsNew';
+import { SharedRoutineImport } from './components/SharedRoutine';
 import { clock, useNow, useStore } from './store';
 
 const TABS = [
@@ -75,6 +76,7 @@ export default function App() {
       <ToastView />
       <UpdateBanner />
       <WhatsNewOnUpdate />
+      <SharedRoutineImport />
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (

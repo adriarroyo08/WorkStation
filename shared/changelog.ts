@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.1.0',
+    date: '2026-10-25',
+    items: [
+      'Comparte una rutina con un enlace: quien lo abre la ve y la guarda con un toque (sin cuentas ni servidores).',
+      'Mucho más rápida con años de historial: el perfil y la pantalla de entrenar abren hasta 5 veces antes.',
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-10-24',
     items: [

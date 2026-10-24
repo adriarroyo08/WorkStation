@@ -1,6 +1,6 @@
 # Workstation 🏋️
 
-[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.0-ff5f1f)
+[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.1.0-ff5f1f)
 
 App personal de entrenamiento de fuerza (estilo Hevy) con **coach IA gratuito** y **servidor MCP**.
 Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus datos de Hevy mediante su exportación CSV o su API pública oficial.
@@ -39,7 +39,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 - ⚖️ **Frente a la última vez**: cada entreno se compara con la sesión anterior de la misma rutina (volumen, series, reps y duración).
 
 **Rutinas**
-- Carpetas, duplicar, mover, compartir como texto y editor serie a serie.
+- Carpetas, duplicar, mover, editor serie a serie y compartir: como texto o como **enlace** que la otra persona guarda con un toque (la rutina va comprimida en el propio enlace, sin servidor).
 - Explorar 7 programas predefinidos: Cuerpo completo, 5×5, Torso/Pierna, PPL, Arnold split, En casa y Glúteo.
 - El Coach IA crea rutinas o programas enteros que guardas con un toque.
 

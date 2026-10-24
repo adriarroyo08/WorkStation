@@ -12,6 +12,7 @@ import { BatteryCharging, CalendarCheck, ClipboardList, Compass, Flame, FolderPl
 import BodyMap from './BodyMap';
 import { ProgressRing, Sheet, useScrollTop } from './ui';
 import { fmtWeight } from '../../../shared/units';
+import { shareRoutineLink } from './SharedRoutine';
 
 // Pantallas que no hacen falta al abrir la app: se descargan aparte y se precargan cuando el navegador está libre.
 const loadLogger = () => import('./WorkoutLogger');
@@ -338,6 +339,16 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
               }}
             >
               📤 Compartir como texto
+            </button>
+            <button
+              className="item"
+              disabled={!menu.exercises.length}
+              onClick={() => {
+                void shareRoutineLink(menu, data.exercises);
+                setMenu(null);
+              }}
+            >
+              🔗 Compartir enlace (se guarda con un toque)
             </button>
             <button className="item danger" onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}>
               🗑 Borrar rutina

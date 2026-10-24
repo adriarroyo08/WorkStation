@@ -149,13 +149,13 @@ test('novedades tras actualizar y versión en ajustes', async ({ page, errors })
   await page.evaluate(() => localStorage.setItem('ws:seenVersion', '0.2.0'));
   await page.reload();
   const sheet = page.getByRole('dialog', { name: 'Novedades' });
-  await expect(sheet).toContainText('Versión 1.0.0');
+  await expect(sheet).toContainText('Versión 1.1.0');
   await sheet.getByRole('button', { name: '¡Genial!' }).click();
   await page.reload();
   await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: 'Ajustes' }).click();
-  await expect(page.locator('.app-version')).toContainText('Workstation v1.0.0');
+  await expect(page.locator('.app-version')).toContainText('Workstation v1.1.0');
 });
 
 test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ page, errors }) => {
@@ -202,4 +202,28 @@ test('funciona sin conexión tras la primera visita', async ({ page, context, er
   await tab(page, 'Perfil').click(); // pestaña cargada bajo demanda: también desde la caché
   await expect(page.locator('h1:visible').first()).toHaveText('Perfil');
   await context.setOffline(false);
+});
+
+test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({ page, browser, errors }) => {
+  void errors;
+  await page.addInitScript(() => {
+    (navigator as unknown as { share: (d: ShareData) => Promise<void> }).share = async (d) => void ((window as unknown as { shared: ShareData }).shared = d);
+  });
+  await seed(page, SAMPLE);
+  await page.locator('.card.routine', { hasText: 'Torso A' }).getByRole('button', { name: 'Opciones' }).click();
+  await page.getByRole('button', { name: /Compartir enlace/ }).click();
+  const url = await page.waitForFunction(() => (window as unknown as { shared?: ShareData }).shared?.url).then((h) => h.jsonValue() as Promise<string>);
+  expect(url).toMatch(/#rutina=z[\w-]+$/);
+
+  // Otra persona, sin datos, abre el enlace.
+  const ctx = await browser.newContext({ ...test.info().project.use, baseURL: undefined });
+  const other = await ctx.newPage();
+  await other.goto(url.replace(/^https?:\/\/[^/]+\/?/, 'http://localhost:4174/'));
+  const sheet = other.getByRole('dialog', { name: 'Rutina compartida' });
+  await expect(sheet).toContainText('Torso A');
+  await expect(sheet).toContainText('Press de banca (barra)');
+  await sheet.getByRole('button', { name: 'Guardar en mis rutinas' }).click();
+  await expect(other.locator('.card.routine', { hasText: 'Torso A' })).toBeVisible();
+  expect(other.url()).not.toContain('#rutina=');
+  await ctx.close();
 });

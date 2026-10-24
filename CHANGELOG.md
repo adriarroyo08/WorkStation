@@ -3,6 +3,14 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.1.0] - 2026-10-25
+
+### Añadido
+- Compartir rutinas por enlace (comprimidas en el propio enlace, ~300 caracteres para 6 ejercicios), con pantalla para guardarlas y validación de enlaces manipulados.
+
+### Rendimiento
+- Racha semanal y objetivo en tiempo lineal: con ~1.000 entrenos, Perfil 872 → 164 ms y Entrenar 598 → 105 ms.
+
 ## [1.0.0] - 2026-10-24
 
 ### Añadido
