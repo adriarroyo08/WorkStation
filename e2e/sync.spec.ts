@@ -1,6 +1,6 @@
 // Sincronización con un Supabase simulado (auth + tabla records con "gana el más reciente"), entre dispositivos.
 import type { BrowserContext, Page, Route } from '@playwright/test';
-import { SAMPLE, expect, seed, tab, test } from './fixtures';
+import { SAMPLE, expect, seed, tab, test, skipTour } from './fixtures';
 
 const URL_ = 'https://fake-project.supabase.co';
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -88,6 +88,7 @@ test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuari
 
   // Segundo dispositivo, vacío: recibe los entrenos de Ana.
   const ctx2 = await browser.newContext({ ...test.info().project.use });
+  await skipTour(ctx2);
   await sb.attach(ctx2);
   const p2 = await ctx2.newPage();
   await p2.goto('/');
@@ -115,6 +116,7 @@ test('un dispositivo con la hora atrasada no pierde sus cambios', async ({ page,
 
   // Segundo móvil con el reloj una hora atrasado.
   const ctx2 = await browser.newContext({ ...test.info().project.use });
+  await skipTour(ctx2);
   await ctx2.addInitScript(() => {
     const real = Date.now.bind(Date);
     Date.now = () => real() - 3600_000;

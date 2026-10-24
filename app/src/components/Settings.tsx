@@ -8,7 +8,7 @@ import ApiKeys from './ApiKeys';
 import AutoBackups from './AutoBackups';
 import { cloud } from '../cloud';
 import { AllReleasesSheet, APP_VERSION } from './WhatsNew';
-import { Bot, Calculator, Cloud, Dumbbell, Film, Info, Plug, Save, Sparkles, Watch } from 'lucide-react';
+import { Bot, Calculator, Cloud, Compass, Dumbbell, Film, Info, Plug, Save, Sparkles, Watch } from 'lucide-react';
 import { snapshot } from '../backups';
 import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
@@ -343,6 +343,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <p>Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
         <button className="ghost small icon-btn" onClick={() => setNotes(true)}>
           <Sparkles size={15} /> Novedades
+        </button>
+        <button className="ghost small icon-btn" onClick={() => window.dispatchEvent(new Event('ws:show-tour'))}>
+          <Compass size={15} /> Ver tour de nuevo
         </button>
         <a className="ghost small" href="https://github.com/adriarroyo08/WorkStation/blob/main/PRIVACY.md" target="_blank" rel="noreferrer">
           Privacidad

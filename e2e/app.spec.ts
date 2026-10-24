@@ -1,4 +1,45 @@
-import { SAMPLE, expect, seed, tab, test } from './fixtures';
+import { SAMPLE, expect, seed, tab, test, skipTour } from './fixtures';
+
+test.describe('tour de bienvenida', () => {
+  test.use({ onboarded: false });
+  const tour = (page: import('@playwright/test').Page) => page.getByRole('dialog', { name: 'Bienvenida' });
+
+  test('primera visita: se muestra, Saltar lo cierra y no vuelve', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    await expect(tour(page)).toContainText('Bienvenido a Workstation');
+    await page.getByRole('button', { name: 'Saltar' }).click();
+    await expect(tour(page)).toHaveCount(0);
+    await expect(page.getByText('Bienvenido a Workstation')).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('Bienvenido a Workstation')).toBeVisible();
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('recorre las 7 pantallas y Crear cuenta lleva a Perfil', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    for (let n = 0; n < 6; n++) await page.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(tour(page)).toContainText('Todo sincronizado');
+    await page.getByRole('button', { name: 'Crear cuenta' }).click();
+    await expect(page.locator('h1:visible').first()).toHaveText('Perfil');
+  });
+
+  test('con datos no sale', async ({ page, errors }) => {
+    void errors;
+    await seed(page, SAMPLE);
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('"Ver tour de nuevo" en Ajustes lo abre', async ({ page, errors }) => {
+    void errors;
+    await seed(page, SAMPLE);
+    await tab(page, 'Perfil').click();
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    await page.getByRole('button', { name: 'Ver tour de nuevo' }).click();
+    await expect(tour(page)).toBeVisible();
+  });
+});
 
 test('entreno completo desde cero', async ({ page, errors }) => {
   void errors;
@@ -241,6 +282,7 @@ test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({
 
   // Otra persona, sin datos, abre el enlace.
   const ctx = await browser.newContext({ ...test.info().project.use, baseURL: undefined });
+  await skipTour(ctx);
   const other = await ctx.newPage();
   await other.goto(url.replace(/^https?:\/\/[^/]+\/?/, 'http://localhost:4174/'));
   const sheet = other.getByRole('dialog', { name: 'Rutina compartida' });

@@ -1,5 +1,5 @@
 import { BarChart3, CalendarDays, Dumbbell, Library } from 'lucide-react';
-import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Train from './components/Train';
 
 // El resto de pestañas se cargan bajo demanda: el arranque solo descarga "Entrenar".
@@ -14,6 +14,16 @@ import { toast, useToast } from './toast';
 import { UpdateBanner, WhatsNewOnUpdate } from './components/WhatsNew';
 import { SharedRoutineImport } from './components/SharedRoutine';
 import { clock, useNow, useStore } from './store';
+import Onboarding from './components/Onboarding';
+import { ONBOARDED_KEY, shouldShowOnboarding } from '../../shared/onboarding';
+
+const read = (k: string) => {
+  try {
+    return localStorage.getItem(k) ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 const TABS = [
   { id: 'train', label: 'Entrenar', Icon: Dumbbell },
@@ -25,7 +35,16 @@ const TABS = [
 export type TabId = (typeof TABS)[number]['id'];
 
 export default function App() {
-  const { active } = useStore();
+  const { active, data } = useStore();
+  const [tour, setTour] = useState(() =>
+    shouldShowOnboarding({ onboarded: read(ONBOARDED_KEY) === '1', seenVersion: read('ws:seenVersion'), hasData: data.workouts.length + data.routines.length > 0 }),
+  );
+  // "Ver tour de nuevo" (Ajustes) lo reabre.
+  useEffect(() => {
+    const show = () => setTour(true);
+    window.addEventListener('ws:show-tour', show);
+    return () => window.removeEventListener('ws:show-tour', show);
+  }, []);
   useSessionController();
   useCloudSync();
   const [tab, setTab] = useState<TabId>('train');
@@ -51,6 +70,8 @@ export default function App() {
   useLayoutEffect(() => {
     if (!overlayExercise) window.scrollTo({ top: savedScroll.current, behavior: 'instant' as ScrollBehavior });
   }, [overlayExercise]);
+
+  if (tour) return <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setTab('profile'))} />;
 
   return (
     <div className="app">
