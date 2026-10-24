@@ -190,3 +190,16 @@ test('unidades en libras: escribir, calculadora de discos e historial', async ({
   await expect(calc).toContainText('Por lado: 45 + 45');
   await expect(calc).toContainText('Total cargado: 225 lb');
 });
+
+test('funciona sin conexión tras la primera visita', async ({ page, context, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await expect.poll(() => page.evaluate(async () => !!(await navigator.serviceWorker.getRegistration())?.active), { timeout: 20000 }).toBe(true);
+  await page.reload();
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('.today h3')).toHaveText('Pierna A');
+  await tab(page, 'Perfil').click(); // pestaña cargada bajo demanda: también desde la caché
+  await expect(page.locator('h1:visible').first()).toHaveText('Perfil');
+  await context.setOffline(false);
+});
