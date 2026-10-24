@@ -85,6 +85,15 @@ test('sin sesión, Perfil abre con la tarjeta de cuenta y el registro avisa del 
   expect(new URLSearchParams(signup.search).get('redirect_to')).toMatch(/^http:\/\/localhost:4174\/$/);
 });
 
+test('sin VITE_GOOGLE_WEB_CLIENT_ID no hay botón de Google', async ({ page, errors }) => {
+  void errors;
+  await new Mock().attach(page);
+  await configure(page);
+  await tab(page, 'Perfil').click();
+  await expect(page.getByRole('button', { name: 'Continuar con email' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continuar con Google' })).toHaveCount(0);
+});
+
 test('con sesión, la tarjeta muestra el email y Cerrar sesión', async ({ page, errors }) => {
   void errors;
   await new Mock().attach(page);

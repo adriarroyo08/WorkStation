@@ -16,6 +16,7 @@ interface NativeApi {
   setSystemBars?(dark: boolean): void; // desde la app 1.4
   notificationsState?(): 'granted' | 'denied' | 'ask';
   requestNotifications?(): void;
+  googleSignIn?(webClientId: string, hashedNonce: string): void;
   shareText?(title: string, text: string): void; // desde la app 1.3
 }
 
@@ -36,16 +37,21 @@ let handler: ((c: WatchCommand) => void) | null = null;
 export const onWatchCommand = (h: (c: WatchCommand) => void) => void (handler = h);
 
 const notifWaiters: ((granted: boolean) => void)[] = [];
+const googleWaiters: { ok: (token: string | null) => void; fail: (e: Error) => void }[] = [];
 
 // Mensajes que llegan desde Android: {kind:'watch_cmd', payload:'<json>'} | {kind:'watch_status', nodes:[...]}
 (window as unknown as { __workstationFromNative: (raw: string) => void }).__workstationFromNative = (raw: string) => {
   try {
-    const msg = JSON.parse(raw) as { kind: string; payload?: string; nodes?: string[]; granted?: boolean };
+    const msg = JSON.parse(raw) as { kind: string; payload?: string; nodes?: string[]; granted?: boolean; token?: string; message?: string };
     if (msg.kind === 'watch_status') {
       watch = { nodes: msg.nodes ?? [], checkedAt: Date.now() };
       subs.forEach((f) => f());
     } else if (msg.kind === 'notif_result') {
       notifWaiters.splice(0).forEach((r) => r(!!msg.granted));
+    } else if (msg.kind === 'google_token' || msg.kind === 'google_cancel') {
+      googleWaiters.splice(0).forEach((w) => w.ok(msg.kind === 'google_token' ? (msg.token ?? null) : null));
+    } else if (msg.kind === 'google_error') {
+      googleWaiters.splice(0).forEach((w) => w.fail(new Error(msg.message || 'No se pudo iniciar sesión con Google')));
     } else if (msg.kind === 'watch_cmd' && msg.payload) {
       const c = parseWatchCommand(msg.payload);
       if (c) handler?.(c);
@@ -86,6 +92,14 @@ export const native = {
       if (!a?.requestNotifications) return resolve(false);
       notifWaiters.push(resolve);
       a.requestNotifications();
+    }),
+  /** Google (Credential Manager). null = cancelado; rechaza si falla o si esta versión de la app no lo soporta. */
+  googleSignIn: (webClientId: string, hashedNonce: string) =>
+    new Promise<string | null>((ok, fail) => {
+      const a = api();
+      if (!a?.googleSignIn) return fail(new Error('Esta versión de la app no admite Google. Actualízala.'));
+      googleWaiters.push({ ok, fail });
+      a.googleSignIn(webClientId, hashedNonce);
     }),
   /** Iconos de las barras del sistema según el tema efectivo (Android). */
   setSystemBars: (dark: boolean) => api()?.setSystemBars?.(dark),

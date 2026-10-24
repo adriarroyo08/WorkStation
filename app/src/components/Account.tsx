@@ -14,9 +14,19 @@ const STATUS: Record<string, string> = {
   error: 'Error de sincronización',
 };
 
+const GoogleG = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+    <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.4z" />
+    <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3A11.5 11.5 0 0 0 12 23.5z" />
+    <path fill="#FBBC05" d="M5.6 14.2a6.9 6.9 0 0 1 0-4.4v-3H1.8a11.5 11.5 0 0 0 0 10.4l3.8-3z" />
+    <path fill="#EA4335" d="M12 5.4c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11.5 11.5 0 0 0 1.8 6.8l3.8 3C6.5 7.4 9 5.4 12 5.4z" />
+  </svg>
+);
+
 export function AccountCard({ onEmail }: { onEmail?: () => void }) {
   const st = useCloud();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
   if (st.email)
     return (
@@ -69,7 +79,33 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
     <div className="card account">
       <b>Inicia sesión para sincronizar</b>
       <p className="small muted">Guarda tus entrenos en la nube y úsalos en el móvil, la web y el reloj. Sin cuenta, todo se guarda en este dispositivo.</p>
-      <button className="primary full" onClick={onEmail}>
+      {cloud.googleAvailable() && (
+        <>
+          <button
+            className="outline full"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setErr('');
+              try {
+                await cloud.signInWithGoogle();
+              } catch (e) {
+                setErr((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <GoogleG /> Continuar con Google
+          </button>
+          {err && (
+            <p className="error small" role="alert">
+              {err}
+            </p>
+          )}
+        </>
+      )}
+      <button className={cloud.googleAvailable() ? 'outline full' : 'primary full'} onClick={onEmail}>
         <Mail size={16} /> Continuar con email
       </button>
     </div>

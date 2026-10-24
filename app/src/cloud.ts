@@ -9,7 +9,8 @@ import type { WorkstationData } from '../../shared/types';
 import { useStore } from './store';
 import { emptyData } from '../../shared/data';
 import { snapshot as snapshotBackup } from './backups';
-import { isNative } from './native';
+import { isNative, native } from './native';
+import { makeNonce } from '../../shared/nonce';
 
 export interface CloudConfig {
   url: string;
@@ -47,7 +48,8 @@ let state: CloudState = {
   lastSync: null,
   error: null,
   recovery: hashType === 'recovery',
-  justConfirmed: /[#&]access_token=/.test(authHash) && hashType !== 'recovery',
+  // Solo los enlaces de email llevan `type`; al volver de Google (OAuth) la sesión entra directa, sin pantalla de "cuenta confirmada".
+  justConfirmed: /[#&]access_token=/.test(authHash) && !!hashType && hashType !== 'recovery',
   linkError: /[#&]error=/.test(authHash) ? 'El enlace ha caducado o ya se usó. Vuelve a pedirlo desde la app.' : null,
 };
 const subs = new Set<() => void>();
@@ -286,6 +288,28 @@ export const cloud = {
     if (!client) throw new Error('Configura primero la URL y la anon key');
     const { error } = await client.auth.updateUser({ password });
     if (error) throw friendly(error.message);
+  },
+  /** Hay cliente OAuth Web configurado y la app va conectada al Supabase del build (el proveedor Google se configura allí). */
+  googleAvailable: () => !!import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID && cloud.builtIn(),
+  /** Android: Credential Manager → id_token → Supabase (entra por onSignedIn, como el email). Web: redirección OAuth. Cancelar no es error. */
+  async signInWithGoogle() {
+    await ready;
+    if (!client) throw new Error('Configura primero la URL y la anon key');
+    if (isNative()) {
+      const { raw, hashed } = await makeNonce();
+      let token: string | null;
+      try {
+        token = await native.googleSignIn(import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID!, hashed);
+      } catch (e) {
+        throw friendly((e as Error).message);
+      }
+      if (!token) return;
+      const { error } = await client.auth.signInWithIdToken({ provider: 'google', token, nonce: raw });
+      if (error) throw friendly(error.message);
+    } else {
+      const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectUrl() } });
+      if (error) throw friendly(error.message);
+    }
   },
   /** Cierra las pantallas de "cuenta confirmada" / "nueva contraseña". */
   dismissLanding: () => emit({ recovery: false, justConfirmed: false, linkError: null }),
