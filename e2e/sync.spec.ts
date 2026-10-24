@@ -11,8 +11,9 @@ type Row = { user_id: string; collection: string; id: string; doc: unknown; dele
 class FakeSupabase {
   rows = new Map<string, Row>();
   private tick = 0;
+  // Hora real del "servidor", con microsegundos crecientes (como la migración 003).
   private now() {
-    return new Date(Date.UTC(2026, 9, 24, 12) + this.tick++).toISOString().replace('Z', '000+00:00');
+    return new Date(Date.now()).toISOString().replace('Z', `${String(this.tick++ % 1000).padStart(3, '0')}+00:00`);
   }
   async attach(ctx: BrowserContext) {
     await ctx.route(`${URL_}/**`, (r) => this.handle(r));
@@ -103,4 +104,36 @@ test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuari
   await tab(page, 'Historial').click();
   await expect(page.locator('button.card', { hasText: 'Torso A' })).toHaveCount(0);
   expect(sb.count('user-ana', 'workouts')).toBe(3); // y la cuenta de Ana sigue intacta
+});
+
+test('un dispositivo con la hora atrasada no pierde sus cambios', async ({ page, browser, errors }) => {
+  void errors;
+  const sb = new FakeSupabase();
+  await sb.attach(page.context());
+  await seed(page, SAMPLE);
+  await signIn(page, 'ana@example.com');
+
+  // Segundo móvil con el reloj una hora atrasado.
+  const ctx2 = await browser.newContext({ ...test.info().project.use });
+  await ctx2.addInitScript(() => {
+    const real = Date.now.bind(Date);
+    Date.now = () => real() - 3600_000;
+  });
+  await sb.attach(ctx2);
+  const p2 = await ctx2.newPage();
+  await p2.goto('/');
+  await signIn(p2, 'ana@example.com');
+  const goal = (p: typeof page) => p.getByLabel('Objetivo semanal (entrenos)');
+  const goalOnServer = () => ([...sb.rows.values()].find((r) => r.collection === 'settings')?.doc as { weeklyGoal?: number } | undefined)?.weeklyGoal;
+  // Primera subida de p2: sirve para medir su desfase con el servidor.
+  await goal(p2).selectOption('5');
+  await expect.poll(goalOnServer).toBe(5);
+  await p2.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  // Ana cambia el objetivo en el primer móvil y, después, el segundo móvil lo vuelve a cambiar.
+  await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await goal(page).selectOption('4');
+  await expect.poll(goalOnServer).toBe(4);
+  await goal(p2).selectOption('6');
+  await expect.poll(goalOnServer).toBe(6); // sin corregir el reloj, este cambio "de hace una hora" perdería
+  await ctx2.close();
 });

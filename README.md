@@ -1,6 +1,6 @@
 # Workstation 🏋️
 
-[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.2.0-ff5f1f)
+[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.3.0-ff5f1f)
 
 App personal de entrenamiento de fuerza (estilo Hevy) con **coach IA gratuito** y **servidor MCP**.
 Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus datos de Hevy mediante su exportación CSV o su API pública oficial.

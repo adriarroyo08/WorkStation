@@ -149,13 +149,13 @@ test('novedades tras actualizar y versión en ajustes', async ({ page, errors })
   await page.evaluate(() => localStorage.setItem('ws:seenVersion', '0.2.0'));
   await page.reload();
   const sheet = page.getByRole('dialog', { name: 'Novedades' });
-  await expect(sheet).toContainText('Versión 1.2.0');
+  await expect(sheet).toContainText('Versión 1.3.0');
   await sheet.getByRole('button', { name: '¡Genial!' }).click();
   await page.reload();
   await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: 'Ajustes' }).click();
-  await expect(page.locator('.app-version')).toContainText('Workstation v1.2.0');
+  await expect(page.locator('.app-version')).toContainText('Workstation v1.3.0');
 });
 
 test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ page, errors }) => {

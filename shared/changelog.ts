@@ -7,6 +7,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.3.0',
+    date: '2026-10-26',
+    items: [
+      'Android: el entrenamiento sigue vivo con la pantalla apagada y el botón Atrás cierra lo que tengas abierto.',
+      'Reloj: el pulso se mide aunque bajes la muñeca, y en libras los botones +/− guardan justo lo que ves.',
+      'Los enlaces de rutinas se abren en la app de Android y se comparten con el menú del móvil.',
+      'La sincronización ya no depende de que la hora del móvil esté bien puesta.',
+      'Revisión visual en móviles pequeños: decimales con coma y cifras que ya no se cortan.',
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-10-25',
     items: [

@@ -78,3 +78,14 @@ describe('auditoría de la sincronización', () => {
     expect(apply(d, [row], new Map([['workouts:w', '2026-10-20T09:59:59.000Z']])).data.workouts[0].name).toBe('remoto');
   });
 });
+
+describe('desfase del reloj', () => {
+  it('estima servidor − local con la mediana y descarta valores raros', async () => {
+    const { estimateClockOffset } = await import('./sync');
+    const t = Date.parse('2026-10-24T12:00:00Z');
+    // Móvil 5 min atrasado: el servidor marca 5 min más que el punto medio de la petición.
+    const s = (lat: number) => ({ serverAt: new Date(t + 300_000 + lat).toISOString(), sentAt: t, receivedAt: t + 2 * lat });
+    expect(estimateClockOffset([s(40), s(60), s(80), { serverAt: 'basura', sentAt: t, receivedAt: t }])).toBe(300_000);
+    expect(estimateClockOffset([])).toBeUndefined();
+  });
+});

@@ -3,6 +3,18 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.3.0] - 2026-10-26
+
+### Corregido (auditoría de Android y Wear OS)
+- Móvil: servicio en primer plano durante el entreno (Android ya no congela la app con la pantalla apagada y los comandos del reloj se procesan); el pulso no expulsa comandos de la cola; Atrás cierra hojas y pantallas de la web; sin service worker dentro del APK (servía la versión anterior); `SCHEDULE_EXACT_ALARM` en lugar de `USE_EXACT_ALARM` (política de Google Play); sin pantalla en blanco tras cerrarse el proceso; avisos al abrir la app del reloj.
+- Reloj: pulso en un servicio de tipo health (sigue con la muñeca bajada y se para solo al terminar); pasos de 5 lb sobre el valor mostrado; la unidad solo cambia con un estado más nuevo; se ignora un entreno abandonado de hace más de 6 h.
+- Sincronización: se mide el desfase del reloj del dispositivo con el servidor y se corrige al fechar los cambios.
+- Diseño a 360 px: decimales con coma, rejillas de cifras compactas y etiquetas del gráfico sin recortar.
+
+### Añadido
+- Enlaces de rutinas que se abren en la app de Android y menú nativo de compartir.
+- e2e de diseño (todas las pantallas a 360 px sin desbordes) y de dispositivo con la hora atrasada.
+
 ## [1.2.0] - 2026-10-25
 
 Auditoría completa (entreno en vivo, sincronización, estadísticas e importadores).

@@ -4,7 +4,7 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { get, set } from 'idb-keyval';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { applyRemote, diff, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
+import { applyRemote, diff, estimateClockOffset, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
 import type { WorkstationData } from '../../shared/types';
 import { useStore } from './store';
 import { emptyData } from '../../shared/data';
@@ -44,6 +44,11 @@ let channel: RealtimeChannel | null = null;
 let userId: string | null = null;
 let pending = new Map<string, SyncRecord>();
 let cursor = '1970-01-01T00:00:00Z';
+// Desfase del reloj local respecto al servidor (ms) y subidas recientes con las que medirlo.
+let clockOffset = 0;
+const inflight = new Map<string, { client_updated_at: string; sentAt: number; receivedAt: number }>();
+/** Hora "del servidor" para fechar los cambios locales. */
+const serverNow = () => new Date(Date.now() + clockOffset).toISOString();
 let getData: () => WorkstationData = () => {
   throw new Error('store no listo');
 };
@@ -61,6 +66,7 @@ async function setup() {
   const stored = await get<CloudConfig>('cloud-config');
   if (stored?.url && stored.anonKey) cfg = stored;
   pending = new Map(((await get<SyncRecord[]>('cloud-pending')) ?? []).map((r) => [recordKey(r.collection, r.id), r]));
+  clockOffset = (await get<number>('cloud-clock-offset')) ?? 0;
   emit({ configured: !!(cfg.url && cfg.anonKey), pending: pending.size });
   client = await makeClient();
   if (!client) return emit({ status: 'off' });
@@ -139,6 +145,17 @@ async function pull(): Promise<Set<string>> {
       if (p && Date.parse(p.client_updated_at) <= Date.parse(r.client_updated_at)) dropped = pending.delete(k) || dropped;
     }
     if (dropped) await savePending();
+    // Filas que acabamos de subir: su updated_at (hora del servidor) permite medir el desfase del reloj.
+    const samples = rows.flatMap((r) => {
+      const f = inflight.get(recordKey(r.collection, r.id));
+      return f && r.updated_at && f.client_updated_at === r.client_updated_at ? [{ serverAt: r.updated_at, sentAt: f.sentAt, receivedAt: f.receivedAt }] : [];
+    });
+    const off = estimateClockOffset(samples);
+    if (off !== undefined) {
+      clockOffset = Math.abs(off) < 2000 ? 0 : off; // por debajo de 2 s es solo latencia
+      inflight.clear();
+      await set('cloud-clock-offset', clockOffset);
+    }
     from = rows[rows.length - 1].updated_at ?? from;
     if (Date.parse(from) > Date.parse(cursor)) cursor = from;
     await set(`cloud-cursor:${userId}`, cursor);
@@ -156,11 +173,14 @@ async function flush() {
     const batch = [...pending.values()];
     for (let i = 0; i < batch.length; i += 200) {
       const chunk = batch.slice(i, i + 200);
+      const sentAt = Date.now();
       const { error } = await client.from('records').upsert(
         chunk.map((r) => ({ collection: r.collection, id: r.id, doc: r.doc, deleted: r.deleted, client_updated_at: r.client_updated_at })),
         { onConflict: 'user_id,collection,id' },
       );
       if (error) throw new Error(error.message);
+      const receivedAt = Date.now();
+      for (const r of chunk.slice(0, 20)) inflight.set(recordKey(r.collection, r.id), { client_updated_at: r.client_updated_at, sentAt, receivedAt });
       // Solo se quitan si no han vuelto a cambiar mientras subían.
       for (const r of chunk) {
         const k = recordKey(r.collection, r.id);
@@ -246,7 +266,7 @@ export function useCloudSync() {
       applied.current = null;
       return;
     }
-    const changes = diff(prev.current, d);
+    const changes = diff(prev.current, d, serverNow());
     prev.current = snapshot(d);
     if (!changes.length || !state.configured) return;
     for (const r of changes) pending.set(recordKey(r.collection, r.id), r);

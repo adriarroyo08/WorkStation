@@ -96,3 +96,15 @@ export function initialUpload(local: WorkstationData, remoteKeys: Set<string>, n
   }
   return out;
 }
+
+/**
+ * Desfase del reloj del dispositivo respecto al servidor (ms; servidor − local), estimado con filas recién subidas:
+ * el servidor les pone updated_at entre que se envía la petición (sentAt) y llega la respuesta (receivedAt).
+ * Con él, "gana el cambio más reciente" no depende de que la hora del móvil esté bien puesta.
+ */
+export function estimateClockOffset(samples: { serverAt: string; sentAt: number; receivedAt: number }[]): number | undefined {
+  const offs = samples.map((x) => Date.parse(x.serverAt) - (x.sentAt + x.receivedAt) / 2).filter((x) => Number.isFinite(x));
+  if (!offs.length) return undefined;
+  offs.sort((a, b) => a - b);
+  return Math.round(offs[Math.floor(offs.length / 2)]);
+}
