@@ -22,7 +22,7 @@ const bestLift = (data: WorkstationData, ids: string[]) => {
 export function achievements(data: WorkstationData, now = new Date()): Achievement[] {
   const ws: Workout[] = data.workouts;
   const n = ws.length;
-  const tons = ws.reduce((v, w) => v + workoutVolume(w), 0) / 1000;
+  const tons = ws.reduce((v, w) => v + workoutVolume(w, data.exercises), 0) / 1000;
   const prs = prEvents(data).length;
   const streak = weekStreak(data, data.settings?.weekStartsMonday ?? true, now);
   const hours = ws.map((w) => new Date(w.startedAt).getHours());

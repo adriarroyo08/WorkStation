@@ -99,7 +99,13 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       <div className="card">
         <h3>Objetivo semanal ({r.goal.target} entrenos)</h3>
         <p>
-          Cumplido <b>{r.goal.weeksMet}</b> de {r.goal.weeks} semana{r.goal.weeks === 1 ? '' : 's'}
+          {r.goal.weeks ? (
+            <>
+              Cumplido <b>{r.goal.weeksMet}</b> de {r.goal.weeks} semana{r.goal.weeks === 1 ? '' : 's'}
+            </>
+          ) : (
+            'Semana en curso: aún estás a tiempo'
+          )}
         </p>
         <div className="progress">
           <div style={{ width: `${r.goal.weeks ? (r.goal.weeksMet / r.goal.weeks) * 100 : 0}%` }} />

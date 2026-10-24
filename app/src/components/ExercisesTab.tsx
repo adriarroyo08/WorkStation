@@ -54,7 +54,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
               right={
                 pr ? (
                   <small className="muted right">
-                    🏆 {pr.best1RM ? fmtWeight(pr.best1RM) : `${pr.maxReps} reps`}
+                    🏆 {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
                     <br />
                     {pr.sessions} ses.
                   </small>

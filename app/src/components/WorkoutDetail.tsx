@@ -107,7 +107,7 @@ export default function WorkoutDetail({
       </p>
       <div className="stats four">
         <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
-        <Stat value={fmtMass(workoutVolume(w))} label="volumen" />
+        <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
         <Stat value={workoutSetCount(w)} label="series" />
         <Stat value={prs.length} label="récords" />
       </div>

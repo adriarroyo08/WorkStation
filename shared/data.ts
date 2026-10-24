@@ -33,16 +33,24 @@ export function normalizeData(input: unknown): WorkstationData {
   };
 }
 
-// Fusiona `incoming` en `base` sin duplicar ids. Los ajustes de `base` se mantienen.
+// Fusiona `incoming` en `base` sin duplicar ids: añade lo que falta y, si un elemento existe en los dos,
+// gana el local (importar un backup antiguo no deshace ediciones posteriores; las herramientas MCP solo añaden).
+// En los ejercicios se combinan campos para no perder la nota fija, el GIF elegido o las instrucciones traducidas.
 export function mergeData(base: WorkstationData, incoming: WorkstationData): WorkstationData {
   const by = <T extends { id: string }>(a: T[], b: T[]) => {
     const m = new Map(a.map((x) => [x.id, x]));
-    for (const x of b) m.set(x.id, x);
+    for (const x of b) if (!m.has(x.id)) m.set(x.id, x);
     return [...m.values()];
   };
+  const incomingEx = new Map(incoming.exercises.map((e) => [e.id, e]));
+  const exercises = by(base.exercises, incoming.exercises).map((e) => {
+    const other = incomingEx.get(e.id);
+    if (!other || other === e) return e;
+    return { ...e, stickyNote: e.stickyNote ?? other.stickyNote, exdbId: e.exdbId ?? other.exdbId, instructions: e.instructions ?? other.instructions };
+  });
   return {
     version: 1,
-    exercises: by(base.exercises, incoming.exercises),
+    exercises,
     routines: by(base.routines, incoming.routines),
     folders: by(base.folders, incoming.folders),
     workouts: by(base.workouts, incoming.workouts),

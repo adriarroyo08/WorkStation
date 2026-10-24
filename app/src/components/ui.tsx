@@ -3,7 +3,7 @@ import { fromUnit, toUnit } from '../../../shared/units';
 import { mediaUrls } from '../../../shared/exercises';
 import { ANIMATED } from '../../../shared/anim-index';
 import { useExdbGif } from '../exdb';
-import { PR_LABELS, type PrKind } from '../../../shared/stats';
+import { formatDuration, PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
 
 export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
@@ -199,7 +199,8 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
             {items
               .map((p) => {
                 // Récords de peso en la unidad del usuario; reps, tiempo y distancia tal cual.
-                const v = (n: number) => (p.kind === 'weight' || p.kind === '1rm' || p.kind === 'setVolume' ? toUnit(n) : n).toLocaleString('es-ES');
+                const v = (n: number) =>
+                  p.kind === 'duration' ? formatDuration(n) : p.kind === 'distance' ? `${n.toLocaleString('es-ES')} m` : (p.kind === 'reps' ? n : toUnit(n)).toLocaleString('es-ES');
                 return `${PR_LABELS[p.kind]} ${v(p.value)} (antes ${v(p.previous)})`;
               })
               .join(' · ')}

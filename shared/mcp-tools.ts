@@ -66,7 +66,7 @@ export const TOOLS: ToolDef[] = [
             name: w.name,
             date: w.startedAt,
             minutes: workoutDurationMin(w),
-            volume_kg: workoutVolume(w),
+            volume_kg: workoutVolume(w, data.exercises),
             avg_hr: w.heartRate?.avg,
             exercises: w.exercises.map((e) => names.get(e.exerciseId) ?? e.exerciseId),
           })),
@@ -286,7 +286,7 @@ export const TOOLS: ToolDef[] = [
         exercises: exercises.map((e) => ({ exerciseId: findOrCreateExercise(data, e.name).id, sets: e.sets.map((s) => ({ ...s, type: s.type ?? 'normal', done: true })) })),
       };
       data.workouts.push(w);
-      return write(src, data, `Entrenamiento registrado (id ${w.id}, volumen ${workoutVolume(w)} kg).`);
+      return write(src, data, `Entrenamiento registrado (id ${w.id}, volumen ${workoutVolume(w, data.exercises)} kg).`);
     },
   }),
   tool({

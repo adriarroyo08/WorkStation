@@ -2,7 +2,7 @@ import { ListChecks, MoreHorizontal, Plus, Timer, Trash2, Watch, Weight } from '
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
-import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, lastSessionSets } from '../../../shared/stats';
+import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, lastSessionSets, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
 import { uid } from '../../../shared/types';
@@ -117,17 +117,7 @@ export default function WorkoutLogger({
     edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id, sets: n.exercises[ei].sets.map((s) => ({ type: s.type, done: false })) }));
 
   const elapsed = Math.round((now - Date.parse(w.startedAt)) / 1000);
-  const totals = w.exercises.reduce(
-    (t, e) => {
-      for (const s of e.sets)
-        if (s.done && s.type !== 'warmup') {
-          t.sets++;
-          t.volume += (s.weight ?? 0) * (s.reps ?? 0);
-        }
-      return t;
-    },
-    { sets: 0, volume: 0 },
-  );
+  const totals = { sets: workoutSetCount(w), volume: workoutVolume(w, data.exercises) };
 
   return (
     <section className="active">

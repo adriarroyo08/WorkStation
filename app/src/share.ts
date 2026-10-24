@@ -34,7 +34,7 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
 
   const stats: [string, string][] = [
     [formatDuration(workoutDurationMin(w) * 60), 'Duración'],
-    [fmtMass(workoutVolume(w)), 'Volumen'],
+    [fmtMass(workoutVolume(w, data.exercises)), 'Volumen'],
     [String(workoutSetCount(w)), 'Series'],
     [String(prs.length), 'Récords'],
   ];

@@ -89,7 +89,7 @@ export function compareWithPrevious(data: WorkstationData, workoutId: string): C
   if (!previous) return null;
   return {
     previous,
-    volume: [workoutVolume(w), workoutVolume(previous)],
+    volume: [workoutVolume(w, data.exercises), workoutVolume(previous, data.exercises)],
     sets: [workoutSetCount(w), workoutSetCount(previous)],
     reps: [workoutReps(w), workoutReps(previous)],
     durationMin: [workoutDurationMin(w), workoutDurationMin(previous)],

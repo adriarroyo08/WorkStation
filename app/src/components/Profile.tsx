@@ -36,7 +36,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
     for (const w of data.workouts) m.set(new Date(w.startedAt).toDateString(), 1);
     return m;
   }, [data.workouts]);
-  const all = totals(data.workouts);
+  const all = totals(data.workouts, data.exercises);
   const streak = weekStreak(data, settings.weekStartsMonday);
 
   const since = Date.now() - muscleRange * 864e5;

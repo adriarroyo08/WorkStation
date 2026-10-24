@@ -1,6 +1,6 @@
-import { MUSCLE_LABELS } from './exercises';
+import { DEFAULT_EXERCISES, MUSCLE_LABELS } from './exercises';
 import { fmtWeight } from './units';
-import type { Exercise, MuscleGroup, Workout, WorkoutSet, WorkstationData } from './types';
+import type { Exercise, ExerciseKind, MuscleGroup, Workout, WorkoutSet, WorkstationData } from './types';
 
 // 1RM estimado (fórmula de Epley).
 export function estimate1RM(weight: number, reps: number): number {
@@ -13,9 +13,19 @@ export const countsAsWorkSet = (s: WorkoutSet) => s.done && s.type !== 'warmup';
 
 const byDate = (a: Workout, b: Workout) => a.startedAt.localeCompare(b.startedAt);
 
-export function workoutVolume(w: Workout): number {
+// Kg que cuentan como carga levantada. En los ejercicios asistidos el peso es la AYUDA de la máquina:
+// no es carga (más ayuda = más fácil), así que no suma volumen ni récords de peso.
+const DEFAULT_KIND = new Map(DEFAULT_EXERCISES.map((e) => [e.id, e.kind]));
+const kindOf = (id: string, exercises?: Exercise[]): ExerciseKind => exercises?.find((e) => e.id === id)?.kind ?? DEFAULT_KIND.get(id) ?? 'weight_reps';
+export const loadKg = (s: WorkoutSet, kind: ExerciseKind) => (kind === 'assisted' ? 0 : (s.weight ?? 0));
+
+/** Volumen (kg × reps de las series efectivas). Pasa `exercises` para reconocer los asistidos personalizados. */
+export function workoutVolume(w: Workout, exercises?: Exercise[]): number {
   let v = 0;
-  for (const ex of w.exercises) for (const s of ex.sets) if (countsAsWorkSet(s)) v += (s.weight ?? 0) * (s.reps ?? 0);
+  for (const ex of w.exercises) {
+    const kind = kindOf(ex.exerciseId, exercises);
+    for (const s of ex.sets) if (countsAsWorkSet(s)) v += loadKg(s, kind) * (s.reps ?? 0);
+  }
   return Math.round(v);
 }
 
@@ -65,6 +75,9 @@ export function exerciseHistory(data: WorkstationData, exerciseId: string): Exer
 
 function computeExerciseHistory(data: WorkstationData, exerciseId: string): ExerciseSession[] {
   const out: ExerciseSession[] = [];
+  const kind = kindOf(exerciseId, data.exercises);
+  // 1RM solo tiene sentido con peso y repeticiones (no con el lastre de un ejercicio de peso corporal).
+  const rm = (s: WorkoutSet) => (kind === 'weight_reps' ? estimate1RM(s.weight ?? 0, s.reps ?? 0) : 0);
   for (const w of data.workouts) {
     for (const ex of w.exercises) {
       if (ex.exerciseId !== exerciseId) continue;
@@ -74,10 +87,10 @@ function computeExerciseHistory(data: WorkstationData, exerciseId: string): Exer
         workoutId: w.id,
         date: w.startedAt,
         sets,
-        bestWeight: Math.max(0, ...sets.map((s) => s.weight ?? 0)),
-        best1RM: Math.max(0, ...sets.map((s) => estimate1RM(s.weight ?? 0, s.reps ?? 0))),
-        bestSetVolume: Math.max(0, ...sets.map((s) => (s.weight ?? 0) * (s.reps ?? 0))),
-        volume: sets.reduce((v, s) => v + (s.weight ?? 0) * (s.reps ?? 0), 0),
+        bestWeight: Math.max(0, ...sets.map((s) => loadKg(s, kind))),
+        best1RM: Math.max(0, ...sets.map(rm)),
+        bestSetVolume: Math.max(0, ...sets.map((s) => loadKg(s, kind) * (s.reps ?? 0))),
+        volume: sets.reduce((v, s) => v + loadKg(s, kind) * (s.reps ?? 0), 0),
         maxReps: Math.max(0, ...sets.map((s) => s.reps ?? 0)),
         totalReps: sets.reduce((v, s) => v + (s.reps ?? 0), 0),
         maxDuration: Math.max(0, ...sets.map((s) => s.durationSec ?? 0)),
@@ -154,6 +167,7 @@ function computePersonalRecords(data: WorkstationData): PersonalRecord[] {
 // Mejor peso levantado para cada número de repeticiones ("récords por serie").
 export function repRecords(data: WorkstationData, exerciseId: string, maxReps = 15): { reps: number; weight: number; date: string }[] {
   const best = new Map<number, { weight: number; date: string }>();
+  if (kindOf(exerciseId, data.exercises) === 'assisted') return []; // la ayuda no es un récord de peso
   for (const s of exerciseHistory(data, exerciseId))
     for (const set of s.sets) {
       const r = set.reps ?? 0;
@@ -282,7 +296,7 @@ export function trainingSummary(data: WorkstationData, lastN = 10): string {
   if (msTxt) lines.push(`Series por músculo (últimos 30 días): ${msTxt}.`);
   lines.push('', `Últimos ${recent.length} entrenamientos:`);
   for (const w of recent) {
-    lines.push(`- ${w.startedAt.slice(0, 10)} "${w.name}" (${workoutDurationMin(w)} min, volumen ${workoutVolume(w)} kg)`);
+    lines.push(`- ${w.startedAt.slice(0, 10)} "${w.name}" (${workoutDurationMin(w)} min, volumen ${workoutVolume(w, data.exercises)} kg)`);
     for (const ex of w.exercises) {
       const e = names.get(ex.exerciseId);
       const sets = ex.sets

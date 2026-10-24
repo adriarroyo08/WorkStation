@@ -95,7 +95,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                   <Timer size={14} /> {workoutDurationMin(w)} min
                 </span>
                 <span className="icon-btn">
-                  <Weight size={14} /> {fmtMass(workoutVolume(w))}
+                  <Weight size={14} /> {fmtMass(workoutVolume(w, data.exercises))}
                 </span>
                 <span className="icon-btn">
                   <ListChecks size={14} /> {workoutSetCount(w)} series

@@ -1,7 +1,7 @@
 // Informes semanales / mensuales / anuales y estadísticas de perfil.
 import { MUSCLE_LABELS } from './exercises';
-import { countsAsWorkSet, muscleSets, PR_LABELS, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume, type PrEvent } from './stats';
-import type { MuscleGroup, Workout, WorkstationData } from './types';
+import { countsAsWorkSet, loadKg, muscleSets, PR_LABELS, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume, type PrEvent } from './stats';
+import type { Exercise, MuscleGroup, Workout, WorkstationData } from './types';
 import { fmtMass } from './units';
 
 export type PeriodKind = 'week' | 'month' | 'year';
@@ -59,11 +59,11 @@ export interface PeriodTotals {
   daysTrained: number;
 }
 
-export function totals(ws: Workout[]): PeriodTotals {
+export function totals(ws: Workout[], exercises?: Exercise[]): PeriodTotals {
   return {
     workouts: ws.length,
     durationMin: ws.reduce((n, w) => n + workoutDurationMin(w), 0),
-    volume: ws.reduce((n, w) => n + workoutVolume(w), 0),
+    volume: ws.reduce((n, w) => n + workoutVolume(w, exercises), 0),
     sets: ws.reduce((n, w) => n + workoutSetCount(w), 0),
     reps: ws.reduce((n, w) => n + workoutReps(w), 0),
     daysTrained: new Set(ws.map((w) => new Date(w.startedAt).toDateString())).size,
@@ -85,13 +85,12 @@ export interface PeriodReport {
 export function periodReport(data: WorkstationData, p: Period): PeriodReport {
   const names = new Map(data.exercises.map((e) => [e.id, e.name]));
   const ws = data.workouts.filter((w) => inPeriod(w, p)).sort((a, b) => a.startedAt.localeCompare(b.startedAt));
-  const len = p.end.getTime() - p.start.getTime();
   const prevP: Period =
     p.kind === 'month'
       ? { ...p, start: new Date(p.start.getFullYear(), p.start.getMonth() - 1, 1), end: p.start }
       : p.kind === 'year'
         ? { ...p, start: new Date(p.start.getFullYear() - 1, 0, 1), end: p.start }
-        : { ...p, start: new Date(p.start.getTime() - len), end: p.start };
+        : { ...p, start: new Date(p.start.getFullYear(), p.start.getMonth(), p.start.getDate() - 7), end: p.start };
   const prevWs = data.workouts.filter((w) => inPeriod(w, prevP));
 
   const ids = new Set(ws.map((w) => w.id));
@@ -105,6 +104,7 @@ export function periodReport(data: WorkstationData, p: Period): PeriodReport {
     .map((m) => ({ muscle: m as MuscleGroup, label: MUSCLE_LABELS[m as MuscleGroup] ?? m, sets: cur[m as MuscleGroup] ?? 0, previous: prev[m as MuscleGroup] ?? 0 }))
     .sort((a, b) => b.sets - a.sets);
 
+  const kinds = new Map(data.exercises.map((e) => [e.id, e.kind]));
   const top = new Map<string, { sets: number; volume: number; sessions: number }>();
   for (const w of ws)
     for (const we of w.exercises) {
@@ -112,7 +112,8 @@ export function periodReport(data: WorkstationData, p: Period): PeriodReport {
       if (!sets.length) continue;
       const t = top.get(we.exerciseId) ?? { sets: 0, volume: 0, sessions: 0 };
       t.sets += sets.length;
-      t.volume += sets.reduce((v, s) => v + (s.weight ?? 0) * (s.reps ?? 0), 0);
+      const kind = kinds.get(we.exerciseId) ?? 'weight_reps';
+      t.volume += sets.reduce((v, s) => v + loadKg(s, kind) * (s.reps ?? 0), 0);
       t.sessions++;
       top.set(we.exerciseId, t);
     }
@@ -125,7 +126,7 @@ export function periodReport(data: WorkstationData, p: Period): PeriodReport {
   if (p.kind !== 'year')
     for (let d = new Date(p.start); d < p.end; d.setDate(d.getDate() + 1)) {
       const day = ws.filter((w) => new Date(w.startedAt).toDateString() === d.toDateString());
-      byDay.push({ date: d.toISOString(), workouts: day.length, volume: day.reduce((v, w) => v + workoutVolume(w), 0) });
+      byDay.push({ date: d.toISOString(), workouts: day.length, volume: day.reduce((v, w) => v + workoutVolume(w, data.exercises), 0) });
     }
 
   // Semanas del periodo que cumplieron el objetivo semanal.
@@ -134,11 +135,14 @@ export function periodReport(data: WorkstationData, p: Period): PeriodReport {
   let weeks = 0,
     weeksMet = 0;
   for (let s = startOfWeek(p.start, mondayFirst); s < p.end && s.getTime() <= Date.now(); s.setDate(s.getDate() + 7)) {
+    const done = (weekCounts(data, mondayFirst).get(s.getTime()) ?? 0) >= target;
+    // La semana en curso solo cuenta si ya se cumplió (si no, aún no es un fallo).
+    if (s.getTime() + 7 * 864e5 > Date.now() && !done) continue;
     weeks++;
-    if ((weekCounts(data, mondayFirst).get(s.getTime()) ?? 0) >= target) weeksMet++;
+    if (done) weeksMet++;
   }
 
-  return { period: p, totals: totals(ws), previous: totals(prevWs), workouts: ws, prs, muscles, topExercises, byDay, goal: { target, weeksMet, weeks } };
+  return { period: p, totals: totals(ws, data.exercises), previous: totals(prevWs, data.exercises), workouts: ws, prs, muscles, topExercises, byDay, goal: { target, weeksMet, weeks } };
 }
 
 // Serie de las últimas N semanas (para el gráfico de barras del perfil).
@@ -146,7 +150,13 @@ export function weeklySeries(data: WorkstationData, weeks = 12, mondayFirst = tr
   const out: { start: Date; totals: PeriodTotals }[] = [];
   for (let i = weeks - 1; i >= 0; i--) {
     const p = period('week', -i, mondayFirst, now);
-    out.push({ start: p.start, totals: totals(data.workouts.filter((w) => inPeriod(w, p))) });
+    out.push({
+      start: p.start,
+      totals: totals(
+        data.workouts.filter((w) => inPeriod(w, p)),
+        data.exercises,
+      ),
+    });
   }
   return out;
 }

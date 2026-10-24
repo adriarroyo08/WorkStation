@@ -9,7 +9,8 @@ export interface PlateResult {
 export function platesFor(target: number, barKg = 20, plates = [25, 20, 15, 10, 5, 2.5, 1.25]): PlateResult {
   let side = Math.max(0, (target - barKg) / 2);
   const perSide: number[] = [];
-  for (const p of [...plates].sort((a, b) => b - a)) {
+  // Discos no positivos (p. ej. de un backup manipulado) harían un bucle infinito.
+  for (const p of plates.filter((x) => x > 0).sort((a, b) => b - a)) {
     while (side + 1e-9 >= p) {
       perSide.push(p);
       side -= p;
