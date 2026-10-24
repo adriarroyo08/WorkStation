@@ -138,9 +138,9 @@ const friendly = (m: string) => new Error(ES.find(([re]) => re.test(m))?.[1] ?? 
 async function onSignedIn(uid: string, email: string | null) {
   emit({ email, status: 'syncing', error: null });
   // Otra cuenta en este dispositivo: no mezclar sus datos con los de la anterior sin preguntar.
-  const last = await get<string>('cloud-last-user');
   switching = true;
   try {
+    const last = await get<string>('cloud-last-user');
     if (last && last !== uid && (await askSwitch(email)) === 'fresh') {
       await snapshotBackup(getData(), 'antes de cambiar de cuenta');
       pending.clear();
