@@ -25,6 +25,10 @@ jobs:
       - name: Web (se empaqueta dentro del APK del móvil)
         run: npm ci && npm run build
         working-directory: app
+        # Variables del repo (opcionales): la app ya viene conectada a Supabase.
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - uses: actions/setup-java@v6
         with:

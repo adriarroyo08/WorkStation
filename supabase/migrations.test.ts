@@ -37,7 +37,7 @@ beforeAll(async () => {
     create publication supabase_realtime;
     insert into auth.users values ('${A}'), ('${B}');
   `);
-  for (const f of ['001_records.sql', '002_api_keys.sql', '003_sync_hardening.sql']) await db.exec(sql(f));
+  for (const f of ['001_records.sql', '002_api_keys.sql', '003_sync_hardening.sql', '004_touch_search_path.sql']) await db.exec(sql(f));
   await db.exec(`grant select, insert, update, delete on public.records, public.api_keys to authenticated;`);
   await db.query(
     `insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_l', 'read'), ($1, encode(extensions.digest($3, 'sha256'), 'hex'), 'ws_e', 'write')`,
