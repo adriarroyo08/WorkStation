@@ -68,6 +68,8 @@ let client: SupabaseClient | null = null;
 let ready: Promise<unknown> = Promise.resolve();
 let channel: RealtimeChannel | null = null;
 let userId: string | null = null;
+/** Mientras el diálogo de cambio de cuenta está abierto, nada se sube: iría a la cuenta nueva. */
+let switching = false;
 let pending = new Map<string, SyncRecord>();
 let cursor = '1970-01-01T00:00:00Z';
 // Desfase del reloj local respecto al servidor (ms) y subidas recientes con las que medirlo.
@@ -137,11 +139,16 @@ async function onSignedIn(uid: string, email: string | null) {
   emit({ email, status: 'syncing', error: null });
   // Otra cuenta en este dispositivo: no mezclar sus datos con los de la anterior sin preguntar.
   const last = await get<string>('cloud-last-user');
-  if (last && last !== uid && (await askSwitch(email)) === 'fresh') {
-    await snapshotBackup(getData(), 'antes de cambiar de cuenta');
-    pending.clear();
-    await savePending();
-    applyData(emptyData());
+  switching = true;
+  try {
+    if (last && last !== uid && (await askSwitch(email)) === 'fresh') {
+      await snapshotBackup(getData(), 'antes de cambiar de cuenta');
+      pending.clear();
+      await savePending();
+      applyData(emptyData());
+    }
+  } finally {
+    switching = false;
   }
   await set('cloud-last-user', uid);
   cursor = (await get<string>(`cloud-cursor:${uid}`)) ?? '1970-01-01T00:00:00Z';
@@ -209,7 +216,7 @@ async function pull(): Promise<Set<string>> {
 }
 
 async function flush() {
-  if (!client || !userId) return;
+  if (switching || !client || !userId) return;
   if (!navigator.onLine) return emit({ status: 'offline', pending: pending.size });
   emit({ status: 'syncing' });
   try {

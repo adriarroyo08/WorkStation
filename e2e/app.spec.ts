@@ -19,10 +19,33 @@ test.describe('tour de bienvenida', () => {
   test('recorre las 7 pantallas y Crear cuenta lleva al registro por email', async ({ page, errors }) => {
     void errors;
     await page.goto('/');
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('keyval-store');
+          open.onupgradeneeded = () => open.result.createObjectStore('keyval');
+          open.onsuccess = () => {
+            const tx = open.result.transaction('keyval', 'readwrite');
+            tx.objectStore('keyval').put({ url: 'https://fake-project.supabase.co', anonKey: 'anon-key' }, 'cloud-config');
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        }),
+    );
+    await page.reload();
     for (let n = 0; n < 6; n++) await page.getByRole('button', { name: 'Siguiente' }).click();
     await expect(tour(page)).toContainText('Todo sincronizado');
     await page.getByRole('button', { name: 'Crear cuenta' }).click();
     await expect(page.locator('h1:visible').first()).toHaveText('Crear cuenta');
+  });
+
+  test('sin nube configurada no hay Crear cuenta y Escape cierra el tour', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    for (let n = 0; n < 6; n++) await page.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(page.getByRole('button', { name: 'Crear cuenta' })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(tour(page)).toHaveCount(0);
   });
 
   test('con datos no sale', async ({ page, errors }) => {

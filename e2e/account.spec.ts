@@ -154,6 +154,29 @@ test('"Subir también estos datos" sube lo de este dispositivo a la cuenta nueva
   await expect.poll(posts).toBeGreaterThan(before);
 });
 
+test('con el diálogo de cambio de cuenta abierto no se sube nada a la cuenta nueva', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  await mock.attach(page);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+  await page.getByRole('button', { name: 'Cambiar tema' }).click(); // cambio local pendiente
+  await toEmail(page);
+  const posts = () => mock.calls.filter((c) => c.path === '/rest/v1/records' && c.method === 'POST').length;
+  const before = posts();
+  await page.getByLabel('Email').fill('bea@example.com');
+  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
+  const dlg = page.getByRole('dialog', { name: 'Has entrado con otra cuenta' });
+  await expect(dlg).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForTimeout(800);
+  expect(posts()).toBe(before);
+  await dlg.getByRole('button', { name: 'Subir también estos datos' }).click();
+  await expect.poll(posts).toBeGreaterThan(before);
+});
+
 test.describe('enlaces del email', () => {
   test.use({ onboarded: false });
   const tokens = (type: string) => `#access_token=${jwt('user-ana')}&expires_in=3600&refresh_token=r&token_type=bearer&type=${type}`;

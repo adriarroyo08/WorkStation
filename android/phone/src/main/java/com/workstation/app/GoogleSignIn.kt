@@ -16,29 +16,33 @@ import org.json.JSONObject
 object GoogleSignIn {
     fun start(activity: MainActivity, webClientId: String, hashedNonce: String) {
         val reply = { m: JSONObject -> activity.sendToWeb(m) }
-        val option = GetGoogleIdOption.Builder()
-            .setServerClientId(webClientId)
-            .setNonce(hashedNonce)
-            .setFilterByAuthorizedAccounts(false)
-            .build()
-        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
-        CredentialManager.create(activity).getCredentialAsync(
-            activity, request, CancellationSignal(), ContextCompat.getMainExecutor(activity),
-            object : CredentialManagerCallback<GetCredentialResponse, GetCredentialException> {
-                override fun onResult(result: GetCredentialResponse) {
-                    try {
-                        val token = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
-                        reply(JSONObject().put("kind", "google_token").put("token", token))
-                    } catch (e: Exception) {
-                        reply(JSONObject().put("kind", "google_error").put("message", e.message ?: "Respuesta de Google no válida"))
+        try {
+            val option = GetGoogleIdOption.Builder()
+                .setServerClientId(webClientId)
+                .setNonce(hashedNonce)
+                .setFilterByAuthorizedAccounts(false)
+                .build()
+            val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+            CredentialManager.create(activity).getCredentialAsync(
+                activity, request, CancellationSignal(), ContextCompat.getMainExecutor(activity),
+                object : CredentialManagerCallback<GetCredentialResponse, GetCredentialException> {
+                    override fun onResult(result: GetCredentialResponse) {
+                        try {
+                            val token = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+                            reply(JSONObject().put("kind", "google_token").put("token", token))
+                        } catch (e: Exception) {
+                            reply(JSONObject().put("kind", "google_error").put("message", e.message ?: "Respuesta de Google no válida"))
+                        }
                     }
-                }
 
-                override fun onError(e: GetCredentialException) {
-                    if (e is GetCredentialCancellationException) reply(JSONObject().put("kind", "google_cancel"))
-                    else reply(JSONObject().put("kind", "google_error").put("message", e.message ?: e.type))
-                }
-            },
-        )
+                    override fun onError(e: GetCredentialException) {
+                        if (e is GetCredentialCancellationException) reply(JSONObject().put("kind", "google_cancel"))
+                        else reply(JSONObject().put("kind", "google_error").put("message", e.message ?: e.type))
+                    }
+                },
+            )
+        } catch (e: Exception) {
+            reply(JSONObject().put("kind", "google_error").put("message", e.message ?: "No se pudo iniciar Google"))
+        }
     }
 }

@@ -8,6 +8,8 @@ Android solo acepta el inicio de sesión si el SHA-1 de la clave que firma el AP
 
 **No uses `android/keystore/workstation.jks` del repo**: es una clave local de prueba, no la de las versiones publicadas. La real está en el secret de GitHub `WS_KEYSTORE_B64` (base64 del `.jks`; ver `.github/workflows/android.yml`).
 
+> **Aviso:** el secret `WS_KEYSTORE_B64` debe estar definido **antes** de construir el APK en CI. Sin él, CI firma con una clave temporal: el SHA-1 cambia en cada build y el inicio de sesión con Google falla.
+
 1. Copia el valor del secret a un archivo (por ejemplo `ws.b64`; GitHub no deja leer secrets, usa tu copia original) y decodifícalo:
    ```
    base64 -d ws.b64 > release.jks

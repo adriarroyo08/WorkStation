@@ -72,6 +72,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const theme = state?.data.settings.theme;
   useEffect(() => {
+    if (!theme) return;
     const root = document.documentElement;
     root.classList.add('theme-anim');
     if (theme === 'auto') root.removeAttribute('data-theme');

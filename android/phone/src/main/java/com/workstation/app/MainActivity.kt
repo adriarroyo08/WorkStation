@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.webkit.JsPromptResult
+import android.webkit.JsResult
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -15,7 +17,9 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.EditText
 import android.widget.FrameLayout
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -111,6 +115,34 @@ class MainActivity : AppCompatActivity() {
                     fileCallback = null
                     false
                 }
+            }
+
+            // Diálogos nativos de JS (confirm/alert/prompt) en español y sin el título en inglés del WebView.
+            override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                AlertDialog.Builder(this@MainActivity).setMessage(message)
+                    .setPositiveButton("Aceptar") { _, _ -> result.confirm() }
+                    .setOnCancelListener { result.confirm() }
+                    .show()
+                return true
+            }
+
+            override fun onJsConfirm(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                AlertDialog.Builder(this@MainActivity).setMessage(message)
+                    .setPositiveButton("Aceptar") { _, _ -> result.confirm() }
+                    .setNegativeButton("Cancelar") { _, _ -> result.cancel() }
+                    .setOnCancelListener { result.cancel() }
+                    .show()
+                return true
+            }
+
+            override fun onJsPrompt(view: WebView, url: String, message: String, defaultValue: String?, result: JsPromptResult): Boolean {
+                val input = EditText(this@MainActivity).apply { setText(defaultValue) }
+                AlertDialog.Builder(this@MainActivity).setMessage(message).setView(input)
+                    .setPositiveButton("Aceptar") { _, _ -> result.confirm(input.text.toString()) }
+                    .setNegativeButton("Cancelar") { _, _ -> result.cancel() }
+                    .setOnCancelListener { result.cancel() }
+                    .show()
+                return true
             }
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.SERVICE_WORKER_BASIC_USAGE)) {

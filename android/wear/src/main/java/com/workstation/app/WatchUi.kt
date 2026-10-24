@@ -173,7 +173,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
             Text(
                 (if (ex.superset) "Superserie · " else "") + typeLabel + if (set.done) " ✓" else "",
                 fontSize = 12.sp,
-                color = if (set.done) Accent else TextDim,
+                color = TextDim,
             )
         }
         if (usesWeight) {

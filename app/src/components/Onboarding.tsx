@@ -1,5 +1,6 @@
 // Tour de bienvenida: pantallas a pantalla completa con una maqueta en HTML/CSS de la propia UI.
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCloud } from '../cloud';
 import { ONBOARDED_KEY } from '../../../shared/onboarding';
 
 const Row = ({ a, b, hot }: { a: string; b: string; hot?: boolean }) => (
@@ -96,6 +97,15 @@ export default function Onboarding({ onDone, onCreateAccount }: { onDone: () => 
     onDone();
     then?.();
   };
+  const { configured } = useCloud();
+  // Escape (y "Atrás" en Android, vía __workstationBack) cierra el tour.
+  const doneRef = useRef(done);
+  doneRef.current = done;
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && doneRef.current();
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, []);
   return (
     <div className="onb" role="dialog" aria-modal="true" aria-label="Bienvenida">
       <div className="onb-top">
@@ -118,15 +128,17 @@ export default function Onboarding({ onDone, onCreateAccount }: { onDone: () => 
         </div>
         {last ? (
           <>
-            <button className="primary full" onClick={() => done(onCreateAccount)}>
-              Crear cuenta
-            </button>
-            <button className="ghost full" onClick={() => done()}>
-              Ahora no
+            {configured && (
+              <button className="primary full" autoFocus onClick={() => done(onCreateAccount)}>
+                Crear cuenta
+              </button>
+            )}
+            <button className={configured ? 'ghost full' : 'primary full'} autoFocus={!configured} onClick={() => done()}>
+              {configured ? 'Ahora no' : 'Empezar'}
             </button>
           </>
         ) : (
-          <button className="primary full" onClick={() => setI(i + 1)}>
+          <button className="primary full" autoFocus onClick={() => setI(i + 1)}>
             Siguiente
           </button>
         )}
