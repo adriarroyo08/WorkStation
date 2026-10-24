@@ -10,6 +10,6 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "../shared", "vite.config.ts"],
+  "include": ["src", "../shared"],
   "exclude": ["../shared/**/*.test.ts", "../shared/mcp-tools.ts", "../shared/mcp-http.ts", "../shared/cloud-source.ts"]
 }

@@ -6,6 +6,8 @@ import { clock, downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
 import ApiKeys from './ApiKeys';
 import AutoBackups from './AutoBackups';
+import { AllReleasesSheet, APP_VERSION } from './WhatsNew';
+import { Sparkles } from 'lucide-react';
 import { snapshot } from '../backups';
 import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
@@ -13,6 +15,7 @@ import { Back, Toggle } from './ui';
 
 export default function Settings({ onBack }: { onBack: () => void }) {
   const { data, ai, settings, setAi, setSettings, replace } = useStore();
+  const [notes, setNotes] = useState(false);
   const [cfg, setCfg] = useState(ai);
   const [test, setTest] = useState('');
   const provider = AI_PROVIDERS.find((p) => p.id === cfg.providerId);
@@ -277,7 +280,17 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h2>ℹ️ Acerca de</h2>
       <div className="card small muted">
         <p>Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
+        <button className="ghost small icon-btn" onClick={() => setNotes(true)}>
+          <Sparkles size={15} /> Novedades
+        </button>
+        <a className="ghost small" href="https://github.com/adriarroyo08/WorkStation/blob/main/PRIVACY.md" target="_blank" rel="noreferrer">
+          Privacidad
+        </a>
       </div>
+      <p className="app-version">
+        Workstation v{APP_VERSION} · {__APP_COMMIT__}
+      </p>
+      {notes && <AllReleasesSheet onClose={() => setNotes(false)} />}
     </section>
   );
 }

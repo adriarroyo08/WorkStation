@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { StoreProvider } from './store';
 import '@fontsource-variable/inter';
 import './styles.css';
+import { setupPwa } from './pwa';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -15,3 +16,5 @@ createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </StrictMode>,
 );
+
+void setupPwa();

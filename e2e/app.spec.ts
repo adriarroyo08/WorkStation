@@ -141,3 +141,19 @@ test('reordenar ejercicios arrastrando y con teclado', async ({ page, errors }) 
       .first(),
   ).toContainText('Sentadilla');
 });
+
+test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
+  void errors;
+  await page.goto('/');
+  await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0); // primera instalación: sin aviso
+  await page.evaluate(() => localStorage.setItem('ws:seenVersion', '0.2.0'));
+  await page.reload();
+  const sheet = page.getByRole('dialog', { name: 'Novedades' });
+  await expect(sheet).toContainText('Versión 1.0.0');
+  await sheet.getByRole('button', { name: '¡Genial!' }).click();
+  await page.reload();
+  await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: 'Ajustes' }).click();
+  await expect(page.locator('.app-version')).toContainText('Workstation v1.0.0');
+});

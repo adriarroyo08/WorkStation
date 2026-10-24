@@ -1,16 +1,29 @@
 import react from '@vitejs/plugin-react';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
+const commit = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'dev';
+  }
+})();
+
 export default defineConfig({
+  // Versión visible en Ajustes y usada para mostrar las novedades tras actualizar.
+  define: { __APP_VERSION__: JSON.stringify(pkg.version), __APP_COMMIT__: JSON.stringify(commit) },
   // Rutas relativas para que funcione en GitHub Pages (/workstation/) o en cualquier hosting estático.
   base: './',
   plugins: [
     react(),
     VitePWA({
-      // Registro del service worker sin bloquear el primer pintado.
-      injectRegister: 'script-defer',
-      registerType: 'autoUpdate',
+      // El registro lo hace src/pwa.ts: avisa de la nueva versión en lugar de recargar sola.
+      injectRegister: false,
+      registerType: 'prompt',
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Workstation',

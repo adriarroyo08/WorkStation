@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData, normalizeData, repeatWorkout, routineFromWorkout } from './data';
+import { CHANGELOG, unseenReleases } from './changelog';
 import { DEFAULT_EXERCISES } from './exercises';
 import { importHevyCsv, parseCsv } from './hevy';
 import { period, periodReport, weekStreak } from './reports';
@@ -138,5 +139,14 @@ describe('serie anterior', () => {
     ];
     const cur = [{ type: 'warmup' as const }, { type: 'warmup' as const }, { type: 'normal' as const }, { type: 'normal' as const }];
     expect(alignPrevious(cur, prev).map((s) => s?.weight)).toEqual([40, undefined, 80, undefined]);
+  });
+});
+
+describe('novedades', () => {
+  it('muestra solo lo posterior a la versión vista', () => {
+    expect(unseenReleases(undefined, '1.0.0')).toEqual([]); // primera instalación: sin novedades
+    expect(unseenReleases('0.2.0', '1.0.0').map((r) => r.version)).toEqual(['1.0.0']);
+    expect(unseenReleases('1.0.0', '1.0.0')).toEqual([]);
+    expect(CHANGELOG[0].version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
