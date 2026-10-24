@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var root: FrameLayout
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pageReady = false
+    private var darkUi = true
     private val pending = ArrayDeque<String>()
 
     private val pickFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
@@ -119,7 +120,7 @@ class MainActivity : AppCompatActivity() {
 
             // Diálogos nativos de JS (confirm/alert/prompt) en español y sin el título en inglés del WebView.
             override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
-                AlertDialog.Builder(this@MainActivity).setMessage(message)
+                AlertDialog.Builder(this@MainActivity, dialogTheme()).setMessage(message)
                     .setPositiveButton("Aceptar") { _, _ -> result.confirm() }
                     .setOnCancelListener { result.confirm() }
                     .show()
@@ -127,7 +128,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onJsConfirm(view: WebView, url: String, message: String, result: JsResult): Boolean {
-                AlertDialog.Builder(this@MainActivity).setMessage(message)
+                AlertDialog.Builder(this@MainActivity, dialogTheme()).setMessage(message)
                     .setPositiveButton("Aceptar") { _, _ -> result.confirm() }
                     .setNegativeButton("Cancelar") { _, _ -> result.cancel() }
                     .setOnCancelListener { result.cancel() }
@@ -137,7 +138,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onJsPrompt(view: WebView, url: String, message: String, defaultValue: String?, result: JsPromptResult): Boolean {
                 val input = EditText(this@MainActivity).apply { setText(defaultValue) }
-                AlertDialog.Builder(this@MainActivity).setMessage(message).setView(input)
+                AlertDialog.Builder(this@MainActivity, dialogTheme()).setMessage(message).setView(input)
                     .setPositiveButton("Aceptar") { _, _ -> result.confirm(input.text.toString()) }
                     .setNegativeButton("Cancelar") { _, _ -> result.cancel() }
                     .setOnCancelListener { result.cancel() }
@@ -210,8 +211,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    private fun dialogTheme() = if (darkUi) R.style.WsDialog_Dark else R.style.WsDialog_Light
+
     /** Fondo bajo las barras del sistema e iconos de estado/navegación legibles según el tema efectivo de la app. */
     fun setSystemBars(dark: Boolean) = runOnUiThread {
+        darkUi = dark
         root.setBackgroundColor(Color.parseColor(if (dark) "#141414" else "#ffffff"))
         WindowInsetsControllerCompat(window, root).apply {
             isAppearanceLightStatusBars = !dark

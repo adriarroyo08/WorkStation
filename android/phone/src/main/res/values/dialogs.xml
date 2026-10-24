@@ -1,0 +1,12 @@
+<resources>
+    <!-- Diálogos nativos (confirm/alert/prompt) con el tema efectivo de la app, no el del sistema. -->
+    <style name="WsDialog.Dark" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@drawable/dialog_bg_dark</item>
+        <item name="android:textColorPrimary">#f2f2f2</item>
+    </style>
+    <style name="WsDialog.Light" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@drawable/dialog_bg_light</item>
+    </style>
+</resources>
