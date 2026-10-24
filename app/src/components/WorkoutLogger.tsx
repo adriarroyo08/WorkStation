@@ -74,11 +74,24 @@ export default function WorkoutLogger({
 
   const setField = (ei: number, si: number, patch: Partial<WorkoutSet>) => edit((n) => void Object.assign(n.exercises[ei].sets[si], patch));
 
+  // Serie cuyo ✓ arrancó el descanso actual: si se desmarca, el descanso se cancela.
+  const restFrom = useRef<string | null>(null);
   const toggleDone = (ei: number, si: number) => {
-    if (!w.exercises[ei].sets[si].done && settings.vibrate) navigator.vibrate?.(25);
-    const r = toggleSet(data, w, ei, si);
+    const wasDone = w.exercises[ei].sets[si].done;
+    if (!wasDone && settings.vibrate) navigator.vibrate?.(25);
+    // Si el cronómetro de esta serie está en marcha, su tiempo es el de la serie.
+    const running = stopwatch?.ei === ei && stopwatch.si === si ? { durationSec: Math.round((Date.now() - stopwatch.start) / 1000) } : {};
+    if (running.durationSec !== undefined) setStopwatch(null);
+    const r = toggleSet(data, w, ei, si, running);
     edit((n) => void Object.assign(n, structuredClone(r.workout)));
-    if (mode === 'live' && r.restSec > 0) rest.start(r.restSec);
+    const key = `${ei}:${si}`;
+    if (mode === 'live' && r.restSec > 0) {
+      rest.start(r.restSec);
+      restFrom.current = key;
+    } else if (mode === 'live' && wasDone && restFrom.current === key && rest.get().end) {
+      rest.stop();
+      restFrom.current = null;
+    }
     // Lleva la vista a la siguiente serie pendiente.
     const nx = nextPendingSet(r.workout);
     if (mode === 'live' && nx && !w.exercises[ei].sets[si].done) setTimeout(() => document.getElementById(`set-${nx.ei}-${nx.si}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
@@ -114,7 +127,8 @@ export default function WorkoutLogger({
   };
 
   const replaceExercise = (ei: number, e: Exercise) =>
-    edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id, sets: n.exercises[ei].sets.map((s) => ({ type: s.type, done: false })) }));
+    // Se conservan las series (y las ya hechas): reemplazar sirve sobre todo para corregir el ejercicio elegido.
+    edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id }));
 
   const elapsed = Math.round((now - Date.parse(w.startedAt)) / 1000);
   const totals = { sets: workoutSetCount(w), volume: workoutVolume(w, data.exercises) };
@@ -217,9 +231,17 @@ export default function WorkoutLogger({
                   onChange={(p) => setField(ei, si, p)}
                   onToggle={() => toggleDone(ei, si)}
                   onRemove={() => {
-                    const snap = structuredClone(w);
+                    // Deshacer vuelve a meter solo esa serie (no revierte lo que hayas hecho después).
+                    const removed = structuredClone(we.sets[si]);
+                    const exId = we.exerciseId;
+                    setStopwatch(null);
                     edit((n) => void n.exercises[ei].sets.splice(si, 1));
-                    toast.undo('Serie borrada', () => edit((n) => void Object.assign(n, snap)));
+                    toast.undo('Serie borrada', () =>
+                      edit((n) => {
+                        const target = n.exercises[ei]?.exerciseId === exId ? n.exercises[ei] : n.exercises.find((x) => x.exerciseId === exId);
+                        target?.sets.splice(Math.min(si, target.sets.length), 0, removed);
+                      }),
+                    );
                   }}
                   onPlates={() => setPlates(s.weight ?? aligned[si]?.weight ?? 0)}
                 />
@@ -281,7 +303,14 @@ export default function WorkoutLogger({
         />
       )}
       {menu !== null && w.exercises[menu] && (
-        <ExerciseMenu w={w} ei={menu} edit={edit} onClose={() => setMenu(null)} onReplace={() => (setPicker({ replace: menu }), setMenu(null))} onReorder={() => (setMenu(null), setReorder(true))} />
+        <ExerciseMenu
+          w={w}
+          ei={menu}
+          edit={(fn) => (setStopwatch(null), edit(fn))}
+          onClose={() => setMenu(null)}
+          onReplace={() => (setPicker({ replace: menu }), setMenu(null))}
+          onReorder={() => (setMenu(null), setReorder(true))}
+        />
       )}
       {reorder && (
         <ReorderSheet
@@ -302,7 +331,7 @@ export default function WorkoutLogger({
               </span>
             );
           }}
-          onMove={(from, to) => edit((n) => void (n.exercises = moveItem(n.exercises, from, to)))}
+          onMove={(from, to) => (setStopwatch(null), edit((n) => void (n.exercises = moveItem(n.exercises, from, to))))}
           onClose={() => setReorder(false)}
         />
       )}
@@ -407,9 +436,9 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
         <button
           className="item danger"
           onClick={() => {
-            const snap = structuredClone(w);
+            const removed = structuredClone(we);
             edit((n) => void n.exercises.splice(ei, 1));
-            toast.undo(`${ex?.name ?? 'Ejercicio'} quitado`, () => edit((n) => void Object.assign(n, snap)));
+            toast.undo(`${ex?.name ?? 'Ejercicio'} quitado`, () => edit((n) => void n.exercises.splice(Math.min(ei, n.exercises.length), 0, removed)));
             onClose();
           }}
         >

@@ -28,9 +28,10 @@ export function toggleSet(data: WorkstationData, w: Workout, ei: number, si: num
   s.done = done;
   let restSec = 0;
   if (done && !wasDone) {
-    // En superseries el descanso empieza tras el último ejercicio del bloque.
-    const next = n.exercises[ei + 1];
-    const chained = we.supersetId && next?.supersetId === we.supersetId;
+    // En superseries el descanso empieza tras el último ejercicio del bloque que aún tenga series pendientes
+    // (con A de 4 series y B de 3, tras A4 ya no queda nada de B: toca descansar).
+    let chained = false;
+    for (let j = ei + 1; we.supersetId && n.exercises[j]?.supersetId === we.supersetId; j++) if (n.exercises[j].sets.some((x) => !x.done)) chained = true;
     restSec = chained ? 0 : (we.restSec ?? data.settings.defaultRestSec);
   }
   return { workout: n, restSec };
@@ -72,7 +73,20 @@ export function finishWorkout(w: Workout, endedAt = new Date()): Workout | null 
   return done.exercises.length ? done : null;
 }
 
-export const hasPendingData = (w: Workout) => w.exercises.some((e) => e.sets.some((s) => !s.done && (s.weight !== undefined || s.reps !== undefined)));
+/**
+ * ¿Hay series sin marcar con datos que se perderían al terminar? Cuenta peso, reps, tiempo y distancia,
+ * pero no los valores que venían ya de la rutina (saltarse una serie planificada no es "perder datos").
+ */
+export function hasPendingData(w: Workout, routine?: Routine): boolean {
+  const keys = ['weight', 'reps', 'durationSec', 'distanceM'] as const;
+  return w.exercises.some((e, ei) =>
+    e.sets.some((s, si) => {
+      if (s.done) return false;
+      const planned = routine?.exercises[ei]?.exerciseId === e.exerciseId ? routine.exercises[ei].sets[si] : undefined;
+      return keys.some((k) => s[k] !== undefined && s[k] !== (planned as Partial<WorkoutSet> | undefined)?.[k]);
+    }),
+  );
+}
 
 // ---- Protocolo con el reloj (Wear OS) ----
 
@@ -141,8 +155,9 @@ export function buildWatchState(data: WorkstationData, w: Workout | null, rest: 
 
 export type WatchCommand =
   | { type: 'hello' }
-  | { type: 'complete_set'; ei: number; si: number; weight?: number; reps?: number; durationSec?: number }
-  | { type: 'uncomplete_set'; ei: number; si: number }
+  // wid/ex: entreno y nombre del ejercicio que veía el reloj (opcionales para relojes antiguos).
+  | { type: 'complete_set'; ei: number; si: number; wid?: string; ex?: string; weight?: number; reps?: number; durationSec?: number }
+  | { type: 'uncomplete_set'; ei: number; si: number; wid?: string; ex?: string }
   | { type: 'rest_add'; sec: number }
   | { type: 'rest_skip' }
   | { type: 'start_routine'; id: string }

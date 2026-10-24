@@ -58,11 +58,16 @@ export function finishActive(store: Store): boolean {
   return true;
 }
 
-export function completeSet(store: Store, w: Workout, ei: number, si: number, overrides = {}, forceDone?: boolean) {
+export function completeSet(store: Store, w: Workout, ei: number, si: number, overrides = {}, forceDone?: boolean): Workout {
   const { workout, restSec } = toggleSet(store.data, w, ei, si, overrides, forceDone);
   store.setActive(workout);
   if (restSec > 0) rest.start(restSec);
+  return workout;
 }
+
+// ¿El comando del reloj se refiere al entreno y ejercicio que hay ahora en esa posición?
+const matchesWatch = (w: Workout, data: Store['data'], c: { ei: number; wid?: string; ex?: string }) =>
+  (!c.wid || c.wid === w.id) && (!c.ex || data.exercises.find((e) => e.id === w.exercises[c.ei]?.exerciseId)?.name === c.ex);
 
 export function useSessionController() {
   const store = useStore();
@@ -108,11 +113,19 @@ export function useSessionController() {
           native.sendToWatch(JSON.stringify(buildWatchState(s.data, s.active, rest.get())));
           break;
         case 'complete_set':
-          if (s.active) completeSet(s, s.active, c.ei, c.si, { weight: c.weight, reps: c.reps, durationSec: c.durationSec }, true);
+        case 'uncomplete_set': {
+          if (!s.active) break;
+          // Si el reloj veía un estado anterior (se reordenó o borró algo), no se toca nada y se le reenvía el actual.
+          if (!matchesWatch(s.active, s.data, c)) {
+            native.sendToWatch(JSON.stringify(buildWatchState(s.data, s.active, rest.get())));
+            break;
+          }
+          const next =
+            c.type === 'complete_set' ? completeSet(s, s.active, c.ei, c.si, { weight: c.weight, reps: c.reps, durationSec: c.durationSec }, true) : completeSet(s, s.active, c.ei, c.si, {}, false);
+          // Dos comandos seguidos antes de que React vuelva a pintar: el segundo parte del resultado del primero.
+          ref.current = { ...s, active: next };
           break;
-        case 'uncomplete_set':
-          if (s.active) completeSet(s, s.active, c.ei, c.si, {}, false);
-          break;
+        }
         case 'rest_add':
           rest.add(c.sec);
           break;

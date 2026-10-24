@@ -61,7 +61,14 @@ function TrainScreen({ onExercise }: { onExercise: (id: string) => void }) {
         onExercise={onExercise}
         onDiscard={() => discardActive(store)}
         onFinish={() => {
-          if (hasPendingData(active) && !confirm('Hay series con datos sin marcar como completadas. Se descartarán. ¿Terminar igualmente?')) return;
+          if (
+            hasPendingData(
+              active,
+              store.data.routines.find((r) => r.id === active.routineId),
+            ) &&
+            !confirm('Hay series con datos sin marcar como completadas. Se descartarán. ¿Terminar igualmente?')
+          )
+            return;
           if (!finishActive(store) && confirm('No hay series completadas. ¿Descartar el entrenamiento?')) discardActive(store);
         }}
       />

@@ -87,14 +87,16 @@ fun parseState(json: String): WatchState? = runCatching {
 
 object Cmd {
     fun hello() = JSONObject().put("type", "hello")
-    fun completeSet(ei: Int, si: Int, weight: Double?, reps: Int?, durationSec: Int?) = JSONObject()
-        .put("type", "complete_set").put("ei", ei).put("si", si)
+    // wid y ex identifican el entreno y el ejercicio: el móvil ignora el comando si ya no coinciden
+    // (p. ej. se reordenó o se borró algo mientras el reloj mostraba un estado anterior).
+    fun completeSet(wid: String, ex: String, ei: Int, si: Int, weight: Double?, reps: Int?, durationSec: Int?) = JSONObject()
+        .put("type", "complete_set").put("wid", wid).put("ex", ex).put("ei", ei).put("si", si)
         .apply {
             weight?.let { put("weight", it) }
             reps?.let { put("reps", it) }
             durationSec?.let { put("durationSec", it) }
         }
-    fun uncompleteSet(ei: Int, si: Int) = JSONObject().put("type", "uncomplete_set").put("ei", ei).put("si", si)
+    fun uncompleteSet(wid: String, ex: String, ei: Int, si: Int) = JSONObject().put("type", "uncomplete_set").put("wid", wid).put("ex", ex).put("ei", ei).put("si", si)
     fun restAdd(sec: Int) = JSONObject().put("type", "rest_add").put("sec", sec)
     fun restSkip() = JSONObject().put("type", "rest_skip")
     fun startRoutine(id: String) = JSONObject().put("type", "start_routine").put("id", id)

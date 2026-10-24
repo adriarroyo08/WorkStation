@@ -89,3 +89,33 @@ describe('sesión en curso', () => {
     });
   });
 });
+
+describe('auditoría: superseries desiguales y datos pendientes', () => {
+  it('descansa tras A4 si B ya no tiene series pendientes', async () => {
+    const { toggleSet: toggle } = await import('./session');
+    const { emptyData: empty } = await import('./data');
+    const d = empty();
+    const s = (done: boolean) => ({ type: 'normal' as const, reps: 8, done });
+    const w = {
+      id: 'w',
+      name: 'x',
+      startedAt: '2026-10-01T10:00:00Z',
+      exercises: [
+        { exerciseId: 'press-banca', supersetId: 'a', restSec: 90, sets: [s(true), s(true), s(true), s(false)] },
+        { exerciseId: 'remo-barra', supersetId: 'a', restSec: 90, sets: [s(true), s(true), s(true)] },
+      ],
+    };
+    expect(toggle(d, w, 0, 3).restSec).toBe(90);
+    w.exercises[1].sets.push(s(false));
+    expect(toggle(d, w, 0, 3).restSec).toBe(0); // B aún tiene una serie: sin descanso entre A y B
+  });
+  it('saltarse una serie planificada no cuenta como datos perdidos', async () => {
+    const { hasPendingData: pending } = await import('./session');
+    const routine = { id: 'r', name: 'r', exercises: [{ exerciseId: 'press-banca', restSec: 90, sets: [{ type: 'normal' as const, reps: 8, weight: 60 }] }] };
+    const w = { id: 'w', name: 'x', startedAt: '', routineId: 'r', exercises: [{ exerciseId: 'press-banca', sets: [{ type: 'normal' as const, reps: 8, weight: 60, done: false }] }] };
+    expect(pending(w, routine)).toBe(false);
+    w.exercises[0].sets[0].reps = 10;
+    expect(pending(w, routine)).toBe(true);
+    expect(pending({ ...w, exercises: [{ exerciseId: 'plancha', sets: [{ type: 'normal' as const, durationSec: 60, done: false }] }] })).toBe(true);
+  });
+});

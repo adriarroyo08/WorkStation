@@ -132,6 +132,7 @@ export function routineFromWorkout(w: Workout, defaultRest = 90): Routine {
       exerciseId: e.exerciseId,
       restSec: e.restSec ?? defaultRest,
       supersetId: e.supersetId,
+      ...(e.notes ? { notes: e.notes } : {}), // "Actualizar rutina" no debe borrar las notas de cada ejercicio
       sets: e.sets.map(({ type, weight, reps, durationSec, distanceM }) => ({ type, weight, reps, durationSec, distanceM })),
     })),
   };

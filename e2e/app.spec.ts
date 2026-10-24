@@ -227,3 +227,37 @@ test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({
   expect(other.url()).not.toContain('#rutina=');
   await ctx.close();
 });
+
+test('editar un entreno pasado: series nuevas sin ✓ se guardan y deshacer tras guardar no rompe nada', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await tab(page, 'Historial').click();
+  await page.locator('button.card', { hasText: 'Pierna A' }).first().click();
+  await page.getByRole('button', { name: 'Editar' }).click();
+  await page.getByRole('button', { name: 'Añadir serie' }).first().click();
+  const last = page.locator('.swipe .set').last();
+  await last.getByLabel('Repeticiones').fill('3');
+  // Borra una serie (ofrece deshacer) y guarda: pulsar Deshacer después no debe romper la app.
+  await page.locator('.swipe .set').first().locator('.settype').click();
+  await page.getByRole('button', { name: /Borrar serie/ }).click();
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByRole('button', { name: 'Deshacer' })).toHaveCount(0);
+  await expect(page.locator('section:visible').getByText('100kg × 3')).toBeVisible();
+});
+
+test('reemplazar un ejercicio conserva las series hechas', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  const row = page.locator('.swipe .set').first();
+  await row.getByLabel('Peso (kg)').fill('90');
+  await row.getByLabel('Repeticiones').fill('5');
+  await row.getByLabel('Completar serie').click();
+  await page.getByRole('button', { name: 'Opciones' }).first().click();
+  await page.getByRole('button', { name: 'Reemplazar ejercicio' }).click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('sentadilla frontal');
+  await page.locator('.exrow').first().click();
+  const first = page.locator('.swipe .set').first();
+  await expect(first).toHaveClass(/done/);
+  await expect(first.getByLabel('Peso (kg)')).toHaveValue('90');
+});

@@ -199,8 +199,8 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
                     modifier = Modifier.size(ButtonDefaults.LargeButtonSize),
                     colors = ButtonDefaults.buttonColors(backgroundColor = if (set.done) Color.DarkGray else Ok, contentColor = if (set.done) Color.White else Color(0xFF141A05)),
                     onClick = {
-                        if (set.done) send(Cmd.uncompleteSet(cur.ei, cur.si))
-                        else send(Cmd.completeSet(cur.ei, cur.si, if (usesWeight) weight else null, if (isTime) null else reps, if (isTime) secs else null))
+                        if (set.done) send(Cmd.uncompleteSet(a.id, ex.name, cur.ei, cur.si))
+                        else send(Cmd.completeSet(a.id, ex.name, cur.ei, cur.si, if (usesWeight) weight else null, if (isTime) null else reps, if (isTime) secs else null))
                     },
                 ) { Text(if (set.done) "↺" else "✓", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
                 CompactButton(onClick = { if (idx < flat.size - 1) idx++ }, enabled = idx < flat.size - 1, colors = ButtonDefaults.secondaryButtonColors()) { Text("▶") }

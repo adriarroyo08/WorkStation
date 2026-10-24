@@ -44,17 +44,24 @@ export default function WorkoutDetail({
         mode="edit"
         edit={(fn) =>
           setEditing((cur) => {
-            const n = structuredClone(cur!);
+            if (!cur) return cur; // p. ej. "Deshacer" pulsado después de guardar o descartar
+            const n = structuredClone(cur);
             fn(n);
             return n;
           })
         }
         onFinish={() => {
-          const clean = { ...editing, exercises: editing.exercises.map((e) => ({ ...e, sets: e.sets.filter((s) => s.done) })).filter((e) => e.sets.length) };
+          // Editando un entreno pasado, una serie con datos cuenta como hecha aunque no se marque el ✓.
+          const hasData = (x: Workout['exercises'][number]['sets'][number]) => x.weight !== undefined || x.reps !== undefined || x.durationSec !== undefined || x.distanceM !== undefined;
+          const clean = {
+            ...editing,
+            exercises: editing.exercises.map((e) => ({ ...e, sets: e.sets.filter((x) => x.done || hasData(x)).map((x) => ({ ...x, done: true })) })).filter((e) => e.sets.length),
+          };
           update((d) => void (d.workouts[d.workouts.findIndex((x) => x.id === id)] = clean));
+          toast.dismiss();
           setEditing(null);
         }}
-        onDiscard={() => setEditing(null)}
+        onDiscard={() => (toast.dismiss(), setEditing(null))}
       />
     );
 
