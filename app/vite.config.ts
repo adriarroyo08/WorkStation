@@ -13,6 +13,23 @@ const commit = (() => {
   }
 })();
 
+// Política de seguridad de contenido (solo en el build: el servidor de desarrollo usa scripts en línea).
+// Scripts solo propios; conexiones HTTPS abiertas porque la IA, Supabase y ExerciseDB los configura el usuario
+// (y http://localhost para modelos locales como Ollama o LM Studio).
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https: wss: http://localhost:* http://127.0.0.1:*",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
 export default defineConfig({
   // Versión visible en Ajustes y usada para mostrar las novedades tras actualizar.
   define: { __APP_VERSION__: JSON.stringify(pkg.version), __APP_COMMIT__: JSON.stringify(commit) },
@@ -20,6 +37,7 @@ export default defineConfig({
   base: './',
   plugins: [
     react(),
+    { name: 'csp', apply: 'build', transformIndexHtml: (html) => html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`) },
     VitePWA({
       // El registro lo hace src/pwa.ts: avisa de la nueva versión en lugar de recargar sola.
       injectRegister: false,

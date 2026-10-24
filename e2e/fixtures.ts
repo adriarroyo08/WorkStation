@@ -5,6 +5,8 @@ export const test = base.extend<{ errors: string[] }>({
   errors: async ({ page }, use) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
+    // Una violación de la CSP no lanza excepción: se detecta en la consola.
+    page.on('console', (m) => m.type() === 'error' && /Content Security Policy/i.test(m.text()) && errors.push(m.text()));
     await use(errors);
     expect(errors).toEqual([]);
   },
