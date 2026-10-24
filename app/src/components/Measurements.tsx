@@ -66,8 +66,8 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
               return (
                 <button key={f} className={`card tile ${field === f ? 'on' : ''}`} onClick={() => setField(f)}>
                   <small className="muted">{MEASURE_LABELS[f]}</small>
-                  <b>{l ?? '—'}</b>
-                  {d !== 0 && <small className={d > 0 ? 'delta up' : 'delta down'}>{d > 0 ? `+${d}` : d}</small>}
+                  <b>{l === undefined ? '—' : l.toLocaleString('es-ES')}</b>
+                  {d !== 0 && <small className={d > 0 ? 'delta up' : 'delta down'}>{(d > 0 ? '+' : '') + d.toLocaleString('es-ES')}</small>}
                 </button>
               );
             })}

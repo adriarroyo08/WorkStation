@@ -97,7 +97,8 @@ export function Delta({ cur, prev, unit = '' }: { cur: number; prev: number; uni
 export function Stat({ value, label, extra }: { value: ReactNode; label: string; extra?: ReactNode }) {
   return (
     <div className="stat">
-      <b>{value}</b>
+      {/* Números con formato español (101,3 y no 101.3). */}
+      <b>{typeof value === 'number' ? value.toLocaleString('es-ES', { maximumFractionDigits: 1 }) : value}</b>
       <small>{label}</small>
       {extra}
     </div>
@@ -114,13 +115,15 @@ export function BarChart({
   format?: (v: number) => string;
 }) {
   const max = Math.max(1, ...bars.map((b) => b.value));
+  // Con muchas barras, una etiqueta sí y otra no (empezando por la última) para que quepan en móviles estrechos.
+  const sparse = bars.length > 8;
   return (
     <div className="bars" role="img" aria-label="Gráfico de barras">
       {bars.map((b, i) => (
         <div key={i} className="bar-col" title={`${b.label}: ${format(b.value)}`}>
           <span className="bar-val">{b.value ? format(b.value) : ''}</span>
           <div className={`bar ${highlightLast && i === bars.length - 1 ? 'on' : ''}`} style={{ height: `${(b.value / max) * 100}%` }} />
-          <span className="bar-lbl">{b.label}</span>
+          <span className="bar-lbl">{sparse && (bars.length - 1 - i) % 2 ? '' : b.label}</span>
         </div>
       ))}
     </div>

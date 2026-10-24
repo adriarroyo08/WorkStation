@@ -970,8 +970,11 @@ button.card {
   color: var(--muted);
   margin-top: 3px;
   white-space: nowrap;
-  overflow: hidden;
-  max-width: 100%;
+  /* Puede ocupar el hueco de la barra vecina (sin etiqueta cuando hay muchas). */
+  overflow: visible;
+  width: 0;
+  display: flex;
+  justify-content: center;
 }
 .hbars {
   display: flex;
@@ -2192,4 +2195,17 @@ pre.code {
 }
 .shared-head {
   margin-top: 0;
+}
+
+/* Móviles estrechos (≤ 380 px): las rejillas de 4 cifras no se cortan */
+@media (max-width: 380px) {
+  .stats.four .stat {
+    padding: 8px 6px;
+  }
+  .stats.four .stat b {
+    font-size: 14px;
+  }
+  .stats.four .stat small {
+    font-size: 11px;
+  }
 }
