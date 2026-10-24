@@ -19,6 +19,21 @@ test('entreno completo desde cero', async ({ page, errors }) => {
   await expect(page.getByText('600 kg', { exact: true })).toBeVisible();
 });
 
+test('la semana se muestra como 7 días', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  const days = page.locator('.weekstrip i');
+  await expect(days).toHaveCount(7);
+  // Días distintos de esta semana (lunes primero) con algún entreno, calculados en el navegador.
+  const expected = await page.evaluate((starts) => {
+    const mon = new Date();
+    mon.setHours(0, 0, 0, 0);
+    mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+    return new Set(starts.filter((s) => Date.parse(s) >= mon.getTime()).map((s) => (new Date(s).getDay() + 6) % 7)).size;
+  }, SAMPLE.workouts.map((w) => w.startedAt));
+  await expect(page.locator('.weekstrip i.on')).toHaveCount(expected);
+});
+
 test('hoy toca, recuperación y comparación con la sesión anterior', async ({ page, errors }) => {
   void errors;
   await seed(page, SAMPLE);
@@ -210,7 +225,7 @@ test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({
     (navigator as unknown as { share: (d: ShareData) => Promise<void> }).share = async (d) => void ((window as unknown as { shared: ShareData }).shared = d);
   });
   await seed(page, SAMPLE);
-  await page.locator('.card.routine', { hasText: 'Torso A' }).getByRole('button', { name: 'Opciones' }).click();
+  await page.locator('.routine', { hasText: 'Torso A' }).getByRole('button', { name: 'Opciones' }).click();
   await page.getByRole('button', { name: /Compartir enlace/ }).click();
   const url = await page.waitForFunction(() => (window as unknown as { shared?: ShareData }).shared?.url).then((h) => h.jsonValue() as Promise<string>);
   expect(url).toMatch(/#rutina=z[\w-]+$/);
@@ -223,7 +238,7 @@ test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({
   await expect(sheet).toContainText('Torso A');
   await expect(sheet).toContainText('Press de banca (barra)');
   await sheet.getByRole('button', { name: 'Guardar en mis rutinas' }).click();
-  await expect(other.locator('.card.routine', { hasText: 'Torso A' })).toBeVisible();
+  await expect(other.locator('.routine', { hasText: 'Torso A' })).toBeVisible();
   expect(other.url()).not.toContain('#rutina=');
   await ctx.close();
 });

@@ -214,35 +214,19 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
   );
 }
 
-// Anillo de progreso (objetivo semanal, etc.).
-export function ProgressRing({ value, max, size = 92, label, sub }: { value: number; max: number; size?: number; label: string; sub?: string }) {
-  const r = (size - 12) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, max ? value / max : 0));
+// Semana en 7 casillas: las de los días entrenados en acento.
+export function WeekStrip({ days, goal }: { days: boolean[]; goal: number }) {
   return (
-    <svg className="ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub ?? ''}`}>
-      <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} />
-      <circle
-        className="ring-val"
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        strokeWidth={9}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text x="50%" y={sub ? '47%' : '53%'} textAnchor="middle" dominantBaseline="middle">
-        {label}
-      </text>
-      {sub && (
-        <text className="ring-sub" x="50%" y="66%" textAnchor="middle" dominantBaseline="middle">
-          {sub}
-        </text>
-      )}
-    </svg>
+    <div className="weekstrip">
+      <div className="sec">
+        Esta semana · {days.filter(Boolean).length} de {goal}
+      </div>
+      <div className="weekstrip-days">
+        {days.map((on, i) => (
+          <i key={i} className={on ? 'on' : ''} />
+        ))}
+      </div>
+    </div>
   );
 }
 

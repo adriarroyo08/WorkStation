@@ -112,7 +112,7 @@ main {
   padding: 12px 16px calc(104px + env(safe-area-inset-bottom));
 }
 h1 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.02em;
   margin: 6px 0 14px;
@@ -435,10 +435,7 @@ button.card {
   font-size: 20px;
 }
 .folder {
-  margin-top: 14px;
-}
-.routine p {
-  margin: 4px 0 8px;
+  margin-top: 4px;
 }
 .exline {
   padding: 4px 0;
@@ -1527,39 +1524,7 @@ main > div > section {
   transition: box-shadow var(--dur);
 }
 
-/* Anillo de progreso y héroe */
-.hero {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px;
-}
-.hero h2 {
-  margin: 0 0 2px;
-  font-size: 18px;
-}
-.ring {
-  flex-shrink: 0;
-}
-.ring circle {
-  transition: stroke-dashoffset 0.9s var(--ease);
-}
-.ring-track {
-  stroke: var(--line-strong);
-}
-.ring-val {
-  stroke: var(--accent);
-}
-.ring text {
-  fill: var(--text);
-  font-weight: 800;
-  font-size: 20px;
-}
-.ring .ring-sub {
-  fill: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-}
+/* Chips */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -1675,25 +1640,6 @@ pre.code {
 }
 
 /* Hoy toca y recuperación */
-.today h3 {
-  margin: 4px 0 12px;
-  font-size: 20px;
-}
-.today .tile-ico,
-.recovery-row .tile-ico {
-  margin: 0;
-}
-.recovery-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-  color: var(--text);
-}
-.recovery-row .tile-ico {
-  color: var(--warn-ink);
-}
 .recovery-item {
   padding: 8px 0;
 }
@@ -1706,16 +1652,6 @@ pre.code {
 .vs-last .stats {
   margin-bottom: 0;
 }
-.today .row {
-  flex-wrap: nowrap;
-}
-.today .row .grow {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* Niveles de fuerza: gris → ámbar → brasa → potencia → volt */
 .strength {
   --l0: color-mix(in srgb, var(--text) 22%, var(--card2));
@@ -2175,4 +2111,100 @@ pre.code {
 .badge-row svg,
 .big-emoji {
   display: inline-block;
+}
+
+/* Entrenar: filas planas, semana en 7 casillas */
+.sec {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 16px 0 8px;
+}
+.weekstrip-days {
+  display: flex;
+  gap: 6px;
+}
+.weekstrip-days i {
+  flex: 1;
+  height: 30px;
+  border-radius: 4px;
+  background: var(--line);
+}
+.weekstrip-days i.on {
+  background: var(--accent);
+}
+.line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  text-align: left;
+}
+.line .tile-ico {
+  margin: 0;
+  color: var(--muted);
+}
+.line h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.line b,
+.line small {
+  display: block;
+}
+.line p {
+  margin: 2px 0 0;
+}
+.today .sec {
+  margin-bottom: 0;
+}
+.welcome {
+  margin: 12px 0;
+}
+.welcome h2 {
+  margin: 8px 0 2px;
+}
+button.link {
+  background: none;
+  padding: 4px 6px;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+button.outline {
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.actions {
+  margin: 10px 0 0;
+}
+.sec-row {
+  margin-top: 8px;
+}
+.sec-row .sec {
+  margin: 8px 0;
+}
+.folder-name {
+  padding: 8px 0;
+  justify-content: flex-start;
+}
+.routine .grow {
+  min-width: 0;
+  cursor: pointer;
+}
+.routine p {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

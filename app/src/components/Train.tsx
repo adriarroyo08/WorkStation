@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { workoutFromRoutine } from '../../../shared/data';
-import { weekStreak } from '../../../shared/reports';
 import type { Routine } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { hasPendingData } from '../../../shared/session';
@@ -8,9 +7,9 @@ import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { muscleRecovery, nextRoutine } from '../../../shared/planning';
 import { discardActive, finishActive, startEmpty, startWorkout, summary, useSummary } from '../controller';
 import { useStore } from '../store';
-import { BatteryCharging, CalendarCheck, ClipboardList, Compass, Copy, Download, Flame, FolderPlus, Link2, MoreHorizontal, Pencil, Play, Plus, Search, Share2, Trash2, Zap } from 'lucide-react';
+import { BatteryCharging, CalendarCheck, ChevronDown, ChevronRight, Copy, Download, FolderPlus, Link2, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2, Zap } from 'lucide-react';
 import BodyMap from './BodyMap';
-import { ProgressRing, Sheet, useScrollTop } from './ui';
+import { Sheet, useScrollTop, WeekStrip } from './ui';
 import { fmtWeight } from '../../../shared/units';
 import { shareRoutineLink } from './SharedRoutine';
 import { native } from '../native';
@@ -98,20 +97,24 @@ function Today() {
   return (
     <>
       {next && (
-        <div className="card today">
-          <div className="row">
-            <CalendarCheck size={18} className="tile-ico" />
-            <span className="muted small grow">Hoy toca{folder ? ` · ${folder.name}` : ''}</span>
-            {next.last && <span className="muted small">Última vez {ago(next.last.startedAt)}</span>}
+        <div className="today">
+          <div className="sec">
+            Hoy toca{folder ? ` · ${folder.name}` : ''}
           </div>
-          <h3>{next.routine.name}</h3>
-          <button className="primary full icon-btn" onClick={() => startWorkout(store, workoutFromRoutine(next.routine))}>
-            <Play size={16} fill="currentColor" /> Empezar
-          </button>
+          <div className="line">
+            <CalendarCheck size={18} className="tile-ico" />
+            <div className="grow">
+              <h3>{next.routine.name}</h3>
+              {next.last && <small className="muted">Última vez {ago(next.last.startedAt)}</small>}
+            </div>
+            <button className="link" onClick={() => startWorkout(store, workoutFromRoutine(next.routine))}>
+              Empezar
+            </button>
+          </div>
         </div>
       )}
       {recovery.length > 0 && (
-        <button className="card recovery-row" onClick={() => setShowRecovery(true)}>
+        <button className="recovery-row line" onClick={() => setShowRecovery(true)}>
           <BatteryCharging size={18} className="tile-ico" />
           <span className="grow left small">
             {tired.length ? (
@@ -162,11 +165,14 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
   const { data, settings, update } = store;
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<Routine | null>(null);
-  const streak = weekStreak(data, settings.weekStartsMonday);
   const weekStart = new Date();
   weekStart.setHours(0, 0, 0, 0);
   weekStart.setDate(weekStart.getDate() - (settings.weekStartsMonday ? (weekStart.getDay() + 6) % 7 : weekStart.getDay()));
-  const thisWeek = data.workouts.filter((w) => Date.parse(w.startedAt) >= weekStart.getTime()).length;
+  const days = Array<boolean>(7).fill(false);
+  for (const w of data.workouts) {
+    const t = Date.parse(w.startedAt);
+    if (t >= weekStart.getTime()) days[(new Date(t).getDay() + (settings.weekStartsMonday ? 6 : 0)) % 7] = true;
+  }
 
   const groups: { id?: string; name: string; routines: Routine[] }[] = [
     ...data.folders.map((f) => ({ id: f.id, name: f.name, routines: data.routines.filter((r) => r.folderId === f.id) })),
@@ -177,71 +183,70 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
   return (
     <section>
       <h1>Entrenar</h1>
-      <div className="card hero">
-        <ProgressRing value={thisWeek} max={settings.weeklyGoal} label={`${thisWeek}/${settings.weeklyGoal}`} sub="semana" />
-        <div className="grow">
-          <h2>
-            {thisWeek >= settings.weeklyGoal
-              ? '¡Objetivo semanal cumplido!'
-              : thisWeek
-                ? `Te faltan ${settings.weeklyGoal - thisWeek} entreno${settings.weeklyGoal - thisWeek === 1 ? '' : 's'}`
-                : 'A por la semana'}
-          </h2>
-          <p className="muted small" style={{ margin: '0 0 8px' }}>
-            {data.workouts.length
-              ? `Último: ${new Date([...data.workouts].sort((x, y) => y.startedAt.localeCompare(x.startedAt))[0].startedAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}`
-              : 'Tu primer entreno te espera'}
-          </p>
-          <span className={`chip ${streak ? 'warm' : ''}`} title="Semanas seguidas entrenando">
-            <Flame size={13} /> {streak} {streak === 1 ? 'semana' : 'semanas'} de racha
-          </span>
-        </div>
-      </div>
+      <WeekStrip days={days} goal={settings.weeklyGoal} />
       <Today />
       {!data.workouts.length && !data.routines.length && (
-        <div className="card welcome">
-          <h3>Bienvenido a Workstation</h3>
+        <div className="welcome">
+          <h2>Bienvenido a Workstation</h2>
           <p className="small muted">Tres formas de empezar:</p>
-          <div className="list">
-            <button className="item" onClick={onExplore}>
-              <b><Search size={16} className="ico" /> Elegir un programa</b>
+          <button className="line" onClick={onExplore}>
+            <Search size={18} className="tile-ico" />
+            <span className="grow left">
+              <b>Elegir un programa</b>
               <small className="muted">Full body, 5×5, PPL, Torso/Pierna…</small>
-            </button>
-            <button
-              className="item"
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.csv,text/csv';
-                input.onchange = () =>
-                  input.files?.[0]?.text().then(async (t) => {
-                    const { importHevyCsv } = await import('../../../shared/hevy');
-                    const d = structuredClone(data);
-                    const n = importHevyCsv(d, t);
-                    store.replace(d);
-                    alert(`Importados ${n} entrenamientos desde Hevy.`);
-                  });
-                input.click();
-              }}
-            >
-              <b><Download size={16} className="ico" /> Importar mi historial de Hevy</b>
+            </span>
+            <ChevronRight size={16} className="muted" />
+          </button>
+          <button
+            className="line"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.csv,text/csv';
+              input.onchange = () =>
+                input.files?.[0]?.text().then(async (t) => {
+                  const { importHevyCsv } = await import('../../../shared/hevy');
+                  const d = structuredClone(data);
+                  const n = importHevyCsv(d, t);
+                  store.replace(d);
+                  alert(`Importados ${n} entrenamientos desde Hevy.`);
+                });
+              input.click();
+            }}
+          >
+            <Download size={18} className="tile-ico" />
+            <span className="grow left">
+              <b>Importar mi historial de Hevy</b>
               <small className="muted">Hevy → Perfil → Ajustes → Exportar entrenamientos (CSV)</small>
-            </button>
-            <button className="item" onClick={() => startEmpty(store)}>
-              <b><Zap size={16} className="ico" /> Entrenar ya</b>
+            </span>
+            <ChevronRight size={16} className="muted" />
+          </button>
+          <button className="line" onClick={() => startEmpty(store)}>
+            <Zap size={18} className="tile-ico" />
+            <span className="grow left">
+              <b>Entrenar ya</b>
               <small className="muted">Empieza vacío y añade ejercicios sobre la marcha</small>
-            </button>
-          </div>
+            </span>
+            <ChevronRight size={16} className="muted" />
+          </button>
         </div>
       )}
       <button className="primary big icon-btn" onClick={() => startEmpty(store)}>
         <Plus size={20} strokeWidth={2.6} /> Empezar entrenamiento vacío
       </button>
+      <div className="row actions">
+        <button className="outline grow" onClick={() => onNewRoutine()}>
+          Nueva rutina
+        </button>
+        <button className="outline grow" onClick={onExplore}>
+          Explorar
+        </button>
+      </div>
 
-      <div className="row">
-        <h2 className="grow">Rutinas</h2>
+      <div className="row sec-row">
+        <div className="sec grow">Rutinas</div>
         <button
-          className="ghost small icon-btn"
+          className="link icon-btn"
           onClick={() => {
             const name = prompt('Nombre de la carpeta');
             if (name) update((d) => void d.folders.push({ id: uid(), name }));
@@ -250,26 +255,18 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           <FolderPlus size={16} /> Carpeta
         </button>
       </div>
-      <div className="row">
-        <button className="card grow tile" onClick={() => onNewRoutine()}>
-          <ClipboardList size={20} className="tile-ico" /> Nueva rutina
-        </button>
-        <button className="card grow tile" onClick={onExplore}>
-          <Compass size={20} className="tile-ico" /> Explorar programas
-        </button>
-      </div>
 
       {groups.map((g) =>
         !g.id && !g.routines.length ? null : (
           <div key={g.id ?? 'root'}>
             <div className="row folder">
-              <button className="plain grow left" onClick={() => setCollapsed((s) => (s.has(g.name) ? (s.delete(g.name), new Set(s)) : new Set(s.add(g.name))))}>
-                {collapsed.has(g.name) ? '▸' : '▾'} <b>{g.name}</b> <span className="muted small">({g.routines.length})</span>
+              <button className="plain grow left icon-btn folder-name" onClick={() => setCollapsed((s) => (s.has(g.name) ? (s.delete(g.name), new Set(s)) : new Set(s.add(g.name))))}>
+                {collapsed.has(g.name) ? <ChevronRight size={16} /> : <ChevronDown size={16} />} <b>{g.name}</b> <span className="muted small">({g.routines.length})</span>
               </button>
               {g.id && (
                 <>
-                  <button className="ghost small" onClick={() => onNewRoutine(g.id)}>
-                    +
+                  <button className="ghost small icon-btn" aria-label="Nueva rutina en la carpeta" onClick={() => onNewRoutine(g.id)}>
+                    <Plus size={16} />
                   </button>
                   <button
                     className="ghost small icon-btn"
@@ -293,20 +290,16 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             </div>
             {!collapsed.has(g.name) &&
               g.routines.map((r) => (
-                <div key={r.id} className="card routine">
-                  <div className="row">
-                    <b className="grow" onClick={() => onEdit(r)}>
-                      {r.name}
-                    </b>
-                    <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
-                      <MoreHorizontal size={20} />
-                    </button>
+                <div key={r.id} className="routine line">
+                  <div className="grow" onClick={() => onEdit(r)}>
+                    <b>{r.name}</b>
+                    <p className="muted small">{r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}</p>
                   </div>
-                  <p className="muted small" onClick={() => onEdit(r)}>
-                    {r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}
-                  </p>
-                  <button className="primary full icon-btn" onClick={() => startWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
-                    <Play size={16} fill="currentColor" /> Empezar rutina
+                  <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => startWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
+                    Empezar
+                  </button>
+                  <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
+                    <MoreHorizontal size={20} />
                   </button>
                 </div>
               ))}
