@@ -13,6 +13,7 @@ interface NativeApi {
   workoutEnded(): void;
   saveFile(name: string, mime: string, base64: string): void;
   openWatchApp(): void;
+  setSystemBars?(dark: boolean): void; // desde la app 1.4
   shareText?(title: string, text: string): void; // desde la app 1.3
 }
 
@@ -71,6 +72,8 @@ export const native = {
     a.shareText(title, text);
     return true;
   },
+  /** Iconos de las barras del sistema según el tema efectivo (Android). */
+  setSystemBars: (dark: boolean) => api()?.setSystemBars?.(dark),
   sendToWatch: (json: string) => api()?.sendToWatch(json),
   requestWatchStatus: () => api()?.requestWatchStatus(),
   scheduleRest: (end: number, label: string) => api()?.scheduleRest(end, label),

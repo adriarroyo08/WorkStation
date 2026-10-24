@@ -76,10 +76,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     root.classList.add('theme-anim');
     if (theme === 'auto') root.removeAttribute('data-theme');
     else if (theme) root.setAttribute('data-theme', theme);
-    const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0c0a09' : '#fbf8f5');
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => {
+      const dark = theme === 'dark' || (theme === 'auto' && mq.matches);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#141414' : '#ffffff');
+      native.setSystemBars(dark);
+    };
+    apply();
+    if (theme === 'auto') mq.addEventListener('change', apply);
     const t = setTimeout(() => root.classList.remove('theme-anim'), 400);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      mq.removeEventListener('change', apply);
+    };
   }, [theme]);
 
   if (!state) return <div className="center muted">Cargando…</div>;

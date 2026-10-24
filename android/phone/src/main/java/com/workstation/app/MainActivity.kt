@@ -3,6 +3,7 @@ package com.workstation.app
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -13,11 +14,15 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.FrameLayout
 import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.ServiceWorkerClientCompat
 import androidx.webkit.ServiceWorkerControllerCompat
@@ -33,6 +38,7 @@ import org.json.JSONObject
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var root: FrameLayout
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pageReady = false
     private val pending = ArrayDeque<String>()
@@ -54,10 +60,18 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         webView = WebView(this)
-        setContentView(webView)
-        // Respeta barra de estado, navegación y teclado (Android 15 dibuja de borde a borde).
-        ViewCompat.setOnApplyWindowInsetsListener(webView) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+        // Android 15 dibuja de borde a borde. Los insets (barras, recorte y teclado) van como padding de un contenedor:
+        // en el propio WebView el padding no desplazaría su contenido.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        root = FrameLayout(this).apply {
+            setBackgroundColor(ContextCompat.getColor(context, R.color.bg))
+            addView(webView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        }
+        setContentView(root)
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime()
+            )
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
@@ -149,6 +163,15 @@ class MainActivity : AppCompatActivity() {
         WatchBus.detach(this)
         webView.destroy()
         super.onDestroy()
+    }
+
+    /** Fondo bajo las barras del sistema e iconos de estado/navegación legibles según el tema efectivo de la app. */
+    fun setSystemBars(dark: Boolean) = runOnUiThread {
+        root.setBackgroundColor(Color.parseColor(if (dark) "#141414" else "#ffffff"))
+        WindowInsetsControllerCompat(window, root).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
+        }
     }
 
     /** Envía un mensaje a la web: window.__workstationFromNative('<json>'). Seguro desde cualquier hilo. */

@@ -74,6 +74,9 @@ class NativeBridge(private val activity: MainActivity) {
         RestAlarmReceiver.cancel(ctx)
     }
 
+    @JavascriptInterface
+    fun setSystemBars(dark: Boolean) = activity.setSystemBars(dark)
+
     /** Menú nativo de compartir (navigator.share no existe en el WebView). */
     @JavascriptInterface
     fun shareText(title: String, text: String) {
