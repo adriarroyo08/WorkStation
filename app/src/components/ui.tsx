@@ -214,19 +214,13 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
   );
 }
 
-// Anillo de progreso con degradado (objetivo semanal, etc.).
+// Anillo de progreso (objetivo semanal, etc.).
 export function ProgressRing({ value, max, size = 92, label, sub }: { value: number; max: number; size?: number; label: string; sub?: string }) {
   const r = (size - 12) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, max ? value / max : 0));
   return (
     <svg className="ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub ?? ''}`}>
-      <defs>
-        <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--accent-2)" />
-        </linearGradient>
-      </defs>
       <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} />
       <circle
         className="ring-val"

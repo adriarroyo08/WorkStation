@@ -41,7 +41,7 @@ for (const scheme of ['light', 'dark'] as const)
     await page.emulateMedia({ colorScheme: scheme });
     await seed(page, SAMPLE);
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(bg).toBe(scheme === 'dark' ? 'rgb(12, 10, 9)' : 'rgb(251, 248, 245)');
+    expect(bg).toBe(scheme === 'dark' ? 'rgb(20, 20, 20)' : 'rgb(255, 255, 255)');
     for (const name of ['Historial', 'Ejercicios', 'Perfil', 'Coach', 'Entrenar']) {
       await tab(page, name).click();
       await expect(page.locator('h1:visible').first()).toBeVisible();
