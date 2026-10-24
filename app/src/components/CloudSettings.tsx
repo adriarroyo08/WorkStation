@@ -1,35 +1,21 @@
+// Solo lo técnico: apuntar la app a tu propio proyecto de Supabase. La cuenta (email) vive en Perfil.
 import { useState } from 'react';
 import { cloud, useCloud } from '../cloud';
-import { toast } from '../toast';
-
-const STATUS: Record<string, string> = {
-  off: 'Sin configurar',
-  'signed-out': 'Sin sesión',
-  syncing: 'Sincronizando…',
-  idle: 'Sincronizado',
-  offline: 'Sin conexión (se subirá al volver)',
-  error: 'Error',
-};
 
 export default function CloudSettings() {
   const st = useCloud();
   const [url, setUrl] = useState(cloud.config().url);
   const [key, setKey] = useState(cloud.config().anonKey);
-  const [email, setEmail] = useState('');
-  const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [bad, setBad] = useState(false);
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
     setMsg('');
-    setBad(false);
     try {
       await fn();
     } catch (e) {
       setMsg((e as Error).message);
-      setBad(true);
     } finally {
       setBusy(false);
     }
@@ -37,19 +23,15 @@ export default function CloudSettings() {
 
   return (
     <div className="card">
-      <div className="row">
-        <b className="grow">{st.email ?? 'Tu cuenta'}</b>
-        <span className={`pill ${st.status === 'idle' ? 'ok' : ''}`}>{STATUS[st.status]}</span>
-      </div>
       <p className="small muted">
-        Opcional. Guarda tus entrenamientos en tu propio proyecto de{' '}
+        Opcional. Por defecto la app usa su propio servicio. Si prefieres guardar tus entrenamientos en tu proyecto de{' '}
         <a href="https://supabase.com" target="_blank" rel="noreferrer">
           Supabase
         </a>{' '}
-        (gratis) y sincroniza móvil, web y app Android. Sin cuenta, todo sigue guardándose solo en este dispositivo.
+        (gratis), conéctalo aquí. Tu cuenta, con el email, está en Perfil.
       </p>
 
-      {(!st.configured || st.status === 'off') && (
+      {!st.configured || st.status === 'off' ? (
         <>
           <label>
             Project URL
@@ -66,65 +48,20 @@ export default function CloudSettings() {
             En Supabase: Project Settings → API. Antes, ejecuta una vez el SQL de <code>supabase/migrations/001_records.sql</code> en el SQL Editor.
           </p>
         </>
-      )}
-
-      {st.configured && st.status === 'signed-out' && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            run(() => cloud.signIn(email, pw));
-          }}
-        >
-          <label>
-            Email
-            <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <label>
-            Contraseña
-            <input type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
-          </label>
-          <div className="row">
-            <button className="primary" disabled={busy || !email || pw.length < 6}>
-              Iniciar sesión
-            </button>
-            <button
-              type="button"
-              className="outline"
-              disabled={busy || !email || pw.length < 6}
-              onClick={() =>
-                run(async () => {
-                  const r = await cloud.signUp(email, pw);
-                  setMsg(r === 'confirm' ? 'Revisa tu email para confirmar la cuenta y luego inicia sesión.' : 'Cuenta creada.');
-                })
-              }
-            >
-              Crear cuenta
-            </button>
-          </div>
-          <button type="button" className="ghost small" onClick={() => run(() => cloud.configure({ url: '', anonKey: '' }))}>
-            Cambiar proyecto
-          </button>
-        </form>
-      )}
-
-      {st.email && (
+      ) : (
         <>
-          <p className="small muted">
-            {st.pending ? `${st.pending} cambios pendientes de subir. ` : ''}
-            {st.lastSync ? `Última sincronización: ${new Date(st.lastSync).toLocaleString('es-ES')}.` : ''}
+          <p className="small">
+            Proyecto: <code>{cloud.config().url}</code>
+            {cloud.builtIn() && ' (el de la app)'}
           </p>
-          {st.error && <p className="error small">{st.error}</p>}
-          <div className="row">
-            <button className="primary" disabled={busy || st.status === 'syncing'} onClick={() => run(async () => (await cloud.syncNow(), toast.show('Sincronizado')))}>
-              Sincronizar ahora
+          {st.status === 'signed-out' && (
+            <button className="outline" disabled={busy} onClick={() => run(() => cloud.configure({ url: '', anonKey: '' }))}>
+              Cambiar proyecto
             </button>
-            <button className="outline" onClick={() => run(() => cloud.signOut())}>
-              Cerrar sesión
-            </button>
-          </div>
+          )}
         </>
       )}
-      {msg && <p className={bad ? 'small error' : 'small'}>{msg}</p>}
+      {msg && <p className="small error">{msg}</p>}
     </div>
   );
 }

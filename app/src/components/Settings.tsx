@@ -98,7 +98,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h1>Ajustes</h1>
 
       <h2>
-        <Cloud size={16} className="ico" /> Cuenta y sincronización
+        <Cloud size={16} className="ico" /> Servidor de sincronización
       </h2>
       <CloudSettings />
 

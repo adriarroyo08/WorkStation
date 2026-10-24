@@ -16,15 +16,16 @@ import Measurements from './Measurements';
 import Reports from './Reports';
 import Settings from './Settings';
 import Coach from './Coach';
+import { AccountCard, EmailAuth } from './Account';
 import { BarChart, HBars, MonthCalendar, Stat } from './ui';
 import { fmtMass, fmtWeight, toUnit } from '../../../shared/units';
 
 type Metric = 'workouts' | 'durationMin' | 'volume' | 'sets' | 'reps';
 const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Duración', volume: 'Volumen', sets: 'Series', reps: 'Reps' };
 
-export default function Profile({ onExercise }: { onExercise: (id: string) => void }) {
+export default function Profile({ onExercise, signUp = false }: { onExercise: (id: string) => void; signUp?: boolean }) {
   const { data, settings, setSettings } = useStore();
-  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements' | 'coach'>('home');
+  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements' | 'coach' | 'email'>(signUp ? 'email' : 'home');
   const [settingsFromCoach, setSettingsFromCoach] = useState(false);
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
@@ -62,6 +63,8 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   const trainedIn = (y: number) => data.workouts.some((w) => new Date(w.startedAt).getFullYear() === y);
   const wrappedYear = trainedIn(thisYear) ? thisYear : trainedIn(thisYear - 1) ? thisYear - 1 : undefined;
 
+  const backHome = () => setView('home');
+  if (view === 'email') return <EmailAuth onBack={backHome} signUp={signUp} />;
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
@@ -114,6 +117,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
           <SettingsIcon size={20} /> Ajustes
         </button>
       </div>
+      <AccountCard onEmail={() => setView('email')} />
       <div className="stats four">
         <Stat value={all.workouts} label="entrenos" />
         <Stat value={`${Math.round(all.durationMin / 60)}h`} label="entrenando" />

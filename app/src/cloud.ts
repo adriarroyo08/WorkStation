@@ -9,6 +9,7 @@ import type { WorkstationData } from '../../shared/types';
 import { useStore } from './store';
 import { emptyData } from '../../shared/data';
 import { snapshot as snapshotBackup } from './backups';
+import { isNative } from './native';
 
 export interface CloudConfig {
   url: string;
@@ -22,12 +23,30 @@ export interface CloudState {
   pending: number;
   lastSync: string | null;
   error: string | null;
+  /** Llegó el enlace de "recuperar contraseña": toca elegir una nueva. */
+  recovery: boolean;
+  /** Sesión llegada por el enlace de confirmación del email (solo en la web). */
+  justConfirmed: boolean;
 }
 
 const ENV: CloudConfig = { url: import.meta.env.VITE_SUPABASE_URL ?? '', anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '' };
 
 let cfg: CloudConfig = ENV;
-let state: CloudState = { configured: !!(ENV.url && ENV.anonKey), email: null, status: 'off', pending: 0, lastSync: null, error: null };
+// Supabase deja los tokens en el hash del enlace del email (#access_token=…&type=signup|recovery) y supabase-js lo consume al crear el cliente.
+const authHash = typeof location === 'undefined' ? '' : /[#&]access_token=/.test(location.hash) ? location.hash : '';
+const hashType = new URLSearchParams(authHash.slice(1)).get('type');
+/** ¿La página se abrió desde un enlace de email de Supabase? (el tour no debe taparlo) */
+export const openedFromAuthLink = !!authHash;
+let state: CloudState = {
+  configured: !!(ENV.url && ENV.anonKey),
+  email: null,
+  status: 'off',
+  pending: 0,
+  lastSync: null,
+  error: null,
+  recovery: hashType === 'recovery',
+  justConfirmed: !!authHash && hashType !== 'recovery',
+};
 const subs = new Set<() => void>();
 const emit = (p: Partial<CloudState>) => {
   state = { ...state, ...p };
@@ -40,6 +59,8 @@ export const useCloud = () =>
   );
 
 let client: SupabaseClient | null = null;
+/** Arranque en curso: las acciones de cuenta lo esperan (si no, un envío muy rápido vería el cliente aún sin crear). */
+let ready: Promise<unknown> = Promise.resolve();
 let channel: RealtimeChannel | null = null;
 let userId: string | null = null;
 let pending = new Map<string, SyncRecord>();
@@ -70,7 +91,8 @@ async function setup() {
   emit({ configured: !!(cfg.url && cfg.anonKey), pending: pending.size });
   client = await makeClient();
   if (!client) return emit({ status: 'off' });
-  client.auth.onAuthStateChange((_e, session) => {
+  client.auth.onAuthStateChange((e, session) => {
+    if (e === 'PASSWORD_RECOVERY') emit({ recovery: true });
     const uid = session?.user.id ?? null;
     if (uid === userId) return;
     userId = uid;
@@ -85,20 +107,35 @@ async function setup() {
   if (!data.session) emit({ status: 'signed-out' });
 }
 
+// La interfaz registra aquí su diálogo; sin él, se suben también los datos del dispositivo.
+let askSwitch: (email: string | null) => Promise<'fresh' | 'merge'> = async () => 'merge';
+export const setAccountSwitchPrompt = (fn: typeof askSwitch) => void (askSwitch = fn);
+
+const PUBLIC_URL = 'https://adriarroyo08.github.io/WorkStation/';
+/** Dónde abren los enlaces de los emails: en el APK la web publicada; en la web, esta misma (BASE_URL puede ser relativa). */
+const redirectUrl = () => (isNative() ? PUBLIC_URL : new URL(import.meta.env.BASE_URL, location.origin + location.pathname).href);
+
+const ES: [RegExp, string][] = [
+  [/invalid login credentials/i, 'Email o contraseña incorrectos.'],
+  [/email not confirmed/i, 'Aún no has confirmado tu email. Revisa tu bandeja de entrada.'],
+  [/already registered|already been registered/i, 'Ya existe una cuenta con ese email. Inicia sesión.'],
+  [/password should be|weak password|at least \d+ char/i, 'La contraseña es demasiado débil: usa al menos 6 caracteres.'],
+  [/different from the old/i, 'La nueva contraseña debe ser distinta de la anterior.'],
+  [/rate limit|only request this after|too many/i, 'Demasiados intentos. Espera un momento y vuelve a probar.'],
+  [/invalid email|unable to validate email/i, 'Ese email no parece válido.'],
+  [/failed to fetch|network/i, 'Sin conexión con el servidor. Revisa tu conexión.'],
+];
+const friendly = (m: string) => new Error(ES.find(([re]) => re.test(m))?.[1] ?? m);
+
 async function onSignedIn(uid: string, email: string | null) {
   emit({ email, status: 'syncing', error: null });
   // Otra cuenta en este dispositivo: no mezclar sus datos con los de la anterior sin preguntar.
   const last = await get<string>('cloud-last-user');
-  if (last && last !== uid) {
-    const fresh = confirm(
-      `Has entrado con otra cuenta (${email ?? 'nueva'}).\n\nAceptar: empezar con los datos de esa cuenta (antes se guarda una copia de los datos actuales en este dispositivo).\nCancelar: subir también los datos de este dispositivo a esa cuenta.`,
-    );
-    if (fresh) {
-      await snapshotBackup(getData(), 'antes de cambiar de cuenta');
-      pending.clear();
-      await savePending();
-      applyData(emptyData());
-    }
+  if (last && last !== uid && (await askSwitch(email)) === 'fresh') {
+    await snapshotBackup(getData(), 'antes de cambiar de cuenta');
+    pending.clear();
+    await savePending();
+    applyData(emptyData());
   }
   await set('cloud-last-user', uid);
   cursor = (await get<string>(`cloud-cursor:${uid}`)) ?? '1970-01-01T00:00:00Z';
@@ -220,16 +257,36 @@ export const cloud = {
     await setup();
   },
   async signUp(email: string, password: string) {
+    await ready;
     if (!client) throw new Error('Configura primero la URL y la anon key');
-    const { data, error } = await client.auth.signUp({ email, password });
-    if (error) throw new Error(error.message);
+    const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl() } });
+    if (error) throw friendly(error.message);
+    // Con la confirmación activada, un email ya registrado no da error: devuelve un usuario sin identidades.
+    if (data.user && !data.user.identities?.length) throw friendly('User already registered');
     return data.session ? 'ok' : 'confirm';
   },
   async signIn(email: string, password: string) {
+    await ready;
     if (!client) throw new Error('Configura primero la URL y la anon key');
     const { error } = await client.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) throw friendly(error.message);
   },
+  async resetPassword(email: string) {
+    await ready;
+    if (!client) throw new Error('Configura primero la URL y la anon key');
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl() });
+    if (error) throw friendly(error.message);
+  },
+  async updatePassword(password: string) {
+    await ready;
+    if (!client) throw new Error('Configura primero la URL y la anon key');
+    const { error } = await client.auth.updateUser({ password });
+    if (error) throw friendly(error.message);
+  },
+  /** Cierra las pantallas de "cuenta confirmada" / "nueva contraseña". */
+  dismissLanding: () => emit({ recovery: false, justConfirmed: false }),
+  /** ¿La configuración activa es la del build (no una propia del usuario)? */
+  builtIn: () => !!ENV.url && cfg.url === ENV.url && cfg.anonKey === ENV.anonKey,
   async signOut() {
     await client?.auth.signOut();
   },
@@ -253,7 +310,7 @@ export function useCloudSync() {
       applied.current = d;
       storeRef.current.replace(d);
     };
-    setup().catch((e) => emit({ status: 'error', error: String(e) }));
+    ready = setup().catch((e) => emit({ status: 'error', error: String(e) }));
     const online = () => schedule(flush, 200);
     window.addEventListener('online', online);
     return () => window.removeEventListener('online', online);

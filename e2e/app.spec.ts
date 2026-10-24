@@ -16,13 +16,13 @@ test.describe('tour de bienvenida', () => {
     await expect(tour(page)).toHaveCount(0);
   });
 
-  test('recorre las 7 pantallas y Crear cuenta lleva a Perfil', async ({ page, errors }) => {
+  test('recorre las 7 pantallas y Crear cuenta lleva al registro por email', async ({ page, errors }) => {
     void errors;
     await page.goto('/');
     for (let n = 0; n < 6; n++) await page.getByRole('button', { name: 'Siguiente' }).click();
     await expect(tour(page)).toContainText('Todo sincronizado');
     await page.getByRole('button', { name: 'Crear cuenta' }).click();
-    await expect(page.locator('h1:visible').first()).toHaveText('Perfil');
+    await expect(page.locator('h1:visible').first()).toHaveText('Crear cuenta');
   });
 
   test('con datos no sale', async ({ page, errors }) => {

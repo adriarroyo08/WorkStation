@@ -7,7 +7,7 @@ const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
 const Profile = lazy(() => import('./components/Profile'));
 import { useScrollTop } from './components/ui';
-import { useCloudSync } from './cloud';
+import { openedFromAuthLink, useCloud, useCloudSync } from './cloud';
 import { useSessionController } from './controller';
 import { useRest } from './rest';
 import { toast, useToast } from './toast';
@@ -16,6 +16,8 @@ import { NotifGate } from './components/NotifPrompt';
 import { SharedRoutineImport } from './components/SharedRoutine';
 import { clock, useNow, useStore } from './store';
 import Onboarding from './components/Onboarding';
+import AuthLanding from './components/AuthLanding';
+import { AccountSwitchDialog } from './components/Account';
 import { ONBOARDED_KEY, shouldShowOnboarding } from '../../shared/onboarding';
 
 const read = (k: string) => {
@@ -38,6 +40,7 @@ export type TabId = (typeof TABS)[number]['id'];
 export default function App() {
   const { active, data } = useStore();
   const [tour, setTour] = useState(() =>
+    !openedFromAuthLink && // quien confirma su email en un dispositivo nuevo ve su pantalla, no el tour
     shouldShowOnboarding({ onboarded: read(ONBOARDED_KEY) === '1', seenVersion: read('ws:seenVersion'), hasData: data.workouts.length + data.routines.length > 0 }),
   );
   // "Ver tour de nuevo" (Ajustes) lo reabre.
@@ -48,7 +51,10 @@ export default function App() {
   }, []);
   useSessionController();
   useCloudSync();
+  const { recovery, justConfirmed } = useCloud();
   const [tab, setTab] = useState<TabId>('train');
+  // "Crear cuenta" del tour abre Perfil directamente en el registro.
+  const [signUp, setSignUp] = useState(false);
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   // Desde el entrenamiento en curso abrimos la ficha en una capa encima, sin perder el registro.
   const [overlayExercise, setOverlayExercise] = useState<string | null>(null);
@@ -72,10 +78,18 @@ export default function App() {
     if (!overlayExercise) window.scrollTo({ top: savedScroll.current, behavior: 'instant' as ScrollBehavior });
   }, [overlayExercise]);
 
-  if (tour) return <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setTab('profile'))} />;
+  if (recovery || justConfirmed) return <AuthLanding />;
+  if (tour)
+    return (
+      <>
+        <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />
+        <AccountSwitchDialog />
+      </>
+    );
 
   return (
     <div className="app">
+      <AccountSwitchDialog />
       <main>
         <Suspense fallback={<Skeleton />}>
           {overlayExercise ? (
@@ -87,7 +101,7 @@ export default function App() {
               </div>
               {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
               {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
-              {tab === 'profile' && <Profile onExercise={goExercise} />}
+              {tab === 'profile' && <Profile onExercise={goExercise} signUp={signUp} />}
             </>
           )}
         </Suspense>
@@ -100,7 +114,7 @@ export default function App() {
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setOverlayExercise(null), setTab(t.id))}>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
             <t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 1.9} aria-hidden />
             {t.label}
           </button>
