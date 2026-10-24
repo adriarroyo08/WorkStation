@@ -13,7 +13,8 @@ import { toast } from '../toast';
 import { clock, useNow, useStore, useWakeLock } from '../store';
 import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
-import { ExerciseMedia, Sheet } from './ui';
+import { ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
+import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB, fmtMass, fmtWeight, fromUnit, toUnit, weightUnit } from '../../../shared/units';
 import { ReorderSheet, moveItem } from './Reorder';
 
 const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
@@ -90,7 +91,7 @@ export default function WorkoutLogger({
     const prev = alignPrevious(we.sets, history.get(we.exerciseId)?.prev ?? [])[cursor.si];
     const wt = s.weight ?? prev?.weight;
     const reps = s.reps ?? prev?.reps;
-    return `${exMap.get(we.exerciseId)?.name ?? ''}${wt || reps ? ` · ${wt ? `${wt} kg × ` : ''}${reps ?? ''}` : ''}`;
+    return `${exMap.get(we.exerciseId)?.name ?? ''}${wt || reps ? ` · ${wt ? `${fmtWeight(wt)} × ` : ''}${reps ?? ''}` : ''}`;
   })();
 
   const isPr = (we: WorkoutExercise, s: WorkoutSet, ex?: Exercise) => {
@@ -145,7 +146,7 @@ export default function WorkoutLogger({
           )}
           {mode === 'live' && hr.live && <span className="hr-live">❤️ {hr.bpm}</span>}
           <span className="icon-btn">
-            <Weight size={14} /> {Math.round(totals.volume).toLocaleString('es-ES')} kg
+            <Weight size={14} /> {fmtMass(totals.volume)}
           </span>
           <span className="icon-btn">
             <ListChecks size={14} /> {totals.sets} series
@@ -170,8 +171,8 @@ export default function WorkoutLogger({
         const ssPrev = ei > 0 && we.supersetId && w.exercises[ei - 1].supersetId === we.supersetId;
         const ssNext = we.supersetId && w.exercises[ei + 1]?.supersetId === we.supersetId;
         const kind = ex?.kind ?? 'weight_reps';
-        const [c1, c2] =
-          kind === 'duration' ? ['kg', 'Tiempo'] : kind === 'distance' ? ['Metros', 'Tiempo'] : kind === 'reps' ? ['+kg', 'Reps'] : kind === 'assisted' ? ['-kg', 'Reps'] : ['kg', 'Reps'];
+        const u = weightUnit();
+        const [c1, c2] = kind === 'duration' ? [u, 'Tiempo'] : kind === 'distance' ? ['Metros', 'Tiempo'] : kind === 'reps' ? [`+${u}`, 'Reps'] : kind === 'assisted' ? [`-${u}`, 'Reps'] : [u, 'Reps'];
         return (
           <div key={ei} className={`card excard ${we.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''} ${ssNext ? 'ss-next' : ''}`}>
             {we.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
@@ -377,12 +378,14 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
           <button
             className="item"
             onClick={() => {
-              const ws = warmupSets(workWeight, settings.barKg);
-              edit((n) => void n.exercises[ei].sets.unshift(...ws.map((s) => ({ type: 'warmup' as SetType, weight: s.weight, reps: s.reps, done: false }))));
+              // Se calcula en la unidad visible (redondeo a 2,5 kg o 5 lb) y se guarda en kg.
+              const lb = weightUnit() === 'lb';
+              const ws = warmupSets(toUnit(workWeight), lb ? (settings.barLb ?? DEFAULT_BAR_LB) : settings.barKg, lb ? 5 : 2.5);
+              edit((n) => void n.exercises[ei].sets.unshift(...ws.map((s) => ({ type: 'warmup' as SetType, weight: fromUnit(s.weight), reps: s.reps, done: false }))));
               onClose();
             }}
           >
-            🔥 Añadir series de calentamiento (hasta {workWeight} kg)
+            🔥 Añadir series de calentamiento (hasta {fmtWeight(workWeight)})
           </button>
         )}
         {next && (
@@ -429,22 +432,26 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
 
 export function PlateCalculator({ initial, onClose }: { initial: number; onClose: () => void }) {
   const { settings } = useStore();
-  const [target, setTarget] = useState(String(initial || ''));
-  const [bar, setBar] = useState(settings.barKg);
-  const r = platesFor(Number(target.replace(',', '.')) || 0, bar, settings.platesKg);
+  // Trabaja en la unidad visible: en lb usa barra de 45 y discos en libras.
+  const u = weightUnit();
+  const lb = u === 'lb';
+  const [target, setTarget] = useState<number | undefined>(initial ? toUnit(initial) : undefined);
+  const [bar, setBar] = useState(lb ? (settings.barLb ?? DEFAULT_BAR_LB) : settings.barKg);
+  const r = platesFor(target ?? 0, bar, lb ? (settings.platesLb ?? DEFAULT_PLATES_LB) : settings.platesKg);
+  const asKg = (p: number) => fromUnit(p, u);
   return (
     <Sheet title="Calculadora de discos" onClose={onClose}>
       <div className="row">
         <label className="grow">
-          Peso total (kg)
-          <input inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} autoFocus />
+          Peso total ({u})
+          <NumberField value={target} onChange={setTarget} autoFocus />
         </label>
         <label>
           Barra
           <select value={bar} onChange={(e) => setBar(Number(e.target.value))}>
-            {[20, 15, 10, 7, 0].map((b) => (
+            {(lb ? [45, 35, 25, 15, 0] : [20, 15, 10, 7, 0]).map((b) => (
               <option key={b} value={b}>
-                {b} kg
+                {b} {u}
               </option>
             ))}
           </select>
@@ -452,17 +459,21 @@ export function PlateCalculator({ initial, onClose }: { initial: number; onClose
       </div>
       <div className="plates">
         <div className="barbell" />
-        {r.perSide.map((p, i) => (
-          <div key={i} className={`plate p${p >= 25 ? 25 : p >= 20 ? 20 : p >= 15 ? 15 : p >= 10 ? 10 : p >= 5 ? 5 : p >= 2 ? 2 : 1}`} style={{ height: `${40 + p * 3}px` }}>
-            {p}
-          </div>
-        ))}
+        {r.perSide.map((p, i) => {
+          const k = asKg(p); // el color y el tamaño siguen el estándar en kg
+          return (
+            <div key={i} className={`plate p${k >= 24 ? 25 : k >= 19 ? 20 : k >= 14 ? 15 : k >= 9 ? 10 : k >= 5 ? 5 : k >= 2 ? 2 : 1}`} style={{ height: `${40 + k * 3}px` }}>
+              {String(p).replace('.', ',')}
+            </div>
+          );
+        })}
       </div>
       <p>
-        Por lado: <b>{r.perSide.length ? r.perSide.join(' + ') : '—'}</b>
+        Por lado: <b>{r.perSide.length ? r.perSide.map((p) => String(p).replace('.', ',')).join(' + ') : '—'}</b>
       </p>
       <p className="muted small">
-        Total cargado: {r.achieved} kg{r.remainder ? ` (faltan ${r.remainder} kg con tus discos)` : ''}. Configura tus discos en Ajustes.
+        Total cargado: {String(r.achieved).replace('.', ',')} {u}
+        {r.remainder ? ` (faltan ${String(r.remainder).replace('.', ',')} ${u} con tus discos)` : ''}. Configura tus discos en Ajustes.
       </p>
     </Sheet>
   );
@@ -494,14 +505,14 @@ function SetRow(props: {
       ? formatDuration(prev.durationSec ?? 0)
       : kind === 'distance'
         ? `${prev.distanceM ?? '-'}m`
-        : `${prev.weight ? `${prev.weight}×` : ''}${prev.reps ?? 0}`
+        : `${prev.weight ? `${String(toUnit(prev.weight)).replace('.', ',')}×` : ''}${prev.reps ?? 0}`
     : '—';
   const weightInput = (
-    <input
-      inputMode="decimal"
-      placeholder={prev?.weight?.toString() ?? ''}
-      value={s.weight ?? ''}
-      onChange={(e) => onChange({ weight: numVal(e.target.value) })}
+    <WeightField
+      aria-label={kind === 'assisted' ? `Asistencia (${weightUnit()})` : `Peso (${weightUnit()})`}
+      placeholder={prev?.weight ? String(toUnit(prev.weight)).replace('.', ',') : ''}
+      kg={s.weight}
+      onChange={(weight) => onChange({ weight })}
       onDoubleClick={kind === 'weight_reps' ? onPlates : undefined}
     />
   );
@@ -519,24 +530,25 @@ function SetRow(props: {
           {prevTxt}
         </span>
         {kind === 'distance' ? (
-          <input inputMode="decimal" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM ?? ''} onChange={(e) => onChange({ distanceM: numVal(e.target.value) })} />
+          <NumberField aria-label="Distancia (m)" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM} onChange={(distanceM) => onChange({ distanceM })} />
         ) : (
           weightInput
         )}
         {kind === 'duration' || kind === 'distance' ? (
           <div className="dur">
-            <input
-              inputMode="numeric"
+            <NumberField
+              decimals={false}
+              aria-label="Tiempo (s)"
               placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'}
-              value={running ?? s.durationSec ?? ''}
-              onChange={(e) => onChange({ durationSec: numVal(e.target.value) })}
+              value={running ?? s.durationSec}
+              onChange={(durationSec) => onChange({ durationSec })}
             />
             <button className={`plain sw ${running !== undefined ? 'on' : ''}`} onClick={onStopwatch} aria-label="Cronómetro">
               {running !== undefined ? '■' : '▶'}
             </button>
           </div>
         ) : (
-          <input inputMode="numeric" placeholder={prev?.reps?.toString() ?? ''} value={s.reps ?? ''} onChange={(e) => onChange({ reps: numVal(e.target.value) })} />
+          <NumberField decimals={false} aria-label="Repeticiones" placeholder={prev?.reps?.toString() ?? ''} value={s.reps} onChange={(reps) => onChange({ reps })} />
         )}
         {showRpe && (
           <select aria-label="RPE" className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
@@ -629,14 +641,14 @@ function useSwipeToDelete(onDelete: () => void) {
   };
 }
 
-// "💡 Hoy: 82,5 kg × 8" — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
+// "💡 Hoy: 82,5 kg × 8" (o en lb) — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
 function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: Exercise; prev: WorkoutSet[]; onApply: (p: Partial<WorkoutSet>) => void }) {
   const [open, setOpen] = useState(false);
   const pending = we.sets.filter((s) => !s.done && s.type !== 'warmup');
   if (!pending.length) return null;
   const sug = suggestNext(prev, ex, pending[0].reps);
   if (!sug) return null;
-  const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${sug.weight} kg × ` : ''}${sug.reps ?? ''}${sug.weight || sug.reps ? '' : ''}`;
+  const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${fmtWeight(sug.weight)} × ` : ''}${sug.reps ?? ''}`;
   const applied = pending.every(
     (s) => (sug.weight === undefined || s.weight === sug.weight) && (sug.reps === undefined || s.reps === sug.reps) && (sug.durationSec === undefined || s.durationSec === sug.durationSec),
   );

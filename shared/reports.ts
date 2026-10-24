@@ -2,6 +2,7 @@
 import { MUSCLE_LABELS } from './exercises';
 import { countsAsWorkSet, muscleSets, PR_LABELS, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume, type PrEvent } from './stats';
 import type { MuscleGroup, Workout, WorkstationData } from './types';
+import { fmtMass } from './units';
 
 export type PeriodKind = 'week' | 'month' | 'year';
 
@@ -172,12 +173,12 @@ export function reportToText(r: PeriodReport): string {
   const lines = [
     `INFORME: ${r.period.label}`,
     `Entrenamientos: ${t.workouts} (${pct(t.workouts, p.workouts)} vs periodo anterior) · Días entrenados: ${t.daysTrained}`,
-    `Duración total: ${Math.round(t.durationMin / 6) / 10} h (${pct(t.durationMin, p.durationMin)}) · Volumen: ${t.volume.toLocaleString('es-ES')} kg (${pct(t.volume, p.volume)})`,
+    `Duración total: ${Math.round(t.durationMin / 6) / 10} h (${pct(t.durationMin, p.durationMin)}) · Volumen: ${fmtMass(t.volume)} (${pct(t.volume, p.volume)})`,
     `Series: ${t.sets} (${pct(t.sets, p.sets)}) · Repeticiones: ${t.reps}`,
     `Objetivo semanal (${r.goal.target}/semana) cumplido ${r.goal.weeksMet} de ${r.goal.weeks} semanas`,
   ];
   if (r.muscles.length) lines.push('', 'Series por músculo:', ...r.muscles.map((m) => `- ${m.label}: ${m.sets} (antes ${m.previous})`));
-  if (r.topExercises.length) lines.push('', 'Ejercicios principales:', ...r.topExercises.map((e) => `- ${e.name}: ${e.sets} series, ${e.volume} kg`));
+  if (r.topExercises.length) lines.push('', 'Ejercicios principales:', ...r.topExercises.map((e) => `- ${e.name}: ${e.sets} series, ${fmtMass(e.volume)}`));
   if (r.prs.length) lines.push('', `Récords batidos (${r.prs.length}):`, ...r.prs.map((e) => `- ${e.exerciseName} · ${PR_LABELS[e.kind]}: ${e.value} (antes ${e.previous})`));
   return lines.join('\n');
 }

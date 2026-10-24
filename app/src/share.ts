@@ -3,6 +3,7 @@ import { bestSetText } from './summary';
 import type { Workout, WorkstationData } from '../../shared/types';
 import type { YearWrapped } from '../../shared/wrapped';
 import { formatDuration, prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../shared/stats';
+import { fmtMass } from '../../shared/units';
 
 export async function workoutImage(data: WorkstationData, w: Workout): Promise<Blob> {
   const W = 1080;
@@ -33,7 +34,7 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
 
   const stats: [string, string][] = [
     [formatDuration(workoutDurationMin(w) * 60), 'Duración'],
-    [`${workoutVolume(w).toLocaleString('es-ES')} kg`, 'Volumen'],
+    [fmtMass(workoutVolume(w)), 'Volumen'],
     [String(workoutSetCount(w)), 'Series'],
     [String(prs.length), 'Récords'],
   ];
@@ -95,7 +96,7 @@ export async function wrappedImage(y: YearWrapped): Promise<Blob> {
   const rows: [string, string][] = [
     [String(y.workouts), 'entrenamientos'],
     [`${y.hours.toLocaleString('es-ES')} h`, 'entrenando'],
-    [`${(y.volumeKg / 1000).toLocaleString('es-ES', { maximumFractionDigits: 1 })} t`, `levantadas (${y.equivalence})`],
+    [fmtMass(y.volumeKg), `levantadas (${y.equivalence})`],
     [String(y.prs), 'récords batidos'],
     [`${y.longestStreak} sem.`, 'de racha máxima'],
   ];

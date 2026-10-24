@@ -179,9 +179,9 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
         if (usesWeight) {
             item {
                 Stepper(
-                    value = formatKg(weight) + if (ex.kind == "assisted") " kg asist." else " kg",
-                    onMinus = { weight = ((weight ?: 0.0) - 2.5).coerceAtLeast(0.0) },
-                    onPlus = { weight = (weight ?: 0.0) + 2.5 },
+                    value = formatWeight(weight) + if (ex.kind == "assisted") " $weightUnit asist." else " $weightUnit",
+                    onMinus = { weight = ((weight ?: 0.0) - weightStepKg()).coerceAtLeast(0.0) },
+                    onPlus = { weight = (weight ?: 0.0) + weightStepKg() },
                 )
             }
         }
@@ -190,7 +190,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
             else Stepper(value = "${reps ?: 0} reps", onMinus = { reps = ((reps ?: 0) - 1).coerceAtLeast(0) }, onPlus = { reps = (reps ?: 0) + 1 })
         }
         if (set.prevWeight != null || set.prevReps != null) {
-            item { Text("Anterior: ${formatKg(set.prevWeight)} × ${set.prevReps ?: "–"}", fontSize = 11.sp, color = Color.Gray) }
+            item { Text("Anterior: ${formatWeight(set.prevWeight)} × ${set.prevReps ?: "–"}", fontSize = 11.sp, color = Color.Gray) }
         }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -272,7 +272,7 @@ private fun RestScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Un
             if (next != null) {
                 val (e, s) = next
                 Text(
-                    "Siguiente: ${e.name}" + (s?.let { " · ${formatKg(it.weight ?: it.prevWeight)}×${it.reps ?: it.prevReps ?: "–"}" } ?: ""),
+                    "Siguiente: ${e.name}" + (s?.let { " · ${formatWeight(it.weight ?: it.prevWeight)}×${it.reps ?: it.prevReps ?: "–"}" } ?: ""),
                     fontSize = 11.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,

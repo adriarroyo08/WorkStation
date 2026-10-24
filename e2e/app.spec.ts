@@ -16,7 +16,7 @@ test('entreno completo desde cero', async ({ page, errors }) => {
   await row.getByLabel('Completar serie').click();
   await page.getByRole('button', { name: 'Terminar' }).click();
   await expect(page.getByText('¡Buen trabajo!')).toBeVisible();
-  await expect(page.getByText('600', { exact: true })).toBeVisible();
+  await expect(page.getByText('600 kg', { exact: true })).toBeVisible();
 });
 
 test('hoy toca, recuperación y comparación con la sesión anterior', async ({ page, errors }) => {
@@ -156,4 +156,37 @@ test('novedades tras actualizar y versión en ajustes', async ({ page, errors })
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: 'Ajustes' }).click();
   await expect(page.locator('.app-version')).toContainText('Workstation v1.0.0');
+});
+
+test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ page, errors }) => {
+  void errors;
+  page.on('dialog', (d) => d.accept());
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  const row = page.locator('.swipe .set').first();
+  const kg = row.getByLabel('Peso (kg)');
+  await kg.pressSequentially('82,5');
+  await expect(kg).toHaveValue('82,5');
+  await row.getByLabel('Repeticiones').fill('5');
+  await row.getByLabel('Completar serie').click();
+  await page.getByRole('button', { name: 'Terminar' }).click();
+  await expect(page.getByText('82,5kg × 5').first()).toBeVisible();
+});
+
+test('unidades en libras: escribir, calculadora de discos e historial', async ({ page, errors }) => {
+  void errors;
+  page.on('dialog', (d) => d.accept());
+  await seed(page, { ...SAMPLE, settings: { unit: 'lb' } });
+  await tab(page, 'Historial').click();
+  await expect(page.locator('button.card', { hasText: 'Torso A' }).first()).toContainText('lb');
+  await tab(page, 'Entrenar').click();
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  const row = page.locator('.swipe .set').first();
+  await expect(row.locator('.prev')).toContainText('220,5×5'); // 100 kg de la sesión anterior
+  const lb = row.getByLabel('Peso (lb)');
+  await lb.fill('225');
+  await lb.dblclick();
+  const calc = page.getByRole('dialog', { name: 'Calculadora de discos' });
+  await expect(calc).toContainText('Por lado: 45 + 45');
+  await expect(calc).toContainText('Total cargado: 225 lb');
 });

@@ -1,9 +1,10 @@
 import { ListChecks, Timer, Weight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
-import { cap, fmtDate, fmtNum, useStore } from '../store';
+import { cap, fmtDate, useStore } from '../store';
 import { MonthCalendar } from './ui';
 import WorkoutDetail from './WorkoutDetail';
+import { fmtMass } from '../../../shared/units';
 
 export default function History({ onExercise, goTrain }: { onExercise: (id: string) => void; goTrain: () => void }) {
   const { data, settings } = useStore();
@@ -94,7 +95,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                   <Timer size={14} /> {workoutDurationMin(w)} min
                 </span>
                 <span className="icon-btn">
-                  <Weight size={14} /> {fmtNum(workoutVolume(w))} kg
+                  <Weight size={14} /> {fmtMass(workoutVolume(w))}
                 </span>
                 <span className="icon-btn">
                   <ListChecks size={14} /> {workoutSetCount(w)} series

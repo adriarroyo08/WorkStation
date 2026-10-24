@@ -6,7 +6,8 @@ import { uid } from '../../../shared/types';
 import { clock, useStore } from '../store';
 import ExercisePicker from './ExercisePicker';
 import { ArrowUpDown, Plus } from 'lucide-react';
-import { Back, ExerciseMedia } from './ui';
+import { Back, ExerciseMedia, NumberField, WeightField } from './ui';
+import { weightUnit } from '../../../shared/units';
 
 export default function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => void }) {
   const { data, update, settings } = useStore();
@@ -20,7 +21,6 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
       fn(n);
       return n;
     });
-  const num = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const exists = data.routines.some((x) => x.id === r.id);
 
   const save = () => {
@@ -136,7 +136,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
             </div>
             <div className="rset head small muted">
               <span>Serie</span>
-              <span>{dur ? '' : 'kg'}</span>
+              <span>{dur ? '' : weightUnit()}</span>
               <span>{dur ? 'Seg' : 'Reps'}</span>
               <span />
             </div>
@@ -153,11 +153,11 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                 >
                   {{ normal: si + 1, warmup: 'C', drop: 'D', failure: 'F' }[s.type]}
                 </button>
-                {dur ? <span /> : <input inputMode="decimal" value={s.weight ?? ''} placeholder="-" onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].weight = num(ev.target.value)))} />}
+                {dur ? <span /> : <WeightField aria-label={`Peso (${weightUnit()})`} kg={s.weight} placeholder="-" onChange={(v) => edit((n) => void (n.exercises[i].sets[si].weight = v))} />}
                 {dur ? (
-                  <input inputMode="numeric" value={s.durationSec ?? ''} onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].durationSec = num(ev.target.value)))} />
+                  <NumberField decimals={false} aria-label="Segundos" value={s.durationSec} onChange={(v) => edit((n) => void (n.exercises[i].sets[si].durationSec = v))} />
                 ) : (
-                  <input inputMode="numeric" value={s.reps ?? ''} placeholder="-" onChange={(ev) => edit((n) => void (n.exercises[i].sets[si].reps = num(ev.target.value)))} />
+                  <NumberField decimals={false} aria-label="Repeticiones" value={s.reps} placeholder="-" onChange={(v) => edit((n) => void (n.exercises[i].sets[si].reps = v))} />
                 )}
                 <button className="ghost small" onClick={() => edit((n) => void n.exercises[i].sets.splice(si, 1))} disabled={e.sets.length === 1}>
                   ✕

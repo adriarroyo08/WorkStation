@@ -6,6 +6,7 @@ import { emptyData, normalizeData } from '../../shared/data';
 import type { Settings, Workout, WorkstationData } from '../../shared/types';
 import { isNative, native } from './native';
 import { dailySnapshot } from './backups';
+import { setWeightUnit } from '../../shared/units';
 
 // Todo se guarda en el navegador (IndexedDB). Nada sale del dispositivo salvo las llamadas a la IA que tú configures.
 interface Store {
@@ -82,6 +83,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   if (!state) return <div className="center muted">Cargando…</div>;
+  // Unidad de peso activa para todo el árbol (se fija antes de renderizar a los hijos).
+  setWeightUnit(state.data.settings.unit);
   return <Ctx.Provider value={{ ...state, settings: state.data.settings, update, replace, setActive, setAi, setSettings }}>{children}</Ctx.Provider>;
 }
 

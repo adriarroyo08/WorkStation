@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Gauge } from 'lucide-react';
 import { LEVELS, STANDARDS, latestBodyweight, strengthLevels, type StrengthLevel } from '../../../shared/strength';
 import { uid } from '../../../shared/types';
+import { fmtWeight, fromUnit, weightUnit } from '../../../shared/units';
 import { useStore } from '../store';
 
-const fmtVal = (l: StrengthLevel, v = l.value) => (l.unit === 'kg' ? `${Math.round(v * 10) / 10} kg` : `${v} reps`);
+const fmtVal = (l: StrengthLevel, v = l.value) => (l.unit === 'kg' ? fmtWeight(v, { decimals: 1 }) : `${v} reps`);
 const levelName = (i: number) => (i < 0 ? 'Iniciándote' : LEVELS[i]);
 
 // Escala de cinco tramos; el actual se rellena según el progreso hacia el siguiente.
@@ -29,12 +30,12 @@ function SetupBodyweight() {
     <div className="lvl-setup">
       <p className="small muted">Indica tu peso corporal para comparar tu fuerza con los estándares.</p>
       <div className="row">
-        <input inputMode="decimal" placeholder="Peso (kg)" aria-label="Peso corporal (kg)" value={bw} onChange={(e) => setBw(e.target.value)} />
+        <input inputMode="decimal" placeholder={`Peso (${weightUnit()})`} aria-label={`Peso corporal (${weightUnit()})`} value={bw} onChange={(e) => setBw(e.target.value)} />
         <SexToggle value={settings.sex ?? 'm'} onChange={(sex) => setSettings({ sex })} />
         <button
           className="primary"
           disabled={!(Number(bw.replace(',', '.')) > 0)}
-          onClick={() => update((d) => void d.measurements.push({ id: uid(), date: new Date().toISOString(), bodyweight: Number(bw.replace(',', '.')) }))}
+          onClick={() => update((d) => void d.measurements.push({ id: uid(), date: new Date().toISOString(), bodyweight: fromUnit(Number(bw.replace(',', '.'))) }))}
         >
           Guardar
         </button>

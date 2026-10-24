@@ -40,7 +40,7 @@ export function volumeEquivalence(kg: number): string {
       return `${r.toLocaleString('es-ES')} ${r === 1 ? one : many}`;
     }
   }
-  return `${Math.round(kg / 20)} sacos de 20 kg`;
+  return `${Math.round(kg / 20)} sacos de cemento`;
 }
 
 export function yearWrapped(data: WorkstationData, year = new Date().getFullYear()): YearWrapped {

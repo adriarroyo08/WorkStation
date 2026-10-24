@@ -81,6 +81,7 @@ fun parseState(json: String): WatchState? = runCatching {
             },
         )
     }
+    weightUnit = if (o.optString("unit", "kg") == "lb") "lb" else "kg"
     WatchState(o.optLong("sentAt"), active, routines)
 }.getOrNull()
 
@@ -107,6 +108,17 @@ fun formatKg(v: Double?): String = when {
     v % 1.0 == 0.0 -> v.toInt().toString()
     else -> "%.2f".format(v).trimEnd('0').trimEnd('.', ',')
 }
+
+// Unidad visible que llega del móvil. Los pesos se reciben y envían siempre en kg.
+var weightUnit = "kg"
+private const val LB_PER_KG = 2.2046226218
+
+/** Peso en kg mostrado en la unidad del usuario (lb redondeadas a 0,5). */
+fun formatWeight(kg: Double?): String =
+    if (kg == null) "–" else if (weightUnit == "lb") formatKg(Math.round(kg * LB_PER_KG * 2) / 2.0) else formatKg(kg)
+
+/** Incremento de los botones −/+ en kg: 2,5 kg o 5 lb. */
+fun weightStepKg(): Double = if (weightUnit == "lb") 5 / LB_PER_KG else 2.5
 
 fun clock(sec: Long): String {
     val s = sec.coerceAtLeast(0)

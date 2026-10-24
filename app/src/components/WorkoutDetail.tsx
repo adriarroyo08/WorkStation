@@ -6,7 +6,7 @@ import { formatDuration, formatSet, muscleSets, prEvents, workoutDurationMin, wo
 import type { MuscleGroup, Workout } from '../../../shared/types';
 import { startWorkout } from '../controller';
 import { toast } from '../toast';
-import { fmtCompact, fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
+import { fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
 import { newlyUnlocked } from '../../../shared/achievements';
 import { AchievementBadge } from './Achievements';
@@ -15,6 +15,7 @@ import LineChart from './LineChart';
 import { Back, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
 import { compareWithPrevious } from '../../../shared/planning';
 import WorkoutLogger from './WorkoutLogger';
+import { fmtMass, toUnit, weightUnit } from '../../../shared/units';
 
 // Detalle de un entrenamiento guardado. `justFinished` muestra la pantalla de "¡Buen trabajo!".
 export default function WorkoutDetail({
@@ -106,7 +107,7 @@ export default function WorkoutDetail({
       </p>
       <div className="stats four">
         <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
-        <Stat value={fmtCompact(workoutVolume(w))} label="kg volumen" />
+        <Stat value={fmtMass(workoutVolume(w))} label="volumen" />
         <Stat value={workoutSetCount(w)} label="series" />
         <Stat value={prs.length} label="récords" />
       </div>
@@ -115,7 +116,7 @@ export default function WorkoutDetail({
           <h3>Frente a la última vez</h3>
           <p className="muted small">{fmtDate(cmp.previous.startedAt)}</p>
           <div className="stats four">
-            <Stat value={fmtCompact(cmp.volume[0])} label="kg volumen" extra={<Delta cur={cmp.volume[0]} prev={cmp.volume[1]} unit=" kg" />} />
+            <Stat value={fmtMass(cmp.volume[0])} label="volumen" extra={<Delta cur={toUnit(cmp.volume[0])} prev={toUnit(cmp.volume[1])} unit={` ${weightUnit()}`} />} />
             <Stat value={cmp.sets[0]} label="series" extra={<Delta cur={cmp.sets[0]} prev={cmp.sets[1]} />} />
             <Stat value={cmp.reps[0]} label="reps" extra={<Delta cur={cmp.reps[0]} prev={cmp.reps[1]} />} />
             <Stat value={formatDuration(cmp.durationMin[0] * 60)} label="duración" extra={<Delta cur={cmp.durationMin[0]} prev={cmp.durationMin[1]} unit=" min" />} />

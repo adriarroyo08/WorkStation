@@ -1,6 +1,7 @@
 // Sugerencia de sobrecarga progresiva a partir de la última sesión del ejercicio.
 import { MUSCLE_REGION } from './exercises';
 import type { Exercise, WorkoutSet } from './types';
+import { fmtWeight, fromUnit, toUnit, weightUnit, type WeightUnit } from './units';
 
 export interface Suggestion {
   weight?: number;
@@ -10,8 +11,10 @@ export interface Suggestion {
   reason: string;
 }
 
-// Incremento habitual según material y zona: barra de pierna 5 kg, mancuernas 2 kg, resto 2,5 kg.
-export function weightStep(ex?: Exercise): number {
+// Incremento habitual según material y zona, en la unidad indicada.
+// kg: barra de pierna 5, mancuernas 2, resto 2,5 · lb: barra de pierna 10, resto 5.
+export function weightStep(ex?: Exercise, u: WeightUnit = 'kg'): number {
+  if (u === 'lb') return ex?.equipment === 'barra' && (MUSCLE_REGION[ex.muscle] === 'Piernas' || ex.muscle === 'lumbar') ? 10 : 5;
   if (!ex) return 2.5;
   if (ex.equipment === 'mancuernas') return 2;
   if (ex.equipment === 'barra' && MUSCLE_REGION[ex.muscle] === 'Piernas') return 5;
@@ -53,11 +56,13 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
   const hitAll = atTop.every((s) => (s.reps ?? 0) >= goal);
   const rpes = atTop.map((s) => s.rpe).filter((r): r is number => r !== undefined);
   const hard = rpes.length > 0 && rpes.reduce((a, b) => a + b, 0) / rpes.length > 8.5;
-  const step = weightStep(ex);
+  // El salto se calcula en la unidad que ve el usuario (2,5 kg o 5 lb) y se guarda en kg.
+  const u = weightUnit();
+  const step = weightStep(ex, u);
   // Siguiente peso cargable: múltiplo del incremento por encima del actual (47 → 50, 80 → 82,5).
-  const next = Math.ceil((top + step / 2) / step) * step;
-  if (hitAll && !hard)
-    return { weight: Math.round(next * 100) / 100, reps: goal, action: 'up', reason: `Completaste ${atTop.length}×${goal} con ${top} kg: sube a ${Math.round(next * 100) / 100} kg.` };
-  if (hitAll && hard) return { weight: top, reps: goal + 1, action: 'reps', reason: `Muy exigente (RPE alto): mantén ${top} kg y busca una rep más.` };
-  return { weight: top, reps: goal, action: 'repeat', reason: `Te faltaron reps con ${top} kg: repite el peso hasta completar ${goal}.` };
+  const nextU = Math.ceil((toUnit(top, u) + step / 2) / step) * step;
+  const next = u === 'kg' ? Math.round(nextU * 100) / 100 : fromUnit(nextU, u);
+  if (hitAll && !hard) return { weight: next, reps: goal, action: 'up', reason: `Completaste ${atTop.length}×${goal} con ${fmtWeight(top)}: sube a ${fmtWeight(next)}.` };
+  if (hitAll && hard) return { weight: top, reps: goal + 1, action: 'reps', reason: `Muy exigente (RPE alto): mantén ${fmtWeight(top)} y busca una rep más.` };
+  return { weight: top, reps: goal, action: 'repeat', reason: `Te faltaron reps con ${fmtWeight(top)}: repite el peso hasta completar ${goal}.` };
 }

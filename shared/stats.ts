@@ -1,4 +1,5 @@
 import { MUSCLE_LABELS } from './exercises';
+import { fmtWeight } from './units';
 import type { Exercise, MuscleGroup, Workout, WorkoutSet, WorkstationData } from './types';
 
 // 1RM estimado (fórmula de Epley).
@@ -253,10 +254,10 @@ export function formatDuration(sec: number): string {
 export function formatSet(s: WorkoutSet, ex?: Exercise): string {
   const tag = s.type === 'warmup' ? ' (calent.)' : s.type === 'drop' ? ' (drop)' : s.type === 'failure' ? ' (fallo)' : '';
   const rpe = s.rpe ? ` @RPE${s.rpe}` : '';
-  if (ex?.kind === 'duration' || (s.durationSec && !s.reps && !s.distanceM)) return `${formatDuration(s.durationSec ?? 0)}${s.weight ? ` con ${s.weight}kg` : ''}${tag}`;
+  if (ex?.kind === 'duration' || (s.durationSec && !s.reps && !s.distanceM)) return `${formatDuration(s.durationSec ?? 0)}${s.weight ? ` con ${fmtWeight(s.weight, { space: false })}` : ''}${tag}`;
   if (ex?.kind === 'distance' || (s.distanceM && !s.reps)) return `${s.distanceM ?? 0}m${s.durationSec ? ` en ${formatDuration(s.durationSec)}` : ''}${tag}`;
-  if (ex?.kind === 'assisted') return `${s.reps ?? 0} reps${s.weight ? ` (asist. ${s.weight}kg)` : ''}${rpe}${tag}`;
-  const w = s.weight ? `${s.weight}kg × ` : '';
+  if (ex?.kind === 'assisted') return `${s.reps ?? 0} reps${s.weight ? ` (asist. ${fmtWeight(s.weight, { space: false })})` : ''}${rpe}${tag}`;
+  const w = s.weight ? `${fmtWeight(s.weight, { space: false })} × ` : '';
   return `${w}${s.reps ?? 0}${rpe}${tag}`;
 }
 

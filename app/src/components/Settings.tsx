@@ -11,7 +11,8 @@ import { Sparkles } from 'lucide-react';
 import { snapshot } from '../backups';
 import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
-import { Back, Toggle } from './ui';
+import { Back, NumberField, Toggle } from './ui';
+import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB } from '../../../shared/units';
 
 export default function Settings({ onBack }: { onBack: () => void }) {
   const { data, ai, settings, setAi, setSettings, replace } = useStore();
@@ -124,6 +125,13 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <Toggle label="Mantener pantalla encendida" checked={settings.keepAwake} onChange={(v) => setSettings({ keepAwake: v })} />
         <Toggle label="La semana empieza en lunes" checked={settings.weekStartsMonday} onChange={(v) => setSettings({ weekStartsMonday: v })} />
         <label>
+          Unidad de peso
+          <select value={settings.unit ?? 'kg'} onChange={(e) => setSettings({ unit: e.target.value as 'kg' | 'lb' })}>
+            <option value="kg">Kilos (kg)</option>
+            <option value="lb">Libras (lb)</option>
+          </select>
+        </label>
+        <label>
           Tema
           <select value={settings.theme} onChange={(e) => setSettings({ theme: e.target.value as typeof settings.theme })}>
             <option value="auto">Automático</option>
@@ -141,22 +149,50 @@ export default function Settings({ onBack }: { onBack: () => void }) {
 
       <h2>🧮 Calculadora de discos</h2>
       <div className="card">
-        <label>
-          Peso de la barra (kg)
-          <input inputMode="decimal" value={settings.barKg} onChange={(e) => setSettings({ barKg: Number(e.target.value.replace(',', '.')) || 0 })} />
-        </label>
-        <label>Discos disponibles (kg)</label>
-        <div className="chips">
-          {[50, 25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5].map((p) => (
-            <button
-              key={p}
-              className={settings.platesKg.includes(p) ? 'on' : ''}
-              onClick={() => setSettings({ platesKg: settings.platesKg.includes(p) ? settings.platesKg.filter((x) => x !== p) : [...settings.platesKg, p].sort((a, b) => b - a) })}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+        {settings.unit === 'lb' ? (
+          <>
+            <label>
+              Peso de la barra (lb)
+              <NumberField value={settings.barLb ?? DEFAULT_BAR_LB} onChange={(v) => setSettings({ barLb: v ?? 0 })} />
+            </label>
+            <label>Discos disponibles (lb)</label>
+            <div className="chips">
+              {[55, 45, 35, 25, 15, 10, 5, 2.5, 1.25].map((p) => {
+                const plates = settings.platesLb ?? DEFAULT_PLATES_LB;
+                return (
+                  <button
+                    key={p}
+                    className={plates.includes(p) ? 'on' : ''}
+                    aria-pressed={plates.includes(p)}
+                    onClick={() => setSettings({ platesLb: plates.includes(p) ? plates.filter((x) => x !== p) : [...plates, p].sort((a, b) => b - a) })}
+                  >
+                    {String(p).replace('.', ',')}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <label>
+              Peso de la barra (kg)
+              <NumberField value={settings.barKg} onChange={(v) => setSettings({ barKg: v ?? 0 })} />
+            </label>
+            <label>Discos disponibles (kg)</label>
+            <div className="chips">
+              {[50, 25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5].map((p) => (
+                <button
+                  key={p}
+                  className={settings.platesKg.includes(p) ? 'on' : ''}
+                  aria-pressed={settings.platesKg.includes(p)}
+                  onClick={() => setSettings({ platesKg: settings.platesKg.includes(p) ? settings.platesKg.filter((x) => x !== p) : [...settings.platesKg, p].sort((a, b) => b - a) })}
+                >
+                  {String(p).replace('.', ',')}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <h2>🤖 Inteligencia artificial</h2>

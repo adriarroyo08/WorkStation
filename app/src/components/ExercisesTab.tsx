@@ -11,6 +11,7 @@ import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
 import { StrengthCard } from './Strength';
+import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
 import { Back, ExerciseMedia, Sheet, Stat } from './ui';
 
 export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: string | null; onOpened?: () => void; onClose?: () => void }) {
@@ -53,8 +54,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
               right={
                 pr ? (
                   <small className="muted right">
-                    🏆 {pr.best1RM || pr.maxReps}
-                    {pr.best1RM ? ' kg' : ' reps'}
+                    🏆 {pr.best1RM ? fmtWeight(pr.best1RM) : `${pr.maxReps} reps`}
                     <br />
                     {pr.sessions} ses.
                   </small>
@@ -202,7 +202,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const metrics = METRICS_BY_KIND[e.kind];
   const m = metric && metrics.includes(metric) ? metric : metrics[0];
   const since = range === 'all' ? 0 : Date.now() - (range === '3m' ? 90 : 365) * 864e5;
-  const fmtMetric = (k: Metric, v: number) => (k === 'maxDuration' ? formatDuration(v) : k === 'maxDistance' ? `${v} m` : k.includes('Reps') ? `${v}` : `${Math.round(v * 10) / 10} kg`);
+  const fmtMetric = (k: Metric, v: number) => (k === 'maxDuration' ? formatDuration(v) : k === 'maxDistance' ? `${v} m` : k.includes('Reps') ? `${v}` : fmtWeight(v, { decimals: 1 }));
 
   const translate = async () => {
     if (!instructions?.length) return;
@@ -262,8 +262,8 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
             <div className="stats">
               {e.kind === 'weight_reps' ? (
                 <>
-                  <Stat value={pr.best1RM} label="kg 1RM est." />
-                  <Stat value={pr.bestWeight} label="kg máx." />
+                  <Stat value={toUnit(pr.best1RM)} label={`${weightUnit()} 1RM est.`} />
+                  <Stat value={toUnit(pr.bestWeight)} label={`${weightUnit()} máx.`} />
                   <Stat value={pr.sessions} label="sesiones" />
                 </>
               ) : e.kind === 'duration' ? (
@@ -396,19 +396,19 @@ function Records({ id, e }: { id: string; e: Exercise }) {
               <>
                 <tr>
                   <td>Peso máximo</td>
-                  <td>{pr.bestWeight} kg</td>
+                  <td>{fmtWeight(pr.bestWeight)}</td>
                 </tr>
                 <tr>
                   <td>1RM estimado</td>
-                  <td>{pr.best1RM} kg</td>
+                  <td>{fmtWeight(pr.best1RM)}</td>
                 </tr>
                 <tr>
                   <td>Mejor serie (peso × reps)</td>
-                  <td>{pr.bestSetVolume} kg</td>
+                  <td>{fmtWeight(pr.bestSetVolume, { decimals: 0 })}</td>
                 </tr>
                 <tr>
                   <td>Mejor volumen en una sesión</td>
-                  <td>{pr.bestVolumeSession} kg</td>
+                  <td>{fmtWeight(pr.bestVolumeSession, { decimals: 0 })}</td>
                 </tr>
               </>
             )}
@@ -448,7 +448,7 @@ function Records({ id, e }: { id: string; e: Exercise }) {
               {reps.map((r) => (
                 <tr key={r.reps}>
                   <td>{r.reps}</td>
-                  <td>{r.weight} kg</td>
+                  <td>{fmtWeight(r.weight)}</td>
                   <td className="muted">{fmtDate(r.date)}</td>
                 </tr>
               ))}
@@ -458,7 +458,7 @@ function Records({ id, e }: { id: string; e: Exercise }) {
       )}
       {e.kind === 'weight_reps' && pr.best1RM > 0 && (
         <div className="card">
-          <h3>Porcentajes de tu 1RM ({pr.best1RM} kg)</h3>
+          <h3>Porcentajes de tu 1RM ({fmtWeight(pr.best1RM)})</h3>
           <table className="table small">
             <thead>
               <tr>
@@ -469,12 +469,16 @@ function Records({ id, e }: { id: string; e: Exercise }) {
             </thead>
             <tbody>
               {[100, 95, 90, 85, 80, 75, 70, 65, 60, 50].map((p) => {
-                const wgt = Math.round((pr.best1RM * p) / 100 / 2.5) * 2.5;
+                // Redondeado a pesos cargables: 2,5 kg o 5 lb.
+                const step = weightUnit() === 'lb' ? 5 : 2.5;
+                const wgt = Math.round((toUnit(pr.best1RM) * p) / 100 / step) * step;
                 const reps = p === 100 ? 1 : Math.max(1, Math.round(30 * (100 / p - 1)));
                 return (
                   <tr key={p}>
                     <td>{p}%</td>
-                    <td>{wgt} kg</td>
+                    <td>
+                      {String(wgt).replace('.', ',')} {weightUnit()}
+                    </td>
                     <td>{reps}</td>
                   </tr>
                 );
@@ -504,7 +508,7 @@ function Records({ id, e }: { id: string; e: Exercise }) {
             {totalVol > 0 && (
               <tr>
                 <td>Volumen</td>
-                <td>{Math.round(totalVol).toLocaleString('es-ES')} kg</td>
+                <td>{fmtWeight(totalVol, { decimals: 0 })}</td>
               </tr>
             )}
           </tbody>

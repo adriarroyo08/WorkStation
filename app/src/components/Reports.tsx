@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { chat } from '../../../shared/ai';
 import { period, periodReport, reportToText, type PeriodKind } from '../../../shared/reports';
 import { formatDuration } from '../../../shared/stats';
-import { fmtCompact, fmtNum, useStore } from '../store';
+import { useStore } from '../store';
 import BodyMap from './BodyMap';
 import { Back, BarChart, Delta, HBars, PrList } from './ui';
+import { fmtMass, toUnit, weightUnit } from '../../../shared/units';
 
 export default function Reports({ onBack }: { onBack: () => void }) {
   const { data, settings, ai } = useStore();
@@ -45,7 +46,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
           label: new Date(p.start.getFullYear(), m, 1).toLocaleDateString('es-ES', { month: 'narrow' }),
           value: r.workouts.filter((w) => new Date(w.startedAt).getMonth() === m).length,
         }))
-      : r.byDay.map((d) => ({ label: kind === 'week' ? new Date(d.date).toLocaleDateString('es-ES', { weekday: 'narrow' }) : String(new Date(d.date).getDate()), value: d.volume }));
+      : r.byDay.map((d) => ({ label: kind === 'week' ? new Date(d.date).toLocaleDateString('es-ES', { weekday: 'narrow' }) : String(new Date(d.date).getDate()), value: toUnit(d.volume) }));
 
   return (
     <section className="report">
@@ -81,7 +82,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
         {[
           ['Entrenos', t.workouts, prev.workouts, String(t.workouts)],
           ['Duración', t.durationMin, prev.durationMin, t.durationMin >= 60 ? `${Math.floor(t.durationMin / 60)}h ${t.durationMin % 60}m` : formatDuration(t.durationMin * 60)],
-          ['Volumen (kg)', t.volume, prev.volume, fmtCompact(t.volume)],
+          [`Volumen (${weightUnit()})`, t.volume, prev.volume, fmtMass(t.volume)],
           ['Series', t.sets, prev.sets, String(t.sets)],
         ].map(([label, cur, before, txt]) => (
           <div key={label as string} className="stat">
@@ -141,7 +142,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
                 <tr key={e.exerciseId}>
                   <td>{e.name}</td>
                   <td>{e.sets}</td>
-                  <td>{e.volume ? `${fmtNum(e.volume)} kg` : '—'}</td>
+                  <td>{e.volume ? fmtMass(e.volume) : '—'}</td>
                 </tr>
               ))}
             </tbody>

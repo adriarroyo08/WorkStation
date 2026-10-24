@@ -11,6 +11,7 @@ import { useStore } from '../store';
 import { BatteryCharging, CalendarCheck, ClipboardList, Compass, Flame, FolderPlus, MoreHorizontal, Play, Plus } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { ProgressRing, Sheet, useScrollTop } from './ui';
+import { fmtWeight } from '../../../shared/units';
 
 // Pantallas que no hacen falta al abrir la app: se descargan aparte y se precargan cuando el navegador está libre.
 const loadLogger = () => import('./WorkoutLogger');
@@ -331,7 +332,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             <button
               className="item"
               onClick={() => {
-                const txt = `${menu.name}\n${menu.exercises.map((e) => `- ${exName.get(e.exerciseId)}: ${e.sets.length}×${e.sets[0]?.reps ?? e.sets[0]?.durationSec + 's'}${e.sets[0]?.weight ? ` @ ${e.sets[0].weight}kg` : ''}`).join('\n')}`;
+                const txt = `${menu.name}\n${menu.exercises.map((e) => `- ${exName.get(e.exerciseId)}: ${e.sets.length}×${e.sets[0]?.reps ?? e.sets[0]?.durationSec + 's'}${e.sets[0]?.weight ? ` @ ${fmtWeight(e.sets[0].weight, { space: false })}` : ''}`).join('\n')}`;
                 navigator.share ? navigator.share({ title: menu.name, text: txt }).catch(() => {}) : navigator.clipboard.writeText(txt).then(() => alert('Copiado al portapapeles'));
                 setMenu(null);
               }}

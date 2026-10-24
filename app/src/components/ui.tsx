@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { fromUnit, toUnit } from '../../../shared/units';
 import { mediaUrls } from '../../../shared/exercises';
 import { ANIMATED } from '../../../shared/anim-index';
 import { useExdbGif } from '../exdb';
@@ -194,7 +195,15 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
       {[...groups.entries()].map(([name, items]) => (
         <li key={name}>
           <b>{name}</b>
-          <div className="muted">{items.map((p) => `${PR_LABELS[p.kind]} ${p.value.toLocaleString('es-ES')} (antes ${p.previous.toLocaleString('es-ES')})`).join(' · ')}</div>
+          <div className="muted">
+            {items
+              .map((p) => {
+                // Récords de peso en la unidad del usuario; reps, tiempo y distancia tal cual.
+                const v = (n: number) => (p.kind === 'weight' || p.kind === '1rm' || p.kind === 'setVolume' ? toUnit(n) : n).toLocaleString('es-ES');
+                return `${PR_LABELS[p.kind]} ${v(p.value)} (antes ${v(p.previous)})`;
+              })
+              .join(' · ')}
+          </div>
         </li>
       ))}
     </ul>
@@ -244,4 +253,41 @@ export function useScrollTop(key?: unknown) {
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [key]);
+}
+
+const fmtNum = (v?: number) => (v === undefined || Number.isNaN(v) ? '' : String(Math.round(v * 1000) / 1000).replace('.', ','));
+const parseNum = (t: string) => (t === '' || t === ',' || t === '.' ? undefined : Number(t.replace(',', '.')));
+
+/**
+ * Campo numérico que conserva lo que escribes ("82," mientras tecleas 82,5) y acepta coma o punto.
+ * Solo emite números válidos; si el valor cambia desde fuera (p. ej. "Aplicar sugerencia"), se actualiza.
+ */
+export function NumberField({
+  value,
+  onChange,
+  decimals = true,
+  ...rest
+}: { value?: number; onChange: (v: number | undefined) => void; decimals?: boolean } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
+  const [text, setText] = useState(() => fmtNum(value));
+  useEffect(() => {
+    setText((t) => (parseNum(t) === value ? t : fmtNum(value)));
+  }, [value]);
+  return (
+    <input
+      inputMode={decimals ? 'decimal' : 'numeric'}
+      {...rest}
+      value={text}
+      onChange={(e) => {
+        const t = e.target.value.replace(/\s/g, '');
+        if (!(decimals ? /^\d*([.,]\d{0,3})?$/ : /^\d*$/).test(t)) return;
+        setText(t);
+        onChange(parseNum(t));
+      }}
+    />
+  );
+}
+
+/** Campo de peso en la unidad del usuario; guarda siempre kg. */
+export function WeightField({ kg, onChange, ...rest }: { kg?: number; onChange: (kg: number | undefined) => void } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
+  return <NumberField value={kg === undefined ? undefined : toUnit(kg)} onChange={(v) => onChange(v === undefined ? undefined : fromUnit(v))} {...rest} />;
 }

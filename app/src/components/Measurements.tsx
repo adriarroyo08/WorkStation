@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import { MEASUREMENT_FIELDS, uid, type Measurement, type MeasurementField } from '../../../shared/types';
 import { compressImage, deletePhoto, fmtDate, loadPhoto, savePhoto, useStore } from '../store';
 import LineChart from './LineChart';
+import { fromUnit, toUnit, weightUnit } from '../../../shared/units';
 import { Back, Sheet } from './ui';
 
 export const MEASURE_LABELS: Record<MeasurementField, string> = {
-  bodyweight: 'Peso corporal (kg)',
+  // El peso corporal se muestra en la unidad elegida (se guarda en kg).
+  get bodyweight() {
+    return `Peso corporal (${weightUnit()})`;
+  },
   bodyFat: 'Grasa corporal (%)',
   neck: 'Cuello (cm)',
   shoulders: 'Hombros (cm)',
@@ -21,6 +25,8 @@ export const MEASURE_LABELS: Record<MeasurementField, string> = {
 };
 
 const photoIds = (m: Measurement) => m.photos ?? [];
+// Valor visible de un campo: el peso corporal se convierte a la unidad elegida.
+const shown = (f: MeasurementField, v: number | undefined) => (v === undefined ? undefined : f === 'bodyweight' ? toUnit(v) : v);
 
 export default function Measurements({ onBack }: { onBack: () => void }) {
   const { data, update } = useStore();
@@ -29,8 +35,8 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState<'charts' | 'photos'>('charts');
   const list = [...data.measurements].sort((a, b) => b.date.localeCompare(a.date));
   const withField = list.filter((m) => m[field] !== undefined).reverse();
-  const latest = (f: MeasurementField) => list.find((m) => m[f] !== undefined)?.[f];
-  const first = (f: MeasurementField) => [...list].reverse().find((m) => m[f] !== undefined)?.[f];
+  const latest = (f: MeasurementField) => shown(f, list.find((m) => m[f] !== undefined)?.[f]);
+  const first = (f: MeasurementField) => shown(f, [...list].reverse().find((m) => m[f] !== undefined)?.[f]);
 
   return (
     <section>
@@ -67,7 +73,7 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
             })}
           </div>
           <h3>{MEASURE_LABELS[field]}</h3>
-          <LineChart points={withField.map((m) => ({ x: Date.parse(m.date), y: m[field]! }))} />
+          <LineChart points={withField.map((m) => ({ x: Date.parse(m.date), y: shown(field, m[field])! }))} />
           <h3>Registros</h3>
           {list.map((m) => (
             <div key={m.id} className="card small row">
@@ -75,7 +81,7 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
                 <b>{fmtDate(m.date)}</b>
                 <div className="muted">
                   {MEASUREMENT_FIELDS.filter((f) => m[f] !== undefined)
-                    .map((f) => `${MEASURE_LABELS[f].split(' (')[0]}: ${m[f]}`)
+                    .map((f) => `${MEASURE_LABELS[f].split(' (')[0]}: ${String(shown(f, m[f])).replace('.', ',')}`)
                     .join(' · ')}
                   {photoIds(m).length ? ` · 📷 ${photoIds(m).length}` : ''}
                 </div>
@@ -115,7 +121,11 @@ function AddMeasurement({ onClose }: { onClose: () => void }) {
       ids.push(pid);
     }
     const m: Measurement = { id, date: new Date(`${date}T12:00:00`).toISOString(), ...(ids.length ? { photos: ids } : {}) };
-    for (const [k, v] of Object.entries(vals)) if (v && !Number.isNaN(Number(v.replace(',', '.')))) m[k as MeasurementField] = Number(v.replace(',', '.'));
+    for (const [k, v] of Object.entries(vals))
+      if (v && !Number.isNaN(Number(v.replace(',', '.')))) {
+        const n = Number(v.replace(',', '.'));
+        m[k as MeasurementField] = k === 'bodyweight' ? fromUnit(n) : n;
+      }
     if (Object.keys(m).length <= 2 && !ids.length) return alert('Introduce al menos un valor');
     update((d) => void d.measurements.push(m));
     onClose();

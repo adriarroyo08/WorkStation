@@ -22,8 +22,9 @@ export function platesFor(target: number, barKg = 20, plates = [25, 20, 15, 10, 
 export const roundTo = (v: number, step = 2.5) => Math.round(v / step) * step;
 
 // Esquema clásico: barra vacía y aproximaciones al 40/60/80 %.
-export function warmupSets(working: number, barKg = 20): { weight: number; reps: number }[] {
-  if (working <= barKg) return [{ weight: Math.max(0, roundTo(working * 0.5)), reps: 10 }];
+// `step`: redondeo a pesos cargables (2,5 kg o 5 lb); los valores van en la misma unidad que `working`.
+export function warmupSets(working: number, barKg = 20, step = 2.5): { weight: number; reps: number }[] {
+  if (working <= barKg) return [{ weight: Math.max(0, roundTo(working * 0.5, step)), reps: 10 }];
   const scheme: [number, number][] = [
     [0.4, 10],
     [0.6, 5],
@@ -31,7 +32,7 @@ export function warmupSets(working: number, barKg = 20): { weight: number; reps:
   ];
   const out = [{ weight: barKg, reps: 10 }];
   for (const [p, reps] of scheme) {
-    const w = roundTo(working * p);
+    const w = roundTo(working * p, step);
     if (w > out[out.length - 1].weight && w < working) out.push({ weight: w, reps });
   }
   return out;

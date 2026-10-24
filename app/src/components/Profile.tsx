@@ -3,7 +3,7 @@ import { MUSCLE_LABELS, MUSCLE_REGION } from '../../../shared/exercises';
 import { totals, weekStreak, weeklySeries } from '../../../shared/reports';
 import { muscleSets, personalRecords } from '../../../shared/stats';
 import type { MuscleGroup } from '../../../shared/types';
-import { cap, fmtNum, fmtShort, useStore } from '../store';
+import { cap, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
 import Achievements from './Achievements';
@@ -16,6 +16,7 @@ import Measurements from './Measurements';
 import Reports from './Reports';
 import Settings from './Settings';
 import { BarChart, HBars, MonthCalendar, Stat } from './ui';
+import { fmtMass, fmtWeight, toUnit } from '../../../shared/units';
 
 type Metric = 'workouts' | 'durationMin' | 'volume' | 'sets' | 'reps';
 const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Duración', volume: 'Volumen', sets: 'Series', reps: 'Reps' };
@@ -65,7 +66,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   if (view === 'settings') return <Settings onBack={() => setView('home')} />;
 
   const fmt = (v: number) =>
-    metric === 'volume' ? (v >= 1000 ? `${Math.round(v / 100) / 10}k` : String(Math.round(v))) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v));
+    metric === 'volume' ? ((x) => (x >= 1000 ? `${Math.round(x / 100) / 10}k` : String(Math.round(x))))(toUnit(v)) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v));
 
   return (
     <section>
@@ -89,7 +90,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
       <div className="stats four">
         <Stat value={all.workouts} label="entrenos" />
         <Stat value={`${Math.round(all.durationMin / 60)}h`} label="entrenando" />
-        <Stat value={fmtNum(all.volume / 1000) + 't'} label="levantadas" />
+        <Stat value={fmtMass(all.volume)} label="levantadas" />
         <Stat value={`🔥${streak}`} label="sem. racha" />
       </div>
 
@@ -191,7 +192,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
             <button key={p.exerciseId} className="plain row full left exline" onClick={() => onExercise(p.exerciseId)}>
               <span className="grow">{p.exerciseName}</span>
               <span className="muted small">
-                {p.sessions} ses. · {p.best1RM ? `${p.best1RM} kg e1RM` : p.maxDuration ? formatDuration(p.maxDuration) : p.maxDistance ? `${p.maxDistance} m` : `${p.maxReps} reps`}
+                {p.sessions} ses. · {p.best1RM ? `${fmtWeight(p.best1RM)} e1RM` : p.maxDuration ? formatDuration(p.maxDuration) : p.maxDistance ? `${p.maxDistance} m` : `${p.maxReps} reps`}
               </span>
             </button>
           ))}

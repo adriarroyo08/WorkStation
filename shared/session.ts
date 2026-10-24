@@ -89,6 +89,8 @@ export interface WatchSet {
 export interface WatchState {
   v: 1;
   sentAt: number;
+  // Unidad visible en el reloj; los pesos viajan siempre en kg.
+  unit: 'kg' | 'lb';
   active: null | {
     id: string;
     name: string;
@@ -106,11 +108,13 @@ export interface WatchState {
 export function buildWatchState(data: WorkstationData, w: Workout | null, rest: { end: number | null; total: number }, now = Date.now()): WatchState {
   const names = new Map(data.exercises.map((e) => [e.id, e]));
   const routines = [...data.routines].slice(0, 20).map((r: Routine) => ({ id: r.id, name: r.name, exercises: r.exercises.length }));
-  if (!w) return { v: 1, sentAt: now, active: null, routines };
+  const unit = data.settings.unit ?? 'kg';
+  if (!w) return { v: 1, sentAt: now, unit, active: null, routines };
   const all = w.exercises.flatMap((e) => e.sets);
   return {
     v: 1,
     sentAt: now,
+    unit,
     routines,
     active: {
       id: w.id,

@@ -2,6 +2,7 @@
 import { useMemo } from 'react';
 import { workoutVolume } from '../../../shared/stats';
 import type { Workout } from '../../../shared/types';
+import { fmtMass } from '../../../shared/units';
 
 export default function YearHeatmap({ workouts, mondayFirst }: { workouts: Workout[]; mondayFirst: boolean }) {
   const { weeks, max, days } = useMemo(() => {
@@ -36,7 +37,7 @@ export default function YearHeatmap({ workouts, mondayFirst }: { workouts: Worko
             )}
             {wk.map((d, j) => (
               <rect key={j} x={i * (C + G)} y={j * (C + G)} width={C} height={C} rx={2} className={d.v ? 'hm on' : 'hm'} style={d.v ? { fillOpacity: 0.3 + 0.7 * (d.v / max) } : undefined}>
-                <title>{`${d.date.toLocaleDateString('es-ES')}${d.v ? ` · ${Math.round(d.v).toLocaleString('es-ES')} kg` : ''}`}</title>
+                <title>{`${d.date.toLocaleDateString('es-ES')}${d.v ? ` · ${fmtMass(d.v)}` : ''}`}</title>
               </rect>
             ))}
           </g>

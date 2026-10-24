@@ -117,6 +117,11 @@ export interface Settings {
   platesKg: number[];
   // Para los niveles de fuerza (los estándares difieren entre hombres y mujeres).
   sex?: 'm' | 'f';
+  // Unidad de peso visible (los datos siempre se guardan en kg).
+  unit?: 'kg' | 'lb';
+  // Barra y discos para la calculadora cuando la unidad es lb.
+  barLb?: number;
+  platesLb?: number[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {

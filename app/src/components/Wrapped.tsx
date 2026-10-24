@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Share2, X } from 'lucide-react';
 import { yearWrapped, type YearWrapped } from '../../../shared/wrapped';
 import { shareOrDownload, useStore } from '../store';
+import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
 
 const SLIDE_MS = 5500;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -70,9 +71,17 @@ function slides(y: YearWrapped, onShare: () => void): Slide[] {
       tone: 'volt',
       body: (
         <>
-          <p className="kicker">Toneladas</p>
+          <p className="kicker">{weightUnit() === 'lb' ? 'Libras' : 'Toneladas'}</p>
           <h2 className="huge">
-            <Count to={y.volumeKg / 1000} decimals={1} /> t
+            {weightUnit() === 'lb' ? (
+              <>
+                <Count to={Math.round(toUnit(y.volumeKg) / 100) / 10} decimals={1} />k lb
+              </>
+            ) : (
+              <>
+                <Count to={y.volumeKg / 1000} decimals={1} /> t
+              </>
+            )}
           </h2>
           <p className="lead">levantadas en total, como {y.equivalence}.</p>
           <div className="w-row">
@@ -121,8 +130,8 @@ function slides(y: YearWrapped, onShare: () => void): Slide[] {
           <p className="lead">récords batidos</p>
           {y.biggestGain && (
             <p className="w-note">
-              Tu mayor salto: <b>{y.biggestGain.name}</b>, de {Math.round(y.biggestGain.from)} a <b>{Math.round(y.biggestGain.to)} kg</b> de 1RM estimado (+
-              {Math.round(y.biggestGain.to - y.biggestGain.from)} kg).
+              Tu mayor salto: <b>{y.biggestGain.name}</b>, de {fmtWeight(y.biggestGain.from, { decimals: 0 })} a <b>{fmtWeight(y.biggestGain.to, { decimals: 0 })}</b> de 1RM estimado (+
+              {fmtWeight(y.biggestGain.to - y.biggestGain.from, { decimals: 0 })}).
             </p>
           )}
         </>
