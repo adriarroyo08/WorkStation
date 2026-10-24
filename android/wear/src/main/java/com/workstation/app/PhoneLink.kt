@@ -21,7 +21,8 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
     private val _state = MutableStateFlow<WatchState?>(null)
     val state: StateFlow<WatchState?> = _state
 
-    private val _connected = MutableStateFlow(true)
+    // Hasta comprobarlo, se asume desconectado (y se comprueba al arrancar).
+    private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected
 
     fun start() {
@@ -52,7 +53,11 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
     private fun applyJson(json: String) {
         val s = parseState(json) ?: return
         val cur = _state.value
-        if (cur == null || s.sentAt >= cur.sentAt) _state.value = s
+        if (cur != null && s.sentAt < cur.sentAt) return
+        weightUnit = s.unit // solo un estado más nuevo cambia la unidad
+        // Un entreno "en curso" de hace más de 6 h es un resto de una app del móvil que se cerró: se ignora.
+        val stale = s.active != null && System.currentTimeMillis() - s.sentAt > STALE_MS
+        _state.value = if (stale) s.copy(active = null) else s
     }
 
     fun send(cmd: JSONObject) {
@@ -69,5 +74,6 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
         const val PATH_STATE = "/workstation/state"
         const val PATH_CMD = "/workstation/cmd"
         const val KEY_JSON = "json"
+        private const val STALE_MS = 6 * 60 * 60 * 1000L
     }
 }

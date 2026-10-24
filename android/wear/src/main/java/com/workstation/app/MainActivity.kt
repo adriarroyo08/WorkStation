@@ -16,7 +16,7 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
     private lateinit var link: PhoneLink
-    private lateinit var heartRate: HeartRate
+    private val hasHrSensor by lazy { getSystemService(android.hardware.SensorManager::class.java)?.getDefaultSensor(android.hardware.Sensor.TYPE_HEART_RATE) != null }
     private var askedHr = false
 
     private val hrPermission = if (Build.VERSION.SDK_INT >= 36) "android.permission.health.READ_HEART_RATE" else Manifest.permission.BODY_SENSORS
@@ -25,11 +25,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         link = PhoneLink(this)
-        heartRate = HeartRate(this) { bpm -> link.send(Cmd.heartRate(bpm)) }
         setContent {
             val state by link.state.collectAsState()
             val connected by link.connected.collectAsState()
-            val bpm by heartRate.bpm.collectAsState()
+            val bpm by HeartRateService.bpm.collectAsState()
             WatchApp(
                 state = state,
                 connected = connected,
@@ -53,19 +52,17 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
-    override fun onDestroy() {
-        heartRate.stop()
-        super.onDestroy()
-    }
-
-    /** El sensor solo se enciende mientras hay un entrenamiento en curso (ahorra batería). */
+    /**
+     * El pulso solo se mide mientras hay un entrenamiento en curso (ahorra batería), en un servicio en primer
+     * plano para que siga aunque la app del reloj no esté en pantalla.
+     */
     private fun syncHeartRate() {
         val active = link.state.value?.active != null
-        if (!active || !heartRate.available) {
-            heartRate.stop()
+        if (!active || !hasHrSensor) {
+            HeartRateService.stop(this)
             return
         }
-        if (ContextCompat.checkSelfPermission(this, hrPermission) == PackageManager.PERMISSION_GRANTED) heartRate.start()
+        if (ContextCompat.checkSelfPermission(this, hrPermission) == PackageManager.PERMISSION_GRANTED) HeartRateService.start(this)
         else if (!askedHr) {
             askedHr = true
             askPermission.launch(hrPermission)

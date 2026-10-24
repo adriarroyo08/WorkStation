@@ -32,7 +32,7 @@ data class Active(
 
 data class RoutineItem(val id: String, val name: String, val exercises: Int)
 
-data class WatchState(val sentAt: Long, val active: Active?, val routines: List<RoutineItem>)
+data class WatchState(val sentAt: Long, val active: Active?, val routines: List<RoutineItem>, val unit: String = "kg")
 
 private fun JSONObject.optDoubleOrNull(k: String): Double? = if (has(k) && !isNull(k)) optDouble(k) else null
 private fun JSONObject.optIntOrNull(k: String): Int? = if (has(k) && !isNull(k)) optInt(k) else null
@@ -81,8 +81,7 @@ fun parseState(json: String): WatchState? = runCatching {
             },
         )
     }
-    weightUnit = if (o.optString("unit", "kg") == "lb") "lb" else "kg"
-    WatchState(o.optLong("sentAt"), active, routines)
+    WatchState(o.optLong("sentAt"), active, routines, if (o.optString("unit", "kg") == "lb") "lb" else "kg")
 }.getOrNull()
 
 object Cmd {
@@ -119,8 +118,16 @@ private const val LB_PER_KG = 2.2046226218
 fun formatWeight(kg: Double?): String =
     if (kg == null) "–" else if (weightUnit == "lb") formatKg(Math.round(kg * LB_PER_KG * 2) / 2.0) else formatKg(kg)
 
-/** Incremento de los botones −/+ en kg: 2,5 kg o 5 lb. */
-fun weightStepKg(): Double = if (weightUnit == "lb") 5 / LB_PER_KG else 2.5
+/**
+ * Botones −/+: suma o resta 2,5 kg o 5 lb partiendo del valor redondeado que se ve, para que en libras el peso
+ * guardado sea exactamente el mostrado (137,5 lb y no 137,3).
+ */
+fun stepWeight(kg: Double?, dir: Int): Double {
+    val v = kg ?: 0.0
+    if (weightUnit != "lb") return (v + 2.5 * dir).coerceAtLeast(0.0)
+    val lb = Math.round(v * LB_PER_KG * 2) / 2.0
+    return ((lb + 5 * dir).coerceAtLeast(0.0)) / LB_PER_KG
+}
 
 fun clock(sec: Long): String {
     val s = sec.coerceAtLeast(0)

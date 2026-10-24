@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.roundToInt
 
 /** Sensor de pulso del reloj. Envía una lectura al móvil como mucho cada 5 s. */
-class HeartRate(context: Context, private val onSample: (Int) -> Unit) : SensorEventListener {
+class HeartRate(context: Context, private val onValue: (Int) -> Unit = {}, private val onSample: (Int) -> Unit) : SensorEventListener {
     private val sm = context.getSystemService(SensorManager::class.java)
     private val sensor: Sensor? = sm?.getDefaultSensor(Sensor.TYPE_HEART_RATE)
     private val _bpm = MutableStateFlow<Int?>(null)
@@ -36,6 +36,7 @@ class HeartRate(context: Context, private val onSample: (Int) -> Unit) : SensorE
         val v = event.values.firstOrNull()?.roundToInt() ?: return
         if (v <= 0 || event.accuracy == SensorManager.SENSOR_STATUS_NO_CONTACT || event.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) return
         _bpm.value = v
+        onValue(v)
         val now = System.currentTimeMillis()
         if (now - lastSent >= 5000) {
             lastSent = now

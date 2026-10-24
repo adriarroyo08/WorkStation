@@ -13,6 +13,7 @@ interface NativeApi {
   workoutEnded(): void;
   saveFile(name: string, mime: string, base64: string): void;
   openWatchApp(): void;
+  shareText?(title: string, text: string): void; // desde la app 1.3
 }
 
 const api = (): NativeApi | undefined => (window as unknown as { WorkstationNative?: NativeApi }).WorkstationNative;
@@ -47,7 +48,29 @@ export const onWatchCommand = (h: (c: WatchCommand) => void) => void (handler = 
   }
 };
 
+// Botón "Atrás" de Android: cierra la hoja abierta o vuelve de la pantalla actual. Devuelve false si no había
+// nada que cerrar (entonces la app pasa a segundo plano).
+(window as unknown as { __workstationBack: () => boolean }).__workstationBack = () => {
+  if (document.querySelector('[role="dialog"][aria-modal="true"]')) {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    return true;
+  }
+  const back = [...document.querySelectorAll<HTMLButtonElement>('.topbar > button:first-child')].find((b) => b.offsetParent !== null);
+  if (back) {
+    back.click();
+    return true;
+  }
+  return false;
+};
+
 export const native = {
+  /** Menú de compartir nativo (en Android el WebView no tiene navigator.share). true si se usó. */
+  shareText: (title: string, text: string) => {
+    const a = api();
+    if (!a?.shareText) return false;
+    a.shareText(title, text);
+    return true;
+  },
   sendToWatch: (json: string) => api()?.sendToWatch(json),
   requestWatchStatus: () => api()?.requestWatchStatus(),
   scheduleRest: (end: number, label: string) => api()?.scheduleRest(end, label),

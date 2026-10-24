@@ -15,7 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 object Notifications {
     private const val CH_WORKOUT = "workout"
     private const val CH_REST = "rest"
-    private const val ID_ONGOING = 1
+    const val ID_ONGOING = 1
     const val ID_REST = 2
     private val VIBRATION = longArrayOf(0, 300, 150, 300, 150, 500)
 
@@ -48,9 +48,12 @@ object Notifications {
 
     /** Notificación fija con cronómetro (o cuenta atrás del descanso). Solo en el móvil: el reloj tiene su app. */
     @SuppressLint("MissingPermission")
-    fun showOngoing(ctx: Context, name: String, startedAt: Long, restEnd: Long) {
+    fun showOngoing(ctx: Context, name: String, startedAt: Long, restEnd: Long) = notify(ctx, ID_ONGOING, ongoing(ctx, name, startedAt, restEnd))
+
+    fun ongoing(ctx: Context, name: String, startedAt: Long, restEnd: Long): android.app.Notification {
+        ensureChannels(ctx)
         val resting = restEnd > System.currentTimeMillis()
-        val n = NotificationCompat.Builder(ctx, CH_WORKOUT)
+        return NotificationCompat.Builder(ctx, CH_WORKOUT)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle(name)
             .setContentText(if (resting) "Descansando…" else "Entrenamiento en curso")
@@ -63,8 +66,8 @@ object Notifications {
             .setWhen(if (resting) restEnd else startedAt)
             .setShowWhen(true)
             .setContentIntent(openApp(ctx))
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
-        notify(ctx, ID_ONGOING, n)
     }
 
     fun hideOngoing(ctx: Context) = NotificationManagerCompat.from(ctx).cancel(ID_ONGOING)

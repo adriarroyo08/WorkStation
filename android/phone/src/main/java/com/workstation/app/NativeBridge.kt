@@ -44,13 +44,18 @@ class NativeBridge(private val activity: MainActivity) {
 
     @JavascriptInterface
     fun openWatchApp() {
-        Wearable.getNodeClient(ctx).connectedNodes.addOnSuccessListener { nodes ->
-            val helper = RemoteActivityHelper(ctx)
-            val intent = Intent(Intent.ACTION_VIEW)
-                .addCategory(Intent.CATEGORY_BROWSABLE)
-                .setData(Uri.parse("workstation://open"))
-            nodes.forEach { helper.startRemoteActivity(intent, it.id) }
-        }
+        val toast = { msg: String -> activity.runOnUiThread { Toast.makeText(activity, msg, Toast.LENGTH_LONG).show() } }
+        Wearable.getNodeClient(ctx).connectedNodes
+            .addOnSuccessListener { nodes ->
+                if (nodes.isEmpty()) return@addOnSuccessListener toast("No hay ningún reloj conectado")
+                val helper = RemoteActivityHelper(ctx)
+                val intent = Intent(Intent.ACTION_VIEW)
+                    .addCategory(Intent.CATEGORY_BROWSABLE)
+                    .setData(Uri.parse("workstation://open"))
+                nodes.forEach { helper.startRemoteActivity(intent, it.id) }
+                toast("Abriendo Workstation en el reloj…")
+            }
+            .addOnFailureListener { toast("No se pudo conectar con el reloj (¿tiene Workstation instalada?)") }
     }
 
     @JavascriptInterface
@@ -61,12 +66,25 @@ class NativeBridge(private val activity: MainActivity) {
 
     @JavascriptInterface
     fun workoutOngoing(name: String, startedAtMs: Double, restEndAtMs: Double) =
-        Notifications.showOngoing(ctx, name, startedAtMs.toLong(), restEndAtMs.toLong())
+        WorkoutService.update(ctx, name, startedAtMs.toLong(), restEndAtMs.toLong())
 
     @JavascriptInterface
     fun workoutEnded() {
-        Notifications.hideOngoing(ctx)
+        WorkoutService.stop(ctx)
         RestAlarmReceiver.cancel(ctx)
+    }
+
+    /** Menú nativo de compartir (navigator.share no existe en el WebView). */
+    @JavascriptInterface
+    fun shareText(title: String, text: String) {
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text).putExtra(Intent.EXTRA_SUBJECT, title)
+        activity.runOnUiThread {
+            try {
+                activity.startActivity(Intent.createChooser(send, title))
+            } catch (e: Exception) {
+                Toast.makeText(activity, "No se pudo compartir: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     /** Las descargas de la web (backups, CSV, imágenes) se guardan en caché y se abren con el selector "Compartir". */

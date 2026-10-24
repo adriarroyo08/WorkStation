@@ -180,8 +180,8 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
             item {
                 Stepper(
                     value = formatWeight(weight) + if (ex.kind == "assisted") " $weightUnit asist." else " $weightUnit",
-                    onMinus = { weight = ((weight ?: 0.0) - weightStepKg()).coerceAtLeast(0.0) },
-                    onPlus = { weight = (weight ?: 0.0) + weightStepKg() },
+                    onMinus = { weight = stepWeight(weight, -1) },
+                    onPlus = { weight = stepWeight(weight, 1) },
                 )
             }
         }

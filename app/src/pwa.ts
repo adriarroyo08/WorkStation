@@ -1,6 +1,7 @@
 // Actualizaciones de la PWA: la nueva versión se descarga en segundo plano y se aplica cuando el usuario
 // pulsa "Actualizar" (nunca a mitad de un entreno sin avisar).
 import { useSyncExternalStore } from 'react';
+import { isNative } from './native';
 
 let needRefresh = false;
 let apply: (() => Promise<void>) | undefined;
@@ -8,6 +9,12 @@ const subs = new Set<() => void>();
 
 export async function setupPwa() {
   if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  // En la app Android la web ya va dentro del APK: un service worker serviría la versión anterior tras
+  // actualizar la app. Se quita el que hubiera registrado una versión antigua.
+  if (isNative()) {
+    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    return;
+  }
   try {
     const { registerSW } = await import('virtual:pwa-register');
     apply = registerSW({

@@ -8,6 +8,7 @@ import { fmtWeight } from '../../../shared/units';
 import { startWorkout } from '../controller';
 import { useStore } from '../store';
 import { toast } from '../toast';
+import { native } from '../native';
 import { ExerciseMedia, Sheet } from './ui';
 
 const PUBLIC_URL = 'https://adriarroyo08.github.io/WorkStation/';
@@ -19,6 +20,7 @@ const baseUrl = () => (location.protocol.startsWith('http') && !location.hostnam
 export async function shareRoutineLink(r: Routine, exercises: Parameters<typeof encodeRoutine>[1]) {
   const url = `${baseUrl()}${HASH}${await encodeRoutine(r, exercises)}`;
   const text = `Rutina "${r.name}" en Workstation`;
+  if (native.shareText(r.name, `${text}: ${url}`)) return;
   if (navigator.share) {
     await navigator.share({ title: r.name, text, url }).catch(() => {});
   } else {

@@ -105,16 +105,39 @@ class MainActivity : AppCompatActivity() {
         }
         webView.addJavascriptInterface(NativeBridge(this), "WorkstationNative")
 
-        if (savedInstanceState != null) webView.restoreState(savedInstanceState)
-        else webView.loadUrl("https://${WebViewAssetLoader.DEFAULT_DOMAIN}/assets/www/index.html")
+        // Tras cerrarse el proceso, restoreState puede no devolver nada: entonces se carga de nuevo la app.
+        if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) webView.loadUrl(appUrl(intent))
 
-        // "Atrás" no cierra la app: así no se pierde el entrenamiento en curso.
-        onBackPressedDispatcher.addCallback(this) { moveTaskToBack(true) }
+        // "Atrás" cierra primero lo que haya abierto en la web (hojas, pantallas); si no hay nada, la app pasa a
+        // segundo plano en vez de cerrarse (así no se pierde el entrenamiento en curso).
+        onBackPressedDispatcher.addCallback(this) {
+            if (!pageReady) {
+                moveTaskToBack(true)
+                return@addCallback
+            }
+            webView.evaluateJavascript("window.__workstationBack ? window.__workstationBack() : false") { handled ->
+                if (handled != "true") moveTaskToBack(true)
+            }
+        }
 
         WatchBus.attach(this)
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    /** Enlaces de rutinas compartidas (https://…/WorkStation/#rutina=…) se abren dentro de la app. */
+    private fun appUrl(i: Intent?): String {
+        val base = "https://${WebViewAssetLoader.DEFAULT_DOMAIN}/assets/www/index.html"
+        val fragment = i?.data?.fragment
+        return if (fragment != null && fragment.startsWith("rutina=")) "$base#$fragment" else base
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val fragment = intent.data?.fragment ?: return
+        if (fragment.startsWith("rutina=") && pageReady) webView.evaluateJavascript("location.hash = ${JSONObject.quote("#$fragment")}", null)
+        else if (fragment.startsWith("rutina=")) webView.loadUrl(appUrl(intent))
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

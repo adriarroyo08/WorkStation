@@ -9,11 +9,15 @@ import org.json.JSONObject
 object WatchBus {
     private var activity: MainActivity? = null
     private val queue = ArrayDeque<JSONObject>()
+    // El pulso llega cada 5 s: solo se guarda el último para que no expulse de la cola los comandos importantes.
+    private var lastHr: JSONObject? = null
 
     @Synchronized
     fun attach(a: MainActivity) {
         activity = a
         while (queue.isNotEmpty()) a.sendToWeb(queue.removeFirst())
+        lastHr?.let(a::sendToWeb)
+        lastHr = null
     }
 
     @Synchronized
@@ -31,5 +35,18 @@ object WatchBus {
         }
     }
 
-    fun watchCommand(payload: String) = post(JSONObject().put("kind", "watch_cmd").put("payload", payload))
+    @Synchronized
+    fun watchCommand(payload: String) {
+        val msg = JSONObject().put("kind", "watch_cmd").put("payload", payload)
+        val isHr = runCatching { JSONObject(payload).optString("type") == "hr" }.getOrDefault(false)
+        val a = activity
+        when {
+            a != null -> a.sendToWeb(msg)
+            isHr -> lastHr = msg
+            else -> {
+                if (queue.size >= 50) queue.removeFirst()
+                queue.addLast(msg)
+            }
+        }
+    }
 }
