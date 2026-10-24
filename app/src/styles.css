@@ -14,12 +14,12 @@
   --accent-ink: #ff7a2e;
   --accent-fill: #c2410c;
   --on-accent: #ffffff;
-  --ok: #c6f34a;
-  --on-ok: #141a05;
-  --warn: #ffb224;
+  --ok: #30a46c;
+  --on-ok: #04140b;
+  --warn: #d9a441;
   --warn-ink: var(--warn);
-  --ok-ink: var(--ok);
-  --danger: #ff4545;
+  --ok-ink: #4cc38a;
+  --danger: #f2555a;
   --shadow: none;
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
   --radius: 12px;
@@ -43,12 +43,12 @@
     --accent: #f2600c;
     --accent-ink: #b23a08;
     --accent-fill: #c2410c;
-    --ok: #5a9a08;
-    --ok-ink: #3d6b04;
-    --on-ok: #ffffff;
-    --warn: #d97706;
+    --ok: #30a46c;
+    --ok-ink: #1f7a4d;
+    --on-ok: #04140b;
+    --warn: #b7791f;
     --warn-ink: #92400e;
-    --danger: #dc2626;
+    --danger: #d6403f;
     --shadow: none;
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
     color-scheme: light;
@@ -67,12 +67,12 @@
   --accent: #f2600c;
   --accent-ink: #b23a08;
   --accent-fill: #c2410c;
-  --ok: #5a9a08;
-  --ok-ink: #3d6b04;
-  --on-ok: #ffffff;
-  --warn: #d97706;
+  --ok: #30a46c;
+  --ok-ink: #1f7a4d;
+  --on-ok: #04140b;
+  --warn: #b7791f;
   --warn-ink: #92400e;
-  --danger: #dc2626;
+  --danger: #d6403f;
   --shadow: none;
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
   color-scheme: light;
@@ -614,7 +614,7 @@ button.card {
   position: relative;
 }
 .superset {
-  border-left: 4px solid var(--accent-ink);
+  border-left: 4px solid var(--muted);
 }
 .ss-mid {
   margin-top: -6px;
@@ -627,7 +627,7 @@ button.card {
   border-bottom-right-radius: 0;
 }
 .ss-label {
-  color: var(--accent-ink);
+  color: var(--muted);
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 4px;
@@ -684,7 +684,7 @@ button.card {
 }
 .settype.drop,
 .settype-item.drop b {
-  color: var(--accent-ink);
+  color: var(--muted);
 }
 .settype.failure,
 .settype-item.failure b {
@@ -851,7 +851,7 @@ button.card {
   color: var(--warn-ink);
 }
 .setlist li.drop {
-  color: var(--accent-ink);
+  color: var(--muted);
 }
 .setlist li.failure {
   color: var(--danger);
@@ -1515,8 +1515,6 @@ main > div > section {
 .set.done .check {
   animation: pop 0.38s var(--spring);
 }
-.check.on {
-}
 @keyframes pop {
   40% {
     transform: scale(1.18);
@@ -1720,11 +1718,11 @@ pre.code {
 
 /* Niveles de fuerza: gris → ámbar → brasa → potencia → volt */
 .strength {
-  --l0: var(--muted);
-  --l1: var(--warn);
-  --l2: var(--accent);
-  --l3: var(--accent-fill);
-  --l4: var(--ok);
+  --l0: color-mix(in srgb, var(--text) 22%, var(--card2));
+  --l1: color-mix(in srgb, var(--text) 38%, var(--card2));
+  --l2: color-mix(in srgb, var(--text) 56%, var(--card2));
+  --l3: color-mix(in srgb, var(--text) 78%, var(--card2));
+  --l4: var(--accent);
 }
 .lvl-head {
   display: flex;
@@ -1741,16 +1739,16 @@ pre.code {
   color: var(--text);
 }
 .lvl-name.l1 {
-  color: var(--warn-ink);
+  color: var(--text);
 }
 .lvl-name.l2 {
-  color: var(--accent-ink);
+  color: var(--text);
 }
 .lvl-name.l3 {
-  color: var(--accent-ink);
+  color: var(--text);
 }
 .lvl-name.l4 {
-  color: var(--ok-ink);
+  color: var(--accent-ink);
 }
 .lvl-scale {
   display: grid;
@@ -1803,21 +1801,15 @@ pre.code {
   border-radius: 99px;
   background: var(--card2);
 }
-.lvl-pill.l1 {
-  background: color-mix(in srgb, var(--warn) 10%, transparent);
-  color: var(--warn-ink);
-}
-.lvl-pill.l2 {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--accent-ink);
-}
+.lvl-pill.l1,
+.lvl-pill.l2,
 .lvl-pill.l3 {
-  background: color-mix(in srgb, var(--accent-fill) 10%, transparent);
-  color: var(--accent-ink);
+  background: var(--card2);
+  color: var(--text);
 }
 .lvl-pill.l4 {
-  background: var(--ok);
-  color: var(--on-ok);
+  background: var(--accent-fill);
+  color: var(--on-accent);
 }
 .segmented.mini {
   margin: 0;
@@ -1845,17 +1837,6 @@ pre.code {
   user-select: none;
   transition: background 0.6s var(--ease);
 }
-.wrapped::before {
-  content: '';
-  position: absolute;
-  inset: -20%;
-  pointer-events: none;
-}
-@keyframes w-drift {
-  to {
-    transform: translate(6%, -4%) rotate(8deg);
-  }
-}
 .wrapped.tone-ember {
   background: #c2410c;
 }
@@ -1863,8 +1844,8 @@ pre.code {
   background: #2a2a2a;
 }
 .wrapped.tone-volt {
-  background: #c6f34a;
-  color: #10150a;
+  background: #1f7a4d;
+  color: #fff;
 }
 .w-bars {
   position: absolute;
@@ -2026,7 +2007,6 @@ pre.code {
   font-size: 30px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .wrapped::before,
   .w-slide > * {
     animation: none;
   }
