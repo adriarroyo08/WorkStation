@@ -7,6 +7,19 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.4.0',
+    date: '2026-10-27',
+    items: [
+      'Diseño nuevo, más sobrio: fondo oscuro con un único acento naranja, también en claro.',
+      'Tour de bienvenida la primera vez que abres la app.',
+      'Tu cuenta, en Perfil: entra con email o con Google y tus datos te siguen entre dispositivos.',
+      'El Coach ahora vive en Perfil, y la barra inferior queda en cuatro pestañas.',
+      'En Android la app respeta las barras de estado y de navegación del móvil.',
+      'Selector de ejercicios a pantalla completa, más cómodo para buscar y filtrar.',
+      'Reloj renovado, con el mismo aspecto sobrio y el acento naranja.',
+    ],
+  },
+  {
     version: '1.3.0',
     date: '2026-10-26',
     items: [

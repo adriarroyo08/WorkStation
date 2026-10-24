@@ -214,13 +214,35 @@ test('novedades tras actualizar y versión en ajustes', async ({ page, errors })
   await page.evaluate(() => localStorage.setItem('ws:seenVersion', '0.2.0'));
   await page.reload();
   const sheet = page.getByRole('dialog', { name: 'Novedades' });
-  await expect(sheet).toContainText('Versión 1.3.0');
+  await expect(sheet).toContainText('Versión 1.4.0');
   await sheet.getByRole('button', { name: '¡Genial!' }).click();
   await page.reload();
   await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: 'Ajustes' }).click();
-  await expect(page.locator('.app-version')).toContainText('Workstation v1.3.0');
+  await expect(page.locator('.app-version')).toContainText('Workstation v1.4.0');
+});
+
+test.describe('1.4.0: tour o novedades según de dónde vienes', () => {
+  test.use({ onboarded: false });
+  const tour = (page: import('@playwright/test').Page) => page.getByRole('dialog', { name: 'Bienvenida' });
+  const novedades = (page: import('@playwright/test').Page) => page.getByRole('dialog', { name: 'Novedades' });
+
+  test('actualizando desde 1.3.0 con datos: Novedades 1.4.0 y no el tour', async ({ page, errors }) => {
+    void errors;
+    await seed(page, SAMPLE);
+    await page.evaluate(() => localStorage.setItem('ws:seenVersion', '1.3.0'));
+    await page.reload();
+    await expect(novedades(page)).toContainText('Versión 1.4.0');
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('instalación limpia: tour y no Novedades', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    await expect(tour(page)).toBeVisible();
+    await expect(novedades(page)).toHaveCount(0);
+  });
 });
 
 test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ page, errors }) => {

@@ -3,6 +3,20 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.4.0] - 2026-10-27
+
+### Añadido
+- Tour de bienvenida en la primera visita (no sale si ya hay datos o vienes de una versión anterior).
+- Cuenta con email y con Google (en Android y web) visible en Perfil; ver `docs/google-login.md`.
+- Selector de ejercicios a pantalla completa.
+- Aviso para activar notificaciones al empezar el primer entreno.
+
+### Cambiado
+- Diseño nuevo y más sobrio (fondo #141414, acento naranja plano), en oscuro y claro.
+- El Coach pasa a Perfil; la barra inferior queda en 4 pestañas.
+- Android: la app respeta las barras de estado y navegación (edge-to-edge).
+- Reloj Wear OS con el nuevo acabado.
+
 ## [1.3.0] - 2026-10-26
 
 ### Corregido (auditoría de Android y Wear OS)
