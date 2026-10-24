@@ -35,8 +35,8 @@ jobs:
         run: npm run lint
       - name: Tipos
         run: npm run typecheck
-      - name: Tests
-        run: npm test
+      - name: Tests y cobertura
+        run: npm run test:coverage
       - name: Build web y MCP
         run: npm --prefix app run build && npm --prefix mcp run build
       - name: Instalar Chromium para e2e

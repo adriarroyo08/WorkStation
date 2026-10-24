@@ -1,5 +1,7 @@
 # Workstation 🏋️
 
+[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.0-ff5f1f)
+
 App personal de entrenamiento de fuerza (estilo Hevy) con **coach IA gratuito** y **servidor MCP**.
 Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus datos de Hevy mediante su exportación CSV o su API pública oficial.
 
@@ -158,9 +160,13 @@ Para regenerar las capturas: arranca la app (`npm --prefix app run build && npx 
 
 ```bash
 npm install && npm test          # tests del código compartido (vitest)
+npm run test:coverage            # con cobertura (el CI exige ≥ 90 % de líneas en shared/)
+npm run check                    # lint + tipos + cobertura + build, lo mismo que el CI
 npm run e2e                      # tests de extremo a extremo con Playwright (requiere el build de app/)
 npm run catalog                  # regenera app/public/catalog.json desde free-exercise-db
 ```
+
+Más información: [CHANGELOG](CHANGELOG.md) · [Privacidad](PRIVACY.md) · [Seguridad](SECURITY.md) · [Cómo contribuir](CONTRIBUTING.md).
 
 ## Uso rápido
 

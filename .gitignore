@@ -10,3 +10,4 @@ android/keystore/
 video/out/
 test-results/
 playwright-report/
+coverage/
