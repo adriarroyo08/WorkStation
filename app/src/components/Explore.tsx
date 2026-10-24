@@ -62,7 +62,7 @@ export default function Explore({ onBack }: { onBack: () => void }) {
           <div className="small">{p.routines.map((r) => r.name).join(' · ')}</div>
         </button>
       ))}
-      <p className="muted small">¿Quieres algo a medida? Pídeselo al Coach IA: «créame un programa de 4 días para ganar fuerza en banca».</p>
+      <p className="muted small">¿Quieres algo a medida? Pídeselo al Coach IA (en Perfil): «créame un programa de 4 días para ganar fuerza en banca».</p>
     </section>
   );
 }

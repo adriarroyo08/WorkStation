@@ -1,4 +1,25 @@
-import { ListChecks, MoreHorizontal, Plus, Timer, Trash2, Watch, Weight } from 'lucide-react';
+import {
+  Lightbulb,
+  Play,
+  Square,
+  TrendingUp,
+  ArrowUpDown,
+  Calculator,
+  Flame,
+  Heart,
+  Link2,
+  ListChecks,
+  MoreHorizontal,
+  Pin,
+  Plus,
+  RefreshCw,
+  Scissors,
+  Timer,
+  Trash2,
+  Trophy,
+  Watch,
+  Weight,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
@@ -148,7 +169,11 @@ export default function WorkoutLogger({
               <Timer size={14} /> {formatDuration(elapsed)}
             </span>
           )}
-          {mode === 'live' && hr.live && <span className="hr-live">❤️ {hr.bpm}</span>}
+          {mode === 'live' && hr.live && (
+            <span className="hr-live">
+              <Heart size={16} className="ico" /> {hr.bpm}
+            </span>
+          )}
           <span className="icon-btn">
             <Weight size={14} /> {fmtMass(totals.volume)}
           </span>
@@ -164,7 +189,7 @@ export default function WorkoutLogger({
       </div>
 
       {mode === 'edit' && <EditTimes w={w} edit={edit} />}
-      <textarea className="notes" placeholder="Notas del entrenamiento…" value={w.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
+      <textarea className="notes" rows={1} placeholder="Notas del entrenamiento…" value={w.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
 
       {!w.exercises.length && <p className="muted center-text">Añade tu primer ejercicio para empezar.</p>}
 
@@ -184,21 +209,25 @@ export default function WorkoutLogger({
               <button className="plain" onClick={() => onExercise?.(we.exerciseId)}>
                 <ExerciseMedia exercise={ex} size="thumb" />
               </button>
-              <b className="grow accent-text" onClick={() => onExercise?.(we.exerciseId)}>
+              <b className="grow" onClick={() => onExercise?.(we.exerciseId)}>
                 {ex?.name ?? we.exerciseId}
               </b>
               <button className="ghost" onClick={() => setMenu(ei)} aria-label="Opciones">
                 <MoreHorizontal size={20} />
               </button>
             </div>
-            {ex?.stickyNote && <p className="sticky-note small">📌 {ex.stickyNote}</p>}
+            {ex?.stickyNote && (
+              <p className="sticky-note small">
+                <Pin size={16} className="ico" /> {ex.stickyNote}
+              </p>
+            )}
             {mode === 'live' && (
               <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />
             )}
             <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))} />
             {mode === 'live' && (
               <button className="ghost small rest-chip" onClick={() => setMenu(ei)}>
-                ⏲ Descanso: {(we.restSec ?? settings.defaultRestSec) ? clock(we.restSec ?? settings.defaultRestSec) : 'off'}
+                <Timer size={16} className="ico" /> Descanso: {(we.restSec ?? settings.defaultRestSec) ? clock(we.restSec ?? settings.defaultRestSec) : 'off'}
               </button>
             )}
             <div className={`sets ${settings.showRpe ? 'rpe' : ''}`}>
@@ -383,7 +412,7 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
     <Sheet title={ex?.name} onClose={onClose}>
       <p className="muted small">{ex && MUSCLE_LABELS[ex.muscle]}</p>
       <label>
-        ⏲ Temporizador de descanso
+        <Timer size={16} className="ico" /> Temporizador de descanso
         <select aria-label="Descanso" value={we.restSec ?? settings.defaultRestSec} onChange={(e) => edit((n) => void (n.exercises[ei].restSec = Number(e.target.value)))}>
           {REST_OPTIONS.map((s) => (
             <option key={s} value={s}>
@@ -395,7 +424,7 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
       <div className="list">
         {ex?.kind === 'weight_reps' && workWeight > 0 && (
           <button
-            className="item"
+            className="item icon-btn"
             onClick={() => {
               // Se calcula en la unidad visible (redondeo a 2,5 kg o 5 lb) y se guarda en kg.
               const lb = weightUnit() === 'lb';
@@ -404,12 +433,12 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
               onClose();
             }}
           >
-            🔥 Añadir series de calentamiento (hasta {fmtWeight(workWeight)})
+            <Flame size={16} /> Añadir series de calentamiento (hasta {fmtWeight(workWeight)})
           </button>
         )}
         {next && (
           <button
-            className="item"
+            className="item icon-btn"
             onClick={() => {
               edit((n) => {
                 const id = n.exercises[ei].supersetId ?? n.exercises[ei + 1].supersetId ?? uid();
@@ -419,22 +448,22 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
               onClose();
             }}
           >
-            🔗 Hacer superserie con el siguiente
+            <Link2 size={16} /> Hacer superserie con el siguiente
           </button>
         )}
         {we.supersetId && (
-          <button className="item" onClick={() => (edit((n) => void (n.exercises[ei].supersetId = undefined)), onClose())}>
-            ✂️ Quitar de la superserie
+          <button className="item icon-btn" onClick={() => (edit((n) => void (n.exercises[ei].supersetId = undefined)), onClose())}>
+            <Scissors size={16} /> Quitar de la superserie
           </button>
         )}
-        <button className="item" onClick={onReplace}>
-          🔄 Reemplazar ejercicio
+        <button className="item icon-btn" onClick={onReplace}>
+          <RefreshCw size={16} /> Reemplazar ejercicio
         </button>
-        <button className="item" disabled={w.exercises.length < 2} onClick={onReorder}>
-          ↕️ Reordenar ejercicios
+        <button className="item icon-btn" disabled={w.exercises.length < 2} onClick={onReorder}>
+          <ArrowUpDown size={16} /> Reordenar ejercicios
         </button>
         <button
-          className="item danger"
+          className="item danger icon-btn"
           onClick={() => {
             const removed = structuredClone(we);
             edit((n) => void n.exercises.splice(ei, 1));
@@ -442,7 +471,7 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
             onClose();
           }}
         >
-          🗑 Quitar ejercicio
+          <Trash2 size={16} /> Quitar ejercicio
         </button>
       </div>
     </Sheet>
@@ -543,7 +572,11 @@ function SetRow(props: {
       <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`} {...swipe.handlers} style={swipe.style}>
         <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
           {SET_LABEL[s.type] || n}
-          {pr && <span className="pr-badge">🏆</span>}
+          {pr && (
+            <span className="pr-badge">
+              <Trophy size={16} className="ico" />
+            </span>
+          )}
         </button>
         <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
           {prevTxt}
@@ -563,7 +596,7 @@ function SetRow(props: {
               onChange={(durationSec) => onChange({ durationSec })}
             />
             <button className={`plain sw ${running !== undefined ? 'on' : ''}`} onClick={onStopwatch} aria-label="Cronómetro">
-              {running !== undefined ? '■' : '▶'}
+              {running !== undefined ? <Square size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
             </button>
           </div>
         ) : (
@@ -591,12 +624,12 @@ function SetRow(props: {
                 </button>
               ))}
               {kind === 'weight_reps' && (
-                <button className="item" onClick={() => (setTypeMenu(false), onPlates())}>
-                  🧮 Calculadora de discos
+                <button className="item icon-btn" onClick={() => (setTypeMenu(false), onPlates())}>
+                  <Calculator size={16} /> Calculadora de discos
                 </button>
               )}
-              <button className="item danger" onClick={() => (onRemove(), setTypeMenu(false))}>
-                🗑 Borrar serie
+              <button className="item danger icon-btn" onClick={() => (onRemove(), setTypeMenu(false))}>
+                <Trash2 size={16} /> Borrar serie
               </button>
             </div>
           </Sheet>
@@ -660,7 +693,7 @@ function useSwipeToDelete(onDelete: () => void) {
   };
 }
 
-// "💡 Hoy: 82,5 kg × 8" (o en lb) — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
+// "Hoy: 82,5 kg × 8" (o en lb) — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
 function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: Exercise; prev: WorkoutSet[]; onApply: (p: Partial<WorkoutSet>) => void }) {
   const [open, setOpen] = useState(false);
   const pending = we.sets.filter((s) => !s.done && s.type !== 'warmup');
@@ -674,7 +707,7 @@ function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: E
   return (
     <div className={`suggestion ${sug.action}`}>
       <button className="plain grow left" onClick={() => setOpen(!open)}>
-        {sug.action === 'up' ? '📈' : '💡'} Hoy: <b>{label}</b>
+        {sug.action === 'up' ? <TrendingUp size={16} className="ico" /> : <Lightbulb size={16} className="ico" />} Hoy: <b>{label}</b>
         {open && <div className="small muted">{sug.reason}</div>}
       </button>
       <button

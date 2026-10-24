@@ -92,15 +92,53 @@ export default function ExercisePicker({
     );
 
   return (
-    <Sheet title={title} onClose={onClose}>
-      {filters}
-      {!single && (
-        <label className="toggle small">
-          <span className="grow">Selección múltiple</span>
-          <input type="checkbox" checked={multi} onChange={(e) => (setMulti(e.target.checked), setSel([]))} />
-        </label>
-      )}
-      <div className="list">
+    <Sheet
+      full
+      title={title}
+      onClose={onClose}
+      header={
+        <>
+          {filters}
+          {!single && (
+            <label className="toggle small">
+              <span className="grow">Selección múltiple</span>
+              <input type="checkbox" checked={multi} onChange={(e) => (setMulti(e.target.checked), setSel([]))} />
+            </label>
+          )}
+        </>
+      }
+      footer={
+        multi && sel.length > 0 ? (
+          <div className="row">
+            <button
+              className="primary grow"
+              onClick={() =>
+                onPick(
+                  sel.map((id) => byId.get(id)!),
+                  false,
+                )
+              }
+            >
+              Añadir {sel.length}
+            </button>
+            {sel.length > 1 && (
+              <button
+                className="primary grow"
+                onClick={() =>
+                  onPick(
+                    sel.map((id) => byId.get(id)!),
+                    true,
+                  )
+                }
+              >
+                Como superserie
+              </button>
+            )}
+          </div>
+        ) : undefined
+      }
+    >
+      <div className="list picker-list">
         <button className="item accent" onClick={() => setCreating(true)}>
           + Crear ejercicio personalizado{q ? ` “${q}”` : ''}
         </button>
@@ -117,34 +155,6 @@ export default function ExercisePicker({
           </div>
         ))}
       </div>
-      {multi && sel.length > 0 && (
-        <div className="row picker-actions">
-          <button
-            className="primary grow"
-            onClick={() =>
-              onPick(
-                sel.map((id) => byId.get(id)!),
-                false,
-              )
-            }
-          >
-            Añadir {sel.length}
-          </button>
-          {sel.length > 1 && (
-            <button
-              className="primary grow"
-              onClick={() =>
-                onPick(
-                  sel.map((id) => byId.get(id)!),
-                  true,
-                )
-              }
-            >
-              Como superserie
-            </button>
-          )}
-        </div>
-      )}
     </Sheet>
   );
 }

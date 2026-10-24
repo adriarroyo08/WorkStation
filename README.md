@@ -18,6 +18,11 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 
 ### Funciones de la app
 
+**Primeros pasos**
+- Cuatro pestañas: Entrenar, Historial, Ejercicios y Perfil (con estadísticas, Ajustes, cuenta y Coach IA).
+- La primera vez que abres la app, un **tour de bienvenida** te enseña lo básico (se puede saltar).
+- Entra con **email o con Google** desde Perfil para sincronizar. Google en Android requiere configuración: ver [`docs/google-login.md`](docs/google-login.md).
+
 **Entrenar**
 - Registro en vivo: kg/reps, peso corporal (+lastre o asistido), tiempo (con cronómetro) y distancia.
 - Tipos de serie: calentamiento, drop set y al fallo. RPE opcional.
@@ -41,7 +46,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 **Rutinas**
 - Carpetas, duplicar, mover, editor serie a serie y compartir: como texto o como **enlace** que la otra persona guarda con un toque (la rutina va comprimida en el propio enlace, sin servidor).
 - Explorar 7 programas predefinidos: Cuerpo completo, 5×5, Torso/Pierna, PPL, Arnold split, En casa y Glúteo.
-- El Coach IA crea rutinas o programas enteros que guardas con un toque.
+- El Coach IA (en la pestaña **Perfil**) crea rutinas o programas enteros que guardas con un toque.
 
 **Ejercicios**
 - 115 ejercicios en español con imágenes animadas (inicio/fin del movimiento) e instrucciones.

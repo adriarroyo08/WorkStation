@@ -1,6 +1,6 @@
 // Sincronización con un Supabase simulado (auth + tabla records con "gana el más reciente"), entre dispositivos.
 import type { BrowserContext, Page, Route } from '@playwright/test';
-import { SAMPLE, expect, seed, tab, test } from './fixtures';
+import { SAMPLE, expect, seed, tab, test, skipTour } from './fixtures';
 
 const URL_ = 'https://fake-project.supabase.co';
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -59,21 +59,29 @@ class FakeSupabase {
 
 async function signIn(page: Page, email: string) {
   await tab(page, 'Perfil').click();
-  const settings = page.getByRole('button', { name: 'Ajustes' });
-  const heading = page.getByRole('heading', { name: /Cuenta y sincronización/ });
-  await expect(settings.or(heading)).toBeVisible(); // Perfil se carga bajo demanda
-  if (await settings.isVisible()) await settings.click(); // si no, ya estamos en Ajustes
-  const url = page.getByPlaceholder('https://xxxx.supabase.co');
-  await expect(url.or(page.getByLabel('Email'))).toBeVisible(); // Ajustes se carga bajo demanda
-  if (await url.isVisible()) {
-    await url.fill(URL_);
+  const login = page.getByRole('button', { name: 'Continuar con email' });
+  await expect(login.or(page.getByText('Sincronización sin configurar'))).toBeVisible(); // Perfil se carga bajo demanda
+  if (!(await login.isVisible())) {
+    // Sin Supabase integrado en el build: se conecta el simulado desde Ajustes.
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    await page.getByPlaceholder('https://xxxx.supabase.co').fill(URL_);
     await page.getByPlaceholder('eyJhbGciOi…').fill('anon-key');
     await page.getByRole('button', { name: 'Conectar con Supabase' }).click();
+    await page.getByRole('button', { name: 'Volver' }).click();
   }
+  await login.click();
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Contraseña').fill('secreto123');
-  await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+  await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
+}
+
+// "Sincronizar ahora" vive en la tarjeta de Perfil; el objetivo semanal, en Ajustes.
+const openSettings = (p: Page) => p.getByRole('button', { name: 'Ajustes' }).click();
+async function syncNow(p: Page) {
+  await p.getByRole('button', { name: 'Volver' }).click();
+  await p.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await openSettings(p);
 }
 
 test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuario', async ({ page, browser, errors }) => {
@@ -88,21 +96,28 @@ test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuari
 
   // Segundo dispositivo, vacío: recibe los entrenos de Ana.
   const ctx2 = await browser.newContext({ ...test.info().project.use });
+  await skipTour(ctx2);
   await sb.attach(ctx2);
   const p2 = await ctx2.newPage();
   await p2.goto('/');
   await signIn(p2, 'ana@example.com');
   await tab(p2, 'Historial').click();
-  await expect(p2.locator('button.card', { hasText: 'Torso A' })).toHaveCount(2);
+  await expect(p2.locator('button.hrow', { hasText: 'Torso A' })).toHaveCount(2);
   await ctx2.close();
 
   // En el primer dispositivo entra Bea: se ofrece empezar con sus datos y los de Ana no se suben a su cuenta.
-  page.on('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
-  await signIn(page, 'bea@example.com');
+  page.once('dialog', () => expect.soft(false, 'no debe salir un diálogo del navegador').toBe(true));
+  const dlg = page.getByRole('dialog', { name: 'Has entrado con otra cuenta' });
+  await page.getByRole('button', { name: 'Continuar con email' }).click();
+  await page.getByLabel('Email').fill('bea@example.com');
+  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
+  await dlg.getByRole('button', { name: 'Empezar de cero' }).click();
+  await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
   await expect.poll(() => sb.count('user-bea', 'workouts')).toBe(0);
   await tab(page, 'Historial').click();
-  await expect(page.locator('button.card', { hasText: 'Torso A' })).toHaveCount(0);
+  await expect(page.locator('button.hrow', { hasText: 'Torso A' })).toHaveCount(0);
   expect(sb.count('user-ana', 'workouts')).toBe(3); // y la cuenta de Ana sigue intacta
 });
 
@@ -112,9 +127,11 @@ test('un dispositivo con la hora atrasada no pierde sus cambios', async ({ page,
   await sb.attach(page.context());
   await seed(page, SAMPLE);
   await signIn(page, 'ana@example.com');
+  await openSettings(page);
 
   // Segundo móvil con el reloj una hora atrasado.
   const ctx2 = await browser.newContext({ ...test.info().project.use });
+  await skipTour(ctx2);
   await ctx2.addInitScript(() => {
     const real = Date.now.bind(Date);
     Date.now = () => real() - 3600_000;
@@ -123,14 +140,15 @@ test('un dispositivo con la hora atrasada no pierde sus cambios', async ({ page,
   const p2 = await ctx2.newPage();
   await p2.goto('/');
   await signIn(p2, 'ana@example.com');
+  await openSettings(p2);
   const goal = (p: typeof page) => p.getByLabel('Objetivo semanal (entrenos)');
   const goalOnServer = () => ([...sb.rows.values()].find((r) => r.collection === 'settings')?.doc as { weeklyGoal?: number } | undefined)?.weeklyGoal;
   // Primera subida de p2: sirve para medir su desfase con el servidor.
   await goal(p2).selectOption('5');
   await expect.poll(goalOnServer).toBe(5);
-  await p2.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await syncNow(p2);
   // Ana cambia el objetivo en el primer móvil y, después, el segundo móvil lo vuelve a cambiar.
-  await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await syncNow(page);
   await goal(page).selectOption('4');
   await expect.poll(goalOnServer).toBe(4);
   await goal(p2).selectOption('6');

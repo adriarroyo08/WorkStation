@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Camera, Trash2 } from 'lucide-react';
 import { MEASUREMENT_FIELDS, uid, type Measurement, type MeasurementField } from '../../../shared/types';
 import { compressImage, deletePhoto, fmtDate, loadPhoto, savePhoto, useStore } from '../store';
 import LineChart from './LineChart';
@@ -83,18 +84,19 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
                   {MEASUREMENT_FIELDS.filter((f) => m[f] !== undefined)
                     .map((f) => `${MEASURE_LABELS[f].split(' (')[0]}: ${String(shown(f, m[f])).replace('.', ',')}`)
                     .join(' · ')}
-                  {photoIds(m).length ? ` · 📷 ${photoIds(m).length}` : ''}
+                  {photoIds(m).length ? ` · ${photoIds(m).length} ${photoIds(m).length === 1 ? 'foto' : 'fotos'}` : ''}
                 </div>
               </div>
               <button
-                className="ghost"
+                className="ghost icon-btn"
+                aria-label="Borrar registro"
                 onClick={() => {
                   if (!confirm('¿Borrar registro?')) return;
                   photoIds(m).forEach(deletePhoto);
                   update((d) => void (d.measurements = d.measurements.filter((x) => x.id !== m.id)));
                 }}
               >
-                🗑
+                <Trash2 size={16} />
               </button>
             </div>
           ))}
@@ -145,7 +147,7 @@ function AddMeasurement({ onClose }: { onClose: () => void }) {
         ))}
       </div>
       <label>
-        📷 Fotos de progreso (se guardan solo en este dispositivo)
+        <Camera size={16} className="ico" /> Fotos de progreso (se guardan solo en este dispositivo)
         <input type="file" accept="image/*" multiple onChange={(e) => setPhotos([...(e.target.files ?? [])])} />
       </label>
       <button className="primary full" onClick={save}>

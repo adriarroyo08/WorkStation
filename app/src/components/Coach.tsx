@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
+import { Save } from 'lucide-react';
 import { chat, COACH_SYSTEM_PROMPT, extractJsonBlock, type ChatMessage } from '../../../shared/ai';
 import { routineFromDraft, type RoutineDraft } from '../../../shared/data';
 import { period, periodReport, reportToText } from '../../../shared/reports';
 import { trainingSummary } from '../../../shared/stats';
 import { uid } from '../../../shared/types';
 import { useStore } from '../store';
+import { Back } from './ui';
 
 const QUICK = [
   'Analiza mis últimas semanas: ¿qué estoy haciendo bien y qué debería mejorar?',
@@ -14,7 +16,7 @@ const QUICK = [
   '¿Tengo algún grupo muscular descompensado por volumen?',
 ];
 
-export default function Coach({ goSettings }: { goSettings: () => void }) {
+export default function Coach({ goSettings, onBack }: { goSettings: () => void; onBack: () => void }) {
   const { data, ai, update, settings } = useStore();
   const [msgs, setMsgs] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -65,6 +67,7 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
   if (!configured)
     return (
       <section>
+        <Back onClick={onBack} />
         <h1>Coach IA</h1>
         <p>Conecta una IA gratuita (Gemini, Groq, OpenRouter u Ollama) con tu API key en Ajustes.</p>
         <button className="primary" onClick={goSettings}>
@@ -75,6 +78,7 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
 
   return (
     <section className="coach">
+      <Back onClick={onBack} />
       <h1>Coach IA</h1>
       <p className="muted small">
         {ai.model} · tus datos se envían solo al proveedor que configuraste.
@@ -99,13 +103,13 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
           <div key={i} className={`bubble ${m.role}`}>
             <div className="pre">{m.content.replace(/```json[\s\S]*?```/g, '').trim()}</div>
             {json?.exercises && (
-              <button className="primary" onClick={() => saveRoutines([json])}>
-                💾 Guardar rutina “{json.name}”
+              <button className="primary icon-btn" onClick={() => saveRoutines([json])}>
+                <Save size={16} /> Guardar rutina “{json.name}”
               </button>
             )}
             {Array.isArray(json?.routines) && (
-              <button className="primary" onClick={() => saveRoutines(json.routines!, json.program ?? 'Programa del coach')}>
-                💾 Guardar programa “{json.program}” ({json.routines.length} rutinas)
+              <button className="primary icon-btn" onClick={() => saveRoutines(json.routines!, json.program ?? 'Programa del coach')}>
+                <Save size={16} /> Guardar programa “{json.program}” ({json.routines.length} rutinas)
               </button>
             )}
           </div>

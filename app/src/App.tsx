@@ -1,36 +1,69 @@
-import { BarChart3, CalendarDays, Dumbbell, Library, Sparkles } from 'lucide-react';
-import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { BarChart3, CalendarDays, Dumbbell, Library } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Train from './components/Train';
 
 // El resto de pestañas se cargan bajo demanda: el arranque solo descarga "Entrenar".
-const Coach = lazy(() => import('./components/Coach'));
 const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
 const Profile = lazy(() => import('./components/Profile'));
 import { useScrollTop } from './components/ui';
-import { useCloudSync } from './cloud';
+import { openedFromAuthLink, useCloud, useCloudSync } from './cloud';
 import { useSessionController } from './controller';
 import { useRest } from './rest';
 import { toast, useToast } from './toast';
 import { UpdateBanner, WhatsNewOnUpdate } from './components/WhatsNew';
+import { NotifGate } from './components/NotifPrompt';
 import { SharedRoutineImport } from './components/SharedRoutine';
 import { clock, useNow, useStore } from './store';
+import Onboarding from './components/Onboarding';
+import AuthLanding from './components/AuthLanding';
+import { AccountSwitchDialog } from './components/Account';
+import { ONBOARDED_KEY, shouldShowOnboarding } from '../../shared/onboarding';
+
+const read = (k: string) => {
+  try {
+    return localStorage.getItem(k) ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 const TABS = [
   { id: 'train', label: 'Entrenar', Icon: Dumbbell },
   { id: 'history', label: 'Historial', Icon: CalendarDays },
   { id: 'exercises', label: 'Ejercicios', Icon: Library },
   { id: 'profile', label: 'Perfil', Icon: BarChart3 },
-  { id: 'coach', label: 'Coach', Icon: Sparkles },
 ] as const;
 
 export type TabId = (typeof TABS)[number]['id'];
 
 export default function App() {
-  const { active } = useStore();
+  return (
+    <>
+      <AccountSwitchDialog />
+      <AppBody />
+    </>
+  );
+}
+
+function AppBody() {
+  const { active, data } = useStore();
+  const [tour, setTour] = useState(() =>
+    !openedFromAuthLink && // quien confirma su email en un dispositivo nuevo ve su pantalla, no el tour
+    shouldShowOnboarding({ onboarded: read(ONBOARDED_KEY) === '1', seenVersion: read('ws:seenVersion'), hasData: data.workouts.length + data.routines.length > 0 }),
+  );
+  // "Ver tour de nuevo" (Ajustes) lo reabre.
+  useEffect(() => {
+    const show = () => setTour(true);
+    window.addEventListener('ws:show-tour', show);
+    return () => window.removeEventListener('ws:show-tour', show);
+  }, []);
   useSessionController();
   useCloudSync();
+  const { recovery, justConfirmed, linkError } = useCloud();
   const [tab, setTab] = useState<TabId>('train');
+  // "Crear cuenta" del tour abre Perfil directamente en el registro.
+  const [signUp, setSignUp] = useState(false);
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   // Desde el entrenamiento en curso abrimos la ficha en una capa encima, sin perder el registro.
   const [overlayExercise, setOverlayExercise] = useState<string | null>(null);
@@ -54,6 +87,10 @@ export default function App() {
     if (!overlayExercise) window.scrollTo({ top: savedScroll.current, behavior: 'instant' as ScrollBehavior });
   }, [overlayExercise]);
 
+  if (recovery || justConfirmed || linkError) return <AuthLanding />;
+  if (tour)
+    return <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />;
+
   return (
     <div className="app">
       <main>
@@ -67,8 +104,7 @@ export default function App() {
               </div>
               {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
               {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
-              {tab === 'profile' && <Profile onExercise={goExercise} />}
-              {tab === 'coach' && <Coach goSettings={() => setTab('profile')} />}
+              {tab === 'profile' && <Profile onExercise={goExercise} signUp={signUp} />}
             </>
           )}
         </Suspense>
@@ -77,10 +113,11 @@ export default function App() {
       <UpdateBanner />
       <WhatsNewOnUpdate />
       <SharedRoutineImport />
+      <NotifGate />
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setOverlayExercise(null), setTab(t.id))}>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
             <t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 1.9} aria-hidden />
             {t.label}
           </button>

@@ -1,7 +1,13 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
 
 // Falla el test si la página lanza errores de JavaScript.
-export const test = base.extend<{ errors: string[] }>({
+// Por defecto el tour de bienvenida ya está visto; los tests del tour usan test.use({ onboarded: false }).
+export const test = base.extend<{ errors: string[]; onboarded: boolean }>({
+  onboarded: [true, { option: true }],
+  page: async ({ page, onboarded }, use) => {
+    if (onboarded) await page.addInitScript(() => localStorage.setItem('ws:onboarded', '1'));
+    await use(page);
+  },
   errors: async ({ page }, use) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -12,6 +18,9 @@ export const test = base.extend<{ errors: string[] }>({
   },
 });
 export { expect };
+
+// Para contextos extra (segundo dispositivo): marca el tour como visto.
+export const skipTour = (ctx: BrowserContext) => ctx.addInitScript(() => localStorage.setItem('ws:onboarded', '1'));
 
 const hoursAgo = (n: number) => new Date(Date.now() - n * 3600e3).toISOString();
 const sets = (n: number, weight: number, reps: number) => Array.from({ length: n }, () => ({ type: 'normal', weight, reps, done: true }));

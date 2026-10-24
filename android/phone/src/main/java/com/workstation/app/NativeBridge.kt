@@ -74,6 +74,20 @@ class NativeBridge(private val activity: MainActivity) {
         RestAlarmReceiver.cancel(ctx)
     }
 
+    @JavascriptInterface
+    fun setSystemBars(dark: Boolean) = activity.setSystemBars(dark)
+
+    @JavascriptInterface
+    fun notificationsState(): String = activity.notificationsState()
+
+    @JavascriptInterface
+    fun requestNotifications() = activity.requestNotifications()
+
+    /** Credential Manager necesita la Activity y el hilo principal; la respuesta llega como google_token | google_cancel | google_error. */
+    @JavascriptInterface
+    fun googleSignIn(webClientId: String, hashedNonce: String) =
+        activity.runOnUiThread { GoogleSignIn.start(activity, webClientId, hashedNonce) }
+
     /** Menú nativo de compartir (navigator.share no existe en el WebView). */
     @JavascriptInterface
     fun shareText(title: String, text: String) {

@@ -10,21 +10,24 @@ export default function ExdbSettings() {
   const [key, setKey] = useState(cfg.key);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [bad, setBad] = useState(false);
   const linked = data.exercises.filter((e) => e.exdbId).length;
 
   const link = async () => {
     exdb.set({ key: key.trim() });
     setBusy(true);
+    setBad(false);
     setMsg('Descargando la lista de ExerciseDB…');
     try {
       const list = await loadExdbList(true);
       const d = structuredClone(data);
       const n = autoLink(d.exercises, list);
       replace(d);
-      setMsg(`✅ ${list.length} ejercicios en ExerciseDB. Vinculados automáticamente: ${n} más.`);
+      setMsg(`${list.length} ejercicios en ExerciseDB. Vinculados automáticamente: ${n} más.`);
       toast.show('GIFs de ejercicios activados');
     } catch (e) {
-      setMsg(`❌ ${(e as Error).message}. Revisa la key y que estés suscrito a ExerciseDB en RapidAPI.`);
+      setBad(true);
+      setMsg(`${(e as Error).message}. Revisa la key y que estés suscrito a ExerciseDB en RapidAPI.`);
     } finally {
       setBusy(false);
     }
@@ -64,12 +67,12 @@ export default function ExdbSettings() {
           {busy ? 'Vinculando…' : 'Guardar y vincular ejercicios'}
         </button>
         {cfg.key && (
-          <button className="ghost" onClick={() => (exdb.set({ key: '' }), setKey(''), setMsg('Key eliminada.'))}>
+          <button className="outline" onClick={() => (exdb.set({ key: '' }), setKey(''), setMsg('Key eliminada.'))}>
             Quitar key
           </button>
         )}
       </div>
-      {msg && <p className="small">{msg}</p>}
+      {msg && <p className={bad ? 'small error' : 'small'}>{msg}</p>}
       <p className="small muted">
         {linked} de {data.exercises.length} ejercicios con GIF. Puedes elegir otro GIF desde la ficha de cada ejercicio.{' '}
         <button className="ghost small" onClick={() => clearGifCache().then(() => toast.show('Caché de GIFs borrada'))}>

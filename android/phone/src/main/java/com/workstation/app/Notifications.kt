@@ -77,7 +77,7 @@ object Notifications {
         val n = NotificationCompat.Builder(ctx, CH_REST)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle("¡Descanso terminado!")
-            .setContentText("$label · siguiente serie 💪")
+            .setContentText("$label · siguiente serie")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVibrate(VIBRATION)

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { fromUnit, toUnit } from '../../../shared/units';
 import { mediaUrls } from '../../../shared/exercises';
 import { ANIMATED } from '../../../shared/anim-index';
@@ -6,25 +7,33 @@ import { useExdbGif } from '../exdb';
 import { formatDuration, PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
 
-export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
+// Hoja modal. Va en un portal a <body>: dentro de una pantalla con animación (transform) el
+// position:fixed sería relativo a esa pantalla y la hoja saldría recortada.
+// `full`: pantalla completa, con `header` y `footer` fijos y cuerpo con scroll propio.
+export function Sheet({ title, onClose, children, full, header, footer }: { title?: string; onClose: () => void; children: ReactNode; full?: boolean; header?: ReactNode; footer?: ReactNode }) {
   // Escape cierra la hoja (teclado, mandos y lectores de pantalla).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
-    <div className="modal" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
-        <div className="row sheet-head">
-          <b className="grow">{title}</b>
-          <button className="ghost" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
+  return createPortal(
+    <div className={`modal ${full ? 'full' : ''}`} onClick={onClose}>
+      <div className={`sheet ${full ? 'full' : ''}`} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        <div className={full ? 'sheet-top' : undefined}>
+          <div className="row sheet-head">
+            <b className="grow">{title}</b>
+            <button className="ghost" onClick={onClose} aria-label="Cerrar">
+              ✕
+            </button>
+          </div>
+          {header}
         </div>
-        {children}
+        {full ? <div className="sheet-body">{children}</div> : children}
+        {footer && <div className="sheet-foot">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -214,41 +223,19 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
   );
 }
 
-// Anillo de progreso con degradado (objetivo semanal, etc.).
-export function ProgressRing({ value, max, size = 92, label, sub }: { value: number; max: number; size?: number; label: string; sub?: string }) {
-  const r = (size - 12) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, max ? value / max : 0));
+// Semana en 7 casillas: las de los días entrenados en acento.
+export function WeekStrip({ days, goal }: { days: boolean[]; goal: number }) {
   return (
-    <svg className="ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub ?? ''}`}>
-      <defs>
-        <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--accent-2)" />
-        </linearGradient>
-      </defs>
-      <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} />
-      <circle
-        className="ring-val"
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        strokeWidth={9}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text x="50%" y={sub ? '47%' : '53%'} textAnchor="middle" dominantBaseline="middle">
-        {label}
-      </text>
-      {sub && (
-        <text className="ring-sub" x="50%" y="66%" textAnchor="middle" dominantBaseline="middle">
-          {sub}
-        </text>
-      )}
-    </svg>
+    <div className="weekstrip">
+      <div className="sec">
+        Esta semana · {days.filter(Boolean).length} de {goal}
+      </div>
+      <div className="weekstrip-days">
+        {days.map((on, i) => (
+          <i key={i} className={on ? 'on' : ''} />
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 // Lista de copias automáticas del dispositivo, con restaurar y descargar.
 import { useEffect, useState } from 'react';
-import { History } from 'lucide-react';
+import { Download, History } from 'lucide-react';
 import type { BackupMeta } from '../../../shared/backups';
 import { listBackups, loadBackup, snapshot } from '../backups';
 import { downloadFile, useStore } from '../store';
@@ -59,8 +59,8 @@ export default function AutoBackups() {
                   · {b.reason} · {b.workouts} entrenos · {b.routines} rutinas
                 </small>
               </span>
-              <button className="ghost small" onClick={() => download(b)} aria-label={`Descargar copia del ${fmt(b.at)}`}>
-                ⬇
+              <button className="ghost small icon-btn" onClick={() => download(b)} aria-label={`Descargar copia del ${fmt(b.at)}`}>
+                <Download size={16} />
               </button>
               <button className="ghost small" onClick={() => restore(b)}>
                 Restaurar

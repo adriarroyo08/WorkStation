@@ -1,10 +1,10 @@
-import { BookmarkPlus, RefreshCw, Repeat, Share2 } from 'lucide-react';
+import { Award, BookmarkPlus, Dumbbell, Heart, RefreshCw, Repeat, Share2, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { MUSCLE_REGION } from '../../../shared/exercises';
 import { repeatWorkout, routineFromWorkout } from '../../../shared/data';
 import { formatDuration, formatSet, muscleSets, prEvents, workoutDurationMin, workoutReps, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import type { MuscleGroup, Workout } from '../../../shared/types';
-import { startWorkout } from '../controller';
+import { launchWorkout } from '../controller';
 import { toast } from '../toast';
 import { fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
@@ -90,13 +90,13 @@ export default function WorkoutDetail({
       />
       {justFinished && (
         <div className="congrats">
-          <div className="big-emoji">💪</div>
+          <Dumbbell size={48} className="big-emoji" />
           <h1>¡Buen trabajo!</h1>
           <p className="muted">Este es tu entrenamiento nº {count}.</p>
           {unlockedNow.length > 0 && (
             <div className="card new-badges">
               <b>
-                🎖️ ¡Logro{unlockedNow.length > 1 ? 's' : ''} desbloqueado{unlockedNow.length > 1 ? 's' : ''}!
+                <Award size={16} className="ico" /> ¡Logro{unlockedNow.length > 1 ? 's' : ''} desbloqueado{unlockedNow.length > 1 ? 's' : ''}!
               </b>
               <div className="badges">
                 {unlockedNow.map((a) => (
@@ -133,7 +133,7 @@ export default function WorkoutDetail({
       {w.notes && <p className="card small">{w.notes}</p>}
       {w.heartRate && (
         <div className="card">
-          <h3>❤️ Frecuencia cardiaca</h3>
+          <h3><Heart size={16} className="ico" /> Frecuencia cardiaca</h3>
           <div className="stats">
             <Stat value={w.heartRate.avg} label="ppm media" />
             <Stat value={w.heartRate.max} label="ppm máx." />
@@ -147,7 +147,7 @@ export default function WorkoutDetail({
 
       {prs.length > 0 && (
         <div className="card">
-          <h3>🏆 Récords batidos</h3>
+          <h3><Trophy size={16} className="ico" /> Récords batidos</h3>
           <PrList prs={prs.map((p) => ({ ...p, exerciseName: ex.get(p.exerciseId)?.name ?? p.exerciseId }))} />
         </div>
       )}
@@ -165,7 +165,7 @@ export default function WorkoutDetail({
             <div className="row" onClick={() => onExercise?.(we.exerciseId)}>
               <ExerciseMedia exercise={e} size="thumb" />
               <div className="grow">
-                <b className="accent-text">{e?.name ?? we.exerciseId}</b>
+                <b>{e?.name ?? we.exerciseId}</b>
                 <div className="muted small">{bestSetText(we, e)}</div>
               </div>
             </div>
@@ -190,7 +190,7 @@ export default function WorkoutDetail({
           className="ghost full icon-btn"
           onClick={() => {
             if (active && !confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?')) return;
-            startWorkout(store, repeatWorkout(w));
+            launchWorkout(store, repeatWorkout(w));
             goTrain?.();
           }}
         >

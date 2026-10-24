@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Heart, Watch } from 'lucide-react';
 import { bleSupported, connectBleHeartRate, disconnectBle, useHeartRate } from '../hr';
 import { isNative, native, useWatchStatus } from '../native';
 import { Sheet } from './ui';
@@ -15,7 +16,9 @@ export function DevicesPanel() {
     <div>
       <div className="card">
         <div className="row">
-          <b className="grow">⌚ Reloj Wear OS</b>
+          <b className="grow">
+            <Watch size={16} className="ico" /> Reloj Wear OS
+          </b>
           {isNative() ? <span className={watch.nodes.length ? 'pill ok' : 'pill'}>{watch.nodes.length ? 'Conectado' : 'No detectado'}</span> : <span className="pill">Solo en la app Android</span>}
         </div>
         {isNative() ? (
@@ -40,7 +43,9 @@ export function DevicesPanel() {
       </div>
       <div className="card">
         <div className="row">
-          <b className="grow">❤️ Pulsómetro Bluetooth</b>
+          <b className="grow">
+            <Heart size={16} className="ico" /> Pulsómetro Bluetooth
+          </b>
           {hr.bleName && <span className="pill ok">{hr.bleName}</span>}
         </div>
         <p className="small muted">Bandas de pecho o relojes que emitan frecuencia cardiaca por Bluetooth (perfil estándar «Heart Rate»).</p>
@@ -75,7 +80,10 @@ export function DevicesPanel() {
       </div>
       {hr.live && (
         <p className="center-text">
-          <span className="hr-big">❤️ {hr.bpm}</span> <span className="muted small">ppm · {hr.source === 'watch' ? 'reloj' : 'Bluetooth'}</span>
+          <span className="hr-big">
+            <Heart size={28} className="ico" /> {hr.bpm}
+          </span>{' '}
+          <span className="muted small">ppm · {hr.source === 'watch' ? 'reloj' : 'Bluetooth'}</span>
         </p>
       )}
     </div>

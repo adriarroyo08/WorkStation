@@ -166,7 +166,7 @@ function slides(y: YearWrapped, onShare: () => void): Slide[] {
     body: (
       <>
         <p className="kicker">Y esto sigue</p>
-        <h2 className="big">A por el {y.year + 1} 💪</h2>
+        <h2 className="big">A por el {y.year + 1}</h2>
         <button className="w-share" onClick={(e) => (e.stopPropagation(), onShare())}>
           <Share2 size={18} /> Compartir mi año
         </button>

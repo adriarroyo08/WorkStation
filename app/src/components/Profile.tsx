@@ -6,8 +6,8 @@ import type { MuscleGroup } from '../../../shared/types';
 import { cap, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
-import Achievements from './Achievements';
-import { Award, FileBarChart, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
+import Achievements, { AchievementIcon } from './Achievements';
+import { Award, Bot, ChevronRight, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { StrengthOverview } from './Strength';
 import Wrapped from './Wrapped';
@@ -15,15 +15,19 @@ import YearHeatmap from './YearHeatmap';
 import Measurements from './Measurements';
 import Reports from './Reports';
 import Settings from './Settings';
+import Coach from './Coach';
+import { AccountCard, EmailAuth } from './Account';
 import { BarChart, HBars, MonthCalendar, Stat } from './ui';
 import { fmtMass, fmtWeight, toUnit } from '../../../shared/units';
 
 type Metric = 'workouts' | 'durationMin' | 'volume' | 'sets' | 'reps';
 const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Duración', volume: 'Volumen', sets: 'Series', reps: 'Reps' };
 
-export default function Profile({ onExercise }: { onExercise: (id: string) => void }) {
+export default function Profile({ onExercise, signUp = false }: { onExercise: (id: string) => void; signUp?: boolean }) {
   const { data, settings, setSettings } = useStore();
-  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements'>('home');
+  const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements' | 'coach' | 'email'>(signUp ? 'email' : 'home');
+  const [signUpMode, setSignUpMode] = useState(signUp); // solo la primera vez (viene del tour)
+  const [settingsFromCoach, setSettingsFromCoach] = useState(false);
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
   const [detailed, setDetailed] = useState(false);
@@ -60,10 +64,36 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
   const trainedIn = (y: number) => data.workouts.some((w) => new Date(w.startedAt).getFullYear() === y);
   const wrappedYear = trainedIn(thisYear) ? thisYear : trainedIn(thisYear - 1) ? thisYear - 1 : undefined;
 
+  const backHome = () => setView('home');
+  if (view === 'email') return <EmailAuth
+        onBack={() => {
+          setSignUpMode(false);
+          backHome();
+        }}
+        signUp={signUpMode}
+      />;
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
-  if (view === 'settings') return <Settings onBack={() => setView('home')} />;
+  if (view === 'coach')
+    return (
+      <Coach
+        onBack={() => setView('home')}
+        goSettings={() => {
+          setSettingsFromCoach(true);
+          setView('settings');
+        }}
+      />
+    );
+  if (view === 'settings')
+    return (
+      <Settings
+        onBack={() => {
+          setView(settingsFromCoach ? 'coach' : 'home');
+          setSettingsFromCoach(false);
+        }}
+      />
+    );
 
   const fmt = (v: number) =>
     metric === 'volume' ? ((x) => (x >= 1000 ? `${Math.round(x / 100) / 10}k` : String(Math.round(x))))(toUnit(v)) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v));
@@ -83,52 +113,79 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
         >
           {settings.theme === 'light' || (settings.theme === 'auto' && !matchMedia('(prefers-color-scheme: dark)').matches) ? <Moon size={20} /> : <Sun size={20} />}
         </button>
-        <button className="ghost icon-btn" onClick={() => setView('settings')} aria-label="Ajustes">
+        <button
+          className="ghost icon-btn"
+          onClick={() => {
+            setSettingsFromCoach(false);
+            setView('settings');
+          }}
+          aria-label="Ajustes"
+        >
           <SettingsIcon size={20} /> Ajustes
         </button>
       </div>
+      <AccountCard onEmail={() => setView('email')} />
       <div className="stats four">
         <Stat value={all.workouts} label="entrenos" />
         <Stat value={`${Math.round(all.durationMin / 60)}h`} label="entrenando" />
         <Stat value={fmtMass(all.volume)} label="levantadas" />
-        <Stat value={`🔥${streak}`} label="sem. racha" />
+        <Stat value={streak} label="sem. racha" />
       </div>
 
-      <div className="row tiles">
-        <button className="card grow tile" onClick={() => setView('reports')}>
-          <FileBarChart size={20} className="tile-ico" /> Informes
-          <small className="muted">semanal · mensual · anual</small>
+      <div className="lines">
+        <button className="line" onClick={() => setView('reports')}>
+          <FileBarChart size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Informes</b>
+            <small className="muted">semanal · mensual · anual</small>
+          </span>
+          <ChevronRight size={16} className="muted" />
         </button>
-        <button className="card grow tile" onClick={() => setView('measures')}>
-          <Ruler size={20} className="tile-ico" /> Medidas
-          <small className="muted">peso · cuerpo · fotos</small>
+        <button className="line" onClick={() => setView('measures')}>
+          <Ruler size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Medidas</b>
+            <small className="muted">peso · cuerpo · fotos</small>
+          </span>
+          <ChevronRight size={16} className="muted" />
+        </button>
+        <button className="line" onClick={() => setView('coach')}>
+          <Bot size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Coach IA</b>
+            <small className="muted">pregunta, analiza y crea rutinas</small>
+          </span>
+          <ChevronRight size={16} className="muted" />
+        </button>
+        {wrappedYear && (
+          <button className="line" onClick={() => setWrapped(true)}>
+            <Sparkles size={20} className="tile-ico" />
+            <span className="grow">
+              <b>Tu {wrappedYear} en Workstation</b>
+              <small className="muted">Tus cifras del año, en historias para compartir</small>
+            </span>
+            <ChevronRight size={16} className="muted" />
+          </button>
+        )}
+        <button className="line" onClick={() => setView('achievements')}>
+          <Award size={20} className="tile-ico" />
+          <span className="grow">
+            <b>Logros</b>
+            <small className="muted">
+              {unlocked.length} de {allAch.length}
+            </small>
+          </span>
+          <span className="badge-row">
+            {unlocked.slice(-4).map((a) => (
+              <span key={a.id} title={a.title}>
+                <AchievementIcon name={a.icon} size={18} />
+              </span>
+            ))}
+          </span>
+          <ChevronRight size={16} className="muted" />
         </button>
       </div>
-      {wrappedYear && (
-        <button className="card wrapped-tile" onClick={() => setWrapped(true)}>
-          <span className="w-emoji">✨</span>
-          <span className="grow">
-            <b>Tu {wrappedYear} en Workstation</b>
-            <small>Tus cifras del año, en historias para compartir</small>
-          </span>
-        </button>
-      )}
       {wrapped && wrappedYear && <Wrapped year={wrappedYear} onClose={() => setWrapped(false)} />}
-      <button className="card full tile achievements-tile" onClick={() => setView('achievements')}>
-        <span>
-          <Award size={18} className="tile-ico inline" /> Logros{' '}
-          <small className="muted">
-            {unlocked.length} de {allAch.length}
-          </small>
-        </span>
-        <span className="badge-row">
-          {unlocked.slice(-6).map((a) => (
-            <span key={a.id} title={a.title}>
-              {a.icon}
-            </span>
-          ))}
-        </span>
-      </button>
 
       <div className="card">
         <h3>Últimas 12 semanas</h3>

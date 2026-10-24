@@ -1,4 +1,68 @@
-import { SAMPLE, expect, seed, tab, test } from './fixtures';
+import { SAMPLE, expect, seed, tab, test, skipTour } from './fixtures';
+
+test.describe('tour de bienvenida', () => {
+  test.use({ onboarded: false });
+  const tour = (page: import('@playwright/test').Page) => page.getByRole('dialog', { name: 'Bienvenida' });
+
+  test('primera visita: se muestra, Saltar lo cierra y no vuelve', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    await expect(tour(page)).toContainText('Bienvenido a Workstation');
+    await page.getByRole('button', { name: 'Saltar' }).click();
+    await expect(tour(page)).toHaveCount(0);
+    await expect(page.getByText('Bienvenido a Workstation')).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('Bienvenido a Workstation')).toBeVisible();
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('recorre las 7 pantallas y Crear cuenta lleva al registro por email', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('keyval-store');
+          open.onupgradeneeded = () => open.result.createObjectStore('keyval');
+          open.onsuccess = () => {
+            const tx = open.result.transaction('keyval', 'readwrite');
+            tx.objectStore('keyval').put({ url: 'https://fake-project.supabase.co', anonKey: 'anon-key' }, 'cloud-config');
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        }),
+    );
+    await page.reload();
+    for (let n = 0; n < 6; n++) await page.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(tour(page)).toContainText('Todo sincronizado');
+    await page.getByRole('button', { name: 'Crear cuenta' }).click();
+    await expect(page.locator('h1:visible').first()).toHaveText('Crear cuenta');
+  });
+
+  test('sin nube configurada no hay Crear cuenta y Escape cierra el tour', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    for (let n = 0; n < 6; n++) await page.getByRole('button', { name: 'Siguiente' }).click();
+    await expect(page.getByRole('button', { name: 'Crear cuenta' })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('con datos no sale', async ({ page, errors }) => {
+    void errors;
+    await seed(page, SAMPLE);
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('"Ver tour de nuevo" en Ajustes lo abre', async ({ page, errors }) => {
+    void errors;
+    await seed(page, SAMPLE);
+    await tab(page, 'Perfil').click();
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    await page.getByRole('button', { name: 'Ver tour de nuevo' }).click();
+    await expect(tour(page)).toBeVisible();
+  });
+});
 
 test('entreno completo desde cero', async ({ page, errors }) => {
   void errors;
@@ -19,6 +83,24 @@ test('entreno completo desde cero', async ({ page, errors }) => {
   await expect(page.getByText('600 kg', { exact: true })).toBeVisible();
 });
 
+test('la semana se muestra como 7 días', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  const days = page.locator('.weekstrip i');
+  await expect(days).toHaveCount(7);
+  // Días distintos de esta semana (lunes primero) con algún entreno, calculados en el navegador.
+  const expected = await page.evaluate(
+    (starts) => {
+      const mon = new Date();
+      mon.setHours(0, 0, 0, 0);
+      mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+      return new Set(starts.filter((s) => Date.parse(s) >= mon.getTime()).map((s) => (new Date(s).getDay() + 6) % 7)).size;
+    },
+    SAMPLE.workouts.map((w) => w.startedAt),
+  );
+  await expect(page.locator('.weekstrip i.on')).toHaveCount(expected);
+});
+
 test('hoy toca, recuperación y comparación con la sesión anterior', async ({ page, errors }) => {
   void errors;
   await seed(page, SAMPLE);
@@ -29,7 +111,7 @@ test('hoy toca, recuperación y comparación con la sesión anterior', async ({ 
   await page.keyboard.press('Escape');
 
   await tab(page, 'Historial').click();
-  await page.locator('button.card', { hasText: 'Torso A' }).first().click();
+  await page.locator('button.hrow', { hasText: 'Torso A' }).first().click();
   const vs = page.locator('.vs-last');
   await expect(vs).toContainText('Frente a la última vez');
   await expect(vs.locator('.delta.up').first()).toBeVisible();
@@ -41,12 +123,23 @@ for (const scheme of ['light', 'dark'] as const)
     await page.emulateMedia({ colorScheme: scheme });
     await seed(page, SAMPLE);
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(bg).toBe(scheme === 'dark' ? 'rgb(12, 10, 9)' : 'rgb(251, 248, 245)');
-    for (const name of ['Historial', 'Ejercicios', 'Perfil', 'Coach', 'Entrenar']) {
+    expect(bg).toBe(scheme === 'dark' ? 'rgb(20, 20, 20)' : 'rgb(255, 255, 255)');
+    for (const name of ['Historial', 'Ejercicios', 'Perfil', 'Entrenar']) {
       await tab(page, name).click();
       await expect(page.locator('h1:visible').first()).toBeVisible();
     }
   });
+
+test('cuatro pestañas y Coach IA dentro de Perfil', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await expect(page.locator('nav.tabs button')).toHaveText(['Entrenar', 'Historial', 'Ejercicios', 'Perfil']);
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: /Coach IA/ }).click();
+  await expect(page.locator('h1:visible').first()).toHaveText('Coach IA');
+  await page.locator('.topbar > button:first-child').click();
+  await expect(page.locator('h1:visible').first()).toHaveText('Perfil');
+});
 
 test('niveles de fuerza en la ficha y en el perfil', async ({ page, errors }) => {
   void errors;
@@ -67,7 +160,7 @@ test('resumen anual en historias', async ({ page, errors }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page, SAMPLE);
   await tab(page, 'Perfil').click();
-  await page.locator('.wrapped-tile').click();
+  await page.getByRole('button', { name: /Tu \d{4} en Workstation/ }).click();
   const story = page.getByRole('dialog', { name: /Resumen de \d{4}/ });
   await expect(story).toContainText('Tu ');
   await story.click({ position: { x: 300, y: 400 } });
@@ -134,12 +227,7 @@ test('reordenar ejercicios arrastrando y con teclado', async ({ page, errors }) 
   await page.keyboard.press('ArrowUp');
   await expect(names).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
   await page.getByRole('button', { name: 'Listo' }).click();
-  await expect(
-    page
-      .locator('.excard, .card')
-      .filter({ has: page.locator('.accent-text') })
-      .first(),
-  ).toContainText('Sentadilla');
+  await expect(page.locator('.excard').first()).toContainText('Sentadilla');
 });
 
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
@@ -149,13 +237,35 @@ test('novedades tras actualizar y versión en ajustes', async ({ page, errors })
   await page.evaluate(() => localStorage.setItem('ws:seenVersion', '0.2.0'));
   await page.reload();
   const sheet = page.getByRole('dialog', { name: 'Novedades' });
-  await expect(sheet).toContainText('Versión 1.3.0');
+  await expect(sheet).toContainText('Versión 1.4.0');
   await sheet.getByRole('button', { name: '¡Genial!' }).click();
   await page.reload();
   await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: 'Ajustes' }).click();
-  await expect(page.locator('.app-version')).toContainText('Workstation v1.3.0');
+  await expect(page.locator('.app-version')).toContainText('Workstation v1.4.0');
+});
+
+test.describe('1.4.0: tour o novedades según de dónde vienes', () => {
+  test.use({ onboarded: false });
+  const tour = (page: import('@playwright/test').Page) => page.getByRole('dialog', { name: 'Bienvenida' });
+  const novedades = (page: import('@playwright/test').Page) => page.getByRole('dialog', { name: 'Novedades' });
+
+  test('actualizando desde 1.3.0 con datos: Novedades 1.4.0 y no el tour', async ({ page, errors }) => {
+    void errors;
+    await seed(page, SAMPLE);
+    await page.evaluate(() => localStorage.setItem('ws:seenVersion', '1.3.0'));
+    await page.reload();
+    await expect(novedades(page)).toContainText('Versión 1.4.0');
+    await expect(tour(page)).toHaveCount(0);
+  });
+
+  test('instalación limpia: tour y no Novedades', async ({ page, errors }) => {
+    void errors;
+    await page.goto('/');
+    await expect(tour(page)).toBeVisible();
+    await expect(novedades(page)).toHaveCount(0);
+  });
 });
 
 test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ page, errors }) => {
@@ -178,7 +288,7 @@ test('unidades en libras: escribir, calculadora de discos e historial', async ({
   page.on('dialog', (d) => d.accept());
   await seed(page, { ...SAMPLE, settings: { unit: 'lb' } });
   await tab(page, 'Historial').click();
-  await expect(page.locator('button.card', { hasText: 'Torso A' }).first()).toContainText('lb');
+  await expect(page.locator('button.hrow', { hasText: 'Torso A' }).first()).toContainText('lb');
   await tab(page, 'Entrenar').click();
   await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
   const row = page.locator('.swipe .set').first();
@@ -210,20 +320,21 @@ test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({
     (navigator as unknown as { share: (d: ShareData) => Promise<void> }).share = async (d) => void ((window as unknown as { shared: ShareData }).shared = d);
   });
   await seed(page, SAMPLE);
-  await page.locator('.card.routine', { hasText: 'Torso A' }).getByRole('button', { name: 'Opciones' }).click();
+  await page.locator('.routine', { hasText: 'Torso A' }).getByRole('button', { name: 'Opciones' }).click();
   await page.getByRole('button', { name: /Compartir enlace/ }).click();
   const url = await page.waitForFunction(() => (window as unknown as { shared?: ShareData }).shared?.url).then((h) => h.jsonValue() as Promise<string>);
   expect(url).toMatch(/#rutina=z[\w-]+$/);
 
   // Otra persona, sin datos, abre el enlace.
   const ctx = await browser.newContext({ ...test.info().project.use, baseURL: undefined });
+  await skipTour(ctx);
   const other = await ctx.newPage();
   await other.goto(url.replace(/^https?:\/\/[^/]+\/?/, 'http://localhost:4174/'));
   const sheet = other.getByRole('dialog', { name: 'Rutina compartida' });
   await expect(sheet).toContainText('Torso A');
   await expect(sheet).toContainText('Press de banca (barra)');
   await sheet.getByRole('button', { name: 'Guardar en mis rutinas' }).click();
-  await expect(other.locator('.card.routine', { hasText: 'Torso A' })).toBeVisible();
+  await expect(other.locator('.routine', { hasText: 'Torso A' })).toBeVisible();
   expect(other.url()).not.toContain('#rutina=');
   await ctx.close();
 });
@@ -232,7 +343,7 @@ test('editar un entreno pasado: series nuevas sin ✓ se guardan y deshacer tras
   void errors;
   await seed(page, SAMPLE);
   await tab(page, 'Historial').click();
-  await page.locator('button.card', { hasText: 'Pierna A' }).first().click();
+  await page.locator('button.hrow', { hasText: 'Pierna A' }).first().click();
   await page.getByRole('button', { name: 'Editar' }).click();
   await page.getByRole('button', { name: 'Añadir serie' }).first().click();
   const last = page.locator('.swipe .set').last();
@@ -260,4 +371,22 @@ test('reemplazar un ejercicio conserva las series hechas', async ({ page, errors
   const first = page.locator('.swipe .set').first();
   await expect(first).toHaveClass(/done/);
   await expect(first.getByLabel('Peso (kg)')).toHaveValue('90');
+});
+
+test('añadir ejercicio ocupa toda la pantalla y se puede elegir tras desplazar', async ({ page, errors }) => {
+  void errors;
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Empezar entrenamiento vacío' }).click();
+  await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
+  const dialog = page.locator('[role=dialog]');
+  const vh = await page.evaluate(() => innerHeight);
+  expect((await dialog.boundingBox())!.height).toBeGreaterThanOrEqual(vh * 0.95);
+  const listW = (await page.locator('.picker-list').boundingBox())!.width;
+  const rows = page.locator('.exrow');
+  for (let i = 0; i < 5; i++) expect(Math.abs((await rows.nth(i).boundingBox())!.width - listW)).toBeLessThanOrEqual(2);
+  await page.locator('.sheet-body').evaluate((el) => (el.scrollTop = 2500));
+  await expect(page.getByPlaceholder('Buscar ejercicio…')).toBeVisible();
+  await page.locator('.exrow', { hasText: 'Elevación de gemelos de pie' }).first().click();
+  await expect(page.getByText('Elevación de gemelos de pie').first()).toBeVisible();
+  await expect(dialog).toHaveCount(0);
 });
