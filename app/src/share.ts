@@ -56,7 +56,7 @@ export async function workoutImage(data: WorkstationData, w: Workout): Promise<B
     const pr = prs.some((p) => p.exerciseId === we.exerciseId);
     g.fillStyle = '#ffffff';
     font(36, 600);
-    g.fillText(`${we.sets.filter((s) => s.done).length} × ${(e?.name ?? we.exerciseId).slice(0, 32)}${pr ? '  🏆' : ''}`, 70, y);
+    g.fillText(`${we.sets.filter((s) => s.done).length} × ${(e?.name ?? we.exerciseId).slice(0, 32)}${pr ? '  · récord' : ''}`, 70, y);
     g.fillStyle = '#b3a59c';
     font(28);
     g.fillText(bestSetText(we, e), 70, y + 36);

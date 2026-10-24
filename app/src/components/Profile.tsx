@@ -6,8 +6,8 @@ import type { MuscleGroup } from '../../../shared/types';
 import { cap, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
-import Achievements from './Achievements';
-import { Award, FileBarChart, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
+import Achievements, { AchievementIcon } from './Achievements';
+import { Award, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { StrengthOverview } from './Strength';
 import Wrapped from './Wrapped';
@@ -91,7 +91,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
         <Stat value={all.workouts} label="entrenos" />
         <Stat value={`${Math.round(all.durationMin / 60)}h`} label="entrenando" />
         <Stat value={fmtMass(all.volume)} label="levantadas" />
-        <Stat value={`🔥${streak}`} label="sem. racha" />
+        <Stat value={streak} label="sem. racha" />
       </div>
 
       <div className="row tiles">
@@ -106,7 +106,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
       </div>
       {wrappedYear && (
         <button className="card wrapped-tile" onClick={() => setWrapped(true)}>
-          <span className="w-emoji">✨</span>
+          <Sparkles size={28} className="w-emoji" />
           <span className="grow">
             <b>Tu {wrappedYear} en Workstation</b>
             <small>Tus cifras del año, en historias para compartir</small>
@@ -124,7 +124,7 @@ export default function Profile({ onExercise }: { onExercise: (id: string) => vo
         <span className="badge-row">
           {unlocked.slice(-6).map((a) => (
             <span key={a.id} title={a.title}>
-              {a.icon}
+              <AchievementIcon name={a.icon} size={18} />
             </span>
           ))}
         </span>

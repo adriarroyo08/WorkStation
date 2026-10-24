@@ -8,7 +8,7 @@ import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { muscleRecovery, nextRoutine } from '../../../shared/planning';
 import { discardActive, finishActive, startEmpty, startWorkout, summary, useSummary } from '../controller';
 import { useStore } from '../store';
-import { BatteryCharging, CalendarCheck, ClipboardList, Compass, Flame, FolderPlus, MoreHorizontal, Play, Plus } from 'lucide-react';
+import { BatteryCharging, CalendarCheck, ClipboardList, Compass, Copy, Download, Flame, FolderPlus, Link2, MoreHorizontal, Pencil, Play, Plus, Search, Share2, Trash2, Zap } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { ProgressRing, Sheet, useScrollTop } from './ui';
 import { fmtWeight } from '../../../shared/units';
@@ -200,11 +200,11 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
       <Today />
       {!data.workouts.length && !data.routines.length && (
         <div className="card welcome">
-          <h3>👋 Bienvenido a Workstation</h3>
+          <h3>Bienvenido a Workstation</h3>
           <p className="small muted">Tres formas de empezar:</p>
           <div className="list">
             <button className="item" onClick={onExplore}>
-              <b>🔎 Elegir un programa</b>
+              <b><Search size={16} className="ico" /> Elegir un programa</b>
               <small className="muted">Full body, 5×5, PPL, Torso/Pierna…</small>
             </button>
             <button
@@ -224,11 +224,11 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                 input.click();
               }}
             >
-              <b>📥 Importar mi historial de Hevy</b>
+              <b><Download size={16} className="ico" /> Importar mi historial de Hevy</b>
               <small className="muted">Hevy → Perfil → Ajustes → Exportar entrenamientos (CSV)</small>
             </button>
             <button className="item" onClick={() => startEmpty(store)}>
-              <b>⚡ Entrenar ya</b>
+              <b><Zap size={16} className="ico" /> Entrenar ya</b>
               <small className="muted">Empieza vacío y añade ejercicios sobre la marcha</small>
             </button>
           </div>
@@ -272,7 +272,8 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                     +
                   </button>
                   <button
-                    className="ghost small"
+                    className="ghost small icon-btn"
+                    aria-label="Renombrar carpeta"
                     onClick={() => {
                       const name = prompt('Renombrar carpeta (vacío = borrar carpeta; las rutinas se conservan)', g.name);
                       if (name === null) return;
@@ -285,7 +286,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                       });
                     }}
                   >
-                    ✎
+                    <Pencil size={16} />
                   </button>
                 </>
               )}
@@ -317,11 +318,11 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
       {menu && (
         <Sheet title={menu.name} onClose={() => setMenu(null)}>
           <div className="list">
-            <button className="item" onClick={() => (onEdit(menu), setMenu(null))}>
-              ✎ Editar rutina
+            <button className="item icon-btn" onClick={() => (onEdit(menu), setMenu(null))}>
+              <Pencil size={16} /> Editar rutina
             </button>
-            <button className="item" onClick={() => (update((d) => void d.routines.push({ ...structuredClone(menu), id: uid(), name: `${menu.name} (copia)` })), setMenu(null))}>
-              ⧉ Duplicar
+            <button className="item icon-btn" onClick={() => (update((d) => void d.routines.push({ ...structuredClone(menu), id: uid(), name: `${menu.name} (copia)` })), setMenu(null))}>
+              <Copy size={16} /> Duplicar
             </button>
             <label>
               Mover a carpeta
@@ -339,7 +340,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
               </select>
             </label>
             <button
-              className="item"
+              className="item icon-btn"
               onClick={() => {
                 const txt = `${menu.name}\n${menu.exercises.map((e) => `- ${exName.get(e.exerciseId)}: ${e.sets.length}×${e.sets[0]?.reps ?? e.sets[0]?.durationSec + 's'}${e.sets[0]?.weight ? ` @ ${fmtWeight(e.sets[0].weight, { space: false })}` : ''}`).join('\n')}`;
                 if (!native.shareText(menu.name, txt))
@@ -347,20 +348,20 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                 setMenu(null);
               }}
             >
-              📤 Compartir como texto
+              <Share2 size={16} /> Compartir como texto
             </button>
             <button
-              className="item"
+              className="item icon-btn"
               disabled={!menu.exercises.length}
               onClick={() => {
                 void shareRoutineLink(menu, data.exercises);
                 setMenu(null);
               }}
             >
-              🔗 Compartir enlace (se guarda con un toque)
+              <Link2 size={16} /> Compartir enlace (se guarda con un toque)
             </button>
-            <button className="item danger" onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}>
-              🗑 Borrar rutina
+            <button className="item danger icon-btn" onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}>
+              <Trash2 size={16} /> Borrar rutina
             </button>
           </div>
         </Sheet>

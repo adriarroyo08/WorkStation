@@ -1,4 +1,4 @@
-import { Film } from 'lucide-react';
+import { Film, Pin, Search, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
@@ -40,7 +40,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
         </button>
       </div>
       <button className="card full explore" onClick={() => setCatalog(true)}>
-        🔎 <b>Explorar catálogo completo</b> <span className="muted small">870+ ejercicios con imágenes e instrucciones</span>
+        <Search size={16} className="ico" /> <b>Explorar catálogo completo</b> <span className="muted small">870+ ejercicios con imágenes e instrucciones</span>
       </button>
       {filters}
       <div className="list">
@@ -54,7 +54,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
               right={
                 pr ? (
                   <small className="muted right">
-                    🏆 {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
+                    <Trophy size={16} className="ico" /> {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
                     <br />
                     {pr.sessions} ses.
                   </small>
@@ -302,7 +302,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
             points={h.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof ExerciseSession] as number) * 10) / 10 }))}
             format={(v) => fmtMetric(m, v)}
           />
-          {e.stickyNote && <p className="sticky-note">📌 {e.stickyNote}</p>}
+          {e.stickyNote && <p className="sticky-note"><Pin size={16} className="ico" /> {e.stickyNote}</p>}
           <StrengthCard exerciseId={id} />
         </>
       )}
@@ -338,11 +338,11 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
           )}
           {!!instructions?.length && ai.baseUrl && (
             <button className="ghost" disabled={translating} onClick={translate}>
-              {translating ? 'Traduciendo…' : '🌐 Traducir al español con IA'}
+              {translating ? 'Traduciendo…' : 'Traducir al español con IA'}
             </button>
           )}
           <label>
-            📌 Nota fija (aparece cada vez que hagas este ejercicio)
+            <Pin size={16} className="ico" /> Nota fija (aparece cada vez que hagas este ejercicio)
             <textarea
               value={e.stickyNote ?? ''}
               placeholder="Ej.: asiento en posición 4, agarre medio"

@@ -38,3 +38,42 @@ test('sin degradados ni brillos de color', async ({ page, errors }) => {
   }
   expect(bad).toEqual([]);
 });
+
+const EMOJI = /\p{Extended_Pictographic}/u;
+const emojis = (page: import('@playwright/test').Page) =>
+  page.evaluate((src) => (document.body.innerText.match(new RegExp(src, 'gu')) ?? []).join(' '), EMOJI.source);
+
+test('sin emojis en la interfaz', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  const bad: string[] = [];
+  const check = async (where: string) => {
+    const found = await emojis(page);
+    if (found) bad.push(`${where}: ${found}`);
+  };
+  for (const name of ['Entrenar', 'Historial', 'Ejercicios', 'Perfil', 'Coach']) {
+    await tab(page, name).click();
+    await check(name);
+  }
+  // Hoja de Logros y Ajustes
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: /Logros/ }).click();
+  await check('Logros');
+  await page.getByRole('button', { name: /Volver/ }).click();
+  await page.getByRole('button', { name: 'Ajustes' }).click();
+  await check('Ajustes');
+  // Menú de rutina y registro de entreno en curso
+  await tab(page, 'Entrenar').click();
+  await page.getByRole('button', { name: 'Opciones' }).first().click();
+  await check('Menú de rutina');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /Empezar rutina/ }).first().click();
+  await check('Entreno en curso');
+  expect(bad).toEqual([]);
+});
+
+test('sin emojis en la bienvenida', async ({ page, errors }) => {
+  void errors;
+  await seed(page, { ...SAMPLE, workouts: [], routines: [], folders: [] });
+  expect(await emojis(page)).toBe('');
+});

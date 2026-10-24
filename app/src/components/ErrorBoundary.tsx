@@ -1,5 +1,6 @@
 import { get } from 'idb-keyval';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Wrench } from 'lucide-react';
 
 // Si algo revienta, nunca se pierden los datos: se puede descargar el backup y recargar.
 export default class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -27,7 +28,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, { 
     return (
       <section className="center" style={{ padding: 24, textAlign: 'center' }}>
         <div>
-          <div className="big-emoji">🛠️</div>
+          <Wrench size={48} className="big-emoji" />
           <h1>Algo ha fallado</h1>
           <p className="muted">Tus datos están a salvo en este dispositivo. Descarga una copia y recarga la app.</p>
           <pre className="small muted" style={{ whiteSpace: 'pre-wrap' }}>

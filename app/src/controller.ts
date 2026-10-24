@@ -84,7 +84,7 @@ export function useSessionController() {
     if (settings.vibrate) navigator.vibrate?.([300, 120, 300, 120, 300]);
     if (settings.sound) beep();
     if (document.hidden && 'Notification' in window && Notification.permission === 'granted')
-      navigator.serviceWorker?.getRegistration().then((reg) => reg?.showNotification('¡Descanso terminado!', { body: 'Siguiente serie 💪', tag: 'rest', icon: 'icon.svg' }));
+      navigator.serviceWorker?.getRegistration().then((reg) => reg?.showNotification('¡Descanso terminado!', { body: 'Siguiente serie', tag: 'rest', icon: 'icon.svg' }));
     rest.stop();
   }, [r.end, left, settings.vibrate, settings.sound]);
 

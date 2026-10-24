@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Bot, ClipboardCopy, Printer, Trophy } from 'lucide-react';
 import { chat } from '../../../shared/ai';
 import { period, periodReport, reportToText, type PeriodKind } from '../../../shared/reports';
 import { formatDuration } from '../../../shared/stats';
@@ -53,8 +54,8 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       <Back
         onClick={onBack}
         right={
-          <button className="ghost no-print" onClick={() => window.print()}>
-            🖨 PDF
+          <button className="ghost no-print icon-btn" onClick={() => window.print()}>
+            <Printer size={16} /> PDF
           </button>
         }
       />
@@ -119,7 +120,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 
       {r.prs.length > 0 && (
         <div className="card">
-          <h3>🏆 Récords batidos ({r.prs.length})</h3>
+          <h3><Trophy size={16} className="ico" /> Récords batidos ({r.prs.length})</h3>
           <PrList prs={r.prs} />
         </div>
       )}
@@ -158,7 +159,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 
       {t.workouts > 0 && (
         <div className="card">
-          <h3>🤖 Análisis del coach</h3>
+          <h3><Bot size={16} className="ico" /> Análisis del coach</h3>
           {analysis[key] ? <div className="pre small">{analysis[key]}</div> : <p className="muted small">Genera un análisis de este periodo con tu IA configurada.</p>}
           {ai.baseUrl ? (
             <button className="primary no-print" disabled={busy} onClick={analyze}>
@@ -170,10 +171,10 @@ export default function Reports({ onBack }: { onBack: () => void }) {
         </div>
       )}
       <button
-        className="ghost full no-print"
+        className="ghost full no-print icon-btn"
         onClick={() => navigator.clipboard.writeText(reportToText(r) + (analysis[key] ? `\n\nANÁLISIS:\n${analysis[key]}` : '')).then(() => alert('Informe copiado'))}
       >
-        📋 Copiar informe como texto
+        <ClipboardCopy size={16} /> Copiar informe como texto
       </button>
     </section>
   );

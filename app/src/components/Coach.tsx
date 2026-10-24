@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Save } from 'lucide-react';
 import { chat, COACH_SYSTEM_PROMPT, extractJsonBlock, type ChatMessage } from '../../../shared/ai';
 import { routineFromDraft, type RoutineDraft } from '../../../shared/data';
 import { period, periodReport, reportToText } from '../../../shared/reports';
@@ -99,13 +100,13 @@ export default function Coach({ goSettings }: { goSettings: () => void }) {
           <div key={i} className={`bubble ${m.role}`}>
             <div className="pre">{m.content.replace(/```json[\s\S]*?```/g, '').trim()}</div>
             {json?.exercises && (
-              <button className="primary" onClick={() => saveRoutines([json])}>
-                💾 Guardar rutina “{json.name}”
+              <button className="primary icon-btn" onClick={() => saveRoutines([json])}>
+                <Save size={16} /> Guardar rutina “{json.name}”
               </button>
             )}
             {Array.isArray(json?.routines) && (
-              <button className="primary" onClick={() => saveRoutines(json.routines!, json.program ?? 'Programa del coach')}>
-                💾 Guardar programa “{json.program}” ({json.routines.length} rutinas)
+              <button className="primary icon-btn" onClick={() => saveRoutines(json.routines!, json.program ?? 'Programa del coach')}>
+                <Save size={16} /> Guardar programa “{json.program}” ({json.routines.length} rutinas)
               </button>
             )}
           </div>

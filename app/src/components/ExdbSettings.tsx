@@ -21,10 +21,10 @@ export default function ExdbSettings() {
       const d = structuredClone(data);
       const n = autoLink(d.exercises, list);
       replace(d);
-      setMsg(`✅ ${list.length} ejercicios en ExerciseDB. Vinculados automáticamente: ${n} más.`);
+      setMsg(`${list.length} ejercicios en ExerciseDB. Vinculados automáticamente: ${n} más.`);
       toast.show('GIFs de ejercicios activados');
     } catch (e) {
-      setMsg(`❌ ${(e as Error).message}. Revisa la key y que estés suscrito a ExerciseDB en RapidAPI.`);
+      setMsg(`${(e as Error).message}. Revisa la key y que estés suscrito a ExerciseDB en RapidAPI.`);
     } finally {
       setBusy(false);
     }

@@ -2160,3 +2160,19 @@ pre.code {
     font-size: 11px;
   }
 }
+
+/* Iconos de línea (lucide) en línea con el texto */
+.ico {
+  vertical-align: -3px;
+  margin-right: 6px;
+  flex: none;
+}
+.item.icon-btn {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.badge-icon,
+.badge-row svg,
+.big-emoji {
+  display: inline-block;
+}

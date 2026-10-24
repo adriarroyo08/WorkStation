@@ -26,7 +26,7 @@ export default function CloudSettings() {
     try {
       await fn();
     } catch (e) {
-      setMsg(`❌ ${(e as Error).message}`);
+      setMsg(`${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -91,7 +91,7 @@ export default function CloudSettings() {
               onClick={() =>
                 run(async () => {
                   const r = await cloud.signUp(email, pw);
-                  setMsg(r === 'confirm' ? '📧 Revisa tu email para confirmar la cuenta y luego inicia sesión.' : '✅ Cuenta creada.');
+                  setMsg(r === 'confirm' ? 'Revisa tu email para confirmar la cuenta y luego inicia sesión.' : 'Cuenta creada.');
                 })
               }
             >

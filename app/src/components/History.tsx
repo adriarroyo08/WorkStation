@@ -1,4 +1,4 @@
-import { ListChecks, Timer, Weight } from 'lucide-react';
+import { Heart, ListChecks, Timer, Trophy, Weight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import { cap, fmtDate, useStore } from '../store';
@@ -88,7 +88,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                   <b>{w.name}</b>
                   <div className="muted small">{fmtDate(w.startedAt)}</div>
                 </div>
-                {prCount.get(w.id) ? <span className="pr-pill">🏆 {prCount.get(w.id)}</span> : null}
+                {prCount.get(w.id) ? <span className="pr-pill"><Trophy size={16} className="ico" /> {prCount.get(w.id)}</span> : null}
               </div>
               <div className="row small muted wstats">
                 <span className="icon-btn">
@@ -100,7 +100,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                 <span className="icon-btn">
                   <ListChecks size={14} /> {workoutSetCount(w)} series
                 </span>
-                {w.heartRate && <span>❤️ {w.heartRate.avg}</span>}
+                {w.heartRate && <span><Heart size={16} className="ico" /> {w.heartRate.avg}</span>}
               </div>
               <div className="small exsum">
                 {w.exercises.slice(0, 4).map((e, i) => (
