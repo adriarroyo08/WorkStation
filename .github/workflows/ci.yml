@@ -39,6 +39,10 @@ jobs:
         run: npm run test:coverage
       - name: Build web y MCP
         run: npm --prefix app run build && npm --prefix mcp run build
+      - name: Función MCP remota al día
+        run: |
+          npm --prefix mcp run build:edge
+          git diff --exit-code supabase/functions/mcp/index.ts || (echo "::error::supabase/functions/mcp/index.ts está desactualizado: ejecuta npm --prefix mcp run build:edge" && exit 1)
       - name: Instalar Chromium para e2e
         run: npx playwright install --with-deps chromium
       - name: Tests e2e
