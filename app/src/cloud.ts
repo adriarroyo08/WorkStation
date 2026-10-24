@@ -27,13 +27,15 @@ export interface CloudState {
   recovery: boolean;
   /** Sesión llegada por el enlace de confirmación del email (solo en la web). */
   justConfirmed: boolean;
+  /** El enlace del email llegó con error (caducado, ya usado). */
+  linkError: string | null;
 }
 
 const ENV: CloudConfig = { url: import.meta.env.VITE_SUPABASE_URL ?? '', anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '' };
 
 let cfg: CloudConfig = ENV;
 // Supabase deja los tokens en el hash del enlace del email (#access_token=…&type=signup|recovery) y supabase-js lo consume al crear el cliente.
-const authHash = typeof location === 'undefined' ? '' : /[#&]access_token=/.test(location.hash) ? location.hash : '';
+const authHash = typeof location === 'undefined' ? '' : /[#&](access_token|error)=/.test(location.hash) ? location.hash : '';
 const hashType = new URLSearchParams(authHash.slice(1)).get('type');
 /** ¿La página se abrió desde un enlace de email de Supabase? (el tour no debe taparlo) */
 export const openedFromAuthLink = !!authHash;
@@ -45,7 +47,8 @@ let state: CloudState = {
   lastSync: null,
   error: null,
   recovery: hashType === 'recovery',
-  justConfirmed: !!authHash && hashType !== 'recovery',
+  justConfirmed: /[#&]access_token=/.test(authHash) && hashType !== 'recovery',
+  linkError: /[#&]error=/.test(authHash) ? 'El enlace ha caducado o ya se usó. Vuelve a pedirlo desde la app.' : null,
 };
 const subs = new Set<() => void>();
 const emit = (p: Partial<CloudState>) => {
@@ -123,6 +126,7 @@ const ES: [RegExp, string][] = [
   [/different from the old/i, 'La nueva contraseña debe ser distinta de la anterior.'],
   [/rate limit|only request this after|too many/i, 'Demasiados intentos. Espera un momento y vuelve a probar.'],
   [/invalid email|unable to validate email/i, 'Ese email no parece válido.'],
+  [/auth session missing/i, 'El enlace ha caducado. Vuelve a pedirlo desde la app.'],
   [/failed to fetch|network/i, 'Sin conexión con el servidor. Revisa tu conexión.'],
 ];
 const friendly = (m: string) => new Error(ES.find(([re]) => re.test(m))?.[1] ?? m);
@@ -284,7 +288,7 @@ export const cloud = {
     if (error) throw friendly(error.message);
   },
   /** Cierra las pantallas de "cuenta confirmada" / "nueva contraseña". */
-  dismissLanding: () => emit({ recovery: false, justConfirmed: false }),
+  dismissLanding: () => emit({ recovery: false, justConfirmed: false, linkError: null }),
   /** ¿La configuración activa es la del build (no una propia del usuario)? */
   builtIn: () => !!ENV.url && cfg.url === ENV.url && cfg.anonKey === ENV.anonKey,
   async signOut() {

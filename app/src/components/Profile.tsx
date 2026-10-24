@@ -26,6 +26,7 @@ const METRICS: Record<Metric, string> = { workouts: 'Entrenos', durationMin: 'Du
 export default function Profile({ onExercise, signUp = false }: { onExercise: (id: string) => void; signUp?: boolean }) {
   const { data, settings, setSettings } = useStore();
   const [view, setView] = useState<'home' | 'reports' | 'measures' | 'settings' | 'achievements' | 'coach' | 'email'>(signUp ? 'email' : 'home');
+  const [signUpMode, setSignUpMode] = useState(signUp); // solo la primera vez (viene del tour)
   const [settingsFromCoach, setSettingsFromCoach] = useState(false);
   const [metric, setMetric] = useState<Metric>('workouts');
   const [muscleRange, setMuscleRange] = useState<30 | 90 | 365>(30);
@@ -64,7 +65,13 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
   const wrappedYear = trainedIn(thisYear) ? thisYear : trainedIn(thisYear - 1) ? thisYear - 1 : undefined;
 
   const backHome = () => setView('home');
-  if (view === 'email') return <EmailAuth onBack={backHome} signUp={signUp} />;
+  if (view === 'email') return <EmailAuth
+        onBack={() => {
+          setSignUpMode(false);
+          backHome();
+        }}
+        signUp={signUpMode}
+      />;
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;

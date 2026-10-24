@@ -1,6 +1,6 @@
 // Cuenta: tarjeta de Perfil, pantalla de email (entrar / crear cuenta / recuperar) y diálogo al cambiar de cuenta.
 import { Mail, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { cloud, setAccountSwitchPrompt, useCloud } from '../cloud';
 import { toast } from '../toast';
 import { Back } from './ui';
@@ -191,17 +191,26 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
   );
 }
 
-/** Diálogo propio cuando entra una cuenta distinta a la anterior del dispositivo (sustituye al confirm() nativo). Se monta una vez en App. */
+// La pregunta vive fuera del componente: si el árbol cambia mientras está pendiente (tour, enlace del email), al volver a montarse se muestra de nuevo.
+type Ask = { email: string | null; done: (r: 'fresh' | 'merge') => void };
+let pendingAsk: Ask | null = null;
+const askSubs = new Set<() => void>();
+const setAsk = (a: Ask | null) => {
+  pendingAsk = a;
+  askSubs.forEach((f) => f());
+};
+setAccountSwitchPrompt((email) => new Promise((done) => setAsk({ email, done })));
+
+/** Diálogo propio cuando entra una cuenta distinta a la anterior del dispositivo (sustituye al confirm() nativo). Se monta una vez en App, por encima de todo. */
 export function AccountSwitchDialog() {
-  const [ask, setAsk] = useState<{ email: string | null; done: (r: 'fresh' | 'merge') => void } | null>(null);
-  useEffect(() => {
-    setAccountSwitchPrompt((email) => new Promise((done) => setAsk({ email, done })));
-    return () => setAccountSwitchPrompt(async () => 'merge');
-  }, []);
+  const ask = useSyncExternalStore(
+    (f) => (askSubs.add(f), () => askSubs.delete(f)),
+    () => pendingAsk,
+  );
   if (!ask) return null;
   const pick = (r: 'fresh' | 'merge') => {
-    ask.done(r);
     setAsk(null);
+    ask.done(r);
   };
   return (
     <div className="modal">

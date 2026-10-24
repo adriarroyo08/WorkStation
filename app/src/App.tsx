@@ -38,6 +38,15 @@ const TABS = [
 export type TabId = (typeof TABS)[number]['id'];
 
 export default function App() {
+  return (
+    <>
+      <AccountSwitchDialog />
+      <AppBody />
+    </>
+  );
+}
+
+function AppBody() {
   const { active, data } = useStore();
   const [tour, setTour] = useState(() =>
     !openedFromAuthLink && // quien confirma su email en un dispositivo nuevo ve su pantalla, no el tour
@@ -51,7 +60,7 @@ export default function App() {
   }, []);
   useSessionController();
   useCloudSync();
-  const { recovery, justConfirmed } = useCloud();
+  const { recovery, justConfirmed, linkError } = useCloud();
   const [tab, setTab] = useState<TabId>('train');
   // "Crear cuenta" del tour abre Perfil directamente en el registro.
   const [signUp, setSignUp] = useState(false);
@@ -78,18 +87,12 @@ export default function App() {
     if (!overlayExercise) window.scrollTo({ top: savedScroll.current, behavior: 'instant' as ScrollBehavior });
   }, [overlayExercise]);
 
-  if (recovery || justConfirmed) return <AuthLanding />;
+  if (recovery || justConfirmed || linkError) return <AuthLanding />;
   if (tour)
-    return (
-      <>
-        <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />
-        <AccountSwitchDialog />
-      </>
-    );
+    return <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />;
 
   return (
     <div className="app">
-      <AccountSwitchDialog />
       <main>
         <Suspense fallback={<Skeleton />}>
           {overlayExercise ? (

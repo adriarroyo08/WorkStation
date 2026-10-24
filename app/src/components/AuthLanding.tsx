@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { cloud, useCloud } from '../cloud';
 
 export default function AuthLanding() {
-  const { recovery } = useCloud();
+  const { recovery: rec, linkError } = useCloud();
+  const recovery = rec && !linkError;
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -43,8 +44,8 @@ export default function AuthLanding() {
         </form>
       ) : (
         <>
-          <h1>{recovery ? 'Contraseña actualizada' : 'Cuenta confirmada'}</h1>
-          <p className="muted">{recovery ? 'Ya puedes usarla en la app.' : 'Vuelve a la app e inicia sesión.'}</p>
+          <h1>{linkError ? 'Enlace no válido' : recovery ? 'Contraseña actualizada' : 'Cuenta confirmada'}</h1>
+          <p className={linkError ? 'error' : 'muted'}>{linkError ?? (recovery ? 'Ya puedes usarla en la app.' : 'Vuelve a la app e inicia sesión.')}</p>
           <button className="primary full" onClick={cloud.dismissLanding}>
             Continuar en la web
           </button>

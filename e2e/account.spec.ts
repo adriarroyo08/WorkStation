@@ -1,6 +1,6 @@
 // Cuenta con email en Perfil: tarjeta, registro, recuperación, cambio de cuenta y pantallas de los enlaces del email.
 import type { Page, Route } from '@playwright/test';
-import { expect, tab, test } from './fixtures';
+import { SAMPLE, expect, seed, tab, test } from './fixtures';
 
 const URL_ = 'https://fake-project.supabase.co';
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -32,21 +32,22 @@ class Mock {
 }
 
 // Deja la app apuntando al Supabase simulado (como si fuera el integrado en el build).
-async function configure(page: Page) {
+async function configure(page: Page, extra: Record<string, unknown> = {}) {
   await page.goto('/');
   await page.evaluate(
-    (cfg) =>
+    ({ cfg, extra }) =>
       new Promise<void>((resolve, reject) => {
         const open = indexedDB.open('keyval-store');
         open.onupgradeneeded = () => open.result.createObjectStore('keyval');
         open.onsuccess = () => {
           const tx = open.result.transaction('keyval', 'readwrite');
           tx.objectStore('keyval').put(cfg, 'cloud-config');
+          for (const [k, v] of Object.entries(extra)) tx.objectStore('keyval').put(v, k);
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         };
       }),
-    { url: URL_, anonKey: 'anon-key' },
+    { cfg: { url: URL_, anonKey: 'anon-key' }, extra },
   );
   await page.reload();
 }
@@ -126,6 +127,24 @@ test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', a
   expect(native).toBe(0);
 });
 
+test('"Subir también estos datos" sube lo de este dispositivo a la cuenta nueva', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  await mock.attach(page);
+  await seed(page, SAMPLE);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+  await toEmail(page);
+  const posts = () => mock.calls.filter((c) => c.path === '/rest/v1/records' && c.method === 'POST').length;
+  const before = posts();
+  await page.getByLabel('Email').fill('bea@example.com');
+  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
+  await page.getByRole('button', { name: 'Subir también estos datos' }).click();
+  await expect.poll(posts).toBeGreaterThan(before);
+});
+
 test.describe('enlaces del email', () => {
   test.use({ onboarded: false });
   const tokens = (type: string) => `#access_token=${jwt('user-ana')}&expires_in=3600&refresh_token=r&token_type=bearer&type=${type}`;
@@ -153,6 +172,26 @@ test.describe('enlaces del email', () => {
     await page.reload(); // la misma página con otro hash no recarga la app
     await expect(page.getByRole('heading', { name: 'Cuenta confirmada' })).toBeVisible();
     await expect(page.getByText('Vuelve a la app e inicia sesión.')).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Bienvenida' })).toHaveCount(0);
+  });
+
+  test('confirmación con otra cuenta anterior: sale la pregunta propia', async ({ page, errors }) => {
+    void errors;
+    await new Mock().attach(page);
+    await configure(page, { 'cloud-last-user': 'user-otra' });
+    await page.goto(`/${tokens('signup')}`);
+    await page.reload();
+    await expect(page.getByRole('dialog', { name: 'Has entrado con otra cuenta' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cuenta confirmada' })).toBeVisible();
+  });
+
+  test('enlace caducado: mensaje en español', async ({ page, errors }) => {
+    void errors;
+    await new Mock().attach(page);
+    await configure(page);
+    await page.goto('/#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired');
+    await page.reload();
+    await expect(page.getByText('El enlace ha caducado o ya se usó. Vuelve a pedirlo desde la app.')).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Bienvenida' })).toHaveCount(0);
   });
 });
