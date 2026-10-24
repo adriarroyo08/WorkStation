@@ -42,11 +42,11 @@ import androidx.wear.compose.material.Colors
 import kotlinx.coroutines.delay
 import org.json.JSONObject
 
-private val Accent = Color(0xFFFF5F1F)
-private val Ok = Color(0xFFC6F34A)
-private val Warn = Color(0xFFFFB224)
+private val Accent = Color(0xFFF2600C)
+private val Surface = Color(0xFF1F1F1F)
+private val TextMain = Color(0xFFF2F2F2)
+private val TextDim = Color(0xFF8E8E93)
 private val Danger = Color(0xFFFF4545)
-private val Purple = Color(0xFFB18CFF)
 
 @Composable
 fun WatchApp(
@@ -58,7 +58,11 @@ fun WatchApp(
     keepScreenOn: (Boolean) -> Unit,
     onActiveChanged: () -> Unit,
 ) {
-    MaterialTheme(colors = Colors(primary = Accent, secondary = Ok)) {
+    MaterialTheme(colors = Colors(
+        primary = Accent, primaryVariant = Accent, secondary = Accent, secondaryVariant = Accent,
+        background = Color.Black, surface = Surface, error = Danger,
+        onPrimary = Color.White, onSecondary = Color.White, onBackground = TextMain, onSurface = TextMain, onSurfaceVariant = TextDim,
+    )) {
         val now = rememberNow()
         val active = state?.active
         LaunchedEffect(active?.id) { onActiveChanged() }
@@ -87,9 +91,9 @@ private fun rememberNow(): Long {
 @Composable
 private fun IdleScreen(state: WatchState?, connected: Boolean, send: (JSONObject) -> Unit) {
     ScalingLazyColumn(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        item { Text("Workstation", fontWeight = FontWeight.Bold, color = Accent, fontSize = 18.sp) }
+        item { Text("Workstation", fontWeight = FontWeight.Bold, color = TextMain, fontSize = 18.sp) }
         if (!connected) {
-            item { Text("Sin conexión con el móvil", color = Warn, textAlign = TextAlign.Center, fontSize = 13.sp) }
+            item { Text("Sin conexión con el móvil", color = TextDim, textAlign = TextAlign.Center, fontSize = 13.sp) }
         }
         if (state == null) {
             item {
@@ -109,7 +113,7 @@ private fun IdleScreen(state: WatchState?, connected: Boolean, send: (JSONObject
                     colors = ChipDefaults.primaryChipColors(),
                 )
             }
-            if (state.routines.isNotEmpty()) item { Text("Rutinas", fontSize = 12.sp, color = Color.Gray) }
+            if (state.routines.isNotEmpty()) item { Text("Rutinas", fontSize = 12.sp, color = TextDim) }
             state.routines.forEach { r ->
                 item {
                     Chip(
@@ -133,7 +137,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
         }
         return
     }
-    // Serie seleccionada: por defecto la siguiente pendiente; se puede navegar con ◀ ▶.
+    // Serie seleccionada: por defecto la siguiente pendiente; se puede navegar con los botones laterales.
     val flat = remember(a) { a.exercises.flatMapIndexed { ei, e -> e.sets.indices.map { si -> Cursor(ei, si) } } }
     var idx by remember(a.cursor, a.id) { mutableStateOf(a.cursor?.let { c -> flat.indexOf(c).coerceAtLeast(0) } ?: (flat.size - 1)) }
     val cur = flat.getOrNull(idx) ?: return
@@ -158,7 +162,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
             Text(
                 ex.name,
                 fontWeight = FontWeight.Bold,
-                color = if (ex.superset) Purple else Accent,
+                color = TextMain,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -169,11 +173,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
             Text(
                 (if (ex.superset) "Superserie · " else "") + typeLabel + if (set.done) " ✓" else "",
                 fontSize = 12.sp,
-                color = when {
-                    set.done -> Ok
-                    set.type == "warmup" -> Warn
-                    else -> Color.LightGray
-                },
+                color = if (set.done) Accent else TextDim,
             )
         }
         if (usesWeight) {
@@ -190,27 +190,27 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
             else Stepper(value = "${reps ?: 0} reps", onMinus = { reps = ((reps ?: 0) - 1).coerceAtLeast(0) }, onPlus = { reps = (reps ?: 0) + 1 })
         }
         if (set.prevWeight != null || set.prevReps != null) {
-            item { Text("Anterior: ${formatWeight(set.prevWeight)} × ${set.prevReps ?: "–"}", fontSize = 11.sp, color = Color.Gray) }
+            item { Text("Anterior: ${formatWeight(set.prevWeight)} × ${set.prevReps ?: "–"}", fontSize = 11.sp, color = TextDim) }
         }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CompactButton(onClick = { if (idx > 0) idx-- }, enabled = idx > 0, colors = ButtonDefaults.secondaryButtonColors()) { Text("◀") }
+                CompactButton(onClick = { if (idx > 0) idx-- }, enabled = idx > 0, colors = ButtonDefaults.secondaryButtonColors()) { Text("‹", fontSize = 20.sp) }
                 Button(
                     modifier = Modifier.size(ButtonDefaults.LargeButtonSize),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = if (set.done) Color.DarkGray else Ok, contentColor = if (set.done) Color.White else Color(0xFF141A05)),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = if (set.done) Surface else Accent, contentColor = Color.White),
                     onClick = {
                         if (set.done) send(Cmd.uncompleteSet(a.id, ex.name, cur.ei, cur.si))
                         else send(Cmd.completeSet(a.id, ex.name, cur.ei, cur.si, if (usesWeight) weight else null, if (isTime) null else reps, if (isTime) secs else null))
                     },
                 ) { Text(if (set.done) "↺" else "✓", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
-                CompactButton(onClick = { if (idx < flat.size - 1) idx++ }, enabled = idx < flat.size - 1, colors = ButtonDefaults.secondaryButtonColors()) { Text("▶") }
+                CompactButton(onClick = { if (idx < flat.size - 1) idx++ }, enabled = idx < flat.size - 1, colors = ButtonDefaults.secondaryButtonColors()) { Text("›", fontSize = 20.sp) }
             }
         }
         item {
             Text(
-                "⏱ ${clock((now - a.startedAt) / 1000)}  ·  ${a.setsDone}/${a.setsTotal}" + (bpm?.let { "  ·  ♥ $it" } ?: ""),
+                clock((now - a.startedAt) / 1000) + "  ·  ${a.setsDone}/${a.setsTotal}" + (bpm?.let { "  ·  $it ppm" } ?: ""),
                 fontSize = 12.sp,
-                color = Color.LightGray,
+                color = TextDim,
             )
         }
         item { Spacer(Modifier.height(4.dp)) }
@@ -221,7 +221,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
                     if (confirmFinish) send(Cmd.finish()) else confirmFinish = true
                 },
                 label = { Text(if (confirmFinish) "Toca otra vez para guardar" else "Terminar entreno") },
-                colors = ChipDefaults.chipColors(backgroundColor = if (confirmFinish) Danger else Color(0xFF262A33)),
+                colors = ChipDefaults.chipColors(backgroundColor = if (confirmFinish) Danger else Surface, contentColor = if (confirmFinish) Color.White else TextMain),
             )
         }
     }
@@ -260,9 +260,10 @@ private fun RestScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Un
             modifier = Modifier.fillMaxSize().padding(2.dp),
             strokeWidth = 6.dp,
             indicatorColor = Accent,
+            trackColor = Surface,
         )
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(18.dp)) {
-            Text("Descanso", fontSize = 12.sp, color = Color.LightGray)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+            Text("Descanso", fontSize = 12.sp, color = TextDim)
             Text(clock(left), fontSize = 40.sp, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 CompactButton(onClick = { send(Cmd.restAdd(-15)) }, colors = ButtonDefaults.secondaryButtonColors()) { Text("-15") }
@@ -274,13 +275,13 @@ private fun RestScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Un
                 Text(
                     "Siguiente: ${e.name}" + (s?.let { " · ${formatWeight(it.weight ?: it.prevWeight)}×${it.reps ?: it.prevReps ?: "–"}" } ?: ""),
                     fontSize = 11.sp,
-                    color = Color.Gray,
+                    color = TextDim,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            bpm?.let { Text("♥ $it", fontSize = 12.sp, color = Danger) }
+            bpm?.let { Text("$it ppm", fontSize = 12.sp, color = TextDim) }
         }
     }
 }
