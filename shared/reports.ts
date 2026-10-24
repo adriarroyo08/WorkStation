@@ -134,9 +134,8 @@ export function periodReport(data: WorkstationData, p: Period): PeriodReport {
   let weeks = 0,
     weeksMet = 0;
   for (let s = startOfWeek(p.start, mondayFirst); s < p.end && s.getTime() <= Date.now(); s.setDate(s.getDate() + 7)) {
-    const e = new Date(s.getTime() + 7 * 864e5);
     weeks++;
-    if (data.workouts.filter((w) => Date.parse(w.startedAt) >= s.getTime() && Date.parse(w.startedAt) < e.getTime()).length >= target) weeksMet++;
+    if ((weekCounts(data, mondayFirst).get(s.getTime()) ?? 0) >= target) weeksMet++;
   }
 
   return { period: p, totals: totals(ws), previous: totals(prevWs), workouts: ws, prs, muscles, topExercises, byDay, goal: { target, weeksMet, weeks } };
@@ -152,15 +151,31 @@ export function weeklySeries(data: WorkstationData, weeks = 12, mondayFirst = tr
   return out;
 }
 
+// Entrenos por semana (clave: inicio de semana en ms). Se calcula una vez por versión de los datos:
+// la racha y el objetivo semanal la consultan en O(1) en vez de recorrer todos los entrenos por semana.
+const weekCache = new WeakMap<object, { len: number; mondayFirst: boolean; counts: Map<number, number> }>();
+export function weekCounts(data: WorkstationData, mondayFirst = true): Map<number, number> {
+  const c = weekCache.get(data.workouts);
+  if (c && c.len === data.workouts.length && c.mondayFirst === mondayFirst) return c.counts;
+  const counts = new Map<number, number>();
+  for (const w of data.workouts) {
+    const k = startOfWeek(new Date(w.startedAt), mondayFirst).getTime();
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  weekCache.set(data.workouts, { len: data.workouts.length, mondayFirst, counts });
+  return counts;
+}
+
 // Racha: semanas consecutivas (hasta la actual) con al menos un entrenamiento.
 // La semana en curso no rompe la racha si todavía no has entrenado.
 export function weekStreak(data: WorkstationData, mondayFirst = true, now = new Date()): number {
+  const counts = weekCounts(data, mondayFirst);
+  const week = startOfWeek(now, mondayFirst);
   let streak = 0;
   for (let i = 0; i < 520; i++) {
-    const p = period('week', -i, mondayFirst, now);
-    const n = data.workouts.filter((w) => inPeriod(w, p)).length;
-    if (n > 0) streak++;
+    if (counts.get(week.getTime())) streak++;
     else if (i > 0) break;
+    week.setDate(week.getDate() - 7);
   }
   return streak;
 }
