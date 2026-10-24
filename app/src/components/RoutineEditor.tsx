@@ -51,7 +51,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
         }
       />
       <input className="title" value={r.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} placeholder="Nombre de la rutina" />
-      <textarea placeholder="Notas de la rutina" value={r.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
+      <textarea className="notes" rows={1} placeholder="Notas de la rutina" value={r.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
       {data.folders.length > 0 && (
         <label>
           Carpeta

@@ -99,3 +99,78 @@ for (const scheme of ['dark', 'light'] as const)
     await page.waitForTimeout(600);
     await overflow(page, p('17-routine-editor'));
   });
+
+// Pantallas secundarias: Explorar, menús, compartir, Wrapped, claves API, copias, Novedades y temporizador de descanso.
+for (const scheme of ['dark', 'light'] as const)
+  test(`pantallas secundarias a 360 px en modo ${scheme}`, async ({ page, errors }) => {
+    void errors;
+    test.setTimeout(120000);
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await page.addInitScript(() => {
+      (navigator as unknown as { share: (d: ShareData) => Promise<void> }).share = async (d) => void ((window as unknown as { shared: ShareData }).shared = d);
+    });
+    await seed(page, SAMPLE);
+    await page.waitForTimeout(600);
+    const p = (n: string) => `${scheme}-${n}`;
+    const shot = async (n: string) => process.env.SHOTS && (await page.screenshot({ path: `${process.env.SHOTS}/${p(n)}.png` }));
+    // Menú de rutina (filas .item)
+    await page.locator('.routine', { hasText: 'Torso A' }).getByRole('button', { name: 'Opciones' }).click();
+    await page.waitForTimeout(300);
+    await overflow(page, p('20-routine-menu'));
+    await shot('20v-routine-menu');
+    await page.getByRole('button', { name: /Compartir enlace/ }).click();
+    const url = await page.waitForFunction(() => (window as unknown as { shared?: ShareData }).shared?.url).then((h) => h.jsonValue() as Promise<string>);
+    await page.goto(url.replace(/^https?:\/\/[^/]+\/?/, '/'));
+    await page.waitForTimeout(600);
+    await overflow(page, p('21-shared-routine'));
+    await page.getByRole('button', { name: 'Guardar en mis rutinas' }).click();
+    // Explorar programas
+    await page
+      .getByRole('button', { name: /Explorar/ })
+      .first()
+      .click();
+    await page.waitForTimeout(600);
+    await overflow(page, p('22-explore'));
+    await page.getByRole('button', { name: 'Volver' }).first().click();
+    // Wrapped
+    await tab(page, 'Perfil').click();
+    await page.getByRole('button', { name: /Tu \d{4} en Workstation/ }).click();
+    await page.waitForTimeout(700);
+    await overflow(page, p('23-wrapped'));
+    await page
+      .getByRole('button', { name: /Cerrar/ })
+      .first()
+      .click();
+    // Ajustes: claves API, copias y Novedades
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    await page.waitForTimeout(500);
+    await page.addStyleTag({ content: '.toast{display:none!important}' });
+    await page.getByRole('heading', { name: /Acceso para IA/ }).evaluate((el) => el.scrollIntoView());
+    await page.waitForTimeout(400);
+    await shot('24-apikeys');
+    await page.getByRole('heading', { name: 'Datos', exact: true }).evaluate((el) => el.scrollIntoView());
+    await page.waitForTimeout(400);
+    await shot('25-datos-copias');
+    await page.getByRole('heading', { name: /Copias automáticas/ }).evaluate((el) => el.scrollIntoView());
+    await page.waitForTimeout(400);
+    await shot('25b-copias');
+    await page.getByRole('button', { name: /Novedades/ }).click();
+    await page.waitForTimeout(500);
+    await overflow(page, p('26-novedades-todas'));
+    await page.keyboard.press('Escape');
+    // Novedades tras actualizar
+    await page.evaluate(() => localStorage.setItem('ws:seenVersion', '1.2.0'));
+    await page.reload();
+    await page.waitForTimeout(800);
+    await overflow(page, p('27-novedades-update'));
+    await page.getByRole('button', { name: '¡Genial!' }).click();
+    // Temporizador de descanso (solo ventana visible)
+    await tab(page, 'Entrenar').click();
+    await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+    const row = page.locator('.swipe .set').first();
+    await row.getByLabel('Peso (kg)').fill('100');
+    await row.getByLabel('Repeticiones').fill('5');
+    await row.getByLabel('Completar serie').click();
+    await page.waitForTimeout(400);
+    await shot('28-rest-viewport');
+  });

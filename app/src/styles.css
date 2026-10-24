@@ -30,8 +30,8 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
     --bg: #ffffff;
-      --surface: #f4f4f6;
-      --field: #ececec;
+    --surface: #f4f4f6;
+    --field: #ececec;
     --line: #ececec;
     --line-strong: #dcdce0;
     --text: #111111;
@@ -272,7 +272,7 @@ button.card {
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 12px 14px;
   margin: 10px 0;
 }
@@ -320,7 +320,7 @@ button.card {
 .stat {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -497,7 +497,7 @@ button.card {
   display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   z-index: 11;
   font-variant-numeric: tabular-nums;
 }
@@ -719,7 +719,7 @@ button.card {
   margin: 0 auto;
   background: var(--accent-fill);
   color: var(--on-accent);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 10px 14px;
   display: flex;
   gap: 8px;
@@ -872,7 +872,7 @@ button.card {
   height: auto;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 .chart .axis,
 .chart .grid {
@@ -905,7 +905,7 @@ button.card {
   padding: 20px;
   text-align: center;
   background: var(--surface);
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 .bars {
   display: flex;
@@ -1126,7 +1126,7 @@ button.card {
 
 /* Coach */
 .bubble {
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 10px 12px;
   margin: 8px 0;
   max-width: 92%;
@@ -1279,7 +1279,7 @@ button.card {
 .badge {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -1623,7 +1623,7 @@ main > div > section {
   }
 }
 .tile-ico {
-  color: var(--accent-ink);
+  color: var(--muted);
   margin-bottom: 4px;
 }
 .tile-ico.inline {
@@ -1956,26 +1956,6 @@ pre.code {
   font-size: 12px;
   opacity: 0.7;
 }
-.card.wrapped-tile {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-align: left;
-  color: #fff;
-  background: var(--accent-fill);
-  border: 0;
-}
-.wrapped-tile b {
-  font-size: 18px;
-}
-.wrapped-tile small {
-  display: block;
-  opacity: 1;
-}
-.wrapped-tile .w-emoji {
-  font-size: 30px;
-}
 @media (prefers-reduced-motion: reduce) {
   .w-slide > * {
     animation: none;
@@ -2025,8 +2005,9 @@ pre.code {
   padding: 6px 0;
   border-top: 1px solid var(--line);
 }
+.backup-row b,
 .backup-row small {
-  white-space: nowrap;
+  display: block;
 }
 
 /* Reordenar arrastrando */
@@ -2084,7 +2065,7 @@ pre.code {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-lg);
@@ -2348,5 +2329,11 @@ button.outline {
   vertical-align: -5px;
 }
 button.ghost:has(> svg:only-child) {
+  color: var(--muted);
+}
+.topbar button.ghost {
+  color: var(--text);
+}
+.sheet-head .ghost {
   color: var(--muted);
 }

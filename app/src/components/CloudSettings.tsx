@@ -89,7 +89,7 @@ export default function CloudSettings() {
             </button>
             <button
               type="button"
-              className="ghost"
+              className="outline"
               disabled={busy || !email || pw.length < 6}
               onClick={() =>
                 run(async () => {
@@ -118,7 +118,7 @@ export default function CloudSettings() {
             <button className="primary" disabled={busy || st.status === 'syncing'} onClick={() => run(async () => (await cloud.syncNow(), toast.show('Sincronizado')))}>
               Sincronizar ahora
             </button>
-            <button className="ghost" onClick={() => run(() => cloud.signOut())}>
+            <button className="outline" onClick={() => run(() => cloud.signOut())}>
               Cerrar sesión
             </button>
           </div>

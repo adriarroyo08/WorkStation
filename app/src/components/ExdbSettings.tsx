@@ -67,7 +67,7 @@ export default function ExdbSettings() {
           {busy ? 'Vinculando…' : 'Guardar y vincular ejercicios'}
         </button>
         {cfg.key && (
-          <button className="ghost" onClick={() => (exdb.set({ key: '' }), setKey(''), setMsg('Key eliminada.'))}>
+          <button className="outline" onClick={() => (exdb.set({ key: '' }), setKey(''), setMsg('Key eliminada.'))}>
             Quitar key
           </button>
         )}

@@ -257,7 +257,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           <button className="primary" onClick={() => (setAi(cfg), setTest('Guardado'))}>
             Guardar
           </button>
-          <button className="ghost" onClick={testAi}>
+          <button className="outline" onClick={testAi}>
             Probar conexión
           </button>
         </div>
@@ -278,11 +278,11 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         >
           Exportar backup (JSON)
         </button>
-        <button className="ghost full" onClick={exportCsv}>
+        <button className="outline full" onClick={exportCsv}>
           Exportar entrenamientos (CSV, formato compatible con Hevy)
         </button>
         <button
-          className="ghost full"
+          className="outline full"
           onClick={() =>
             readFile('.json,application/json', async (t) => {
               try {
@@ -298,7 +298,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           Importar backup / fichero del MCP (JSON)
         </button>
         <button
-          className="ghost full"
+          className="outline full"
           onClick={() =>
             readFile('.csv,text/csv', async (t) => {
               await snapshot(data, 'antes de importar');
