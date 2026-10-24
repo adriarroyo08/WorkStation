@@ -7,6 +7,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.2.0',
+    date: '2026-10-25',
+    items: [
+      'Revisión a fondo: corregidos más de 25 fallos, entre ellos varios que podían perder series al editar, reemplazar o deshacer.',
+      'Sincronización más segura: un móvil que estuvo sin conexión ya no pisa cambios más recientes, y entrar con otra cuenta no mezcla datos.',
+      'Los ejercicios asistidos ya no cuentan la ayuda como peso levantado; importación de Hevy sin duplicados y con fechas en español.',
+      'El reloj ignora toques sobre series que cambiaron en el móvil.',
+    ],
+  },
+  {
     version: '1.1.0',
     date: '2026-10-25',
     items: [

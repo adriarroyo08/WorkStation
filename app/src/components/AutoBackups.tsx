@@ -4,6 +4,7 @@ import { History } from 'lucide-react';
 import type { BackupMeta } from '../../../shared/backups';
 import { listBackups, loadBackup, snapshot } from '../backups';
 import { downloadFile, useStore } from '../store';
+import { cloud } from '../cloud';
 import { toast } from '../toast';
 
 const fmt = (iso: string) => new Date(iso).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -16,7 +17,8 @@ export default function AutoBackups() {
   useEffect(refresh, [data]);
 
   const restore = async (b: BackupMeta) => {
-    if (!confirm(`¿Restaurar la copia del ${fmt(b.at)}? (${b.workouts} entrenamientos). Antes se guarda una copia del estado actual.`)) return;
+    const synced = cloud.signedIn() ? '\n\nTienes la sincronización activa: tus otros dispositivos también volverán a este estado (lo que añadiste después se borrará también allí).' : '';
+    if (!confirm(`¿Restaurar la copia del ${fmt(b.at)}? (${b.workouts} entrenamientos). Antes se guarda una copia del estado actual.${synced}`)) return;
     const d = await loadBackup(b.id);
     if (!d) return alert('No se encontró la copia.');
     await snapshot(data, 'antes de restaurar');

@@ -84,3 +84,33 @@ describe('MCP por HTTP', () => {
     expect((await handler(new Request('https://fn/mcp', { method: 'POST', body: '{}' }))).status).toBe(401);
   });
 });
+
+describe('auditoría del servidor MCP remoto', () => {
+  it('pagina la lectura y rechaza peticiones JSON-RPC rotas', async () => {
+    const rows = Array.from({ length: 1500 }, (_, i) => ({
+      collection: 'workouts',
+      id: `w${i}`,
+      doc: { id: `w${i}`, name: `E${i}`, startedAt: '2026-10-01T10:00:00Z', exercises: [] },
+      deleted: false,
+      client_updated_at: '2026-10-01T10:00:00Z',
+      updated_at: `2026-10-01T10:00:00.${String(i).padStart(6, '0')}+00:00`,
+    }));
+    const calls: unknown[] = [];
+    const f = (async (_url: string, init: RequestInit) => {
+      const b = JSON.parse(String(init.body));
+      calls.push(b.p_since ?? null);
+      const from = b.p_since ? rows.findIndex((r) => r.updated_at === b.p_since) + 1 : 0;
+      return new Response(JSON.stringify(rows.slice(from, from + 1000)));
+    }) as unknown as typeof fetch;
+    const data = await cloudSource({ url: 'u', anonKey: 'a', apiKey: 'ws_ok', fetch: f }).load();
+    expect(data.workouts).toHaveLength(1500);
+    expect(calls).toEqual([null, rows[999].updated_at]);
+
+    const src = { label: 'x', load: async () => emptyData(), save: async () => {} };
+    const post = (body: string) => handleMcp(new Request('http://x/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body }), () => src);
+    expect((await post('null')).status).toBe(400);
+    const batch = await (await post('[null, {"jsonrpc":"2.0","id":1,"method":"ping"}]')).json();
+    expect(batch).toHaveLength(2);
+    expect(batch[0].error.code).toBe(-32600);
+  });
+});

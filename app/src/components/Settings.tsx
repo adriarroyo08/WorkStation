@@ -6,6 +6,7 @@ import { clock, downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
 import ApiKeys from './ApiKeys';
 import AutoBackups from './AutoBackups';
+import { cloud } from '../cloud';
 import { AllReleasesSheet, APP_VERSION } from './WhatsNew';
 import { Sparkles } from 'lucide-react';
 import { snapshot } from '../backups';
@@ -295,7 +296,8 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <button
           className="danger full"
           onClick={async () => {
-            if (!confirm('¿Borrar TODOS los datos? Se guardará antes una copia automática en este dispositivo.') || !confirm('¿Seguro?')) return;
+            const synced = cloud.signedIn() ? ' Tienes la sincronización activa: se borrarán también de la nube y de tus otros dispositivos.' : '';
+            if (!confirm(`¿Borrar TODOS los datos? Se guardará antes una copia automática en este dispositivo.${synced}`) || !confirm('¿Seguro?')) return;
             await snapshot(data, 'antes de borrar');
             replace(emptyData());
           }}

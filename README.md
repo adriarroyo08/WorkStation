@@ -1,6 +1,6 @@
 # Workstation 🏋️
 
-[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.1.0-ff5f1f)
+[![CI](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/ci.yml) [![Android](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml/badge.svg)](https://github.com/adriarroyo08/WorkStation/actions/workflows/android.yml) ![Versión](https://img.shields.io/badge/versi%C3%B3n-1.2.0-ff5f1f)
 
 App personal de entrenamiento de fuerza (estilo Hevy) con **coach IA gratuito** y **servidor MCP**.
 Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus datos de Hevy mediante su exportación CSV o su API pública oficial.
@@ -82,6 +82,7 @@ Sin cuenta, todo se guarda solo en tu dispositivo. Con Supabase (plan gratuito) 
 
 1. Crea un proyecto en https://supabase.com.
 2. En **SQL Editor**, pega y ejecuta `supabase/migrations/001_records.sql`. Crea la tabla `records`, con seguridad por usuario (RLS) y tiempo real.
+   Después ejecuta también `supabase/migrations/003_sync_hardening.sql` (tras la 002 si usas API keys): hace que en el servidor gane siempre el cambio más reciente aunque llegue tarde desde un dispositivo que estuvo sin conexión. **Si ya tenías la sincronización montada, ejecútala ahora.**
 3. En **Project Settings → API**, copia la *Project URL* y la *anon public key*.
 4. En la app, ve a *Perfil → Ajustes → ☁️ Cuenta y sincronización*, pega los dos valores, crea tu cuenta e inicia sesión. Supabase te enviará un email de confirmación; puedes desactivarlo en *Authentication → Providers → Email*.
 
@@ -90,6 +91,8 @@ Cómo funciona:
 - Si dos dispositivos cambian lo mismo, gana el cambio más reciente.
 - Sin conexión, los cambios esperan en cola y se suben al volver la red. El resto de dispositivos se actualiza en tiempo real.
 - No se sincronizan el entreno en curso, las API keys ni las fotos de progreso.
+- Si en un dispositivo entras con otra cuenta, la app pregunta antes de mezclar datos (y guarda una copia local).
+- Las migraciones SQL tienen tests sobre Postgres real (PGlite): `supabase/migrations.test.ts`.
 - La *anon key* es pública por diseño: la seguridad la ponen las políticas RLS. Si prefieres que la app ya venga configurada, puedes definirla en el build con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
 ## ⌚ Android y Wear OS

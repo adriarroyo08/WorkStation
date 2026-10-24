@@ -43,8 +43,10 @@ export default function ApiKeys() {
   const refresh = useCallback(async () => {
     if (!client) return;
     const { data, error } = await client.from('api_keys').select('id,name,key_prefix,scope,created_at,last_used_at').order('created_at', { ascending: false });
-    if (error) setErr(error.message.includes('api_keys') ? 'Falta ejecutar supabase/migrations/002_api_keys.sql en tu proyecto.' : error.message);
-    else setKeys(data as KeyRow[]);
+    // Un error sin mensaje (p. ej. 404 sin cuerpo) no debe romper la pantalla.
+    const msg = error?.message ?? (error ? 'No se pudieron cargar las API keys' : '');
+    if (error) setErr(msg.includes('api_keys') || error.code === '42P01' || error.code === 'PGRST205' ? 'Falta ejecutar supabase/migrations/002_api_keys.sql en tu proyecto.' : msg);
+    else setKeys(Array.isArray(data) ? (data as KeyRow[]) : []);
   }, [client]);
 
   useEffect(() => {

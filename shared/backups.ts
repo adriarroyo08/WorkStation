@@ -2,7 +2,7 @@
 export interface BackupMeta {
   id: string;
   at: string; // ISO
-  reason: 'diaria' | 'antes de importar' | 'antes de borrar' | 'antes de restaurar' | 'manual';
+  reason: 'diaria' | 'antes de importar' | 'antes de borrar' | 'antes de restaurar' | 'antes de cambiar de cuenta' | 'manual';
   workouts: number;
   routines: number;
 }

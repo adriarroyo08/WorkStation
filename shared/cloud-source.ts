@@ -38,8 +38,15 @@ export function cloudSource(o: CloudSourceOptions): DataSource {
     label: 'tu cuenta de Workstation (Supabase)',
     env: o.env,
     async load(): Promise<WorkstationData> {
-      const rows = (await rpc('api_records', { p_key: o.apiKey })) as SyncRecord[];
-      const data = applyRemote(emptyData(), rows ?? []).data;
+      // La API devuelve como mucho 1000 filas por llamada: se pide por páginas desde el último updated_at.
+      const rows: SyncRecord[] = [];
+      for (let since: string | undefined; ;) {
+        const page = ((await rpc('api_records', since ? { p_key: o.apiKey, p_since: since } : { p_key: o.apiKey })) ?? []) as SyncRecord[];
+        rows.push(...page);
+        if (page.length < 1000 || !page.at(-1)?.updated_at) break;
+        since = page.at(-1)!.updated_at;
+      }
+      const data = applyRemote(emptyData(), rows).data;
       base = snapshot(data);
       return data;
     },

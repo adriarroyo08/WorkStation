@@ -3,6 +3,21 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.2.0] - 2026-10-25
+
+Auditoría completa (entreno en vivo, sincronización, estadísticas e importadores).
+
+### Corregido
+- **Pérdida de datos:** reemplazar un ejercicio vaciaba sus series; las series nuevas al editar un entreno pasado se descartaban; "Deshacer" revertía cambios posteriores (y rompía la app tras guardar).
+- **Sincronización:** las escrituras de la app no respetaban "gana el más reciente" (migración `003_sync_hardening.sql` con trigger en el servidor); el cursor podía saltarse filas; entrar con otra cuenta mezclaba datos; un móvil nuevo subía ajustes de fábrica que pisaban los del principal; el MCP remoto leía como mucho 1000 filas.
+- **Estadísticas:** los ejercicios asistidos contaban la ayuda como peso (volumen, 1RM, récords); 1RM del lastre en ejercicios de peso corporal; semana anterior desplazada con el cambio de hora; la semana en curso contaba como objetivo fallido.
+- **Importación de Hevy:** fechas en español, filas ilegibles fechadas "hoy" con ids repetidos, duplicados al reimportar o entre CSV y API, exportaciones en libras.
+- **Entreno en vivo:** cronómetro al marcar ✓, descanso en superseries desiguales, descanso al desmarcar, comandos del reloj sobre series que habían cambiado, aviso de datos sin guardar.
+- Importar un backup ya no borra notas fijas ni deshace ediciones locales; discos no positivos colgaban la calculadora; API keys con errores sin mensaje rompían Ajustes.
+
+### Añadido
+- Tests de las migraciones SQL sobre Postgres real (PGlite) y e2e de sincronización entre dos dispositivos con un Supabase simulado.
+
 ## [1.1.0] - 2026-10-25
 
 ### Añadido

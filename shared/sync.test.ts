@@ -53,3 +53,28 @@ describe('sync', () => {
     expect(up.some((r) => r.id === '1')).toBe(false);
   });
 });
+
+describe('auditoría de la sincronización', () => {
+  it('la primera subida no incluye ajustes ni ejercicios de fábrica', async () => {
+    const { initialUpload: up } = await import('./sync');
+    const { emptyData: empty } = await import('./data');
+    expect(up(empty(), new Set())).toEqual([]);
+    const d = empty();
+    d.settings.weeklyGoal = 5;
+    d.exercises.find((e) => e.id === 'press-banca')!.stickyNote = 'asiento 4';
+    expect(
+      up(d, new Set())
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual(['press-banca', 'settings']);
+  });
+  it('compara fechas en distinto formato', async () => {
+    const { applyRemote: apply } = await import('./sync');
+    const { emptyData: empty } = await import('./data');
+    const d = empty();
+    d.workouts.push({ id: 'w', name: 'local', startedAt: '2026-10-01T10:00:00Z', exercises: [] });
+    const row = { collection: 'workouts' as const, id: 'w', doc: { ...d.workouts[0], name: 'remoto' }, deleted: false, client_updated_at: '2026-10-20T10:00:00.000500+00:00' };
+    expect(apply(d, [row], new Map([['workouts:w', '2026-10-20T10:00:01.000Z']])).data.workouts[0].name).toBe('local');
+    expect(apply(d, [row], new Map([['workouts:w', '2026-10-20T09:59:59.000Z']])).data.workouts[0].name).toBe('remoto');
+  });
+});

@@ -46,6 +46,7 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
   }
   const src = sourceFor(key);
   const handle = async (m: RpcRequest) => {
+    if (!m || typeof m !== 'object' || Array.isArray(m)) return rpcError(null, -32600, 'Petición JSON-RPC no válida');
     if (m.id === undefined) return null; // notificación (p. ej. notifications/initialized)
     switch (m.method) {
       case 'initialize': {
@@ -78,9 +79,15 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
     }
   };
   if (Array.isArray(body)) {
-    const out = (await Promise.all(body.map(handle))).filter(Boolean);
+    // En orden, una detrás de otra: dos escrituras a la vez partirían del mismo estado y se pisarían.
+    const out: unknown[] = [];
+    for (const m of body) {
+      const r = await handle(m);
+      if (r) out.push(r);
+    }
     return out.length ? reply(out) : new Response(null, { status: 202, headers: CORS });
   }
+  if (body === null || typeof body !== 'object') return reply(rpcError(null, -32600, 'Petición JSON-RPC no válida'), 400);
   const out = await handle(body);
   return out ? reply(out) : new Response(null, { status: 202, headers: CORS });
 }

@@ -1,6 +1,6 @@
 // Sincronización por registros: cada objeto de la app es una fila (colección + id).
 // Se envían solo los registros que cambian y, en conflicto, gana el cambio más reciente.
-import { normalizeData } from './data';
+import { emptyData, normalizeData } from './data';
 import type { WorkstationData } from './types';
 
 export const COLLECTIONS = ['workouts', 'routines', 'folders', 'exercises', 'measurements', 'settings'] as const;
@@ -53,7 +53,8 @@ export function applyRemote(data: WorkstationData, rows: SyncRecord[], pendingTs
   for (const r of rows) {
     if (!COLLECTIONS.includes(r.collection)) continue;
     const local = pendingTs.get(recordKey(r.collection, r.id));
-    if (local && local > r.client_updated_at) continue;
+    // Fechas comparadas como fechas: el servidor las devuelve como "…+00:00" con microsegundos y el cliente como "…Z".
+    if (local && Date.parse(local) > Date.parse(r.client_updated_at)) continue;
     if (r.collection === 'settings') {
       if (!r.deleted && r.doc) {
         d.settings = { ...d.settings, ...(r.doc as object) };
@@ -82,10 +83,13 @@ export function applyRemote(data: WorkstationData, rows: SyncRecord[], pendingTs
 }
 
 // Primera sincronización de un dispositivo: todo lo local que no está en remoto se sube.
+// No se suben los registros que siguen siendo los de fábrica (ajustes y ejercicios de la biblioteca sin tocar):
+// si no, un móvil recién instalado subiría valores por defecto que luego pisarían los del dispositivo principal.
 export function initialUpload(local: WorkstationData, remoteKeys: Set<string>, now = new Date(0).toISOString()): SyncRecord[] {
   const out: SyncRecord[] = [];
+  const pristine = snapshot(emptyData());
   for (const [k, json] of snapshot(local)) {
-    if (remoteKeys.has(k)) continue;
+    if (remoteKeys.has(k) || pristine.get(k) === json) continue;
     const [collection, ...rest] = k.split(':');
     // Fecha antigua: si otro dispositivo ya tenía ese registro, gana el remoto.
     out.push({ collection: collection as Collection, id: rest.join(':'), doc: JSON.parse(json), deleted: false, client_updated_at: now });

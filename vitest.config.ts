@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 // Umbrales de cobertura: el CI falla si bajan.
 export default defineConfig({
   test: {
-    include: ['shared/**/*.test.ts'],
+    include: ['shared/**/*.test.ts', 'supabase/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       include: ['shared/**/*.ts'],

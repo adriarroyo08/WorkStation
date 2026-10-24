@@ -7,6 +7,8 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { applyRemote, diff, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
 import type { WorkstationData } from '../../shared/types';
 import { useStore } from './store';
+import { emptyData } from '../../shared/data';
+import { snapshot as snapshotBackup } from './backups';
 
 export interface CloudConfig {
   url: string;
@@ -79,6 +81,20 @@ async function setup() {
 
 async function onSignedIn(uid: string, email: string | null) {
   emit({ email, status: 'syncing', error: null });
+  // Otra cuenta en este dispositivo: no mezclar sus datos con los de la anterior sin preguntar.
+  const last = await get<string>('cloud-last-user');
+  if (last && last !== uid) {
+    const fresh = confirm(
+      `Has entrado con otra cuenta (${email ?? 'nueva'}).\n\nAceptar: empezar con los datos de esa cuenta (antes se guarda una copia de los datos actuales en este dispositivo).\nCancelar: subir también los datos de este dispositivo a esa cuenta.`,
+    );
+    if (fresh) {
+      await snapshotBackup(getData(), 'antes de cambiar de cuenta');
+      pending.clear();
+      await savePending();
+      applyData(emptyData());
+    }
+  }
+  await set('cloud-last-user', uid);
   cursor = (await get<string>(`cloud-cursor:${uid}`)) ?? '1970-01-01T00:00:00Z';
   const firstTime = !(await get<boolean>(`cloud-init:${uid}`));
   try {
@@ -103,8 +119,11 @@ async function onSignedIn(uid: string, email: string | null) {
 async function pull(): Promise<Set<string>> {
   const seen = new Set<string>();
   if (!client || !userId) return seen;
+  // Se relee una pequeña ventana anterior al cursor: una transacción que empezó antes puede confirmarse después
+  // de que otra haya movido el cursor. Aplicar dos veces la misma fila no cambia nada (gana la más reciente).
+  let from = new Date(Math.max(0, Date.parse(cursor) - 60_000)).toISOString();
   for (;;) {
-    const { data, error } = await client.from('records').select('*').gt('updated_at', cursor).order('updated_at', { ascending: true }).limit(1000);
+    const { data, error } = await client.from('records').select('*').gt('updated_at', from).order('updated_at', { ascending: true }).limit(1000);
     if (error) throw new Error(error.message);
     const rows = (data ?? []) as SyncRecord[];
     if (!rows.length) break;
@@ -112,7 +131,16 @@ async function pull(): Promise<Set<string>> {
     const pendingTs = new Map([...pending].map(([k, r]) => [k, r.client_updated_at]));
     const res = applyRemote(getData(), rows, pendingTs);
     if (res.changed) applyData(res.data);
-    cursor = rows[rows.length - 1].updated_at ?? cursor;
+    // Si en la nube hay una versión igual o más nueva que un cambio pendiente, ese cambio ya no debe subirse.
+    let dropped = false;
+    for (const r of rows) {
+      const k = recordKey(r.collection, r.id);
+      const p = pending.get(k);
+      if (p && Date.parse(p.client_updated_at) <= Date.parse(r.client_updated_at)) dropped = pending.delete(k) || dropped;
+    }
+    if (dropped) await savePending();
+    from = rows[rows.length - 1].updated_at ?? from;
+    if (Date.parse(from) > Date.parse(cursor)) cursor = from;
     await set(`cloud-cursor:${userId}`, cursor);
     if (rows.length < 1000) break;
   }
@@ -186,6 +214,8 @@ export const cloud = {
     await client?.auth.signOut();
   },
   syncNow: () => flush(),
+  /** ¿Hay sesión iniciada? (los cambios locales se replican en los demás dispositivos) */
+  signedIn: () => !!userId,
   client: () => client,
 };
 
