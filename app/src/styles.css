@@ -562,17 +562,21 @@ button.card {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   text-align: left;
-  background: var(--card);
-  border: 1px solid var(--line);
-  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 10px 0;
 }
 .exrow span.grow {
   display: flex;
   flex-direction: column;
 }
 .exrow.selected {
-  border-color: var(--accent-ink);
+  border-bottom-color: var(--accent-ink);
 }
 .checkmark {
   width: 24px;
@@ -587,12 +591,6 @@ button.card {
 .exrow.selected .checkmark {
   background: var(--accent-fill);
   color: var(--on-accent);
-}
-.picker-actions {
-  position: sticky;
-  bottom: 0;
-  background: var(--bg);
-  padding: 8px 0;
 }
 
 /* Entrenamiento */
@@ -1090,6 +1088,48 @@ button.card {
   z-index: 1;
 }
 
+/* Hoja a pantalla completa: cabecera y pie fijos, cuerpo con scroll propio */
+.modal.full {
+  align-items: stretch;
+  background: var(--bg);
+}
+.sheet.full {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  max-height: none;
+  height: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  animation: fade-in 0.2s ease both;
+}
+.sheet-top {
+  flex: none;
+  display: grid;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.sheet-top .sheet-head {
+  position: static;
+}
+.sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px;
+}
+.sheet-foot {
+  flex: none;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
 /* Coach */
 .bubble {
   border-radius: 14px;
@@ -1303,7 +1343,6 @@ button.card {
 .card,
 .stat,
 .item,
-.exrow,
 .badge {
   box-shadow: var(--shadow);
   border-color: var(--line);
@@ -1313,7 +1352,6 @@ button.card {
   padding: 14px 16px;
 }
 .stat,
-.exrow,
 .item {
   border-radius: var(--radius-sm);
 }
@@ -1376,7 +1414,6 @@ a:focus-visible {
 }
 @media (hover: hover) {
   .card.tile:hover,
-  .exrow:hover,
   .item:hover,
   button.card:hover {
     border-color: var(--line-strong);
@@ -1408,6 +1445,9 @@ main > div > section {
   animation: sheet-in 0.34s var(--ease) both;
   box-shadow: var(--shadow-lg);
   border-top: 1px solid var(--line);
+}
+.sheet.full::before {
+  display: none;
 }
 .sheet::before {
   content: '';

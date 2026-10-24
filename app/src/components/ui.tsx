@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { fromUnit, toUnit } from '../../../shared/units';
 import { mediaUrls } from '../../../shared/exercises';
 import { ANIMATED } from '../../../shared/anim-index';
@@ -6,25 +7,33 @@ import { useExdbGif } from '../exdb';
 import { formatDuration, PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
 
-export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
+// Hoja modal. Va en un portal a <body>: dentro de una pantalla con animación (transform) el
+// position:fixed sería relativo a esa pantalla y la hoja saldría recortada.
+// `full`: pantalla completa, con `header` y `footer` fijos y cuerpo con scroll propio.
+export function Sheet({ title, onClose, children, full, header, footer }: { title?: string; onClose: () => void; children: ReactNode; full?: boolean; header?: ReactNode; footer?: ReactNode }) {
   // Escape cierra la hoja (teclado, mandos y lectores de pantalla).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
-    <div className="modal" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
-        <div className="row sheet-head">
-          <b className="grow">{title}</b>
-          <button className="ghost" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
+  return createPortal(
+    <div className={`modal ${full ? 'full' : ''}`} onClick={onClose}>
+      <div className={`sheet ${full ? 'full' : ''}`} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        <div className={full ? 'sheet-top' : undefined}>
+          <div className="row sheet-head">
+            <b className="grow">{title}</b>
+            <button className="ghost" onClick={onClose} aria-label="Cerrar">
+              ✕
+            </button>
+          </div>
+          {header}
         </div>
-        {children}
+        {full ? <div className="sheet-body">{children}</div> : children}
+        {footer && <div className="sheet-foot">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -276,3 +276,21 @@ test('reemplazar un ejercicio conserva las series hechas', async ({ page, errors
   await expect(first).toHaveClass(/done/);
   await expect(first.getByLabel('Peso (kg)')).toHaveValue('90');
 });
+
+test('añadir ejercicio ocupa toda la pantalla y se puede elegir tras desplazar', async ({ page, errors }) => {
+  void errors;
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Empezar entrenamiento vacío' }).click();
+  await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
+  const dialog = page.locator('[role=dialog]');
+  const vh = await page.evaluate(() => innerHeight);
+  expect((await dialog.boundingBox())!.height).toBeGreaterThanOrEqual(vh * 0.95);
+  const listW = (await page.locator('.picker-list').boundingBox())!.width;
+  const rows = page.locator('.exrow');
+  for (let i = 0; i < 5; i++) expect(Math.abs((await rows.nth(i).boundingBox())!.width - listW)).toBeLessThanOrEqual(2);
+  await page.locator('.sheet-body').evaluate((el) => (el.scrollTop = 2500));
+  await expect(page.getByPlaceholder('Buscar ejercicio…')).toBeVisible();
+  await page.locator('.exrow', { hasText: 'Elevación de gemelos de pie' }).first().click();
+  await expect(page.getByText('Elevación de gemelos de pie').first()).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+});
