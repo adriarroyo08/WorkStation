@@ -49,7 +49,7 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
         {st.error && <p className="error small">{st.error}</p>}
         <div className="row">
           <button
-            className="outline"
+            className="outline icon-btn"
             disabled={busy || st.status === 'syncing'}
             onClick={async () => {
               setBusy(true);
@@ -82,7 +82,7 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
       {cloud.googleAvailable() && (
         <>
           <button
-            className="outline full"
+            className="outline full icon-btn"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -105,7 +105,7 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
           )}
         </>
       )}
-      <button className={cloud.googleAvailable() ? 'outline full' : 'primary full'} onClick={onEmail}>
+      <button className={`${cloud.googleAvailable() ? 'outline' : 'primary'} full icon-btn`} onClick={onEmail}>
         <Mail size={16} /> Continuar con email
       </button>
     </div>
@@ -171,6 +171,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
     <section>
       <Back onClick={onBack} />
       <h1>{mode === 'in' ? 'Iniciar sesión' : 'Crear cuenta'}</h1>
+      <p className="muted small">{mode === 'in' ? 'Entra para sincronizar tus entrenos entre el móvil, la web y el reloj.' : 'Con una cuenta, tus entrenos se guardan en la nube y te siguen entre dispositivos.'}</p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -188,6 +189,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
           Contraseña
           <input type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} value={pw} onChange={(e) => setPw(e.target.value)} />
         </label>
+        {mode === 'up' && <p className="small muted">Mínimo 6 caracteres.</p>}
         {err && (
           <p className="error small" role="alert">
             {err}
@@ -200,7 +202,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
       <div className="row">
         {mode === 'in' && (
           <button
-            className="ghost small"
+            className="ghost small gray"
             disabled={busy || !email}
             onClick={() =>
               run(async () => {
@@ -214,7 +216,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
         )}
         <span className="grow" />
         <button
-          className="ghost small"
+          className="ghost small gray"
           onClick={() => {
             setMode(mode === 'in' ? 'up' : 'in');
             setErr('');

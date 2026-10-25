@@ -56,7 +56,7 @@ export default function ApiKeys() {
   if (!st.email)
     return (
       <div className="card small muted">
-        <KeyRound size={16} className="tile-ico inline" /> Inicia sesión en tu cuenta (arriba) para generar una API key y conectar una IA a tus datos por MCP.
+        <KeyRound size={16} className="tile-ico inline" /> Inicia sesión en Perfil para generar una API key y conectar una IA a tus datos por MCP.
       </div>
     );
 

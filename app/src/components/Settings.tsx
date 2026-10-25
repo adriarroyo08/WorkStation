@@ -9,7 +9,7 @@ import ApiKeys from './ApiKeys';
 import AutoBackups from './AutoBackups';
 import { cloud } from '../cloud';
 import { AllReleasesSheet, APP_VERSION } from './WhatsNew';
-import { Bot, Calculator, Cloud, Compass, Dumbbell, Film, Info, Plug, Save, Sparkles, Watch } from 'lucide-react';
+import { Bot, Calculator, ChevronRight, Cloud, Compass, Dumbbell, ExternalLink, Film, Info, Plug, Save, ShieldCheck, Sparkles, Watch } from 'lucide-react';
 import { snapshot } from '../backups';
 import CloudSettings from './CloudSettings';
 import ExdbSettings from './ExdbSettings';
@@ -99,16 +99,6 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h1>Ajustes</h1>
 
       <h2>
-        <Cloud size={16} className="ico" /> Servidor de sincronización
-      </h2>
-      <CloudSettings />
-
-      <h2>
-        <Plug size={16} className="ico" /> Acceso para IA (MCP)
-      </h2>
-      <ApiKeys />
-
-      <h2>
         <Dumbbell size={16} className="ico" /> Entrenamiento
       </h2>
       <div className="card">
@@ -142,16 +132,6 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           </select>
         </label>
       </div>
-
-      <h2>
-        <Watch size={16} className="ico" /> Reloj y sensores
-      </h2>
-      <DevicesPanel />
-
-      <h2>
-        <Film size={16} className="ico" /> GIFs de ejercicios
-      </h2>
-      <ExdbSettings />
 
       <h2>
         <Calculator size={16} className="ico" /> Calculadora de discos
@@ -202,6 +182,11 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           </>
         )}
       </div>
+
+      <h2>
+        <Watch size={16} className="ico" /> Reloj y sensores
+      </h2>
+      <DevicesPanel />
 
       <h2>
         <Bot size={16} className="ico" /> Inteligencia artificial
@@ -257,11 +242,16 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       </div>
 
       <h2>
+        <Film size={16} className="ico" /> GIFs de ejercicios
+      </h2>
+      <ExdbSettings />
+
+      <h2>
         <Save size={16} className="ico" /> Datos
       </h2>
       <div className="card">
         <p className="small muted">
-          {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios · {data.measurements.length} medidas. Todo se guarda en este navegador: exporta
+          {data.workouts.length} entrenamientos · {data.routines.length} rutinas · {data.exercises.length} ejercicios · {data.measurements.length} medidas. Todo se guarda en este dispositivo: exporta
           backups a menudo.
         </p>
         <button
@@ -271,7 +261,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           Exportar backup (JSON)
         </button>
         <button className="outline full" onClick={exportCsv}>
-          Exportar entrenamientos (CSV, formato compatible con Hevy)
+          Exportar entrenamientos (CSV)
         </button>
         <button
           className="outline full"
@@ -287,7 +277,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
             })
           }
         >
-          Importar backup / fichero del MCP (JSON)
+          Importar backup (JSON)
         </button>
         <button
           className="outline full"
@@ -301,9 +291,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
             })
           }
         >
-          Importar CSV exportado de Hevy
+          Importar CSV de Hevy
         </button>
-        <p className="small muted">En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos.</p>
+        <p className="small muted">El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos.</p>
         <button
           className="danger full"
           onClick={async () => {
@@ -319,10 +309,18 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <AutoBackups />
 
       <h2>
-        <Plug size={16} className="ico" /> MCP
+        <Cloud size={16} className="ico" /> Servidor de sincronización
       </h2>
-      <div className="card small">
-        <p>
+      <CloudSettings />
+
+      <h2>
+        <Plug size={16} className="ico" /> Acceso para IA (MCP)
+      </h2>
+      <ApiKeys />
+
+      <div className="card">
+        <b>MCP local, sin cuenta</b>
+        <p className="small muted">
           Para que Claude Desktop, Cursor, LM Studio u otro cliente MCP lea y edite tus entrenamientos, usa el servidor <code>mcp/</code> del repositorio. Trabaja sobre un fichero JSON con el mismo
           formato que el backup: exporta aquí, guárdalo en la ruta de <code>WORKSTATION_DATA</code> y vuelve a importarlo cuando la IA cree rutinas o registre entrenos.
         </p>
@@ -331,16 +329,22 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h2>
         <Info size={16} className="ico" /> Acerca de
       </h2>
-      <div className="card small muted">
-        <p>Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
-        <button className="ghost small icon-btn" onClick={() => setNotes(true)}>
-          <Sparkles size={15} /> Novedades
+      <p className="small muted">Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
+      <div className="lines">
+        <button className="line" onClick={() => setNotes(true)}>
+          <Sparkles size={20} className="tile-ico" />
+          <span className="grow">Novedades</span>
+          <ChevronRight size={16} className="muted" />
         </button>
-        <button className="ghost small icon-btn" onClick={() => window.dispatchEvent(new Event('ws:show-tour'))}>
-          <Compass size={15} /> Ver tour de nuevo
+        <button className="line" onClick={() => window.dispatchEvent(new Event('ws:show-tour'))}>
+          <Compass size={20} className="tile-ico" />
+          <span className="grow">Ver tour de nuevo</span>
+          <ChevronRight size={16} className="muted" />
         </button>
-        <a className="ghost small" href="https://github.com/adriarroyo08/WorkStation/blob/main/PRIVACY.md" target="_blank" rel="noreferrer">
-          Privacidad
+        <a className="line" href="https://github.com/adriarroyo08/WorkStation/blob/main/PRIVACY.md" target="_blank" rel="noreferrer">
+          <ShieldCheck size={20} className="tile-ico" />
+          <span className="grow">Privacidad</span>
+          <ExternalLink size={16} className="muted" />
         </a>
       </div>
       <p className="app-version">

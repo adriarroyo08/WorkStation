@@ -110,7 +110,7 @@ export default function Onboarding({ onDone, onCreateAccount }: { onDone: () => 
     <div className="onb" role="dialog" aria-modal="true" aria-label="Bienvenida">
       <div className="onb-top">
         {!last && (
-          <button className="ghost" onClick={() => done()}>
+          <button className="ghost gray" onClick={() => done()}>
             Saltar
           </button>
         )}

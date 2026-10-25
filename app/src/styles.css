@@ -2834,3 +2834,23 @@ section.active.resting {
 .file-pick + p {
   margin-top: 6px;
 }
+
+/* Repaso: Ajustes, tour y acceso */
+a.line {
+  text-decoration: none;
+}
+.backup-row .backup-meta {
+  margin-top: 2px;
+}
+.onb-art {
+  margin-top: auto;
+}
+.landing {
+  padding-top: 96px;
+}
+.landing h1 {
+  margin-top: 12px;
+}
+.landing-bad {
+  color: var(--danger);
+}
