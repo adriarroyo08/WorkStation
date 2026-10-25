@@ -163,13 +163,13 @@ export default function WorkoutDetail({
         const e = ex.get(we.exerciseId);
         return (
           <div key={i} className={`card ${we.supersetId ? 'superset' : ''}`}>
-            <div className="row" onClick={() => onExercise?.(we.exerciseId)}>
+            <button className="plain row full left ex-head" onClick={() => onExercise?.(we.exerciseId)}>
               <ExerciseMedia exercise={e} size="thumb" />
-              <div className="grow">
+              <span className="grow">
                 <b>{e?.name ?? we.exerciseId}</b>
-                <div className="muted small">{bestSetText(we, e)}</div>
-              </div>
-            </div>
+                <span className="muted small">{bestSetText(we, e)}</span>
+              </span>
+            </button>
             {we.notes && <p className="muted small">{we.notes}</p>}
             <ol className="setlist">
               {we.sets.map((s, j) => (

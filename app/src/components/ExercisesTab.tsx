@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
-import { EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
+import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleMap } from './BodyMap';
 import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
@@ -150,7 +150,7 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
         <Sheet title={preview.name} onClose={() => setPreview(null)}>
           <ExerciseMedia media={preview.id} />
           <p className="muted small">
-            {MUSCLE_LABELS[preview.muscle]} · {preview.equipment} · {preview.category} · {preview.level}
+            {MUSCLE_LABELS[preview.muscle]} · {catalogLabel(preview.equipment)} · {preview.category} · {catalogLabel(preview.level)}
           </p>
           <ol className="small">
             {preview.instructions.map((s, i) => (
@@ -247,7 +247,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       />
       <h1>{e.name}</h1>
       <p className="muted small">
-        {cap(e.equipment)} · {EXERCISE_KIND_LABELS[e.kind]}
+        {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>
       <div className="segmented fit">
         {(['summary', 'history', 'howto', 'records'] as const).map((t) => (

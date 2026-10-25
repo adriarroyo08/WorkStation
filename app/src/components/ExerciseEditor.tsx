@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EQUIPMENT, EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
 import { uid } from '../../../shared/types';
-import { useStore } from '../store';
+import { cap, useStore } from '../store';
 
 export default function ExerciseEditor({ initial, initialName = '', onSaved }: { initial?: Exercise; initialName?: string; onSaved: (e: Exercise) => void }) {
   const { update } = useStore();
@@ -36,7 +36,9 @@ export default function ExerciseEditor({ initial, initialName = '', onSaved }: {
         Material
         <select value={e.equipment} onChange={(ev) => setE({ ...e, equipment: ev.target.value })}>
           {EQUIPMENT.map((k) => (
-            <option key={k}>{k}</option>
+            <option key={k} value={k}>
+              {cap(k)}
+            </option>
           ))}
         </select>
       </label>

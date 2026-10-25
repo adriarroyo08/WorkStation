@@ -194,6 +194,10 @@ export const EXERCISE_KIND_LABELS: Record<ExerciseKind, string> = {
   distance: 'Distancia y tiempo',
 };
 
+// Etiquetas del catálogo libre (free-exercise-db) que aún llegan en inglés en datos antiguos.
+const CATALOG_ES: Record<string, string> = { beginner: 'principiante', intermediate: 'intermedio', expert: 'avanzado', 'foam roller': 'rodillo de espuma' };
+export const catalogLabel = (s: string): string => CATALOG_ES[s] ?? s;
+
 export const EQUIPMENT = ['barra', 'mancuernas', 'máquina', 'polea', 'peso corporal', 'kettlebell', 'bandas', 'disco', 'ninguno', 'otro'];
 
 const MEDIA_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises';

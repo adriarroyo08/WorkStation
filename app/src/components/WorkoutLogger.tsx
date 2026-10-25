@@ -159,7 +159,7 @@ export default function WorkoutLogger({
     <section className={`active ${mode === 'live' && restState.end && restLeft > 0 ? 'resting' : ''}`}>
       <div className="sticky">
         <div className="row">
-          <input className="title grow" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
+          <input className="title grow" aria-label="Nombre del entrenamiento" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
           <button className="primary" onClick={onFinish}>
             {mode === 'live' ? 'Terminar' : 'Guardar'}
           </button>
@@ -572,8 +572,8 @@ function SetRow(props: {
         <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
           {SET_LABEL[s.type] || n}
           {pr && (
-            <span className="pr-badge">
-              <Trophy size={16} className="ico" />
+            <span className="pr-badge" role="img" aria-label="Récord" title="Récord">
+              <Trophy size={12} aria-hidden />
             </span>
           )}
         </button>

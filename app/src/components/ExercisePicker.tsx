@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { EQUIPMENT, MUSCLE_LABELS } from '../../../shared/exercises';
+import { EQUIPMENT, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleMap } from './BodyMap';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
-import { useStore } from '../store';
+import { cap, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseMedia, Sheet } from './ui';
 
@@ -30,7 +30,9 @@ export function useExerciseFilter(exercises: Exercise[]) {
         <select aria-label="Filtrar por material" value={equipment} onChange={(e) => setEquipment(e.target.value)}>
           <option value="">Todo el material</option>
           {EQUIPMENT.map((k) => (
-            <option key={k}>{k}</option>
+            <option key={k} value={k}>
+              {cap(k)}
+            </option>
           ))}
         </select>
       </div>
@@ -46,7 +48,7 @@ export function ExerciseRow({ e, right, onClick, selected }: { e: Exercise; righ
       <span className="grow">
         <b>{e.name}</b>
         <small className="muted">
-          {MUSCLE_LABELS[e.muscle]} · {e.equipment}
+          {MUSCLE_LABELS[e.muscle]} · {catalogLabel(e.equipment)}
         </small>
       </span>
       <MuscleMap primary={e.muscle} secondary={e.secondary} thumb />
