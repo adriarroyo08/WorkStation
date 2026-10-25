@@ -1457,7 +1457,9 @@ a:focus-visible {
 /* Entrada de pantallas y hojas */
 main > section,
 main > div > section {
-  animation: screen-in 0.32s var(--ease) both;
+  /* Sin "forwards": un transform retenido convierte la sección en el contenedor de los position: fixed
+     (el aviso de descanso dejaba de flotar y tapaba el final de la página). */
+  animation: screen-in 0.32s var(--ease) backwards;
 }
 @keyframes screen-in {
   from {
@@ -2703,3 +2705,45 @@ button.ghost:has(> svg:only-child) {
   margin-top: 6px;
 }
 
+/* ===== Repaso: entreno en curso ===== */
+.rest {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-lg);
+  padding: 10px 12px 12px 14px;
+}
+.rest > .rest-progress {
+  top: auto;
+  bottom: 0;
+  height: 3px;
+  background: var(--accent);
+}
+.rest b {
+  color: var(--accent-ink);
+}
+.rest-main > span,
+.rest-next {
+  color: var(--muted);
+  opacity: 1;
+}
+.rest button {
+  background: var(--field);
+  color: var(--text);
+  min-width: 48px;
+  min-height: 40px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rest button.rest-skip {
+  background: none;
+  color: var(--accent-ink);
+}
+/* Con el descanso visible, el final de la página queda por encima del aviso flotante. */
+section.active.resting {
+  padding-bottom: 96px;
+}
+.plate-form {
+  align-items: flex-end;
+}

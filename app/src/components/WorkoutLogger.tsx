@@ -156,7 +156,7 @@ export default function WorkoutLogger({
   const totals = { sets: workoutSetCount(w), volume: workoutVolume(w, data.exercises) };
 
   return (
-    <section className="active">
+    <section className={`active ${mode === 'live' && restState.end && restLeft > 0 ? 'resting' : ''}`}>
       <div className="sticky">
         <div className="row">
           <input className="title grow" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
@@ -308,16 +308,22 @@ export default function WorkoutLogger({
       </button>
 
       {mode === 'live' && restState.end && restLeft > 0 && (
-        <div className="rest">
+        <div className="rest" role="timer" aria-label="Descanso">
           <div className="rest-progress" style={{ width: `${(restLeft / Math.max(1, restState.total)) * 100}%` }} />
           <div className="rest-main">
             <span>Descanso</span>
             <b>{clock(restLeft)}</b>
             {nextLabel && <small className="rest-next">Siguiente: {nextLabel}</small>}
           </div>
-          <button onClick={() => rest.add(-15)}>-15</button>
-          <button onClick={() => rest.add(15)}>+15</button>
-          <button onClick={rest.stop}>Saltar</button>
+          <button onClick={() => rest.add(-15)} aria-label="Quitar 15 segundos">
+            −15
+          </button>
+          <button onClick={() => rest.add(15)} aria-label="Añadir 15 segundos">
+            +15
+          </button>
+          <button className="rest-skip" onClick={rest.stop}>
+            Saltar
+          </button>
         </div>
       )}
 
@@ -482,7 +488,7 @@ export function PlateCalculator({ initial, onClose }: { initial: number; onClose
   const asKg = (p: number) => fromUnit(p, u);
   return (
     <Sheet title="Calculadora de discos" onClose={onClose}>
-      <div className="row">
+      <div className="row plate-form">
         <label className="grow">
           Peso total ({u})
           <NumberField value={target} onChange={setTarget} autoFocus />
@@ -708,7 +714,7 @@ function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: E
         disabled={applied}
         onClick={() => (onApply({ weight: sug.weight, reps: sug.reps, durationSec: sug.durationSec }), toast.show('Sugerencia aplicada a las series pendientes'))}
       >
-        {applied ? '✓' : 'Aplicar'}
+        {applied ? <Check size={16} aria-label="Aplicada" /> : 'Aplicar'}
       </button>
     </div>
   );
