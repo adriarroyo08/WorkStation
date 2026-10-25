@@ -111,13 +111,13 @@ export function MuscleMap({ primary, secondary = [], thumb = false }: { primary:
       )}
       <ul className="bm-legend">
         <li>
-          <span className="bm-dot" /> {MUSCLE_LABELS[primary]} <small className="muted">Principal</small>
+          <span className="bm-dot" /> <small className="muted">Principal</small> {MUSCLE_LABELS[primary]}
         </li>
-        {secondary.map((m) => (
-          <li key={m}>
-            <span className="bm-dot soft" /> {MUSCLE_LABELS[m]} <small className="muted">Secundario</small>
+        {secondary.length > 0 && (
+          <li>
+            <span className="bm-dot soft" /> <small className="muted">{secondary.length > 1 ? 'Secundarios' : 'Secundario'}</small> {secondary.map((m) => MUSCLE_LABELS[m]).join(', ')}
           </li>
-        ))}
+        )}
       </ul>
     </div>
   );

@@ -305,10 +305,6 @@ button.card {
   border-color: var(--accent-ink);
 }
 
-.explore {
-  text-align: left;
-}
-
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -393,6 +389,16 @@ button.card {
 }
 .segmented.small button {
   padding: 4px 10px;
+}
+/* Pestañas que caben en una línea: cada una ocupa lo que su texto */
+.segmented.fit button {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 7px 6px;
+  white-space: nowrap;
+}
+.in-lib {
+  flex: none;
 }
 .grid2 {
   display: grid;

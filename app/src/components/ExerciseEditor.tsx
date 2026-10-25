@@ -50,14 +50,15 @@ export default function ExerciseEditor({ initial, initialName = '', onSaved }: {
           ))}
         </select>
       </label>
-      <label>Músculos secundarios</label>
-      <div className="chips">
+      <label id="ex-secondary">Músculos secundarios</label>
+      <div className="chips" role="group" aria-labelledby="ex-secondary">
         {(Object.keys(MUSCLE_LABELS) as MuscleGroup[])
           .filter((m) => m !== e.muscle)
           .map((m) => (
             <button
               key={m}
               className={e.secondary?.includes(m) ? 'on' : ''}
+              aria-pressed={!!e.secondary?.includes(m)}
               onClick={() => setE({ ...e, secondary: e.secondary?.includes(m) ? e.secondary.filter((x) => x !== m) : [...(e.secondary ?? []), m] })}
             >
               {MUSCLE_LABELS[m]}
