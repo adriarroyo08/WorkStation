@@ -1098,7 +1098,7 @@ button.card {
   border-radius: 0;
   box-shadow: none;
   padding: 0;
-  animation: fade-in 0.2s ease both;
+  animation: fade-in 0.2s ease backwards;
 }
 .sheet-top {
   flex: none;
@@ -1468,11 +1468,11 @@ main > div > section {
   }
 }
 .modal {
-  animation: fade-in 0.2s ease both;
+  animation: fade-in 0.2s ease backwards;
   background: rgba(0, 0, 0, 0.55);
 }
 .sheet {
-  animation: sheet-in 0.34s var(--ease) both;
+  animation: sheet-in 0.34s var(--ease) backwards;
   box-shadow: var(--shadow-lg);
   border-top: 1px solid var(--line);
 }
@@ -1500,7 +1500,7 @@ main > div > section {
 }
 .list > *,
 .badges > * {
-  animation: rise-in 0.36s var(--ease) both;
+  animation: rise-in 0.36s var(--ease) backwards;
 }
 .list > *:nth-child(2) {
   animation-delay: 30ms;
@@ -1905,7 +1905,7 @@ pre.code {
   width: 100%;
 }
 .w-slide > * {
-  animation: w-in 0.7s var(--spring) both;
+  animation: w-in 0.7s var(--spring) backwards;
 }
 .w-slide > :nth-child(2) {
   animation-delay: 0.08s;
@@ -2105,7 +2105,7 @@ pre.code {
   background: var(--surface);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-lg);
-  animation: w-in 0.5s var(--spring) both;
+  animation: w-in 0.5s var(--spring) backwards;
 }
 .update-banner svg {
   color: var(--accent-ink);
