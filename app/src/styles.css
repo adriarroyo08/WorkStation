@@ -304,6 +304,7 @@ button.card {
 .tile.on {
   border-color: var(--accent-ink);
 }
+
 .explore {
   text-align: left;
 }
@@ -859,8 +860,30 @@ button.card {
 .exsum {
   margin-top: 4px;
 }
-.month-h {
-  margin-top: 18px;
+.dur-field {
+  flex: 0 0 120px;
+}
+.empty-state {
+  text-align: center;
+  padding: 48px 16px;
+}
+.empty-state h2 {
+  margin: 12px 0 4px;
+  font-size: 18px;
+}
+.empty-state p {
+  margin: 0 auto 16px;
+  max-width: 300px;
+}
+.stats.five {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.stats.five .stat {
+  padding: 10px 6px;
+}
+.stats.five .stat b {
+  font-size: 15px;
 }
 .actions {
   margin-top: 16px;
@@ -1719,6 +1742,9 @@ pre.code {
 .vs-last h3 {
   margin-bottom: 0;
 }
+.vs-last h3 + p {
+  margin-top: 2px;
+}
 .vs-last .stats {
   margin-bottom: 0;
 }
@@ -2144,6 +2170,15 @@ pre.code {
     font-size: 14px;
   }
   .stats.four .stat small {
+    font-size: 11px;
+  }
+  .stats.five .stat {
+    padding: 8px 5px;
+  }
+  .stats.five .stat b {
+    font-size: 14px;
+  }
+  .stats.five .stat small {
     font-size: 11px;
   }
 }

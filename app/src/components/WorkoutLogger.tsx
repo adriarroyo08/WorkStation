@@ -401,7 +401,7 @@ function EditTimes({ w, edit }: { w: Workout; edit: Edit }) {
           }
         />
       </label>
-      <label>
+      <label className="dur-field">
         Duración (min)
         <input inputMode="numeric" value={dur} onChange={(e) => edit((n) => void (n.endedAt = new Date(Date.parse(n.startedAt) + (Number(e.target.value) || 0) * 60000).toISOString()))} />
       </label>

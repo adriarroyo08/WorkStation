@@ -112,10 +112,11 @@ export default function WorkoutDetail({
         {fmtDate(w.startedAt)} · {fmtTime(w.startedAt)}
         {routine ? ` · Rutina: ${routine.name}` : ''}
       </p>
-      <div className="stats four">
+      <div className="stats five">
         <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
         <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
         <Stat value={workoutSetCount(w)} label="series" />
+        <Stat value={workoutReps(w)} label="reps" />
         <Stat value={prs.length} label="récords" />
       </div>
       {cmp && (
@@ -180,7 +181,6 @@ export default function WorkoutDetail({
           </div>
         );
       })}
-      <p className="muted small">Repeticiones totales: {workoutReps(w)}</p>
 
       <div className="actions">
         <button className="primary full icon-btn" onClick={share}>
