@@ -39,11 +39,24 @@ export default function Achievements({ onBack }: { onBack: () => void }) {
       <div className="progress">
         <div style={{ width: `${(done / list.length) * 100}%` }} />
       </div>
-      <div className="badges">
-        {[...list.filter((a) => a.unlocked), ...list.filter((a) => !a.unlocked)].map((a) => (
-          <AchievementBadge key={a.id} a={a} />
-        ))}
-      </div>
+      {(
+        [
+          ['Desbloqueados', list.filter((a) => a.unlocked)],
+          ['Por conseguir', list.filter((a) => !a.unlocked)],
+        ] as const
+      ).map(
+        ([title, items]) =>
+          items.length > 0 && (
+            <div key={title}>
+              <h2 className="sec">{title}</h2>
+              <div className="badges">
+                {items.map((a) => (
+                  <AchievementBadge key={a.id} a={a} />
+                ))}
+              </div>
+            </div>
+          ),
+      )}
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Camera, Trash2 } from 'lucide-react';
+import { Camera, Images, Plus, Ruler, Trash2 } from 'lucide-react';
 import { MEASUREMENT_FIELDS, uid, type Measurement, type MeasurementField } from '../../../shared/types';
 import { compressImage, deletePhoto, fmtDate, loadPhoto, savePhoto, useStore } from '../store';
 import LineChart from './LineChart';
@@ -44,8 +44,8 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
       <Back
         onClick={onBack}
         right={
-          <button className="primary" onClick={() => setAdding(true)}>
-            + Registrar
+          <button className="primary icon-btn" onClick={() => setAdding(true)}>
+            <Plus size={18} /> Registrar
           </button>
         }
       />
@@ -68,7 +68,7 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
                 <button key={f} className={`card tile ${field === f ? 'on' : ''}`} onClick={() => setField(f)}>
                   <small className="muted">{MEASURE_LABELS[f]}</small>
                   <b>{l === undefined ? '—' : l.toLocaleString('es-ES')}</b>
-                  {d !== 0 && <small className={d > 0 ? 'delta up' : 'delta down'}>{(d > 0 ? '+' : '') + d.toLocaleString('es-ES')}</small>}
+                  {d !== 0 && <small className="delta">{(d > 0 ? '+' : '') + d.toLocaleString('es-ES')}</small>}
                 </button>
               );
             })}
@@ -100,7 +100,13 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
               </button>
             </div>
           ))}
-          {!list.length && <p className="muted">Registra tu peso y medidas para ver tu evolución.</p>}
+          {!list.length && (
+            <div className="empty-state">
+              <Ruler size={40} className="muted" />
+              <h2>Sin registros todavía</h2>
+              <p className="muted small">Registra tu peso y tus medidas para ver aquí tu evolución.</p>
+            </div>
+          )}
         </>
       )}
       {tab === 'photos' && <Photos list={list} />}
@@ -146,10 +152,13 @@ function AddMeasurement({ onClose }: { onClose: () => void }) {
           </label>
         ))}
       </div>
-      <label>
-        <Camera size={16} className="ico" /> Fotos de progreso (se guardan solo en este dispositivo)
+      <label className="file-pick">
+        <span className="outline icon-btn">
+          <Camera size={16} /> {photos.length ? `${photos.length} ${photos.length === 1 ? 'foto elegida' : 'fotos elegidas'}` : 'Añadir fotos de progreso'}
+        </span>
         <input type="file" accept="image/*" multiple onChange={(e) => setPhotos([...(e.target.files ?? [])])} />
       </label>
+      <p className="small muted">Las fotos se guardan solo en este dispositivo.</p>
       <button className="primary full" onClick={save}>
         Guardar
       </button>
@@ -171,7 +180,14 @@ function Photos({ list }: { list: Measurement[] }) {
   const all = list.flatMap((m) => photoIds(m).map((id) => ({ id, date: m.date })));
   const [compare, setCompare] = useState<string[]>([]);
   const [big, setBig] = useState<string | null>(null);
-  if (!all.length) return <p className="muted">Añade fotos al registrar medidas para ver tu transformación. Toca dos fotos para compararlas.</p>;
+  if (!all.length)
+    return (
+      <div className="empty-state">
+        <Images size={40} className="muted" />
+        <h2>Sin fotos de progreso</h2>
+        <p className="muted small">Añade fotos al registrar tus medidas para ver tu transformación. Luego podrás compararlas de dos en dos.</p>
+      </div>
+    );
   const toggle = (id: string) => setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id].slice(-2)));
   return (
     <>

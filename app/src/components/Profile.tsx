@@ -7,7 +7,7 @@ import { cap, fmtShort, useStore } from '../store';
 import { formatDuration } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
 import Achievements, { AchievementIcon } from './Achievements';
-import { Award, Bot, ChevronRight, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
+import { Award, Bot, ChevronLeft, ChevronRight, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { StrengthOverview } from './Strength';
 import Wrapped from './Wrapped';
@@ -96,7 +96,7 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
     );
 
   const fmt = (v: number) =>
-    metric === 'volume' ? ((x) => (x >= 1000 ? `${Math.round(x / 100) / 10}k` : String(Math.round(x))))(toUnit(v)) : metric === 'durationMin' ? `${Math.round(v / 6) / 10}h` : String(Math.round(v));
+    metric === 'volume' ? ((x) => (x >= 1000 ? `${(Math.round(x / 100) / 10).toLocaleString('es-ES')}k` : String(Math.round(x))))(toUnit(v)) : metric === 'durationMin' ? `${(Math.round(v / 6) / 10).toLocaleString('es-ES')}h` : String(Math.round(v));
 
   return (
     <section>
@@ -162,7 +162,7 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
             <Sparkles size={20} className="tile-ico" />
             <span className="grow">
               <b>Tu {wrappedYear} en Workstation</b>
-              <small className="muted">Tus cifras del año, en historias para compartir</small>
+              <small className="muted">tus cifras del año, en historias</small>
             </span>
             <ChevronRight size={16} className="muted" />
           </button>
@@ -189,14 +189,18 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
 
       <div className="card">
         <h3>Últimas 12 semanas</h3>
-        <div className="chips small">
+        <div className="chips small" role="group" aria-label="Métrica">
           {(Object.keys(METRICS) as Metric[]).map((m) => (
-            <button key={m} className={metric === m ? 'on' : ''} onClick={() => setMetric(m)}>
+            <button key={m} className={metric === m ? 'on' : ''} aria-pressed={metric === m} onClick={() => setMetric(m)}>
               {METRICS[m]}
             </button>
           ))}
         </div>
-        <BarChart bars={series.map((s) => ({ label: fmtShort(s.start).replace('.', ''), value: s.totals[metric] }))} format={fmt} />
+        {series.some((s) => s.totals.workouts) ? (
+          <BarChart bars={series.map((s) => ({ label: fmtShort(s.start).replace('.', ''), value: s.totals[metric] }))} format={fmt} />
+        ) : (
+          <p className="muted small">Sin entrenos en estas 12 semanas. Aquí verás tu evolución semana a semana.</p>
+        )}
       </div>
 
       <div className="card">
@@ -225,12 +229,12 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
 
       <div className="card">
         <div className="row">
-          <button className="ghost" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
-            ‹
+          <button className="ghost icon-btn" aria-label="Mes anterior" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
+            <ChevronLeft size={20} />
           </button>
           <b className="grow center-text">{cap(month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }))}</b>
-          <button className="ghost" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
-            ›
+          <button className="ghost icon-btn" aria-label="Mes siguiente" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
+            <ChevronRight size={20} />
           </button>
         </div>
         <MonthCalendar month={month} trained={trained} mondayFirst={settings.weekStartsMonday} />

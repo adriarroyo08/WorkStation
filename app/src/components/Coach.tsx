@@ -88,6 +88,7 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
           </button>
         )}
       </p>
+      {!msgs.length && <h2 className="sec">Prueba con</h2>}
       {!msgs.length && (
         <div className="list">
           {QUICK.map((q) => (

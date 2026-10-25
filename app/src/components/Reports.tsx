@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Bot, ClipboardCopy, Printer, Trophy } from 'lucide-react';
+import { Bot, ChevronLeft, ChevronRight, ClipboardCopy, Printer, Trophy } from 'lucide-react';
 import { chat } from '../../../shared/ai';
 import { period, periodReport, reportToText, type PeriodKind } from '../../../shared/reports';
 import { formatDuration } from '../../../shared/stats';
@@ -18,7 +18,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
   const r = useMemo(() => periodReport(data, p), [data, p.start.getTime(), p.end.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
   const t = r.totals,
     prev = r.previous;
-  const prevLabel = kind === 'week' ? 'semana anterior' : kind === 'month' ? 'mes anterior' : 'año anterior';
+  const prevLabel = kind === 'week' ? 'la semana anterior' : kind === 'month' ? 'el mes anterior' : 'el año anterior';
   const key = `${kind}:${p.start.toISOString()}`;
 
   const analyze = async () => {
@@ -68,12 +68,12 @@ export default function Reports({ onBack }: { onBack: () => void }) {
         ))}
       </div>
       <div className="row period-nav">
-        <button className="ghost no-print" onClick={() => setOffset(offset - 1)}>
-          ‹
+        <button className="ghost no-print icon-btn" aria-label="Periodo anterior" onClick={() => setOffset(offset - 1)}>
+          <ChevronLeft size={20} />
         </button>
         <b className="grow center-text">{p.label}</b>
-        <button className="ghost no-print" disabled={offset >= 0} onClick={() => setOffset(offset + 1)}>
-          ›
+        <button className="ghost no-print icon-btn" aria-label="Periodo siguiente" disabled={offset >= 0} onClick={() => setOffset(offset + 1)}>
+          <ChevronRight size={20} />
         </button>
       </div>
 
@@ -82,8 +82,8 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       <div className="stats four">
         {[
           ['Entrenos', t.workouts, prev.workouts, String(t.workouts)],
-          ['Duración', t.durationMin, prev.durationMin, t.durationMin >= 60 ? `${Math.floor(t.durationMin / 60)}h ${t.durationMin % 60}m` : formatDuration(t.durationMin * 60)],
-          [`Volumen (${weightUnit()})`, t.volume, prev.volume, fmtMass(t.volume)],
+          ['Duración', t.durationMin, prev.durationMin, t.durationMin >= 60 ? `${Math.floor(t.durationMin / 60)}h${t.durationMin % 60 ? ` ${t.durationMin % 60}m` : ''}` : formatDuration(t.durationMin * 60)],
+          ['Volumen', t.volume, prev.volume, fmtMass(t.volume)],
           ['Series', t.sets, prev.sets, String(t.sets)],
         ].map(([label, cur, before, txt]) => (
           <div key={label as string} className="stat">
@@ -114,8 +114,8 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       </div>
 
       <div className="card">
-        <h3>{kind === 'year' ? 'Entrenos por mes' : 'Volumen por día'}</h3>
-        <BarChart bars={bars} highlightLast={false} format={(v) => (kind === 'year' ? String(v) : v >= 1000 ? `${Math.round(v / 100) / 10}k` : String(Math.round(v)))} />
+        <h3>{kind === 'year' ? 'Entrenos por mes' : `Volumen por día (${weightUnit()})`}</h3>
+        <BarChart bars={bars} highlightLast={false} format={(v) => (kind === 'year' ? String(v) : v >= 1000 ? `${(Math.round(v / 100) / 10).toLocaleString('es-ES')}k` : String(Math.round(v)))} />
       </div>
 
       {r.prs.length > 0 && (
