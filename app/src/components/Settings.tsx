@@ -231,7 +231,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         </label>
         <p className="small muted">La clave se guarda solo en este dispositivo y no se incluye en los backups.</p>
         <div className="row">
-          <button className="primary" onClick={() => (setAi(cfg), setTest('Guardado'))}>
+          <button className="outline" onClick={() => (setAi(cfg), setTest('Guardado'))}>
             Guardar
           </button>
           <button className="outline" onClick={testAi}>

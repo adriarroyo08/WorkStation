@@ -189,7 +189,7 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
 
       <div className="card">
         <h3>Últimas 12 semanas</h3>
-        <div className="chips small" role="group" aria-label="Métrica">
+        <div className="chips small scroll" role="group" aria-label="Métrica">
           {(Object.keys(METRICS) as Metric[]).map((m) => (
             <button key={m} className={metric === m ? 'on' : ''} aria-pressed={metric === m} onClick={() => setMetric(m)}>
               {METRICS[m]}

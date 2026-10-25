@@ -2925,3 +2925,18 @@ a.line {
   padding: 0 9px;
   font-size: 12px;
 }
+/* Fila de chips que no cabe: se desliza en vez de partirse en dos líneas. */
+.chips.scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+.chips.scroll button {
+  flex: none;
+}
+/* Sugerencias del coach alineadas con su encabezado. */
+.list.flush .item {
+  padding-inline: 0;
+}

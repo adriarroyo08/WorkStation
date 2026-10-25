@@ -90,7 +90,7 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
       </p>
       {!msgs.length && <h2 className="sec">Prueba con</h2>}
       {!msgs.length && (
-        <div className="list">
+        <div className="list flush">
           {QUICK.map((q) => (
             <button key={q} className="item" onClick={() => send(q)}>
               {q}
