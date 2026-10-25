@@ -297,7 +297,7 @@ test('unidades en libras: escribir, calculadora de discos e historial', async ({
   await tab(page, 'Entrenar').click();
   await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
   const row = page.locator('.swipe .set').first();
-  await expect(row.locator('.prev')).toContainText('220,5×5'); // 100 kg de la sesión anterior
+  await expect(row.locator('.prev')).toContainText('220,5 × 5'); // 100 kg de la sesión anterior
   const lb = row.getByLabel('Peso (lb)');
   await lb.fill('225');
   await lb.dblclick();
@@ -408,4 +408,42 @@ test('cada ejercicio marca sus músculos: principal y secundarios', async ({ pag
   await expect(legend.locator('li').first()).toContainText('Principal');
   await expect(legend).toContainText('Secundario');
   await expect(page.getByRole('img', { name: 'Músculos que trabaja' })).toBeVisible();
+});
+
+test('marcar una serie activa el estilo hecho y aria-pressed', async ({ page, errors }) => {
+  void errors;
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Empezar entrenamiento vacío' }).click();
+  await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('press de banca');
+  await page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first().click();
+  const row = page.locator('.set:not(.head)').first();
+  const check = row.getByLabel('Completar serie');
+  await expect(check).toHaveAttribute('aria-pressed', 'false');
+  await check.click();
+  await expect(row).toHaveClass(/done/);
+  await expect(check).toHaveAttribute('aria-pressed', 'true');
+  await check.click();
+  await expect(row).not.toHaveClass(/done/);
+});
+
+test('selector de descanso propio: chip y ajuste libre', async ({ page, errors }) => {
+  void errors;
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Empezar entrenamiento vacío' }).click();
+  await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('press de banca');
+  await page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first().click();
+  const trigger = page.locator('.rest-chip').first();
+  await trigger.click();
+  const dlg = page.getByRole('dialog', { name: 'Tiempo de descanso' });
+  await expect(dlg).toBeVisible();
+  await dlg.getByRole('button', { name: '2:00 de descanso' }).click();
+  await expect(dlg).toBeHidden();
+  await expect(trigger).toContainText('2:00');
+  await trigger.click();
+  await dlg.getByLabel('Más 15 segundos').click();
+  await expect(dlg.getByTestId('rest-custom')).toHaveText('2:15');
+  await dlg.getByRole('button', { name: 'Usar' }).click();
+  await expect(trigger).toContainText('2:15');
 });

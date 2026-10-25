@@ -1,8 +1,9 @@
+import RestPicker from './RestPicker';
 import { useState } from 'react';
 import { AI_PROVIDERS, chat } from '../../../shared/ai';
 import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { importHevyCsv } from '../../../shared/hevy';
-import { clock, downloadFile, useStore } from '../store';
+import { downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
 import ApiKeys from './ApiKeys';
 import AutoBackups from './AutoBackups';
@@ -111,16 +112,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <Dumbbell size={16} className="ico" /> Entrenamiento
       </h2>
       <div className="card">
-        <label>
-          Descanso por defecto
-          <select value={settings.defaultRestSec} onChange={(e) => setSettings({ defaultRestSec: Number(e.target.value) })}>
-            {[0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map((s) => (
-              <option key={s} value={s}>
-                {s ? clock(s) : 'Desactivado'}
-              </option>
-            ))}
-          </select>
-        </label>
+        <RestPicker prefix="Descanso por defecto" value={settings.defaultRestSec} onChange={(v) => setSettings({ defaultRestSec: v })} />
         <label>
           Objetivo semanal (entrenos)
           <select value={settings.weeklyGoal} onChange={(e) => setSettings({ weeklyGoal: Number(e.target.value) })}>
