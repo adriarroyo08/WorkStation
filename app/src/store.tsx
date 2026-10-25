@@ -152,7 +152,12 @@ export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export const fmtNum = (n: number) => Math.round(n).toLocaleString('es-ES');
 // 1234 → 1,2k (para tarjetas estrechas)
 export const fmtCompact = (n: number) => (Math.abs(n) >= 10000 ? `${(n / 1000).toLocaleString('es-ES', { maximumFractionDigits: 1 })}k` : fmtNum(n));
-export const clock = (sec: number) => `${Math.floor(Math.max(0, sec) / 60)}:${String(Math.max(0, Math.round(sec) % 60)).padStart(2, '0')}`;
+// m:ss, y h:mm:ss a partir de una hora (un entreno olvidado no debe salir como "1331:06").
+export const clock = (sec: number) => {
+  const s = Math.max(0, Math.floor(sec));
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return s >= 3600 ? `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}` : `${Math.floor(s / 60)}:${pad(s % 60)}`;
+};
 
 export function useNow(ms = 1000) {
   const [now, setNow] = useState(Date.now());
