@@ -7,7 +7,7 @@ import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { muscleRecovery, nextRoutine } from '../../../shared/planning';
 import { discardActive, finishActive, launchEmpty, launchWorkout, summary, useSummary } from '../controller';
 import { useStore } from '../store';
-import { BatteryCharging, CalendarCheck, ChevronDown, ChevronRight, Copy, Download, FolderPlus, Link2, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2, Zap } from 'lucide-react';
+import { BatteryCharging, CalendarCheck, ChevronDown, ChevronRight, Copy, Download, FolderInput, FolderPlus, Link2, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2 } from 'lucide-react';
 import BodyMap from './BodyMap';
 import { Sheet, useScrollTop, WeekStrip } from './ui';
 import { fmtWeight } from '../../../shared/units';
@@ -130,7 +130,7 @@ function Today() {
               'Músculos casi recuperados: buen momento para entrenar fuerte'
             )}
           </span>
-          <span className="muted small">Ver</span>
+          <ChevronRight size={16} className="muted" aria-hidden="true" />
         </button>
       )}
       {showRecovery && (
@@ -181,12 +181,12 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
   return (
     <section>
       <h1>Entrenar</h1>
-      <WeekStrip days={days} goal={settings.weeklyGoal} />
+      <WeekStrip days={days} goal={settings.weeklyGoal} mondayFirst={!!settings.weekStartsMonday} />
       <Today />
       {!data.workouts.length && !data.routines.length && (
         <div className="welcome">
           <h2>Bienvenido a Workstation</h2>
-          <p className="small muted">Tres formas de empezar:</p>
+          <p className="small muted">Elige un programa, trae tu historial o empieza un entrenamiento vacío y añade ejercicios sobre la marcha.</p>
           <button className="line" onClick={onExplore}>
             <Search size={18} className="tile-ico" />
             <span className="grow left">
@@ -216,14 +216,6 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             <span className="grow left">
               <b>Importar mi historial de Hevy</b>
               <small className="muted">Hevy → Perfil → Ajustes → Exportar entrenamientos (CSV)</small>
-            </span>
-            <ChevronRight size={16} className="muted" />
-          </button>
-          <button className="line" onClick={() => launchEmpty(store)}>
-            <Zap size={18} className="tile-ico" />
-            <span className="grow left">
-              <b>Entrenar ya</b>
-              <small className="muted">Empieza vacío y añade ejercicios sobre la marcha</small>
             </span>
             <ChevronRight size={16} className="muted" />
           </button>
@@ -315,8 +307,9 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             <button className="item icon-btn" onClick={() => (update((d) => void d.routines.push({ ...structuredClone(menu), id: uid(), name: `${menu.name} (copia)` })), setMenu(null))}>
               <Copy size={16} /> Duplicar
             </button>
-            <label>
-              Mover a carpeta
+            <label className="menu-select">
+              <FolderInput size={16} aria-hidden="true" />
+              <span className="grow">Mover a carpeta</span>
               <select
                 aria-label="Carpeta"
                 value={menu.folderId ?? ''}
@@ -349,7 +342,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                 setMenu(null);
               }}
             >
-              <Link2 size={16} /> Compartir enlace (se guarda con un toque)
+              <Link2 size={16} /> Compartir enlace
             </button>
             <button
               className="item danger icon-btn"

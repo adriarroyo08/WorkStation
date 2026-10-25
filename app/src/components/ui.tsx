@@ -234,15 +234,19 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
 }
 
 // Semana en 7 casillas: las de los días entrenados en acento.
-export function WeekStrip({ days, goal }: { days: boolean[]; goal: number }) {
+export function WeekStrip({ days, goal, mondayFirst = true }: { days: boolean[]; goal: number; mondayFirst?: boolean }) {
+  const letters = mondayFirst ? 'LMXJVSD' : 'DLMXJVS';
+  const today = (new Date().getDay() + (mondayFirst ? 6 : 0)) % 7;
   return (
     <div className="weekstrip">
       <div className="sec">
         Esta semana · {days.filter(Boolean).length} de {goal}
       </div>
-      <div className="weekstrip-days">
+      <div className="weekstrip-days" aria-hidden="true">
         {days.map((on, i) => (
-          <i key={i} className={on ? 'on' : ''} />
+          <i key={i} className={`${on ? 'on' : ''} ${i === today ? 'now' : ''}`}>
+            {letters[i]}
+          </i>
         ))}
       </div>
     </div>

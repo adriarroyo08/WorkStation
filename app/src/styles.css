@@ -2645,3 +2645,61 @@ button.ghost:has(> svg:only-child) {
     }
   }
 }
+
+/* ===== Repaso: Entrenar ===== */
+.weekstrip-days i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: auto;
+  background: none;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.weekstrip-days i::before {
+  content: '';
+  align-self: stretch;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--line);
+}
+.weekstrip-days i.on {
+  background: none;
+}
+.weekstrip-days i.on::before {
+  background: var(--accent);
+}
+.weekstrip-days i.now {
+  color: var(--text);
+}
+.recovery-row b {
+  display: inline;
+}
+.recovery-item b {
+  font-weight: 600;
+  font-size: 15px;
+}
+.menu-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 0 6px 14px;
+  font-size: inherit;
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+.menu-select select {
+  width: auto;
+  max-width: 55%;
+}
+.editor-tools {
+  margin: 2px 0 4px;
+}
+.excard .rset.head {
+  margin-top: 6px;
+}
+

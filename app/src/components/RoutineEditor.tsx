@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { ReorderSheet, moveItem } from './Reorder';
 import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
 import { uid } from '../../../shared/types';
-import { clock, useStore } from '../store';
+import { useStore } from '../store';
+import RestPicker from './RestPicker';
 import ExercisePicker from './ExercisePicker';
 import { ArrowUpDown, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { Back, ExerciseMedia, NumberField, WeightField } from './ui';
@@ -95,29 +96,22 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
         const dur = kind === 'duration';
         const ssPrev = i > 0 && e.supersetId && r.exercises[i - 1].supersetId === e.supersetId;
         return (
-          <div key={i} className={`card ${e.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''}`}>
+          <div key={i} className={`excard ${e.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''}`}>
             {e.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
             <div className="row">
               <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
-              <b className="grow">{ex.get(e.exerciseId)?.name}</b>
-              <button className="ghost small icon-btn" aria-label="Quitar ejercicio" onClick={() => edit((n) => void n.exercises.splice(i, 1))}>
+              <b className="grow">{ex.get(e.exerciseId)?.name ?? e.exerciseId}</b>
+              <button className="ghost small icon-btn gray" aria-label="Quitar ejercicio" onClick={() => edit((n) => void n.exercises.splice(i, 1))}>
                 <Trash2 size={16} />
               </button>
             </div>
-            <div className="row small">
-              <label className="grow">
-                Descanso
-                <select aria-label="Descanso" value={e.restSec} onChange={(ev) => edit((n) => void (n.exercises[i].restSec = Number(ev.target.value)))}>
-                  {[0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map((s) => (
-                    <option key={s} value={s}>
-                      {s ? clock(s) : 'Off'}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="row small editor-tools">
+              <span className="grow">
+                <RestPicker value={e.restSec} onChange={(v) => edit((n) => void (n.exercises[i].restSec = v))} />
+              </span>
               {i < r.exercises.length - 1 && (
                 <button
-                  className="ghost small"
+                  className="ghost small gray"
                   onClick={() =>
                     edit((n) => {
                       const a = n.exercises[i],
@@ -130,7 +124,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                   {e.supersetId && r.exercises[i + 1].supersetId === e.supersetId ? 'Separar' : 'Superserie con siguiente'}
                 </button>
               )}
-              <button className="ghost small icon-btn" aria-label="Reemplazar ejercicio" onClick={() => setPicker({ replace: i })}>
+              <button className="ghost small icon-btn gray" aria-label="Reemplazar ejercicio" onClick={() => setPicker({ replace: i })}>
                 <RefreshCw size={16} />
               </button>
             </div>
@@ -164,13 +158,13 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                 </button>
               </div>
             ))}
-            <button className="ghost full small" onClick={() => edit((n) => void n.exercises[i].sets.push({ ...(n.exercises[i].sets.at(-1) ?? { type: 'normal' }) }))}>
-              + Añadir serie
+            <button className="ghost full icon-btn" onClick={() => edit((n) => void n.exercises[i].sets.push({ ...(n.exercises[i].sets.at(-1) ?? { type: 'normal' }) }))}>
+              <Plus size={16} /> Añadir serie
             </button>
           </div>
         );
       })}
-      <button className="primary full" onClick={() => setPicker({})}>
+      <button className="primary full icon-btn" onClick={() => setPicker({})}>
         <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>
       {exists && (
