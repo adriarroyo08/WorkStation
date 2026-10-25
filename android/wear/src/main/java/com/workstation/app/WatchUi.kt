@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
@@ -66,11 +67,15 @@ fun WatchApp(
         val now = rememberNow()
         val active = state?.active
         LaunchedEffect(active?.id) { onActiveChanged() }
-        Scaffold(timeText = { TimeText() }) {
-            when {
-                active == null -> IdleScreen(state, connected, send)
-                active.restEnd != null && active.restEnd > now -> RestScreen(active, now, bpm, send, vibrate, keepScreenOn)
-                else -> SetScreen(active, now, bpm, send)
+        val resting = active?.restEnd != null && active.restEnd > now
+        val screen = when { active == null -> "idle"; resting -> "rest"; else -> "set" }
+        // Una lista por pantalla, y la hora se oculta al hacer scroll para no tapar los botones de arriba.
+        val list = remember(screen) { ScalingLazyListState() }
+        Scaffold(timeText = { if (list.centerItemIndex <= 1) TimeText() }) {
+            when (screen) {
+                "idle" -> IdleScreen(state, connected, send, list)
+                "rest" -> RestScreen(active!!, now, bpm, send, vibrate, keepScreenOn)
+                else -> SetScreen(active!!, now, bpm, send, list)
             }
         }
     }
@@ -89,8 +94,8 @@ private fun rememberNow(): Long {
 }
 
 @Composable
-private fun IdleScreen(state: WatchState?, connected: Boolean, send: (JSONObject) -> Unit) {
-    ScalingLazyColumn(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+private fun IdleScreen(state: WatchState?, connected: Boolean, send: (JSONObject) -> Unit, list: ScalingLazyListState) {
+    ScalingLazyColumn(modifier = Modifier.fillMaxSize(), state = list, horizontalAlignment = Alignment.CenterHorizontally) {
         item { Text("Workstation", fontWeight = FontWeight.Bold, color = TextMain, fontSize = 18.sp) }
         if (!connected) {
             item { Text("Sin conexión con el móvil", color = TextDim, textAlign = TextAlign.Center, fontSize = 13.sp) }
@@ -130,7 +135,7 @@ private fun IdleScreen(state: WatchState?, connected: Boolean, send: (JSONObject
 }
 
 @Composable
-private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Unit) {
+private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Unit, list: ScalingLazyListState) {
     if (a.exercises.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Text("Añade ejercicios en el móvil", textAlign = TextAlign.Center)
@@ -157,7 +162,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Uni
     }
     var confirmFinish by remember { mutableStateOf(false) }
 
-    ScalingLazyColumn(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+    ScalingLazyColumn(modifier = Modifier.fillMaxSize(), state = list, horizontalAlignment = Alignment.CenterHorizontally) {
         item {
             Text(
                 ex.name,
@@ -272,14 +277,8 @@ private fun RestScreen(a: Active, now: Long, bpm: Int?, send: (JSONObject) -> Un
             }
             if (next != null) {
                 val (e, s) = next
-                Text(
-                    "Siguiente: ${e.name}" + (s?.let { " · ${formatWeight(it.weight ?: it.prevWeight)}×${it.reps ?: it.prevReps ?: "–"}" } ?: ""),
-                    fontSize = 11.sp,
-                    color = TextDim,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Text("Siguiente: ${e.name}", fontSize = 11.sp, color = TextDim, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                s?.let { Text("${formatWeight(it.weight ?: it.prevWeight)} × ${it.reps ?: it.prevReps ?: "–"}", fontSize = 11.sp, color = TextDim) }
             }
             bpm?.let { Text("$it ppm", fontSize = 12.sp, color = TextDim) }
         }

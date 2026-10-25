@@ -5,7 +5,7 @@ import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { clock, useStore } from '../store';
 import ExercisePicker from './ExercisePicker';
-import { ArrowUpDown, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { Back, ExerciseMedia, NumberField, WeightField } from './ui';
 import { weightUnit } from '../../../shared/units';
 
@@ -159,8 +159,8 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                 ) : (
                   <NumberField decimals={false} aria-label="Repeticiones" value={s.reps} placeholder="-" onChange={(v) => edit((n) => void (n.exercises[i].sets[si].reps = v))} />
                 )}
-                <button className="ghost small" onClick={() => edit((n) => void n.exercises[i].sets.splice(si, 1))} disabled={e.sets.length === 1}>
-                  ✕
+                <button className="ghost small" onClick={() => edit((n) => void n.exercises[i].sets.splice(si, 1))} disabled={e.sets.length === 1} aria-label="Quitar serie">
+                  <X size={16} />
                 </button>
               </div>
             ))}

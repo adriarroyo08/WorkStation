@@ -88,8 +88,6 @@ function AppBody() {
   }, [overlayExercise]);
 
   if (recovery || justConfirmed || linkError) return <AuthLanding />;
-  if (tour)
-    return <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />;
 
   return (
     <div className="app">
@@ -109,9 +107,12 @@ function AppBody() {
           )}
         </Suspense>
       </main>
+      {/* Capa encima de la app: al cerrarlo (p. ej. "Ver tour de nuevo" en Ajustes) sigues donde estabas. */}
+      {tour && <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />}
       <ToastView />
       <UpdateBanner />
-      <WhatsNewOnUpdate />
+      {/* Mientras está el tour no se monta: guardaría la versión vista y el tour no volvería si se recarga a medias. */}
+      {!tour && <WhatsNewOnUpdate />}
       <SharedRoutineImport />
       <NotifGate />
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}

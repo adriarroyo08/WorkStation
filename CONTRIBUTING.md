@@ -3,7 +3,7 @@
 ## Puesta en marcha
 
 ```bash
-npm install && npm --prefix app install && npm --prefix mcp install
+npm install && npm --prefix app install && npm --prefix mcp install && npm --prefix video install
 npm --prefix app run dev          # http://localhost:5173
 ```
 

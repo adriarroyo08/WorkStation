@@ -2334,6 +2334,12 @@ button.ghost:has(> svg:only-child) {
 .topbar button.ghost {
   color: var(--text);
 }
+.topbar button.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 0;
+}
 .sheet-head .ghost {
   color: var(--muted);
 }
@@ -2351,6 +2357,8 @@ button.ghost:has(> svg:only-child) {
   max-width: 720px;
   margin: 0 auto;
   overflow-y: auto;
+  /* Tapa también los lados en pantallas anchas: la app sigue montada debajo. */
+  box-shadow: 0 0 0 100vmax var(--bg);
 }
 .onb-top {
   min-height: 48px;

@@ -61,7 +61,12 @@ test.describe('tour de bienvenida', () => {
     await page.getByRole('button', { name: 'Ajustes' }).click();
     await page.getByRole('button', { name: 'Ver tour de nuevo' }).click();
     await expect(tour(page)).toBeVisible();
+    // Al cerrarlo sigues en Ajustes, no vuelves al inicio de Perfil.
+    await page.keyboard.press('Escape');
+    await expect(tour(page)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Ver tour de nuevo' })).toBeVisible();
   });
+
 });
 
 test('entreno completo desde cero', async ({ page, errors }) => {

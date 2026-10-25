@@ -58,7 +58,6 @@ jobs:
         working-directory: android
         env:
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: 0.3.${{ github.run_number }}
           WS_KEYSTORE_PASSWORD: ${{ secrets.WS_KEYSTORE_PASSWORD || 'workstation' }}
           WS_KEY_ALIAS: ${{ secrets.WS_KEY_ALIAS || 'workstation' }}
           WS_KEY_PASSWORD: ${{ secrets.WS_KEY_PASSWORD || 'workstation' }}
