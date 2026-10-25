@@ -4,6 +4,7 @@ import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exer
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
+import { MuscleMap } from './BodyMap';
 import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
 import { fmtDate, useStore } from '../store';
@@ -239,8 +240,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       />
       <h1>{e.name}</h1>
       <p className="muted small">
-        {MUSCLE_LABELS[e.muscle]}
-        {e.secondary?.length ? ` (+ ${e.secondary.map((s) => MUSCLE_LABELS[s]).join(', ')})` : ''} · {e.equipment} · {EXERCISE_KIND_LABELS[e.kind]}
+        {e.equipment} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>
       <div className="segmented">
         {(['summary', 'history', 'howto', 'records'] as const).map((t) => (
@@ -253,6 +253,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {tab === 'summary' && (
         <>
           <ExerciseMedia exercise={e} />
+          <MuscleMap primary={e.muscle} secondary={e.secondary} />
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}

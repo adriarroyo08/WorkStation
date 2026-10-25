@@ -46,7 +46,8 @@ function figure(cx: number, back: boolean): Shape[] {
   ];
 }
 
-const SHAPES = [...figure(50, false), ...figure(150, true)];
+const FRONT = figure(50, false);
+const SHAPES = [...FRONT, ...figure(150, true)];
 
 // fatigue: valores 0..1 de fatiga (1 = recién entrenado); se pinta en naranja y sin leyenda de series.
 export default function BodyMap({ sets, fatigue = false }: { sets: Partial<Record<MuscleGroup, number>>; fatigue?: boolean }) {
@@ -72,6 +73,52 @@ export default function BodyMap({ sets, fatigue = false }: { sets: Partial<Recor
         </text>
       </svg>
       {!fatigue && top.length > 0 && <p className="muted small center-text">Más trabajado: {top.map(([m, v]) => `${MUSCLE_LABELS[m]} (${Math.round(v)})`).join(' · ')}</p>}
+    </div>
+  );
+}
+
+// Músculos de un ejercicio: el principal en naranja pleno y los secundarios en naranja suave.
+// thumb: silueta pequeña (solo la vista, frontal o trasera, donde está el principal) para las listas.
+const SECONDARY = 0.4;
+export function MuscleMap({ primary, secondary = [], thumb = false }: { primary: MuscleGroup; secondary?: MuscleGroup[]; thumb?: boolean }) {
+  const level = (m: MuscleGroup | null) => (m === primary ? 1 : m && secondary.includes(m) ? SECONDARY : 0);
+  const drawn = SHAPES.some((s) => s.m === primary || (s.m && secondary.includes(s.m)));
+  if (thumb) {
+    if (!drawn) return null;
+    const back = !FRONT.some((s) => s.m === primary) && SHAPES.some((s) => s.m === primary);
+    return (
+      <svg className="bm-thumb" viewBox={back ? '115 4 70 168' : '15 4 70 168'} aria-hidden>
+        {SHAPES.map((s, i) => (
+          <path key={i} d={s.d} className={s.m ? 'bm-muscle' : 'bm-base'} style={level(s.m) ? { fill: 'var(--accent)', fillOpacity: level(s.m) } : undefined} />
+        ))}
+      </svg>
+    );
+  }
+  return (
+    <div className="bodymap">
+      {drawn && (
+        <svg viewBox="0 0 200 180" role="img" aria-label="Músculos que trabaja">
+          {SHAPES.map((s, i) => (
+            <path key={i} d={s.d} className={s.m ? 'bm-muscle' : 'bm-base'} style={level(s.m) ? { fill: 'var(--accent)', fillOpacity: level(s.m) } : undefined} />
+          ))}
+          <text x="50" y="178" className="bm-lbl" textAnchor="middle">
+            Frontal
+          </text>
+          <text x="150" y="178" className="bm-lbl" textAnchor="middle">
+            Trasera
+          </text>
+        </svg>
+      )}
+      <ul className="bm-legend">
+        <li>
+          <span className="bm-dot" /> {MUSCLE_LABELS[primary]} <small className="muted">Principal</small>
+        </li>
+        {secondary.map((m) => (
+          <li key={m}>
+            <span className="bm-dot soft" /> {MUSCLE_LABELS[m]} <small className="muted">Secundario</small>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

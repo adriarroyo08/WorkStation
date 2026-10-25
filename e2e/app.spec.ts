@@ -395,3 +395,17 @@ test('añadir ejercicio ocupa toda la pantalla y se puede elegir tras desplazar'
   await expect(page.getByText('Elevación de gemelos de pie').first()).toBeVisible();
   await expect(dialog).toHaveCount(0);
 });
+
+test('cada ejercicio marca sus músculos: principal y secundarios', async ({ page, errors }) => {
+  void errors;
+  await page.goto('/');
+  await tab(page, 'Ejercicios').click();
+  const row = page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first();
+  await expect(row.locator('svg.bm-thumb')).toHaveCount(1);
+  await row.click();
+  const legend = page.locator('.bm-legend');
+  await expect(legend.locator('li').first()).toContainText('Pecho');
+  await expect(legend.locator('li').first()).toContainText('Principal');
+  await expect(legend).toContainText('Secundario');
+  await expect(page.getByRole('img', { name: 'Músculos que trabaja' })).toBeVisible();
+});

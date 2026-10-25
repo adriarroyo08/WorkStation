@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { EQUIPMENT, MUSCLE_LABELS } from '../../../shared/exercises';
+import { MuscleMap } from './BodyMap';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
 import { useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
@@ -48,6 +49,7 @@ export function ExerciseRow({ e, right, onClick, selected }: { e: Exercise; righ
           {MUSCLE_LABELS[e.muscle]} · {e.equipment}
         </small>
       </span>
+      <MuscleMap primary={e.muscle} secondary={e.secondary} thumb />
       {right}
     </button>
   );

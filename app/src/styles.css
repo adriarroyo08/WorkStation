@@ -1223,6 +1223,40 @@ button.card {
   fill: var(--muted);
   font-size: 7px;
 }
+.bm-thumb {
+  width: 26px;
+  height: 60px;
+  flex: none;
+}
+.bm-thumb .bm-base,
+.bm-thumb .bm-muscle {
+  fill: var(--muted);
+  fill-opacity: 0.3;
+  stroke: none;
+}
+.bm-legend {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+}
+.bm-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bm-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.bm-dot.soft {
+  opacity: 0.4;
+}
 .set.next {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
