@@ -3,6 +3,13 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.4.2] - 2026-10-27
+
+### Añadido
+- Importar el CSV de Hevy reconstruye también las rutinas (carpeta "Hevy") desde el último entreno con cada nombre; no toca las rutinas que ya existen con ese nombre.
+- Cuenta más visual, registro con Google, política de contraseñas, emails propios (SMTP configurable, Brevo por defecto) y email de bienvenida.
+- La API key se puede enviar por email, compartir o añadir a Claude como conector.
+
 ## [1.4.0] - 2026-10-27
 
 ### Añadido

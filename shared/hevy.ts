@@ -2,8 +2,9 @@
 //  1. CSV de exportación (Hevy → Perfil → Ajustes → Exportar datos).
 //  2. API pública de Hevy (requiere Hevy Pro y una API key de https://hevy.com/settings?developer).
 // No usa ni copia código de la app de Hevy.
-import { findOrCreateExercise } from './data';
+import { findOrCreateExercise, routineFromWorkout } from './data';
 import { fromUnit } from './units';
+import { uid } from './types';
 import type { SetType, Workout, WorkoutExercise, WorkstationData } from './types';
 
 const SET_TYPES: Record<string, SetType> = { normal: 'normal', warmup: 'warmup', dropset: 'drop', drop: 'drop', failure: 'failure' };
@@ -84,7 +85,12 @@ const num = (s: string | number | null | undefined) => {
   return Number.isFinite(n) ? n : undefined;
 };
 
-export function importHevyCsv(data: WorkstationData, csv: string): number {
+export interface HevyImport {
+  workouts: number;
+  routines: number;
+}
+
+export function importHevyCsv(data: WorkstationData, csv: string): HevyImport {
   const rows = parseCsv(csv);
   const byKey = new Map<string, Workout>();
   for (const r of rows) {
@@ -123,7 +129,7 @@ export function importHevyCsv(data: WorkstationData, csv: string): number {
       done: true,
     });
   }
-  return upsertWorkouts(data, [...byKey.values()]);
+  return importWorkouts(data, [...byKey.values()]);
 }
 
 interface HevyApiWorkout {
@@ -139,7 +145,7 @@ interface HevyApiWorkout {
   }[];
 }
 
-export function convertHevyApiWorkouts(data: WorkstationData, list: HevyApiWorkout[]): number {
+export function convertHevyApiWorkouts(data: WorkstationData, list: HevyApiWorkout[]): HevyImport {
   const workouts: Workout[] = list.map((hw) => ({
     id: `hevy-${hw.id}`,
     name: hw.title,
@@ -160,7 +166,33 @@ export function convertHevyApiWorkouts(data: WorkstationData, list: HevyApiWorko
       })),
     })),
   }));
-  return upsertWorkouts(data, workouts);
+  return importWorkouts(data, workouts);
+}
+
+export const hevySummary = (r: HevyImport) =>
+  `Importados ${r.workouts} entrenamientos desde Hevy` + (r.routines ? ` y ${r.routines} rutinas (carpeta «Hevy»).` : '.');
+
+function importWorkouts(data: WorkstationData, ws: Workout[]): HevyImport {
+  upsertWorkouts(data, ws);
+  return { workouts: ws.length, routines: addHevyRoutines(data, ws) };
+}
+
+// Las exportaciones de Hevy no traen las rutinas, pero cada entreno lleva su nombre: se reconstruye cada rutina
+// a partir de la última vez que se hizo, en la carpeta "Hevy". Las rutinas que ya existen con ese nombre no se tocan.
+function addHevyRoutines(data: WorkstationData, ws: Workout[]): number {
+  const key = (s: string) => s.trim().toLowerCase();
+  const have = new Set(data.routines.map((r) => key(r.name)));
+  const latest = new Map<string, Workout>();
+  for (const w of ws) {
+    const k = key(w.name);
+    const prev = latest.get(k);
+    if (!have.has(k) && w.exercises.length && (!prev || w.startedAt > prev.startedAt)) latest.set(k, w);
+  }
+  if (!latest.size) return 0;
+  let folder = data.folders.find((f) => f.name === 'Hevy');
+  if (!folder) data.folders.push((folder = { id: uid(), name: 'Hevy' }));
+  for (const w of latest.values()) data.routines.push({ ...routineFromWorkout(w, data.settings.defaultRestSec), folderId: folder.id });
+  return latest.size;
 }
 
 export async function fetchHevyWorkouts(apiKey: string, maxPages = 50): Promise<HevyApiWorkout[]> {
@@ -178,7 +210,7 @@ export async function fetchHevyWorkouts(apiKey: string, maxPages = 50): Promise<
 
 // Inserta o actualiza. Un entreno ya importado se reconoce por id o por nombre + inicio (al minuto), así
 // reimportar el CSV, o importar por CSV y después por la API, no duplica entrenos.
-function upsertWorkouts(data: WorkstationData, ws: Workout[]): number {
+function upsertWorkouts(data: WorkstationData, ws: Workout[]) {
   const sig = (w: Workout) => `${w.name.trim().toLowerCase()}|${w.startedAt.slice(0, 16)}`;
   const byId = new Map(data.workouts.map((w, i) => [w.id, i]));
   const bySig = new Map(data.workouts.map((w, i) => [sig(w), i]));
@@ -190,5 +222,4 @@ function upsertWorkouts(data: WorkstationData, ws: Workout[]): number {
       data.workouts.push(w);
     } else data.workouts[i] = { ...w, id: data.workouts[i].id };
   }
-  return ws.length;
 }

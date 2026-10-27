@@ -2,7 +2,7 @@ import RestPicker from './RestPicker';
 import { useState } from 'react';
 import { AI_PROVIDERS, chat } from '../../../shared/ai';
 import { emptyData, mergeData, normalizeData } from '../../../shared/data';
-import { importHevyCsv } from '../../../shared/hevy';
+import { hevySummary, importHevyCsv } from '../../../shared/hevy';
 import { downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
 import ApiKeys from './ApiKeys';
@@ -285,15 +285,15 @@ export default function Settings({ onBack }: { onBack: () => void }) {
             readFile('.csv,text/csv', async (t) => {
               await snapshot(data, 'antes de importar');
               const d = structuredClone(data);
-              const n = importHevyCsv(d, t);
+              const r = importHevyCsv(d, t);
               replace(d);
-              alert(`Importados ${n} entrenamientos desde Hevy.`);
+              alert(hevySummary(r));
             })
           }
         >
           Importar CSV de Hevy
         </button>
-        <p className="small muted">El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos.</p>
+        <p className="small muted">El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos. Tus rutinas se crean a partir de la última vez que hiciste cada una.</p>
         <button
           className="danger full"
           onClick={async () => {

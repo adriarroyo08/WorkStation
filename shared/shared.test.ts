@@ -125,8 +125,23 @@ describe('datos', () => {
       '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n"Push","10 Oct 2026, 18:00","10 Oct 2026, 19:05","","Press de banca (barra)","","",0,"warmup",40,10,"","",""\n"Push","10 Oct 2026, 18:00","10 Oct 2026, 19:05","","Press de banca (barra)","","",1,"normal",80,8,"","",8';
     expect(parseCsv(csv)).toHaveLength(2);
     const d = emptyData();
-    expect(importHevyCsv(d, csv)).toBe(1);
+    expect(importHevyCsv(d, csv)).toEqual({ workouts: 1, routines: 1 });
     expect(d.workouts[0].exercises[0].sets.map((s) => s.type)).toEqual(['warmup', 'normal']);
+  });
+  it('CSV de Hevy: rutinas desde el último entreno de cada una, sin duplicar ni pisar las tuyas', () => {
+    const h = '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n';
+    const row = (t: string, date: string, ex: string, kg: number) => `"${t}","${date}","","","${ex}","","",0,"normal",${kg},8,"","",""\n`;
+    const csv = h + row('Push', '10 Oct 2026, 18:00', 'Press de banca (barra)', 80) + row('Push', '17 Oct 2026, 18:00', 'Press de banca (barra)', 85) + row('Push', '17 Oct 2026, 18:00', 'Fondos', 0) + row('Pierna', '12 Oct 2026, 18:00', 'Sentadilla (barra)', 100);
+    const d = emptyData();
+    d.routines.push({ id: 'mia', name: 'pierna', exercises: [] });
+    expect(importHevyCsv(d, csv)).toEqual({ workouts: 3, routines: 1 });
+    const push = d.routines.find((r) => r.name === 'Push')!;
+    expect(push.exercises).toHaveLength(2);
+    expect(push.exercises[0].sets[0]).toMatchObject({ weight: 85, reps: 8 });
+    expect(d.folders.find((f) => f.id === push.folderId)?.name).toBe('Hevy');
+    expect(d.routines.find((r) => r.id === 'mia')!.exercises).toEqual([]);
+    expect(importHevyCsv(d, csv).routines).toBe(0);
+    expect(d.folders.filter((f) => f.name === 'Hevy')).toHaveLength(1);
   });
 });
 

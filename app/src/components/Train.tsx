@@ -203,11 +203,11 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
               input.accept = '.csv,text/csv';
               input.onchange = () =>
                 input.files?.[0]?.text().then(async (t) => {
-                  const { importHevyCsv } = await import('../../../shared/hevy');
+                  const { hevySummary, importHevyCsv } = await import('../../../shared/hevy');
                   const d = structuredClone(data);
-                  const n = importHevyCsv(d, t);
+                  const r = importHevyCsv(d, t);
                   store.replace(d);
-                  alert(`Importados ${n} entrenamientos desde Hevy.`);
+                  alert(hevySummary(r));
                 });
               input.click();
             }}
