@@ -1,4 +1,5 @@
 import { SAMPLE, expect, seed, tab, test, skipTour } from './fixtures';
+import { CHANGELOG } from '../shared/changelog';
 
 test.describe('tour de bienvenida', () => {
   test.use({ onboarded: false });
@@ -248,7 +249,7 @@ test('novedades tras actualizar y versión en ajustes', async ({ page, errors })
   await expect(page.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
   await tab(page, 'Perfil').click();
   await page.getByRole('button', { name: 'Ajustes' }).click();
-  await expect(page.locator('.app-version')).toContainText('Workstation v1.4.0');
+  await expect(page.locator('.app-version')).toContainText(`Workstation v${CHANGELOG[0].version}`);
 });
 
 test.describe('1.4.0: tour o novedades según de dónde vienes', () => {
