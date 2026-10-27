@@ -1,12 +1,13 @@
-import { Film, Pin, Search, Trophy } from 'lucide-react';
+import { Check, ChevronRight, Film, Pin, Plus, Search, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
-import { EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
+import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
+import { MuscleMap } from './BodyMap';
 import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
-import { fmtDate, useStore } from '../store';
+import { cap, fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
@@ -35,12 +36,17 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
     <section>
       <div className="row">
         <h1 className="grow">Ejercicios</h1>
-        <button className="ghost" onClick={() => setCreating(true)}>
-          + Crear
+        <button className="ghost icon-btn" onClick={() => setCreating(true)}>
+          <Plus size={18} /> Crear
         </button>
       </div>
-      <button className="card full explore" onClick={() => setCatalog(true)}>
-        <Search size={16} className="ico" /> <b>Explorar catálogo completo</b> <span className="muted small">870+ ejercicios con imágenes e instrucciones</span>
+      <button className="line" onClick={() => setCatalog(true)}>
+        <Search size={18} className="tile-ico" />
+        <span className="grow">
+          <b>Explorar catálogo completo</b>
+          <small className="muted">870+ ejercicios con imágenes e instrucciones</small>
+        </span>
+        <ChevronRight size={16} className="muted" />
       </button>
       {filters}
       <div className="list">
@@ -133,7 +139,9 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
             key={e.id}
             e={e}
             onClick={() => setPreview(items!.find((c) => c.id === e.media)!)}
-            right={libraryByMedia.has(e.media!) || have.has(e.id) ? <small className="accent-text">✓ en tu biblioteca</small> : undefined}
+            right={libraryByMedia.has(e.media!) || have.has(e.id) ? <small className="muted icon-btn in-lib">
+                  <Check size={14} /> En tu biblioteca
+                </small> : undefined}
           />
         ))}
         {list.length > 150 && <p className="muted small">Mostrando 150. Afina la búsqueda para ver más.</p>}
@@ -142,7 +150,7 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
         <Sheet title={preview.name} onClose={() => setPreview(null)}>
           <ExerciseMedia media={preview.id} />
           <p className="muted small">
-            {MUSCLE_LABELS[preview.muscle]} · {preview.equipment} · {preview.category} · {preview.level}
+            {MUSCLE_LABELS[preview.muscle]} · {catalogLabel(preview.equipment)} · {preview.category} · {catalogLabel(preview.level)}
           </p>
           <ol className="small">
             {preview.instructions.map((s, i) => (
@@ -239,10 +247,9 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       />
       <h1>{e.name}</h1>
       <p className="muted small">
-        {MUSCLE_LABELS[e.muscle]}
-        {e.secondary?.length ? ` (+ ${e.secondary.map((s) => MUSCLE_LABELS[s]).join(', ')})` : ''} · {e.equipment} · {EXERCISE_KIND_LABELS[e.kind]}
+        {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>
-      <div className="segmented">
+      <div className="segmented fit">
         {(['summary', 'history', 'howto', 'records'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
             {{ summary: 'Resumen', history: 'Historial', howto: 'Cómo hacerlo', records: 'Récords' }[t]}
@@ -253,6 +260,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {tab === 'summary' && (
         <>
           <ExerciseMedia exercise={e} />
+          <MuscleMap primary={e.muscle} secondary={e.secondary} />
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}

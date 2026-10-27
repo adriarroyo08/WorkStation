@@ -56,7 +56,7 @@ export function DevicesPanel() {
             </button>
           ) : (
             <button
-              className="primary"
+              className="outline"
               disabled={busy}
               onClick={async () => {
                 setErr('');

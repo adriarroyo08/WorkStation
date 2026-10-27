@@ -1,4 +1,4 @@
-import { Heart, ListChecks, Timer, Trophy, Weight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Heart, ListChecks, Timer, Trophy, Weight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import { cap, fmtDate, useStore } from '../store';
@@ -57,30 +57,40 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
           </button>
         </div>
       </div>
-      {mode === 'list' && <input placeholder="Buscar por nombre o ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />}
+      {mode === 'list' && data.workouts.length > 0 && <input aria-label="Buscar entrenamientos" placeholder="Buscar por nombre o ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />}
       {mode === 'calendar' && (
         <div className="card">
           <div className="row">
-            <button className="ghost" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)), setDay(null))}>
-              ‹
+            <button className="ghost icon-btn" aria-label="Mes anterior" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)), setDay(null))}>
+              <ChevronLeft size={20} />
             </button>
             <b className="grow center-text">{cap(month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }))}</b>
-            <button className="ghost" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)), setDay(null))}>
-              ›
+            <button className="ghost icon-btn" aria-label="Mes siguiente" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)), setDay(null))}>
+              <ChevronRight size={20} />
             </button>
           </div>
           <MonthCalendar month={month} trained={trained} mondayFirst={settings.weekStartsMonday} onDay={(d) => setDay(day === d.toDateString() ? null : d.toDateString())} />
           <p className="muted small center-text">
-            {list.length} entrenamientos {day ? 'ese día' : 'este mes'}
+            {list.length} {list.length === 1 ? 'entrenamiento' : 'entrenamientos'} {day ? 'ese día' : 'este mes'}
           </p>
         </div>
       )}
-      {!data.workouts.length && <p className="muted">Aún no hay entrenamientos. ¡Empieza uno o importa tus datos de Hevy en Ajustes!</p>}
+      {!data.workouts.length && (
+        <div className="empty-state">
+          <CalendarDays size={40} className="muted" />
+          <h2>Aún no hay entrenamientos</h2>
+          <p className="muted small">Cuando termines uno aparecerá aquí. También puedes importar tu historial de Hevy desde Perfil → Ajustes.</p>
+          <button className="primary" onClick={goTrain}>
+            Ir a Entrenar
+          </button>
+        </div>
+      )}
+      {data.workouts.length > 0 && !total && <p className="muted center-text">{q ? `Nada coincide con «${q}».` : 'Sin entrenamientos en este periodo.'}</p>}
       {groups.map((g) => (
         <div key={g.label}>
-          <h3 className="muted month-h">
+          <h2 className="sec">
             {g.label} · {g.items.length}
-          </h3>
+          </h2>
           {g.items.map((w) => (
             <button key={w.id} className="hrow full left" onClick={() => setOpen(w.id)}>
               <div className="row">
@@ -105,8 +115,8 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
                   <ListChecks size={14} /> {workoutSetCount(w)} series
                 </span>
                 {w.heartRate && (
-                  <span>
-                    <Heart size={16} className="ico" /> {w.heartRate.avg}
+                  <span className="icon-btn">
+                    <Heart size={14} /> {w.heartRate.avg} ppm
                   </span>
                 )}
               </div>

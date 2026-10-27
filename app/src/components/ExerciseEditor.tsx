@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EQUIPMENT, EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
 import { uid } from '../../../shared/types';
-import { useStore } from '../store';
+import { cap, useStore } from '../store';
 
 export default function ExerciseEditor({ initial, initialName = '', onSaved }: { initial?: Exercise; initialName?: string; onSaved: (e: Exercise) => void }) {
   const { update } = useStore();
@@ -36,7 +36,9 @@ export default function ExerciseEditor({ initial, initialName = '', onSaved }: {
         Material
         <select value={e.equipment} onChange={(ev) => setE({ ...e, equipment: ev.target.value })}>
           {EQUIPMENT.map((k) => (
-            <option key={k}>{k}</option>
+            <option key={k} value={k}>
+              {cap(k)}
+            </option>
           ))}
         </select>
       </label>
@@ -50,14 +52,15 @@ export default function ExerciseEditor({ initial, initialName = '', onSaved }: {
           ))}
         </select>
       </label>
-      <label>Músculos secundarios</label>
-      <div className="chips">
+      <label id="ex-secondary">Músculos secundarios</label>
+      <div className="chips" role="group" aria-labelledby="ex-secondary">
         {(Object.keys(MUSCLE_LABELS) as MuscleGroup[])
           .filter((m) => m !== e.muscle)
           .map((m) => (
             <button
               key={m}
               className={e.secondary?.includes(m) ? 'on' : ''}
+              aria-pressed={!!e.secondary?.includes(m)}
               onClick={() => setE({ ...e, secondary: e.secondary?.includes(m) ? e.secondary.filter((x) => x !== m) : [...(e.secondary ?? []), m] })}
             >
               {MUSCLE_LABELS[m]}

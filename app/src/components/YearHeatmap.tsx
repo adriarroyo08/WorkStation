@@ -43,7 +43,7 @@ export default function YearHeatmap({ workouts, mondayFirst }: { workouts: Worko
           </g>
         ))}
       </svg>
-      <p className="muted small">{days} días entrenados en los últimos 12 meses</p>
+      <p className="muted small">{days} {days === 1 ? 'día entrenado' : 'días entrenados'} en los últimos 12 meses</p>
     </div>
   );
 }

@@ -112,10 +112,11 @@ export default function WorkoutDetail({
         {fmtDate(w.startedAt)} · {fmtTime(w.startedAt)}
         {routine ? ` · Rutina: ${routine.name}` : ''}
       </p>
-      <div className="stats four">
+      <div className="stats five">
         <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
         <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
         <Stat value={workoutSetCount(w)} label="series" />
+        <Stat value={workoutReps(w)} label="reps" />
         <Stat value={prs.length} label="récords" />
       </div>
       {cmp && (
@@ -162,13 +163,13 @@ export default function WorkoutDetail({
         const e = ex.get(we.exerciseId);
         return (
           <div key={i} className={`card ${we.supersetId ? 'superset' : ''}`}>
-            <div className="row" onClick={() => onExercise?.(we.exerciseId)}>
+            <button className="plain row full left ex-head" onClick={() => onExercise?.(we.exerciseId)}>
               <ExerciseMedia exercise={e} size="thumb" />
-              <div className="grow">
+              <span className="grow">
                 <b>{e?.name ?? we.exerciseId}</b>
-                <div className="muted small">{bestSetText(we, e)}</div>
-              </div>
-            </div>
+                <span className="muted small">{bestSetText(we, e)}</span>
+              </span>
+            </button>
             {we.notes && <p className="muted small">{we.notes}</p>}
             <ol className="setlist">
               {we.sets.map((s, j) => (
@@ -180,7 +181,6 @@ export default function WorkoutDetail({
           </div>
         );
       })}
-      <p className="muted small">Repeticiones totales: {workoutReps(w)}</p>
 
       <div className="actions">
         <button className="primary full icon-btn" onClick={share}>

@@ -54,9 +54,8 @@ export default function AutoBackups() {
             <div key={b.id} className="row backup-row">
               <span className="grow">
                 <b>{fmt(b.at)}</b>
-                <small className="muted">
-                  {' '}
-                  · {b.reason} · {b.workouts} entrenos · {b.routines} rutinas
+                <small className="muted backup-meta">
+                  {b.reason} · {b.workouts} entrenos · {b.routines} rutinas
                 </small>
               </span>
               <button className="ghost small icon-btn" onClick={() => download(b)} aria-label={`Descargar copia del ${fmt(b.at)}`}>

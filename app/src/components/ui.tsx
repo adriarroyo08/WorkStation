@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { ChevronLeft, X } from 'lucide-react';
 import { fromUnit, toUnit } from '../../../shared/units';
 import { mediaUrls } from '../../../shared/exercises';
 import { ANIMATED } from '../../../shared/anim-index';
@@ -7,16 +8,25 @@ import { useExdbGif } from '../exdb';
 import { formatDuration, PR_LABELS, type PrKind } from '../../../shared/stats';
 import type { Exercise } from '../../../shared/types';
 
+const openSheets: object[] = [];
+
 // Hoja modal. Va en un portal a <body>: dentro de una pantalla con animación (transform) el
 // position:fixed sería relativo a esa pantalla y la hoja saldría recortada.
 // `full`: pantalla completa, con `header` y `footer` fijos y cuerpo con scroll propio.
 export function Sheet({ title, onClose, children, full, header, footer }: { title?: string; onClose: () => void; children: ReactNode; full?: boolean; header?: ReactNode; footer?: ReactNode }) {
-  // Escape cierra la hoja (teclado, mandos y lectores de pantalla).
+  // Escape (y el Atrás de Android) cierra solo la hoja de encima, no todas las abiertas.
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const me = {};
+    openSheets.push(me);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && openSheets.at(-1) === me && close.current();
     addEventListener('keydown', onKey);
-    return () => removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      removeEventListener('keydown', onKey);
+      openSheets.splice(openSheets.indexOf(me), 1);
+    };
+  }, []);
   return createPortal(
     <div className={`modal ${full ? 'full' : ''}`} onClick={onClose}>
       <div className={`sheet ${full ? 'full' : ''}`} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
@@ -24,7 +34,7 @@ export function Sheet({ title, onClose, children, full, header, footer }: { titl
           <div className="row sheet-head">
             <b className="grow">{title}</b>
             <button className="ghost" onClick={onClose} aria-label="Cerrar">
-              ✕
+              <X size={20} />
             </button>
           </div>
           {header}
@@ -41,8 +51,8 @@ export function Back({ onClick, label = 'Volver', right }: { onClick: () => void
   useScrollTop();
   return (
     <div className="row topbar">
-      <button className="ghost" onClick={onClick}>
-        ← {label}
+      <button className="ghost back" onClick={onClick}>
+        <ChevronLeft size={20} /> {label}
       </button>
       <span className="grow" />
       {right}
@@ -224,15 +234,19 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
 }
 
 // Semana en 7 casillas: las de los días entrenados en acento.
-export function WeekStrip({ days, goal }: { days: boolean[]; goal: number }) {
+export function WeekStrip({ days, goal, mondayFirst = true }: { days: boolean[]; goal: number; mondayFirst?: boolean }) {
+  const letters = mondayFirst ? 'LMXJVSD' : 'DLMXJVS';
+  const today = (new Date().getDay() + (mondayFirst ? 6 : 0)) % 7;
   return (
     <div className="weekstrip">
       <div className="sec">
         Esta semana · {days.filter(Boolean).length} de {goal}
       </div>
-      <div className="weekstrip-days">
+      <div className="weekstrip-days" aria-hidden="true">
         {days.map((on, i) => (
-          <i key={i} className={on ? 'on' : ''} />
+          <i key={i} className={`${on ? 'on' : ''} ${i === today ? 'now' : ''}`}>
+            {letters[i]}
+          </i>
         ))}
       </div>
     </div>

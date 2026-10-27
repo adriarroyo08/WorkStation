@@ -28,17 +28,17 @@ export default function CloudSettings() {
         <a href="https://supabase.com" target="_blank" rel="noreferrer">
           Supabase
         </a>{' '}
-        (gratis), conéctalo aquí. Tu cuenta, con el email, está en Perfil.
+        (gratis), conéctalo aquí. Para entrar con tu cuenta, ve a Perfil.
       </p>
 
       {!st.configured || st.status === 'off' ? (
         <>
           <label>
-            Project URL
+            URL del proyecto
             <input placeholder="https://xxxx.supabase.co" value={url} onChange={(e) => setUrl(e.target.value)} />
           </label>
           <label>
-            anon public key
+            Clave pública (anon)
             <input type="password" placeholder="eyJhbGciOi…" value={key} onChange={(e) => setKey(e.target.value)} />
           </label>
           <button className="primary" disabled={busy || !url || !key} onClick={() => run(() => cloud.configure({ url, anonKey: key }))}>

@@ -11,7 +11,8 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = (System.getenv("VERSION_CODE") ?: "3").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "0.3.0"
+        // La misma versión que ve el usuario en la app (Novedades), sacada de app/package.json.
+        versionName = Regex("\"version\":\\s*\"([^\"]+)\"").find(rootDir.resolve("../app/package.json").readText())!!.groupValues[1]
     }
 
     signingConfigs {

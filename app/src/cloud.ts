@@ -131,9 +131,18 @@ const ES: [RegExp, string][] = [
   [/rate limit|only request this after|too many/i, 'Demasiados intentos. Espera un momento y vuelve a probar.'],
   [/invalid email|unable to validate email/i, 'Ese email no parece válido.'],
   [/auth session missing/i, 'El enlace ha caducado. Vuelve a pedirlo desde la app.'],
-  [/failed to fetch|network/i, 'Sin conexión con el servidor. Revisa tu conexión.'],
+  [/expired|invalid.*(token|otp|link)|otp/i, 'El enlace o el código ha caducado. Vuelve a pedirlo desde la app.'],
+  [/signups? not allowed|signup.*disabled/i, 'Ahora mismo no se pueden crear cuentas nuevas.'],
+  [/provider is not enabled|unsupported provider/i, 'Este método de inicio de sesión no está activado.'],
+  [/user not found/i, 'No hay ninguna cuenta con ese email.'],
+  [/failed to fetch|network ?error|networkerror|load failed/i, 'Sin conexión con el servidor. Revisa tu conexión.'],
 ];
-const friendly = (m: string) => new Error(ES.find(([re]) => re.test(m))?.[1] ?? m);
+// Supabase responde en inglés: lo traducimos y, si no lo reconocemos, damos un mensaje genérico en español.
+const friendly = (m: string) => {
+  const es = ES.find(([re]) => re.test(m))?.[1];
+  if (!es) console.warn('Error de cuenta sin traducir:', m);
+  return new Error(es ?? 'No se ha podido completar. Inténtalo de nuevo en un momento.');
+};
 
 async function onSignedIn(uid: string, email: string | null) {
   emit({ email, status: 'syncing', error: null });

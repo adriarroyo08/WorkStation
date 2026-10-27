@@ -5,6 +5,7 @@ import {
   TrendingUp,
   ArrowUpDown,
   Calculator,
+  Check,
   Flame,
   Heart,
   Link2,
@@ -32,6 +33,7 @@ import { suggestNext } from '../../../shared/progression';
 import { useHeartRate } from '../hr';
 import { toast } from '../toast';
 import { clock, useNow, useStore, useWakeLock } from '../store';
+import RestPicker from './RestPicker';
 import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
 import { ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
@@ -41,7 +43,6 @@ import { ReorderSheet, moveItem } from './Reorder';
 const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
 const SET_LABEL: Record<SetType, string> = { normal: '', warmup: 'C', drop: 'D', failure: 'F' };
 const SET_NAMES: Record<SetType, string> = { normal: 'Normal', warmup: 'Calentamiento', drop: 'Drop set', failure: 'Al fallo' };
-const REST_OPTIONS = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 type Edit = (fn: (w: Workout) => void) => void;
@@ -155,10 +156,10 @@ export default function WorkoutLogger({
   const totals = { sets: workoutSetCount(w), volume: workoutVolume(w, data.exercises) };
 
   return (
-    <section className="active">
+    <section className={`active ${mode === 'live' && restState.end && restLeft > 0 ? 'resting' : ''}`}>
       <div className="sticky">
         <div className="row">
-          <input className="title grow" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
+          <input className="title grow" aria-label="Nombre del entrenamiento" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
           <button className="primary" onClick={onFinish}>
             {mode === 'live' ? 'Terminar' : 'Guardar'}
           </button>
@@ -225,11 +226,10 @@ export default function WorkoutLogger({
               <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />
             )}
             <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))} />
-            {mode === 'live' && (
-              <button className="ghost small rest-chip" onClick={() => setMenu(ei)}>
-                <Timer size={16} className="ico" /> Descanso: {(we.restSec ?? settings.defaultRestSec) ? clock(we.restSec ?? settings.defaultRestSec) : 'off'}
-              </button>
-            )}
+            {mode === 'live' && <RestPicker value={we.restSec ?? settings.defaultRestSec} onChange={(v) => edit((n) => void (n.exercises[ei].restSec = v))} />}
+            <div className="exprog" role="progressbar" aria-label="Series completadas" aria-valuemin={0} aria-valuemax={we.sets.length} aria-valuenow={we.sets.filter((x) => x.done).length}>
+              <div style={{ width: `${we.sets.length ? (100 * we.sets.filter((x) => x.done).length) / we.sets.length : 0}%` }} />
+            </div>
             <div className={`sets ${settings.showRpe ? 'rpe' : ''}`}>
               <div className="set head">
                 <span>Serie</span>
@@ -237,7 +237,9 @@ export default function WorkoutLogger({
                 <span>{c1}</span>
                 <span>{c2}</span>
                 {settings.showRpe && <span>RPE</span>}
-                <span>✓</span>
+                <span>
+                  <Check size={14} aria-label="Hecha" />
+                </span>
               </div>
               {we.sets.map((s, si) => (
                 <SetRow
@@ -306,16 +308,22 @@ export default function WorkoutLogger({
       </button>
 
       {mode === 'live' && restState.end && restLeft > 0 && (
-        <div className="rest">
+        <div className="rest" role="timer" aria-label="Descanso">
           <div className="rest-progress" style={{ width: `${(restLeft / Math.max(1, restState.total)) * 100}%` }} />
           <div className="rest-main">
             <span>Descanso</span>
             <b>{clock(restLeft)}</b>
             {nextLabel && <small className="rest-next">Siguiente: {nextLabel}</small>}
           </div>
-          <button onClick={() => rest.add(-15)}>-15</button>
-          <button onClick={() => rest.add(15)}>+15</button>
-          <button onClick={rest.stop}>Saltar</button>
+          <button onClick={() => rest.add(-15)} aria-label="Quitar 15 segundos">
+            −15
+          </button>
+          <button onClick={() => rest.add(15)} aria-label="Añadir 15 segundos">
+            +15
+          </button>
+          <button className="rest-skip" onClick={rest.stop}>
+            Saltar
+          </button>
         </div>
       )}
 
@@ -393,7 +401,7 @@ function EditTimes({ w, edit }: { w: Workout; edit: Edit }) {
           }
         />
       </label>
-      <label>
+      <label className="dur-field">
         Duración (min)
         <input inputMode="numeric" value={dur} onChange={(e) => edit((n) => void (n.endedAt = new Date(Date.parse(n.startedAt) + (Number(e.target.value) || 0) * 60000).toISOString()))} />
       </label>
@@ -411,16 +419,7 @@ function ExerciseMenu({ w, ei, edit, onClose, onReplace, onReorder }: { w: Worko
   return (
     <Sheet title={ex?.name} onClose={onClose}>
       <p className="muted small">{ex && MUSCLE_LABELS[ex.muscle]}</p>
-      <label>
-        <Timer size={16} className="ico" /> Temporizador de descanso
-        <select aria-label="Descanso" value={we.restSec ?? settings.defaultRestSec} onChange={(e) => edit((n) => void (n.exercises[ei].restSec = Number(e.target.value)))}>
-          {REST_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s ? clock(s) : 'Desactivado'}
-            </option>
-          ))}
-        </select>
-      </label>
+      <RestPicker value={we.restSec ?? settings.defaultRestSec} onChange={(v) => edit((n) => void (n.exercises[ei].restSec = v))} />
       <div className="list">
         {ex?.kind === 'weight_reps' && workWeight > 0 && (
           <button
@@ -489,7 +488,7 @@ export function PlateCalculator({ initial, onClose }: { initial: number; onClose
   const asKg = (p: number) => fromUnit(p, u);
   return (
     <Sheet title="Calculadora de discos" onClose={onClose}>
-      <div className="row">
+      <div className="row plate-form">
         <label className="grow">
           Peso total ({u})
           <NumberField value={target} onChange={setTarget} autoFocus />
@@ -553,7 +552,7 @@ function SetRow(props: {
       ? formatDuration(prev.durationSec ?? 0)
       : kind === 'distance'
         ? `${prev.distanceM ?? '-'}m`
-        : `${prev.weight ? `${String(toUnit(prev.weight)).replace('.', ',')}×` : ''}${prev.reps ?? 0}`
+        : `${prev.weight ? `${String(toUnit(prev.weight)).replace('.', ',')} × ` : ''}${prev.reps ?? 0}`
     : '—';
   const weightInput = (
     <WeightField
@@ -573,8 +572,8 @@ function SetRow(props: {
         <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
           {SET_LABEL[s.type] || n}
           {pr && (
-            <span className="pr-badge">
-              <Trophy size={16} className="ico" />
+            <span className="pr-badge" role="img" aria-label="Récord" title="Récord">
+              <Trophy size={12} aria-hidden />
             </span>
           )}
         </button>
@@ -612,8 +611,8 @@ function SetRow(props: {
             ))}
           </select>
         )}
-        <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle} aria-label="Completar serie">
-          ✓
+        <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle} aria-label="Completar serie" aria-pressed={!!s.done}>
+          <Check size={20} strokeWidth={3} />
         </button>
         {typeMenu && (
           <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
@@ -715,7 +714,7 @@ function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: E
         disabled={applied}
         onClick={() => (onApply({ weight: sug.weight, reps: sug.reps, durationSec: sug.durationSec }), toast.show('Sugerencia aplicada a las series pendientes'))}
       >
-        {applied ? '✓' : 'Aplicar'}
+        {applied ? <Check size={16} aria-label="Aplicada" /> : 'Aplicar'}
       </button>
     </div>
   );

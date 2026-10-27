@@ -1,5 +1,6 @@
 // Pantallas de la web a las que llegan los enlaces del email: "Cuenta confirmada" y "Elige tu nueva contraseña".
 import { useState } from 'react';
+import { CircleAlert, CircleCheck, KeyRound } from 'lucide-react';
 import { cloud, useCloud } from '../cloud';
 
 export default function AuthLanding() {
@@ -28,6 +29,7 @@ export default function AuthLanding() {
             }
           }}
         >
+          <KeyRound size={40} className="muted" aria-hidden />
           <h1>Elige tu nueva contraseña</h1>
           <label>
             Nueva contraseña
@@ -44,8 +46,9 @@ export default function AuthLanding() {
         </form>
       ) : (
         <>
+          {linkError ? <CircleAlert size={40} className="landing-bad" aria-hidden /> : <CircleCheck size={40} className="muted" aria-hidden />}
           <h1>{linkError ? 'Enlace no válido' : recovery ? 'Contraseña actualizada' : 'Cuenta confirmada'}</h1>
-          <p className={linkError ? 'error' : 'muted'}>{linkError ?? (recovery ? 'Ya puedes usarla en la app.' : 'Vuelve a la app e inicia sesión.')}</p>
+          <p className="muted">{linkError ?? (recovery ? 'Ya puedes usarla en la app.' : 'Vuelve a la app e inicia sesión.')}</p>
           <button className="primary full" onClick={cloud.dismissLanding}>
             Continuar en la web
           </button>
