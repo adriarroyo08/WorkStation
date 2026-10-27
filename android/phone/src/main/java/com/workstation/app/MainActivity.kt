@@ -110,7 +110,11 @@ class MainActivity : AppCompatActivity() {
                 fileCallback?.onReceiveValue(null)
                 fileCallback = callback
                 return try {
-                    pickFiles.launch(params.createIntent())
+                    // createIntent() usa el primer accept tal cual: con ".csv" el selector no deja elegir nada (y un CSV
+                    // puede venir como text/comma-separated-values). Si hay extensiones, se abre sin filtro.
+                    val intent = if (params.acceptTypes.all { '/' in it }) params.createIntent()
+                    else Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+                    pickFiles.launch(intent)
                     true
                 } catch (e: Exception) {
                     fileCallback = null

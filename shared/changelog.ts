@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.4.3',
+    date: '2026-10-27',
+    items: ['Android: ya se puede elegir el CSV de Hevy (y otros ficheros) al importar.'],
+  },
+  {
     version: '1.4.2',
     date: '2026-10-27',
     items: [

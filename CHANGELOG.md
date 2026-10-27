@@ -3,6 +3,11 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.4.3] - 2026-10-27
+
+### Corregido
+- Android: el selector de ficheros no dejaba elegir el CSV de Hevy (el filtro `.csv` llegaba como tipo MIME inválido).
+
 ## [1.4.2] - 2026-10-27
 
 ### Añadido
