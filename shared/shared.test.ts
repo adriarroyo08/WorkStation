@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emptyData, normalizeData, repeatWorkout, routineFromWorkout } from './data';
 import { CHANGELOG, unseenReleases } from './changelog';
 import { DEFAULT_EXERCISES } from './exercises';
-import { importHevyCsv, parseCsv } from './hevy';
+import { HEVY_EXERCISES, importHevyCsv, parseCsv } from './hevy';
 import { period, periodReport, weekStreak } from './reports';
 import { estimate1RM, prEvents, repRecords, muscleSets } from './stats';
 import { instantiateProgram, PROGRAMS } from './templates';
@@ -142,6 +142,18 @@ describe('datos', () => {
     expect(d.routines.find((r) => r.id === 'mia')!.exercises).toEqual([]);
     expect(importHevyCsv(d, csv).routines).toBe(0);
     expect(d.folders.filter((f) => f.name === 'Hevy')).toHaveLength(1);
+  });
+  it('CSV de Hevy: enlaza los nombres de Hevy con la biblioteca y reenlaza los ya importados', () => {
+    const ids = new Set(emptyData().exercises.map((e) => e.id));
+    expect(Object.values(HEVY_EXERCISES).filter((id) => !ids.has(id))).toEqual([]);
+    const d = emptyData();
+    d.exercises.push({ id: 'custom-plank', name: 'Plank', muscle: 'otro', equipment: 'otro', kind: 'weight_reps', custom: true });
+    d.routines.push({ id: 'r', name: 'Core', exercises: [{ exerciseId: 'custom-plank', restSec: 60, sets: [] }] });
+    const csv = '"title","start_time","exercise_title","set_type","weight_kg","reps"\n"Push","10 Oct 2026, 18:00","Lat Pulldown (Cable)","normal",50,10\n';
+    importHevyCsv(d, csv);
+    expect(d.workouts[0].exercises[0].exerciseId).toBe('jalon-pecho');
+    expect(d.routines.find((r) => r.id === 'r')!.exercises[0].exerciseId).toBe('plancha');
+    expect(d.exercises.some((e) => e.id === 'custom-plank')).toBe(false);
   });
 });
 

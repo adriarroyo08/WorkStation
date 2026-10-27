@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.4.4',
+    date: '2026-10-27',
+    items: ['Los ejercicios importados de Hevy se enlazan con la biblioteca: con sus imágenes, instrucciones y récords. Si ya los habías importado, vuelve a importar el CSV y se corrigen solos.'],
+  },
+  {
     version: '1.4.3',
     date: '2026-10-27',
     items: ['Android: ya se puede elegir el CSV de Hevy (y otros ficheros) al importar.'],

@@ -3,6 +3,11 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.4.4] - 2026-10-27
+
+### Corregido
+- Importar de Hevy enlaza sus ejercicios (nombres en inglés) con la biblioteca en vez de crear personalizados sin imágenes; al reimportar, los personalizados ya creados se reenlazan y se borran. 15 ejercicios nuevos en la biblioteca para cubrir los de Hevy.
+
 ## [1.4.3] - 2026-10-27
 
 ### Corregido
