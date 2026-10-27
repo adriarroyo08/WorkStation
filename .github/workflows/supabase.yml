@@ -1,4 +1,4 @@
-name: Supabase (función MCP)
+name: Supabase (funciones)
 
 # Despliega la Edge Function "mcp" en tu proyecto. Necesita los secrets
 # SUPABASE_ACCESS_TOKEN (supabase.com → Account → Access Tokens) y SUPABASE_PROJECT_REF (id del proyecto).
@@ -34,4 +34,6 @@ jobs:
         if: steps.check.outputs.skip != 'true'
       - name: Desplegar
         if: steps.check.outputs.skip != 'true'
-        run: supabase functions deploy mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+        run: |
+          supabase functions deploy mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          supabase functions deploy welcome --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt

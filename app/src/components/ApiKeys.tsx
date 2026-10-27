@@ -1,6 +1,7 @@
-import { Copy, KeyRound, Trash2 } from 'lucide-react';
+import { Copy, KeyRound, Mail, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { cloud, useCloud } from '../cloud';
+import { isNative, native } from '../native';
 import { toast } from '../toast';
 
 interface KeyRow {
@@ -28,7 +29,24 @@ async function sha256Hex(s: string): Promise<string> {
   return [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-const copy = (t: string) => navigator.clipboard.writeText(t).then(() => toast.show('Copiado'));
+const copy = (t: string, msg = 'Copiado') => navigator.clipboard.writeText(t).then(() => toast.show(msg));
+const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors';
+const keyText = (key: string, url: string) =>
+  `API key de Workstation:
+${key}
+
+Conector MCP (URL para Claude → Conectores → Añadir conector personalizado):
+${url}?key=${key}
+
+No la compartas: da acceso a tus entrenos.`;
+// En el APK el WebView manda los enlaces externos (https, mailto) a su app; en la web, Claude en otra pestaña.
+const openExternal = (u: string) => (isNative() || u.startsWith('mailto:') ? void (location.href = u) : void window.open(u, '_blank', 'noopener'));
+// Android: menú de compartir nativo; web: Web Share o, si no hay, copiar.
+const share = (text: string) => {
+  if (native.shareText('API key de Workstation', text)) return;
+  if (navigator.share) return void navigator.share({ title: 'API key de Workstation', text }).catch(() => {});
+  copy(text);
+};
 
 export default function ApiKeys() {
   const st = useCloud();
@@ -112,6 +130,27 @@ export default function ApiKeys() {
               <Copy size={16} />
             </button>
           </div>
+          <div className="key-actions">
+            <button
+              className="outline icon-btn"
+              onClick={async () => {
+                await copy(`${remoteUrl}?key=${created}`, 'URL copiada: pégala en Claude → Añadir conector personalizado');
+                openExternal(CLAUDE_CONNECTORS);
+              }}
+            >
+              <Sparkles size={16} /> Añadir a Claude
+            </button>
+            <button
+              className="outline icon-btn"
+              onClick={() => openExternal(`mailto:${st.email}?subject=${encodeURIComponent('Tu API key de Workstation')}&body=${encodeURIComponent(keyText(created, remoteUrl))}`)}
+            >
+              <Mail size={16} /> Enviar a mi email
+            </button>
+            <button className="outline icon-btn" onClick={() => share(keyText(created, remoteUrl))}>
+              <Share2 size={16} /> Compartir
+            </button>
+          </div>
+          <p className="small muted">Quien tenga la key puede {scope === 'write' ? 'leer y cambiar' : 'leer'} tus entrenos: mándala solo a ti y revócala si se filtra.</p>
           <h3>Conectar</h3>
           <p className="small">
             <b>MCP remoto</b> (Claude Code, conectores personalizados, clientes HTTP). URL del servidor:

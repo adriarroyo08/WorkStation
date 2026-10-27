@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { CircleAlert, CircleCheck, KeyRound } from 'lucide-react';
 import { cloud, useCloud } from '../cloud';
+import { NewPasswordFields, newPasswordReady } from './Account';
 
 export default function AuthLanding() {
   const { recovery: rec, linkError } = useCloud();
   const recovery = rec && !linkError;
   const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [saved, setSaved] = useState(false);
@@ -31,16 +33,13 @@ export default function AuthLanding() {
         >
           <KeyRound size={40} className="muted" aria-hidden />
           <h1>Elige tu nueva contraseña</h1>
-          <label>
-            Nueva contraseña
-            <input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
-          </label>
+          <NewPasswordFields label="Nueva contraseña" pw={pw} setPw={setPw} pw2={pw2} setPw2={setPw2} />
           {err && (
             <p className="error small" role="alert">
               {err}
             </p>
           )}
-          <button className="primary full" disabled={busy || pw.length < 6}>
+          <button className="primary full" disabled={busy || !newPasswordReady(pw, pw2)}>
             Guardar contraseña
           </button>
         </form>

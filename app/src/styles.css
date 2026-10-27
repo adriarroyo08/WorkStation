@@ -2940,3 +2940,303 @@ a.line {
 .list.flush .item {
   padding-inline: 0;
 }
+/* ===== Cuenta ===== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.sync-art {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 4px auto 8px;
+}
+.sync-art.small {
+  max-width: 200px;
+}
+.sa-dev {
+  fill: var(--field);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.sa-acc {
+  fill: var(--accent);
+}
+.sa-mut {
+  fill: var(--muted);
+  opacity: 0.55;
+}
+.sa-check {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sa-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 40 57;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 140px 101px;
+}
+.sa-link {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 3 5;
+  stroke-linecap: round;
+  animation: sa-flow 1.2s linear infinite;
+}
+@keyframes sa-flow {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+.account-hero {
+  text-align: center;
+}
+.account-hero h2 {
+  margin: 4px 0;
+}
+.perks {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+.perks li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.perks svg {
+  flex: none;
+  color: var(--accent-ink);
+}
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #dadce0;
+  font-weight: 600;
+  margin: 8px 0;
+}
+.account-hero .full + .full {
+  margin-top: 8px;
+}
+.or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0 4px;
+}
+.or::before,
+.or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line-strong);
+}
+.avatar.big {
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  object-fit: cover;
+}
+.avatar-wrap {
+  position: relative;
+  flex: none;
+}
+.avatar-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  background: var(--ok);
+}
+.avatar-wrap.syncing::after {
+  background: var(--accent);
+}
+.avatar-wrap.offline::after {
+  background: var(--muted);
+}
+.avatar-wrap.error::after {
+  background: var(--danger);
+}
+.account-who small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sync-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--field);
+  font-size: 14px;
+}
+.sync-state.idle svg {
+  color: var(--ok-ink);
+}
+.sync-state.syncing svg {
+  color: var(--accent-ink);
+  animation: spin 1s linear infinite;
+}
+.sync-state.error svg {
+  color: var(--danger);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+.input-icon > svg {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.input-icon input {
+  padding-left: 38px;
+}
+.input-icon .eye {
+  position: absolute;
+  right: 2px;
+  min-height: 40px;
+  padding: 0 10px;
+  color: var(--muted);
+}
+.input-icon:has(.eye) input {
+  padding-right: 44px;
+}
+.input-icon.bad input {
+  border-color: var(--danger);
+}
+.pw-meter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 8px 0 4px;
+}
+.pw-meter i {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--field);
+  transition: background var(--dur) var(--ease);
+}
+.pw-meter.s1 i:nth-child(1) {
+  background: var(--danger);
+}
+.pw-meter.s2 i:nth-child(-n + 2) {
+  background: var(--warn);
+}
+.pw-meter.s3 i {
+  background: var(--ok);
+}
+.pw-level {
+  margin: 0;
+  color: var(--muted);
+}
+.pw-rules {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pw-rules li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--dur) var(--ease);
+}
+.pw-rules li.ok,
+.pw-match {
+  color: var(--ok-ink);
+}
+.pw-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+.auth form .primary.full {
+  margin-top: 12px;
+}
+.auth > .ghost.small {
+  display: block;
+  margin: 8px auto 0;
+}
+.auth-sent {
+  text-align: center;
+  padding: 24px 0 8px;
+}
+.auth-bubble {
+  display: inline-grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-ink);
+  animation: auth-pop 420ms var(--spring) backwards;
+}
+@keyframes auth-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+.key-actions {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sa-link,
+  .sync-state.syncing svg,
+  .auth-bubble {
+    animation: none;
+  }
+}
+.account-actions {
+  display: grid;
+  gap: 4px;
+}
+.account-actions .icon-btn {
+  justify-content: center;
+}
