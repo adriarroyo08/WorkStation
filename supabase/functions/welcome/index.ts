@@ -1,5 +1,5 @@
 // Email de bienvenida. La llama el trigger de 005_welcome.sql con { user_id } al confirmarse una cuenta.
-// Envía por SMTP de Gmail (secrets GMAIL_USER y GMAIL_APP_PASSWORD). Se despliega con --no-verify-jwt:
+// Envía por SMTP (secrets SMTP_HOST, SMTP_USER, SMTP_PASS y MAIL_FROM; por defecto el relay de Brevo). Se despliega con --no-verify-jwt:
 // no hace falta secreto porque solo actúa sobre cuentas confirmadas y una sola vez por usuario (tabla welcome_sent).
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 import { WELCOME_HTML } from './template.ts';
@@ -30,8 +30,11 @@ Deno.serve(async (req) => {
   const meta = user.user_metadata ?? {};
   const full: string = meta.full_name ?? meta.name ?? '';
   const name = full.split(' ')[0] || user.email.split('@')[0];
-  const from = Deno.env.get('GMAIL_USER')!;
-  const smtp = new SMTPClient({ connection: { hostname: 'smtp.gmail.com', port: 465, tls: true, auth: { username: from, password: Deno.env.get('GMAIL_APP_PASSWORD')! } } });
+  const env = (k: string) => Deno.env.get(k)!;
+  const from = env('MAIL_FROM');
+  const smtp = new SMTPClient({
+    connection: { hostname: Deno.env.get('SMTP_HOST') ?? 'smtp-relay.brevo.com', port: 465, tls: true, auth: { username: env('SMTP_USER'), password: env('SMTP_PASS') } },
+  });
   try {
     await smtp.send({ from: `Workstation <${from}>`, to: user.email, subject: '¡Bienvenido a Workstation!', html: WELCOME_HTML.replaceAll('{{name}}', esc(name)) });
   } catch (e) {
