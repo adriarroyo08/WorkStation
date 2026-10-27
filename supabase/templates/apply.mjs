@@ -1,16 +1,18 @@
-// Aplica a tu proyecto de Supabase: SMTP de Gmail, plantillas con la marca, política de contraseñas y los secrets
+// Aplica a tu proyecto de Supabase: SMTP propio, plantillas con la marca, política de contraseñas y los secrets
 // de la función `welcome`. Las claves se leen del entorno y van directas a la API de Supabase (no se guardan en ningún sitio).
 //
-//   SUPABASE_ACCESS_TOKEN=sbp_…  GMAIL_USER=tu@gmail.com  GMAIL_APP_PASSWORD=xxxx…  node supabase/templates/apply.mjs
+//   SUPABASE_ACCESS_TOKEN=sbp_…  SMTP_USER=…@smtp-brevo.com  SMTP_PASS=xsmtpsib-…  MAIL_FROM=tu@email.com  node supabase/templates/apply.mjs
 //
-// SUPABASE_ACCESS_TOKEN: supabase.com → Account → Access Tokens. GMAIL_APP_PASSWORD: Cuenta de Google → Seguridad →
-// Contraseñas de aplicaciones (requiere verificación en dos pasos). PROJECT_REF por defecto: el de Workstation.
+// SUPABASE_ACCESS_TOKEN: supabase.com → Account → Access Tokens.
+// Brevo (por defecto): SMTP & API → SMTP → login y clave SMTP; MAIL_FROM, un remitente verificado en Brevo (Senders).
+// Gmail: SMTP_HOST=smtp.gmail.com, SMTP_USER y MAIL_FROM = tu Gmail, SMTP_PASS = contraseña de aplicación.
+// PROJECT_REF por defecto: el de Workstation.
 import { readFileSync } from 'node:fs';
 
-const { SUPABASE_ACCESS_TOKEN: token, GMAIL_USER: user, PROJECT_REF: ref = 'gogaykvgwopkqevarnjo' } = process.env;
-const pass = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, ''); // Google la muestra en grupos de 4
-if (!token || !user || !pass) {
-  console.error('Faltan SUPABASE_ACCESS_TOKEN, GMAIL_USER o GMAIL_APP_PASSWORD');
+const { SUPABASE_ACCESS_TOKEN: token, SMTP_HOST: host = 'smtp-relay.brevo.com', SMTP_USER: user, MAIL_FROM: from, PROJECT_REF: ref = 'gogaykvgwopkqevarnjo' } = process.env;
+const pass = process.env.SMTP_PASS?.replace(/\s/g, ''); // las claves no llevan espacios (Google las muestra en grupos de 4)
+if (!token || !user || !pass || !from) {
+  console.error('Faltan SUPABASE_ACCESS_TOKEN, SMTP_USER, SMTP_PASS o MAIL_FROM');
   process.exit(1);
 }
 const tpl = (n) => readFileSync(new URL(`./${n}.html`, import.meta.url), 'utf8');
@@ -24,11 +26,11 @@ const api = async (method, path, body) => {
 };
 
 await api('PATCH', '/config/auth', {
-  smtp_host: 'smtp.gmail.com',
+  smtp_host: host,
   smtp_port: '465',
   smtp_user: user,
   smtp_pass: pass,
-  smtp_admin_email: user,
+  smtp_admin_email: from,
   smtp_sender_name: 'Workstation',
   mailer_subjects_confirmation: 'Confirma tu email en Workstation',
   mailer_templates_confirmation_content: tpl('confirmation'),
@@ -42,10 +44,12 @@ await api('PATCH', '/config/auth', {
   password_min_length: 8,
   password_required_characters: 'abcdefghijklmnopqrstuvwxyz:ABCDEFGHIJKLMNOPQRSTUVWXYZ:0123456789',
 });
-console.log('✓ Auth: SMTP de Gmail, plantillas y política de contraseñas');
+console.log(`✓ Auth: SMTP (${host}), plantillas y política de contraseñas`);
 
 await api('POST', '/secrets', [
-  { name: 'GMAIL_USER', value: user },
-  { name: 'GMAIL_APP_PASSWORD', value: pass },
+  { name: 'SMTP_HOST', value: host },
+  { name: 'SMTP_USER', value: user },
+  { name: 'SMTP_PASS', value: pass },
+  { name: 'MAIL_FROM', value: from },
 ]);
 console.log('✓ Secrets de la función welcome');
