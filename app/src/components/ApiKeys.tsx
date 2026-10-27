@@ -140,7 +140,10 @@ export default function ApiKeys() {
             >
               <Sparkles size={16} /> Añadir a Claude
             </button>
-            <button className="outline icon-btn" onClick={() => openExternal(`mailto:${st.email}?subject=${encodeURIComponent('Tu API key de Workstation')}&body=${encodeURIComponent(keyText(created, remoteUrl))}`)}>
+            <button
+              className="outline icon-btn"
+              onClick={() => openExternal(`mailto:${st.email}?subject=${encodeURIComponent('Tu API key de Workstation')}&body=${encodeURIComponent(keyText(created, remoteUrl))}`)}
+            >
               <Mail size={16} /> Enviar a mi email
             </button>
             <button className="outline icon-btn" onClick={() => share(keyText(created, remoteUrl))}>

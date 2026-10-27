@@ -321,7 +321,9 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
       <Back onClick={onBack} />
       <SyncArt small />
       <h1>{mode === 'in' ? 'Iniciar sesión' : 'Crear cuenta'}</h1>
-      <p className="muted small">{mode === 'in' ? 'Entra para sincronizar tus entrenos entre el móvil, la web y el reloj.' : 'Gratis. Tus entrenos se guardan en la nube y te siguen entre dispositivos.'}</p>
+      <p className="muted small">
+        {mode === 'in' ? 'Entra para sincronizar tus entrenos entre el móvil, la web y el reloj.' : 'Gratis. Tus entrenos se guardan en la nube y te siguen entre dispositivos.'}
+      </p>
       <div className="segmented" role="group" aria-label="Tipo de acceso">
         <button type="button" className={mode === 'in' ? 'on' : ''} aria-pressed={mode === 'in'} onClick={() => switchTo('in')}>
           Ya tengo cuenta

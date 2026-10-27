@@ -83,14 +83,12 @@ const T = {
 for (const [name, t] of Object.entries(T)) writeFileSync(new URL(`./${name}.html`, import.meta.url), layout(t));
 
 // Bienvenida: la envía la función `welcome` (no es de Supabase Auth); {{name}} lo sustituye la función.
-writeFileSync(
-  new URL('./welcome.html', import.meta.url),
-  layout({
-    preheader: 'Tu cuenta está lista. Así le sacas partido a Workstation.',
-    title: '¡Bienvenido a Workstation, {{name}}!',
-    body:
-      p('Tu cuenta ya está activa. A partir de ahora tus entrenos se guardan en la nube y te siguen al móvil, la web y el reloj.') +
-      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0">
+const welcome = layout({
+  preheader: 'Tu cuenta está lista. Así le sacas partido a Workstation.',
+  title: '¡Bienvenido a Workstation, {{name}}!',
+  body:
+    p('Tu cuenta ya está activa. A partir de ahora tus entrenos se guardan en la nube y te siguen al móvil, la web y el reloj.') +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0">
 ${[
   ['🏋️', 'Crea tu primera rutina', 'O elige un programa hecho en Explorar.'],
   ['⏱️', 'Registra cada serie', 'El descanso arranca solo al marcarla.'],
@@ -98,12 +96,19 @@ ${[
   ['📈', 'Mira tu progreso', 'Récords, informes y el Coach IA en Perfil.'],
 ]
   .map(
-    ([i, h, d]) => `<tr><td width="44" valign="top" style="padding:8px 0;font-size:24px">${i}</td><td style="padding:8px 0"><b style="font-size:15px;color:#141414">${h}</b><br><span style="font-size:14px;color:#6b6b70">${d}</span></td></tr>`,
+    ([i, h, d]) =>
+      `<tr><td width="44" valign="top" style="padding:8px 0;font-size:24px">${i}</td><td style="padding:8px 0"><b style="font-size:15px;color:#141414">${h}</b><br><span style="font-size:14px;color:#6b6b70">${d}</span></td></tr>`,
   )
   .join('\n')}
 </table>`,
-    cta: 'Abrir Workstation',
-    url: 'https://adriarroyo08.github.io/WorkStation/',
-  }),
+  cta: 'Abrir Workstation',
+  url: 'https://adriarroyo08.github.io/WorkStation/',
+});
+writeFileSync(new URL('./welcome.html', import.meta.url), welcome);
+writeFileSync(
+  new URL('../functions/welcome/template.ts', import.meta.url),
+  `// Generado por supabase/templates/build.mjs. No editar a mano.
+export const WELCOME_HTML = ${JSON.stringify(welcome)};
+`,
 );
 console.log('plantillas generadas');
