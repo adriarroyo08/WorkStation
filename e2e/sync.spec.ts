@@ -71,7 +71,7 @@ async function signIn(page: Page, email: string) {
   }
   await login.click();
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
 }
@@ -111,7 +111,7 @@ test('sincroniza entre dos dispositivos y no mezcla cuentas al cambiar de usuari
   const dlg = page.getByRole('dialog', { name: 'Has entrado con otra cuenta' });
   await page.getByRole('button', { name: 'Continuar con email' }).click();
   await page.getByLabel('Email').fill('bea@example.com');
-  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   await dlg.getByRole('button', { name: 'Empezar de cero' }).click();
   await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();

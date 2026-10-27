@@ -20,6 +20,9 @@ export interface CloudConfig {
 export interface CloudState {
   configured: boolean;
   email: string | null;
+  /** Nombre y foto del perfil de Google (con email/contraseña no hay). */
+  name: string | null;
+  avatar: string | null;
   status: 'off' | 'signed-out' | 'syncing' | 'idle' | 'offline' | 'error';
   pending: number;
   lastSync: string | null;
@@ -43,6 +46,8 @@ export const openedFromAuthLink = !!authHash;
 let state: CloudState = {
   configured: !!(ENV.url && ENV.anonKey),
   email: null,
+  name: null,
+  avatar: null,
   status: 'off',
   pending: 0,
   lastSync: null,
@@ -103,11 +108,14 @@ async function setup() {
     const uid = session?.user.id ?? null;
     if (uid === userId) return;
     userId = uid;
-    if (uid) onSignedIn(uid, session!.user.email ?? null);
-    else {
+    if (uid) {
+      const m = session!.user.user_metadata ?? {};
+      emit({ name: m.full_name ?? m.name ?? null, avatar: m.avatar_url ?? m.picture ?? null });
+      onSignedIn(uid, session!.user.email ?? null);
+    } else {
       channel?.unsubscribe();
       channel = null;
-      emit({ email: null, status: 'signed-out' });
+      emit({ email: null, name: null, avatar: null, status: 'signed-out' });
     }
   });
   const { data } = await client.auth.getSession();
@@ -126,7 +134,7 @@ const ES: [RegExp, string][] = [
   [/invalid login credentials/i, 'Email o contraseña incorrectos.'],
   [/email not confirmed/i, 'Aún no has confirmado tu email. Revisa tu bandeja de entrada.'],
   [/already registered|already been registered/i, 'Ya existe una cuenta con ese email. Inicia sesión.'],
-  [/password should be|weak password|at least \d+ char/i, 'La contraseña es demasiado débil: usa al menos 6 caracteres.'],
+  [/password should be|weak password|at least \d+ char/i, 'La contraseña es demasiado débil: usa 8 caracteres o más, con mayúsculas, minúsculas y números.'],
   [/different from the old/i, 'La nueva contraseña debe ser distinta de la anterior.'],
   [/rate limit|only request this after|too many/i, 'Demasiados intentos. Espera un momento y vuelve a probar.'],
   [/invalid email|unable to validate email/i, 'Ese email no parece válido.'],

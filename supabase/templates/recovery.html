@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>Restablece tu contraseña</title></head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#141414">
+<div style="display:none;max-height:0;overflow:hidden">Elige una contraseña nueva para tu cuenta de Workstation.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:24px 12px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden">
+<tr><td style="background:#141414;padding:24px 32px">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td><img src="https://adriarroyo08.github.io/WorkStation/email-logo.png" width="40" height="40" alt="" style="display:block;border:0;border-radius:10px"></td>
+<td style="padding-left:12px;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.2px">Workstation</td>
+</tr></table>
+</td></tr>
+<tr><td style="height:4px;background:#f2600c;line-height:4px;font-size:0">&nbsp;</td></tr>
+<tr><td style="padding:32px">
+<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#141414">Restablece tu contraseña</h1>
+<p style="margin:0 0 12px;font-size:16px;line-height:1.55;color:#3a3a3a">Hemos recibido una petición para cambiar la contraseña de <b>{{ .Email }}</b>.</p><p style="margin:0 0 12px;font-size:16px;line-height:1.55;color:#3a3a3a">Pulsa el botón para elegir una nueva. El enlace caduca en una hora.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0"><tr><td style="background:#c2410c;border-radius:10px">
+<a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none">Elegir contraseña nueva</a>
+</td></tr></table>
+<p style="margin:0 0 12px;font-size:16px;line-height:1.55;color:#3a3a3a"><span style="font-size:13px;color:#8e8e93">¿El botón no funciona? Copia este enlace en el navegador:<br><a href="{{ .ConfirmationURL }}" style="color:#c2410c;word-break:break-all">{{ .ConfirmationURL }}</a></span></p>
+</td></tr>
+<tr><td style="padding:20px 32px;background:#fafafa;border-top:1px solid #ececec;font-size:12px;line-height:1.5;color:#8e8e93">
+Workstation · tu diario de entrenamiento en el móvil, la web y el reloj.<br>
+Si no has sido tú, ignora este correo: tu cuenta sigue igual.
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

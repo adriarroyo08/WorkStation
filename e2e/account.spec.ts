@@ -59,7 +59,7 @@ const toEmail = async (page: Page) => {
 async function login(page: Page, email: string) {
   await toEmail(page);
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
 }
@@ -78,8 +78,15 @@ test('sin sesión, Perfil abre con la tarjeta de cuenta y el registro avisa del 
   await page.getByRole('button', { name: 'Continuar con email' }).click();
   await page.getByRole('button', { name: 'No tengo cuenta' }).click();
   await page.getByLabel('Email').fill('nueva@example.com');
-  await page.getByLabel('Contraseña').fill('secreto123');
-  await page.getByRole('button', { name: 'Crear cuenta', exact: true }).click();
+  const create = page.getByRole('button', { name: 'Crear cuenta', exact: true });
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
+  await expect(create).toBeDisabled(); // sin mayúscula
+  await page.getByLabel('Contraseña', { exact: true }).fill('Secreto123');
+  await page.getByLabel('Repetir contraseña').fill('Secreto12');
+  await expect(page.getByText('Las contraseñas no coinciden.')).toBeVisible();
+  await expect(create).toBeDisabled();
+  await page.getByLabel('Repetir contraseña').fill('Secreto123');
+  await create.click();
   await expect(page.getByText('Te hemos enviado un email')).toBeVisible();
   const signup = mock.hit('/auth/v1/signup')[0];
   expect(new URLSearchParams(signup.search).get('redirect_to')).toMatch(/^http:\/\/localhost:4174\/$/);
@@ -126,7 +133,7 @@ test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', a
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await toEmail(page);
   await page.getByLabel('Email').fill('bea@example.com');
-  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   const dlg = page.getByRole('dialog', { name: 'Has entrado con otra cuenta' });
   await expect(dlg).toBeVisible();
@@ -148,7 +155,7 @@ test('"Subir también estos datos" sube lo de este dispositivo a la cuenta nueva
   const posts = () => mock.calls.filter((c) => c.path === '/rest/v1/records' && c.method === 'POST').length;
   const before = posts();
   await page.getByLabel('Email').fill('bea@example.com');
-  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   await page.getByRole('button', { name: 'Subir también estos datos' }).click();
   await expect.poll(posts).toBeGreaterThan(before);
@@ -166,7 +173,7 @@ test('con el diálogo de cambio de cuenta abierto no se sube nada a la cuenta nu
   const posts = () => mock.calls.filter((c) => c.path === '/rest/v1/records' && c.method === 'POST').length;
   const before = posts();
   await page.getByLabel('Email').fill('bea@example.com');
-  await page.getByLabel('Contraseña').fill('secreto123');
+  await page.getByLabel('Contraseña', { exact: true }).fill('secreto123');
   await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
   const dlg = page.getByRole('dialog', { name: 'Has entrado con otra cuenta' });
   await expect(dlg).toBeVisible();
@@ -190,7 +197,8 @@ test.describe('enlaces del email', () => {
     await page.reload(); // la misma página con otro hash no recarga la app
     await expect(page.getByRole('heading', { name: 'Elige tu nueva contraseña' })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Bienvenida' })).toHaveCount(0);
-    await page.getByLabel('Nueva contraseña').fill('otra-clave-1');
+    await page.getByLabel('Nueva contraseña').fill('OtraClave-1');
+    await page.getByLabel('Repetir contraseña').fill('OtraClave-1');
     await page.getByRole('button', { name: 'Guardar contraseña' }).click();
     await expect(page.getByText('Contraseña actualizada')).toBeVisible();
     expect(mock.calls.some((c) => c.path === '/auth/v1/user' && c.method === 'PUT')).toBe(true);
