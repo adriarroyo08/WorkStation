@@ -1,3 +1,4 @@
+import { useWatchSync } from './watch';
 import { BarChart3, CalendarDays, Dumbbell, Library } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Train from './components/Train';
@@ -59,6 +60,7 @@ function AppBody() {
     return () => window.removeEventListener('ws:show-tour', show);
   }, []);
   useSessionController();
+  useWatchSync();
   useCloudSync();
   const { recovery, justConfirmed, linkError } = useCloud();
   const [tab, setTab] = useState<TabId>('train');

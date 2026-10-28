@@ -18,6 +18,12 @@ interface NativeApi {
   requestNotifications?(): void;
   googleSignIn?(webClientId: string, hashedNonce: string): void;
   shareText?(title: string, text: string): void; // desde la app 1.3
+  // Reloj autónomo (desde la app 1.5): biblioteca para el reloj, entrenos hechos en él y subida en segundo plano.
+  sendLibraryToWatch?(json: string): void;
+  requestWatchWorkouts?(): void;
+  ackWatchWorkout?(id: string): void;
+  setWatchUpload?(json: string): void;
+  watchUploadUser?(): string;
 }
 
 const api = (): NativeApi | undefined => (window as unknown as { WorkstationNative?: NativeApi }).WorkstationNative;
@@ -35,6 +41,8 @@ export function useWatchStatus() {
 
 let handler: ((c: WatchCommand) => void) | null = null;
 export const onWatchCommand = (h: (c: WatchCommand) => void) => void (handler = h);
+let workoutHandler: ((json: string) => void) | null = null;
+export const onWatchWorkout = (h: (json: string) => void) => void (workoutHandler = h);
 
 const notifWaiters: ((granted: boolean) => void)[] = [];
 const googleWaiters: { ok: (token: string | null) => void; fail: (e: Error) => void }[] = [];
@@ -52,6 +60,8 @@ const googleWaiters: { ok: (token: string | null) => void; fail: (e: Error) => v
       googleWaiters.splice(0).forEach((w) => w.ok(msg.kind === 'google_token' ? (msg.token ?? null) : null));
     } else if (msg.kind === 'google_error') {
       googleWaiters.splice(0).forEach((w) => w.fail(new Error(msg.message || 'No se pudo iniciar sesión con Google')));
+    } else if (msg.kind === 'watch_workout' && msg.payload) {
+      workoutHandler?.(msg.payload);
     } else if (msg.kind === 'watch_cmd' && msg.payload) {
       const c = parseWatchCommand(msg.payload);
       if (c) handler?.(c);
@@ -110,6 +120,13 @@ export const native = {
   workoutOngoing: (name: string, startedAt: number, restEnd: number) => api()?.workoutOngoing(name, startedAt, restEnd),
   workoutEnded: () => api()?.workoutEnded(),
   openWatchApp: () => api()?.openWatchApp(),
+  sendLibraryToWatch: (json: string) => api()?.sendLibraryToWatch?.(json),
+  requestWatchWorkouts: () => api()?.requestWatchWorkouts?.(),
+  ackWatchWorkout: (id: string) => api()?.ackWatchWorkout?.(id),
+  /** Credenciales para que el móvil suba solo los entrenos del reloj ('' las borra). */
+  setWatchUpload: (json: string) => api()?.setWatchUpload?.(json),
+  /** Usuario de las credenciales guardadas: '' si no hay, undefined si esta versión no lo admite. */
+  watchUploadUser: (): string | undefined => api()?.watchUploadUser?.(),
   async saveFile(name: string, blob: Blob): Promise<boolean> {
     const a = api();
     if (!a) return false;

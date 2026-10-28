@@ -62,6 +62,14 @@
                     android:pathPrefix="/workstation"
                     android:scheme="wear" />
             </intent-filter>
+            <!-- Entrenos hechos en el reloj (/workstation/workout/<id>). -->
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/workstation/workout/"
+                    android:scheme="wear" />
+            </intent-filter>
         </service>
 
         <receiver

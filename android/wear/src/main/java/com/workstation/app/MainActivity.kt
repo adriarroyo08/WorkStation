@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,17 +22,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        LocalStore.init(this)
         link = PhoneLink(this)
         setContent {
             val state by link.state.collectAsState()
+            val library by link.library.collectAsState()
+            val local by LocalStore.session.collectAsState()
+            val pending by LocalStore.pending.collectAsState()
             val connected by link.connected.collectAsState()
             val bpm by HeartRateService.bpm.collectAsState()
             WatchApp(
                 state = state,
+                library = library,
+                local = local,
+                pending = pending,
                 connected = connected,
                 bpm = bpm,
                 send = link::send,
-                vibrate = ::vibrate,
+                vibrate = { vibrateRestEnd(this) },
                 keepScreenOn = ::keepScreenOn,
                 onActiveChanged = { syncHeartRate() },
             )
@@ -53,11 +58,11 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * El pulso solo se mide mientras hay un entrenamiento en curso (ahorra batería), en un servicio en primer
+     * El pulso solo se mide mientras hay un entrenamiento en curso, del móvil o del reloj (ahorra batería), en un servicio en primer
      * plano para que siga aunque la app del reloj no esté en pantalla.
      */
     private fun syncHeartRate() {
-        val active = link.state.value?.active != null
+        val active = link.state.value?.active != null || LocalStore.session.value != null
         if (!active || !hasHrSensor) {
             HeartRateService.stop(this)
             return
@@ -67,10 +72,6 @@ class MainActivity : ComponentActivity() {
             askedHr = true
             askPermission.launch(hrPermission)
         }
-    }
-
-    private fun vibrate() {
-        getSystemService(Vibrator::class.java)?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300, 150, 500), -1))
     }
 
     private fun keepScreenOn(on: Boolean) {
