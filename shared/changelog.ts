@@ -7,6 +7,25 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.4.4',
+    date: '2026-10-27',
+    items: ['Los ejercicios importados de Hevy se enlazan con la biblioteca: con sus imágenes, instrucciones y récords. Si ya los habías importado, vuelve a importar el CSV y se corrigen solos.'],
+  },
+  {
+    version: '1.4.3',
+    date: '2026-10-27',
+    items: ['Android: ya se puede elegir el CSV de Hevy (y otros ficheros) al importar.'],
+  },
+  {
+    version: '1.4.2',
+    date: '2026-10-27',
+    items: [
+      'Al importar el CSV de Hevy se crean también tus rutinas (carpeta «Hevy»), a partir de la última vez que hiciste cada una.',
+      'Cuenta renovada: crea tu cuenta con Google o con email, con contraseñas seguras y emails con la marca de Workstation.',
+      'Tu API key se puede enviar a tu email o añadir a Claude con un toque.',
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-10-27',
     items: [

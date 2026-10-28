@@ -126,6 +126,22 @@ const raw: Row[] = [
   ['kettlebell-swing', 'Kettlebell swing', 'cuerpo_completo', 'kettlebell', 'One-Arm_Kettlebell_Swings', undefined, ['gluteos', 'isquios']],
   ['clean', 'Cargada de potencia', 'cuerpo_completo', 'barra', 'Power_Clean', undefined, ['cuadriceps', 'trapecio']],
   ['salto-cajon', 'Salto al cajón', 'cuadriceps', 'peso corporal', 'Front_Box_Jump', 'reps', ['gluteos']],
+  // Equivalentes de ejercicios de Hevy que no tenían pareja en la biblioteca (ver HEVY_EXERCISES en hevy.ts).
+  ['press-declinado-maquina', 'Press declinado (máquina)', 'pecho', 'máquina', 'Leverage_Decline_Chest_Press', undefined, ['triceps']],
+  ['press-inclinado-maquina', 'Press inclinado (máquina)', 'pecho', 'máquina', 'Leverage_Incline_Chest_Press', undefined, ['hombros', 'triceps']],
+  ['remo-maquina', 'Remo sentado (máquina)', 'espalda', 'máquina', 'Seated_Cable_Rows', undefined, ['dorsales', 'biceps']],
+  ['remo-iso-maquina', 'Remo iso-lateral (máquina)', 'espalda', 'máquina', 'Leverage_Iso_Row', undefined, ['dorsales', 'biceps']],
+  ['elevaciones-laterales-maquina', 'Elevaciones laterales (máquina)', 'hombros', 'máquina', 'Side_Lateral_Raise'],
+  ['elevaciones-frontales-polea', 'Elevaciones frontales en polea', 'hombros', 'polea', 'Front_Cable_Raise'],
+  ['curl-predicador-maquina', 'Curl predicador (máquina)', 'biceps', 'máquina', 'Machine_Preacher_Curls'],
+  ['curl-polea-espalda', 'Curl en polea por detrás', 'biceps', 'polea', 'Standing_Biceps_Cable_Curl'],
+  ['extension-triceps-polea-una', 'Extensión de tríceps a una mano en polea', 'triceps', 'polea', 'Cable_One_Arm_Tricep_Extension'],
+  ['fondos-lastrados', 'Fondos de tríceps lastrados', 'triceps', 'peso corporal', 'Dips_-_Triceps_Version', undefined, ['pecho', 'hombros']],
+  ['hip-thrust-maquina', 'Hip thrust (máquina)', 'gluteos', 'máquina', 'Barbell_Hip_Thrust', undefined, ['isquios']],
+  ['elevacion-piernas-paralelas', 'Elevación de piernas en paralelas', 'core', 'peso corporal', 'Knee_Hip_Raise_On_Parallel_Bars', 'reps'],
+  ['crunch-bicicleta', 'Crunch bicicleta', 'core', 'peso corporal', 'Air_Bike', 'reps'],
+  ['codo-rodilla', 'Codo a rodilla', 'core', 'peso corporal', 'Elbow_to_Knee', 'reps'],
+  ['flexion-lateral', 'Flexión lateral (mancuerna)', 'core', 'mancuernas', 'Dumbbell_Side_Bend'],
   ['muscle-up', 'Muscle-up', 'dorsales', 'peso corporal', 'Muscle_Up', 'reps', ['triceps', 'pecho']],
 ];
 

@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { achievements } from './achievements';
 import { findOrCreateExercise, routineFromDraft } from './data';
-import { convertHevyApiWorkouts, fetchHevyWorkouts } from './hevy';
+import { convertHevyApiWorkouts, fetchHevyWorkouts, hevySummary } from './hevy';
 import { muscleRecovery, nextRoutine } from './planning';
 import { suggestNext } from './progression';
 import { LEVELS, latestBodyweight, strengthLevels } from './strength';
@@ -309,8 +309,7 @@ export const TOOLS: ToolDef[] = [
       const key = src.env?.('HEVY_API_KEY');
       if (!key) return 'Falta HEVY_API_KEY en la configuración del servidor MCP.';
       const data = await src.load();
-      const n = convertHevyApiWorkouts(data, await fetchHevyWorkouts(key));
-      return write(src, data, `Importados ${n} entrenamientos desde Hevy.`);
+      return write(src, data, hevySummary(convertHevyApiWorkouts(data, await fetchHevyWorkouts(key))));
     },
   }),
 ];
