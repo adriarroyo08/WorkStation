@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.5.0',
+    date: '2026-10-28',
+    items: [
+      'Reloj autónomo: entrena desde el reloj sin el móvil. Rutinas, entreno vacío, series, descansos con vibración, pulso e historial.',
+      'Los entrenos del reloj llegan solos a tu cuenta, aunque la app del móvil esté cerrada.',
+    ],
+  },
+  {
     version: '1.4.4',
     date: '2026-10-27',
     items: ['Los ejercicios importados de Hevy se enlazan con la biblioteca: con sus imágenes, instrucciones y récords. Si ya los habías importado, vuelve a importar el CSV y se corrigen solos.'],

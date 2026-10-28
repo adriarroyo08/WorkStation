@@ -277,6 +277,8 @@ function schedule(fn: () => Promise<void>, ms: number) {
 }
 
 // ---- API para la interfaz ----
+export const WATCH_KEY_NAME = 'Reloj (subida automática)';
+
 export const cloud = {
   config: () => cfg,
   async configure(c: CloudConfig) {
@@ -340,13 +342,43 @@ export const cloud = {
   /** ¿La configuración activa es la del build (no una propia del usuario)? */
   builtIn: () => !!ENV.url && cfg.url === ENV.url && cfg.anonKey === ENV.anonKey,
   async signOut() {
+    // La key con la que el móvil sube los entrenos del reloj es de esta cuenta: se borra con la sesión.
+    if (native.watchUploadUser()) {
+      native.setWatchUpload('');
+      await client?.from('api_keys').delete().eq('name', WATCH_KEY_NAME);
+    }
     await client?.auth.signOut();
   },
   syncNow: () => flush(),
   /** ¿Hay sesión iniciada? (los cambios locales se replican en los demás dispositivos) */
   signedIn: () => !!userId,
+  userId: () => userId,
   client: () => client,
+  /** Crea una API key (en el servidor solo queda su SHA-256) y la devuelve en claro. */
+  async createApiKey(name: string, scope: 'read' | 'write'): Promise<string> {
+    if (!client) throw new Error('Configura primero la URL y la anon key');
+    const key = newKey();
+    const { error } = await client.from('api_keys').insert({ name, key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope });
+    if (error) throw new Error(error.message);
+    return key;
+  },
 };
+
+// Key aleatoria de 256 bits: ws_ + base64url.
+function newKey(): string {
+  const b = crypto.getRandomValues(new Uint8Array(32));
+  return (
+    'ws_' +
+    btoa(String.fromCharCode(...b))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+  );
+}
+async function sha256Hex(s: string): Promise<string> {
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
 
 // Engancha el store: cada cambio local se encola; los cambios remotos se aplican sin volver a subirse.
 export function useCloudSync() {

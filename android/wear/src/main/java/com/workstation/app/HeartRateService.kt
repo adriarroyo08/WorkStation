@@ -8,7 +8,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -17,15 +22,26 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 
 /**
  * Pulso durante el entrenamiento como servicio en primer plano (tipo "health"): sigue midiendo aunque bajes
  * la muñeca o vuelva la esfera. Se para al terminar el entrenamiento (lo decide la app del reloj).
+ * En los entrenos del propio reloj también avisa del fin del descanso con la pantalla apagada.
  */
 class HeartRateService : Service(), DataClient.OnDataChangedListener {
     private var hr: HeartRate? = null
+    private val scope = MainScope()
+    private val handler = Handler(Looper.getMainLooper())
+    private val restDone = Runnable { vibrateRestEnd(this) }
+    private var wake: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -39,8 +55,14 @@ class HeartRateService : Service(), DataClient.OnDataChangedListener {
             stopSelf() // sin permiso de sensores: no hay pulso en segundo plano
             return START_NOT_STICKY
         }
-        hr = HeartRate(this, onValue = { _bpm.value = it }) { bpm -> sendToPhone(Cmd.heartRate(bpm).toString()) }.also { it.start() }
+        running = true
+        LocalStore.init(this)
+        // Entreno del reloj: el pulso se guarda en él; entreno del móvil: se le envía.
+        hr = HeartRate(this, onValue = { _bpm.value = it }) { bpm ->
+            if (LocalStore.session.value != null) LocalStore.addHr(bpm) else sendToPhone(Cmd.heartRate(bpm).toString())
+        }.also { it.start() }
         Wearable.getDataClient(this).addListener(this)
+        LocalStore.session.map { it?.restEnd }.distinctUntilChanged().onEach(::scheduleRest).launchIn(scope)
         return START_NOT_STICKY
     }
 
@@ -54,10 +76,25 @@ class HeartRateService : Service(), DataClient.OnDataChangedListener {
             }
         }
         events.release()
-        if (ended) stopSelf()
+        if (ended && LocalStore.session.value == null) stopSelf()
+    }
+
+    // Vibra al acabar el descanso. Un wake lock parcial (solo lo que dura el descanso) evita que el reloj
+    // dormido retrase el aviso.
+    private fun scheduleRest(end: Long?) {
+        handler.removeCallbacks(restDone)
+        wake?.takeIf { it.isHeld }?.release()
+        val wait = (end ?: return) - System.currentTimeMillis()
+        if (wait <= 0) return
+        wake = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "workstation:rest").apply { acquire(wait + 3000) }
+        handler.postDelayed(restDone, wait)
     }
 
     override fun onDestroy() {
+        running = false
+        scope.cancel()
+        handler.removeCallbacks(restDone)
+        wake?.takeIf { it.isHeld }?.release()
         Wearable.getDataClient(this).removeListener(this)
         hr?.stop()
         hr = null
@@ -91,6 +128,9 @@ class HeartRateService : Service(), DataClient.OnDataChangedListener {
         private const val CHANNEL = "workout"
         private val _bpm = MutableStateFlow<Int?>(null)
         val bpm: StateFlow<Int?> = _bpm
+        // Si está en marcha, él vibra al acabar el descanso local (la pantalla no tiene que hacerlo).
+        var running = false
+            private set
 
         fun start(ctx: Context) = runCatching { ContextCompat.startForegroundService(ctx, Intent(ctx, HeartRateService::class.java)) }
 
@@ -98,4 +138,9 @@ class HeartRateService : Service(), DataClient.OnDataChangedListener {
             ctx.stopService(Intent(ctx, HeartRateService::class.java))
         }
     }
+}
+
+/** Aviso de fin de descanso. */
+fun vibrateRestEnd(ctx: Context) {
+    ctx.getSystemService(Vibrator::class.java)?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300, 150, 500), -1))
 }

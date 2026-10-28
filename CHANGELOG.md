@@ -3,6 +3,12 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.5.0] - 2026-10-28
+
+### Añadido
+- Reloj autónomo: el reloj guarda rutinas, biblioteca, última sesión de cada ejercicio e historial reciente (DataItem `/workstation/library`) y entrena por su cuenta, con la sesión guardada en el reloj.
+- Los entrenos del reloj vuelven por Data Layer (`/workstation/workout/<id>`): con la app abierta los guarda la web; con la app cerrada el móvil los sube a la nube con una API key de escritura propia ("Reloj (subida automática)", se borra al cerrar sesión).
+
 ## [1.4.4] - 2026-10-27
 
 ### Corregido

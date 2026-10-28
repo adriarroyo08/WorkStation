@@ -13,22 +13,6 @@ interface KeyRow {
   last_used_at: string | null;
 }
 
-// Key aleatoria de 256 bits: ws_ + base64url. En el servidor solo se guarda su SHA-256.
-function newKey(): string {
-  const b = crypto.getRandomValues(new Uint8Array(32));
-  return (
-    'ws_' +
-    btoa(String.fromCharCode(...b))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '')
-  );
-}
-async function sha256Hex(s: string): Promise<string> {
-  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, '0')).join('');
-}
-
 const copy = (t: string, msg = 'Copiado') => navigator.clipboard.writeText(t).then(() => toast.show(msg));
 const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors';
 const keyText = (key: string, url: string) =>
@@ -80,9 +64,12 @@ export default function ApiKeys() {
 
   const create = async () => {
     setErr('');
-    const key = newKey();
-    const { error } = await client!.from('api_keys').insert({ name: name.trim() || 'IA', key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope });
-    if (error) return setErr(error.message);
+    let key: string;
+    try {
+      key = await cloud.createApiKey(name.trim() || 'IA', scope);
+    } catch (e) {
+      return setErr((e as Error).message);
+    }
     setCreated(key);
     refresh();
   };

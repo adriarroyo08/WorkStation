@@ -31,6 +31,21 @@ class NativeBridge(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
+    fun sendLibraryToWatch(json: String) = WatchWorkouts.sendLibrary(ctx, json)
+
+    @JavascriptInterface
+    fun requestWatchWorkouts() = WatchWorkouts.scan(ctx)
+
+    @JavascriptInterface
+    fun ackWatchWorkout(id: String) = WatchWorkouts.ack(ctx, id)
+
+    @JavascriptInterface
+    fun setWatchUpload(json: String) = WatchWorkouts.setUpload(ctx, json)
+
+    @JavascriptInterface
+    fun watchUploadUser(): String = WatchWorkouts.uploadUser(ctx)
+
+    @JavascriptInterface
     fun requestWatchStatus() {
         Wearable.getNodeClient(ctx).connectedNodes
             .addOnSuccessListener { nodes ->
