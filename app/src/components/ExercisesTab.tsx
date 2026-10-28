@@ -260,7 +260,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {tab === 'summary' && (
         <>
           <ExerciseMedia exercise={e} />
-          <MuscleMap primary={e.muscle} secondary={e.secondary} />
+          <MuscleMap exercise={e} />
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}

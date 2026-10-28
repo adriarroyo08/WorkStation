@@ -177,3 +177,29 @@ describe('novedades', () => {
     expect(CHANGELOG[0].version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
+
+describe('activación muscular', () => {
+  it('la tabla cubre la biblioteca, usa partes conocidas y el principal es el más trabajado', async () => {
+    const { ACTIVATION, exerciseActivation, parseActivation } = await import('./muscle-detail');
+    const ids = new Set(DEFAULT_EXERCISES.map((e) => e.id));
+    expect(Object.keys(ACTIVATION).filter((id) => !ids.has(id))).toEqual([]);
+    for (const e of DEFAULT_EXERCISES) {
+      expect(ACTIVATION[e.id], e.id).toBeTruthy();
+      expect(parseActivation(ACTIVATION[e.id]).every((x) => x.pct > 0 && x.pct <= 100), e.id).toBe(true);
+      const acts = exerciseActivation(e);
+      expect(acts.find((a) => a.group === e.muscle)?.pct, e.id).toBe(acts[0].pct);
+    }
+  });
+  it('agrupa partes y usa el principal/secundarios cuando no hay tabla', async () => {
+    const { exerciseActivation } = await import('./muscle-detail');
+    const inclinado = exerciseActivation(DEFAULT_EXERCISES.find((e) => e.id === 'press-inclinado')!);
+    expect(inclinado[0]).toMatchObject({ group: 'pecho', pct: 100 });
+    expect(inclinado[0].parts.map((p) => p.region)).toEqual(['pecho-sup', 'pecho-med', 'pecho-inf']);
+    expect(exerciseActivation({ id: 'custom-x', muscle: 'biceps', secondary: ['antebrazo'] })).toMatchObject([
+      { group: 'biceps', pct: 100, parts: [] },
+      { group: 'antebrazo', pct: 50 },
+    ]);
+    // Del catálogo, mismo movimiento que uno de la biblioteca: misma tabla.
+    expect(exerciseActivation({ id: 'db-x', muscle: 'pecho', media: 'Barbell_Bench_Press_-_Medium_Grip' })[0].parts).toHaveLength(3);
+  });
+});

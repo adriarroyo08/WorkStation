@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.5.1',
+    date: '2026-10-28',
+    items: [
+      'Músculos más detallados en cada ejercicio: todos los grupos que trabaja con su intensidad (principal, secundario o estabilizador).',
+      'Toca un músculo para ver las partes que trabaja: pecho superior, medio o inferior, las tres cabezas del deltoides, del bíceps y del tríceps, y más.',
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-10-28',
     items: [

@@ -3,6 +3,12 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.5.1] - 2026-10-28
+
+### Añadido
+- Activación muscular por ejercicio (`shared/muscle-detail.ts`): los 130 de la biblioteca tienen el % de cada grupo y de cada parte (30 partes: porciones del pectoral, cabezas del deltoides/bíceps/tríceps, dorsal alto/bajo, recto abdominal superior/inferior, vastos, glúteo mayor/medio, gastrocnemio/sóleo…). Los del catálogo con la misma imagen heredan la tabla; el resto, principal 100 % y secundarios 50 %.
+- El mapa corporal está dividido en esas partes; en la ficha, tocar un grupo (en la lista o en el mapa) lo resalta y despliega sus partes.
+
 ## [1.5.0] - 2026-10-28
 
 ### Añadido
