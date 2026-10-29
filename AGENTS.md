@@ -26,6 +26,7 @@ Si no tienes las dependencias: `npm install && npm --prefix app install && npm -
 - Accesibilidad AA: cada control con nombre accesible.
 - Funciones que ve el usuario: una línea en `shared/changelog.ts` y en `CHANGELOG.md`.
 - Commits en español, en imperativo.
+- `supabase/functions/mcp/index.ts` es generado: si `npm run check` lo cambia, ese cambio va en el commit (el CI comprueba que está al día). Nunca lo restaures con `git restore`.
 - No toques `.github/workflows/`, `supabase/` ni claves sin que la issue lo pida.
 
 ## Trabajo con agentes
