@@ -20,7 +20,7 @@ Workstation es una app personal: **no tiene servidores propios, ni analítica, n
 - **ExerciseDB (RapidAPI):** se piden los GIFs de los ejercicios con tu clave. No se envían datos de tus entrenamientos.
 - **Imágenes de free-exercise-db:** se descargan de `raw.githubusercontent.com` (GitHub ve la petición, como en cualquier web).
 - **Importar desde Hevy:** el CSV exportado de Hevy se procesa en tu dispositivo. Desde el servidor MCP también puedes importar con tu API key de Hevy (variable de entorno en tu ordenador). No se envía nada a Hevy.
-- **Wear OS:** el móvil y el reloj se comunican directamente por la capa de datos de Wear OS (Bluetooth/Wi-Fi), sin pasar por internet.
+- **Wear OS:** el móvil y el reloj se comunican directamente por la capa de datos de Wear OS (Bluetooth/Wi-Fi), sin pasar por internet. El reloj guarda una copia de tus rutinas, tu biblioteca y tu historial reciente para entrenar sin el móvil. Si usas la sincronización, el móvil guarda una API key de escritura ("Reloj (subida automática)", visible en tus API keys) para subir los entrenos del reloj con la app cerrada; se borra al cerrar sesión.
 - **Alojamiento:** la web se sirve desde GitHub Pages, que registra los accesos como cualquier servidor web.
 
 ## Tus derechos

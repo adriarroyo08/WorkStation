@@ -22,6 +22,10 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
     val state: StateFlow<WatchState?> = _state
 
     // Hasta comprobarlo, se asume desconectado (y se comprueba al arrancar).
+    // Rutinas, biblioteca e historial para entrenar sin el móvil. El Data Layer lo guarda en el reloj.
+    private val _library = MutableStateFlow<Library?>(null)
+    val library: StateFlow<Library?> = _library
+
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected
 
@@ -34,6 +38,18 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
             }
             buffer.release()
         }
+        dataClient.getDataItems(Uri.parse("wear://*${PATH_LIBRARY}")).addOnSuccessListener { buffer ->
+            buffer.forEach { item ->
+                if (item.uri.path == PATH_LIBRARY) DataMapItem.fromDataItem(item).dataMap.getString(KEY_JSON)?.let(::applyLibrary)
+            }
+            buffer.release()
+        }
+        // Entrenos del reloj cuyo DataItem ya no existe: el móvil los guardó y lo borró.
+        dataClient.getDataItems(Uri.parse("wear://*${LocalStore.PATH_WORKOUT}"), DataClient.FILTER_PREFIX).addOnSuccessListener { buffer ->
+            val ids = buffer.mapNotNull { LocalStore.workoutId(it.uri.path) }.toSet()
+            buffer.release()
+            LocalStore.keepOnly(ids)
+        }
         send(Cmd.hello())
     }
 
@@ -43,9 +59,12 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
 
     override fun onDataChanged(events: DataEventBuffer) {
         events.forEach { e ->
-            if (e.type == DataEvent.TYPE_CHANGED && e.dataItem.uri.path == PATH_STATE) {
-                DataMapItem.fromDataItem(e.dataItem).dataMap.getString(KEY_JSON)?.let(::applyJson)
+            val path = e.dataItem.uri.path
+            if (e.type == DataEvent.TYPE_CHANGED && (path == PATH_STATE || path == PATH_LIBRARY)) {
+                val json = DataMapItem.fromDataItem(e.dataItem).dataMap.getString(KEY_JSON) ?: return@forEach
+                if (path == PATH_STATE) applyJson(json) else applyLibrary(json)
             }
+            if (e.type == DataEvent.TYPE_DELETED) LocalStore.workoutId(path)?.let { LocalStore.confirm(listOf(it)) }
         }
         events.release()
     }
@@ -60,6 +79,15 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
         _state.value = if (stale) s.copy(active = null) else s
     }
 
+    private fun applyLibrary(json: String) {
+        val lib = parseLibrary(json) ?: return
+        val cur = _library.value
+        if (cur != null && lib.sentAt < cur.sentAt) return
+        if (_state.value == null) weightUnit = lib.unit
+        _library.value = lib
+        LocalStore.confirm(lib.recent.map { it.id })
+    }
+
     fun send(cmd: JSONObject) {
         val bytes = cmd.toString().toByteArray(Charsets.UTF_8)
         nodeClient.connectedNodes
@@ -72,6 +100,7 @@ class PhoneLink(context: Context) : DataClient.OnDataChangedListener {
 
     companion object {
         const val PATH_STATE = "/workstation/state"
+        const val PATH_LIBRARY = "/workstation/library"
         const val PATH_CMD = "/workstation/cmd"
         const val KEY_JSON = "json"
         private const val STALE_MS = 6 * 60 * 60 * 1000L

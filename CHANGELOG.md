@@ -3,6 +3,28 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.6.0] - 2026-10-29
+
+### Cambiado
+- Entrenar: contador semanal grande y tarjeta "Hoy toca" con `SessionMap` (músculos de la rutina ponderados por series, `sessionMuscles`), series, minutos estimados y botón principal; "Empezar entrenamiento vacío" pasa a secundario cuando hay rutina sugerida.
+- Detalle del entreno: mapa muscular por partes. Perfil: cifras más grandes.
+
+### Añadido
+- Deslizar una serie a la derecha la marca/desmarca como hecha; mantener pulsada una rutina abre su menú (`useLongPress`); vibración corta al empezar.
+- Barra de progreso (series hechas / previstas) bajo la cabecera del entreno en curso.
+
+## [1.5.1] - 2026-10-28
+
+### Añadido
+- Activación muscular por ejercicio (`shared/muscle-detail.ts`): los 130 de la biblioteca tienen el % de cada grupo y de cada parte (30 partes: porciones del pectoral, cabezas del deltoides/bíceps/tríceps, dorsal alto/bajo, recto abdominal superior/inferior, vastos, glúteo mayor/medio, gastrocnemio/sóleo…). Los del catálogo con la misma imagen heredan la tabla; el resto, principal 100 % y secundarios 50 %.
+- El mapa corporal está dividido en esas partes; en la ficha, tocar un grupo (en la lista o en el mapa) lo resalta y despliega sus partes.
+
+## [1.5.0] - 2026-10-28
+
+### Añadido
+- Reloj autónomo: el reloj guarda rutinas, biblioteca, última sesión de cada ejercicio e historial reciente (DataItem `/workstation/library`) y entrena por su cuenta, con la sesión guardada en el reloj.
+- Los entrenos del reloj vuelven por Data Layer (`/workstation/workout/<id>`): con la app abierta los guarda la web; con la app cerrada el móvil los sube a la nube con una API key de escritura propia ("Reloj (subida automática)", se borra al cerrar sesión).
+
 ## [1.4.4] - 2026-10-27
 
 ### Corregido

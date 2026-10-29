@@ -197,6 +197,45 @@ test('deslizar una serie a la izquierda la borra y se puede deshacer', async ({ 
   await expect(rows).toHaveCount(before);
 });
 
+test('deslizar una serie a la derecha la marca como hecha y otra vez la desmarca', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  const rows = page.locator('.swipe');
+  await rows.first().waitFor();
+  await page.waitForTimeout(600);
+  const swipeRight = async () => {
+    const box = (await rows.first().locator('.prev').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    for (let k = 1; k <= 6; k++) await page.mouse.move(box.x + box.width / 2 + k * 20, box.y + box.height / 2);
+    await expect(rows.first()).toHaveClass(/armed done/);
+    await page.mouse.up();
+  };
+  const count = await rows.count();
+  await swipeRight();
+  await expect(rows.first().locator('.set')).toHaveClass(/done/);
+  await expect(rows).toHaveCount(count);
+  await page.waitForTimeout(600); // desplazamiento automático a la siguiente serie: la primera queda bajo la cabecera
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await swipeRight();
+  await expect(rows.first().locator('.set')).not.toHaveClass(/done/);
+});
+
+test('mantener pulsada una rutina abre su menú', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  const row = page.locator('.routine', { hasText: 'Torso A' }).locator('b').first();
+  const box = (await row.boundingBox())!;
+  await page.mouse.move(box.x + 5, box.y + 5);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await page.mouse.up();
+  await expect(page.getByRole('button', { name: 'Duplicar' })).toBeVisible();
+  // El clic de soltar no abre el editor de la rutina
+  await expect(page.locator('h1', { hasText: 'Entrenar' })).toBeVisible();
+});
+
 test('copia automática diaria: borrar todo y restaurar', async ({ page, errors }) => {
   void errors;
   page.on('dialog', (d) => d.accept());
@@ -397,18 +436,24 @@ test('añadir ejercicio ocupa toda la pantalla y se puede elegir tras desplazar'
   await expect(dialog).toHaveCount(0);
 });
 
-test('cada ejercicio marca sus músculos: principal y secundarios', async ({ page, errors }) => {
+test('cada ejercicio marca sus músculos con intensidad y partes', async ({ page, errors }) => {
   void errors;
   await page.goto('/');
   await tab(page, 'Ejercicios').click();
   const row = page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first();
   await expect(row.locator('svg.bm-thumb')).toHaveCount(1);
   await row.click();
-  const legend = page.locator('.bm-legend');
-  await expect(legend.locator('li').first()).toContainText('Pecho');
-  await expect(legend.locator('li').first()).toContainText('Principal');
-  await expect(legend).toContainText('Secundario');
+  const groups = page.locator('.act-list > li');
+  await expect(groups.first()).toContainText('Pecho');
+  await expect(groups.first()).toContainText('Principal');
+  await expect(groups.first()).toContainText('100%');
+  await expect(page.locator('.act-list')).toContainText('Secundario');
   await expect(page.getByRole('img', { name: 'Músculos que trabaja' })).toBeVisible();
+  // Tocar el grupo despliega sus partes con su intensidad
+  await groups.first().getByRole('button').click();
+  await expect(groups.first().getByRole('button')).toHaveAttribute('aria-expanded', 'true');
+  await expect(groups.first().locator('.act-parts')).toContainText('Pecho medio (esternal)');
+  await expect(groups.first().locator('.act-parts li')).toHaveCount(3);
 });
 
 test('marcar una serie activa el estilo hecho y aria-pressed', async ({ page, errors }) => {

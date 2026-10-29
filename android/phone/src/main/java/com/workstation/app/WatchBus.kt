@@ -26,6 +26,9 @@ object WatchBus {
     }
 
     @Synchronized
+    fun attached() = activity != null
+
+    @Synchronized
     fun post(message: JSONObject) {
         val a = activity
         if (a != null) a.sendToWeb(message)

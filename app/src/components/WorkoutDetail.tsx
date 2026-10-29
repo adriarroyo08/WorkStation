@@ -10,7 +10,7 @@ import { fmtDate, fmtTime, shareOrDownload, useStore } from '../store';
 import { bestSetText } from '../summary';
 import { newlyUnlocked } from '../../../shared/achievements';
 import { AchievementBadge } from './Achievements';
-import BodyMap from './BodyMap';
+import { SessionMap } from './BodyMap';
 import LineChart from './LineChart';
 import { Back, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
 import { compareWithPrevious } from '../../../shared/planning';
@@ -155,7 +155,11 @@ export default function WorkoutDetail({
 
       <div className="card">
         <h3>Distribución muscular</h3>
-        <BodyMap sets={muscleSets(data, [w])} />
+        <SessionMap big items={w.exercises.flatMap((we) => {
+          const exercise = ex.get(we.exerciseId);
+          const sets = we.sets.filter((st) => st.done).length;
+          return exercise && sets ? [{ exercise, sets }] : [];
+        })} />
         <HBars rows={[...regions.entries()].sort((a, b) => b[1] - a[1]).map(([label, v]) => ({ label, value: Math.round((v / totalSets) * 100) }))} format={(v) => `${v}%`} />
       </div>
 

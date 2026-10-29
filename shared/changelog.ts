@@ -7,6 +7,32 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.6.0',
+    date: '2026-10-29',
+    items: [
+      'Entrenar renovado: tu semana en grande y "Hoy toca" con el mapa de los músculos que vas a trabajar, series y tiempo estimado.',
+      'Desliza una serie a la derecha para marcarla como hecha (a la izquierda sigue borrándola).',
+      'Mantén pulsada una rutina para abrir sus opciones.',
+      'Barra de progreso del entreno con las series hechas y el mapa muscular por partes en el detalle de cada entreno.',
+    ],
+  },
+  {
+    version: '1.5.1',
+    date: '2026-10-28',
+    items: [
+      'Músculos más detallados en cada ejercicio: todos los grupos que trabaja con su intensidad (principal, secundario o estabilizador).',
+      'Toca un músculo para ver las partes que trabaja: pecho superior, medio o inferior, las tres cabezas del deltoides, del bíceps y del tríceps, y más.',
+    ],
+  },
+  {
+    version: '1.5.0',
+    date: '2026-10-28',
+    items: [
+      'Reloj autónomo: entrena desde el reloj sin el móvil. Rutinas, entreno vacío, series, descansos con vibración, pulso e historial.',
+      'Los entrenos del reloj llegan solos a tu cuenta, aunque la app del móvil esté cerrada.',
+    ],
+  },
+  {
     version: '1.4.4',
     date: '2026-10-27',
     items: ['Los ejercicios importados de Hevy se enlazan con la biblioteca: con sus imágenes, instrucciones y récords. Si ya los habías importado, vuelve a importar el CSV y se corrigen solos.'],
