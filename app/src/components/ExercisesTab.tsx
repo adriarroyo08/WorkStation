@@ -4,7 +4,7 @@ import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exer
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
-import { MuscleMap } from './BodyMap';
+import { MuscleFilter, MuscleMap } from './BodyMap';
 import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
@@ -27,7 +27,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
   }, [openId, onOpened]);
   const prs = new Map(personalRecords(data).map((p) => [p.exerciseId, p]));
   const sorted = [...data.exercises].sort((a, b) => Number(prs.has(b.id)) - Number(prs.has(a.id)) || a.name.localeCompare(b.name));
-  const { list, filters } = useExerciseFilter(sorted);
+  const { list, filters, muscle, setMuscle } = useExerciseFilter(sorted);
 
   if (sel) return <ExerciseDetail id={sel} onBack={() => (onClose ? onClose() : setSel(null))} />;
   if (catalog) return <CatalogBrowser onBack={() => setCatalog(false)} onOpen={(id) => (setCatalog(false), setSel(id))} />;
@@ -48,6 +48,14 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
         </span>
         <ChevronRight size={16} className="muted" />
       </button>
+      <div className="mfilter">
+        <MuscleFilter value={muscle} onPick={setMuscle} />
+        <div className="mfilter-info">
+          <b>{list.length}</b>
+          <span>{muscle ? MUSCLE_LABELS[muscle] : 'ejercicios'}</span>
+          <small className="muted">{muscle ? 'Toca otra vez para quitar el filtro' : 'Toca un músculo para filtrar'}</small>
+        </div>
+      </div>
       {filters}
       <div className="list">
         {list.map((e) => {
@@ -210,6 +218,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const metrics = METRICS_BY_KIND[e.kind];
   const m = metric && metrics.includes(metric) ? metric : metrics[0];
   const since = range === 'all' ? 0 : Date.now() - (range === '3m' ? 90 : 365) * 864e5;
+  const pts = h.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof ExerciseSession] as number) * 10) / 10 }));
   const fmtMetric = (k: Metric, v: number) => (k === 'maxDuration' ? formatDuration(v) : k === 'maxDistance' ? `${v} m` : k.includes('Reps') ? `${v}` : fmtWeight(v, { decimals: 1 }));
 
   const translate = async () => {
@@ -306,10 +315,8 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
               </button>
             ))}
           </div>
-          <LineChart
-            points={h.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof ExerciseSession] as number) * 10) / 10 }))}
-            format={(v) => fmtMetric(m, v)}
-          />
+          <MetricHead points={pts} label={METRICS[m]} range={{ '3m': 'en 3 meses', '1y': 'en un año', all: 'desde el principio' }[range]} format={(v) => fmtMetric(m, v)} />
+          <LineChart points={pts} format={(v) => fmtMetric(m, v)} />
           {e.stickyNote && <p className="sticky-note"><Pin size={16} className="ico" /> {e.stickyNote}</p>}
           <StrengthCard exerciseId={id} />
         </>
@@ -383,6 +390,25 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </Sheet>
       )}
     </section>
+  );
+}
+
+// Cifra grande de la métrica elegida (última sesión) y cuánto ha cambiado en el rango.
+function MetricHead({ points, label, range, format }: { points: { y: number }[]; label: string; range: string; format: (v: number) => string }) {
+  if (!points.length) return null;
+  const last = points.at(-1)!.y;
+  const diff = Math.round((last - points[0].y) * 10) / 10;
+  return (
+    <div className="metric-head">
+      <b>{format(last)}</b>
+      <span className="muted small">{label} · última sesión</span>
+      {points.length > 1 && (
+        <span className={`metric-diff ${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}`}>
+          {diff > 0 ? '+' : diff < 0 ? '−' : '±'}
+          {format(Math.abs(diff))} {range}
+        </span>
+      )}
+    </div>
   );
 }
 

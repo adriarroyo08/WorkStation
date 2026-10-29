@@ -1,5 +1,8 @@
-// Gráfico de línea SVG mínimo, sin dependencias.
+import { useState } from 'react';
+
+// Gráfico de línea SVG mínimo, sin dependencias. Al tocarlo o arrastrar el dedo muestra el punto más cercano.
 export default function LineChart({ points, format = (v) => String(v), timeAxis = false }: { points: { x: number; y: number }[]; format?: (v: number) => string; timeAxis?: boolean }) {
+  const [pick, setPick] = useState<number | null>(null);
   if (points.length < 2) return <p className="muted small chart-empty">Necesitas al menos 2 sesiones para ver la gráfica.</p>;
   const W = 340,
     H = 170,
@@ -15,16 +18,36 @@ export default function LineChart({ points, format = (v) => String(v), timeAxis 
   const date = (t: number) =>
     timeAxis ? new Date(t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : new Date(t).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   const last = points[points.length - 1];
+  const sel = pick !== null ? points[Math.min(pick, points.length - 1)] : null;
+  const scrub = (e: React.PointerEvent<SVGSVGElement>) => {
+    const b = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - b.left) / b.width) * W;
+    let best = 0;
+    for (let i = 1; i < points.length; i++) if (Math.abs(sx(points[i].x) - x) < Math.abs(sx(points[best].x) - x)) best = i;
+    setPick(best);
+  };
   return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Progresión">
+    <svg
+      className="chart scrub"
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-label="Progresión"
+      onPointerDown={scrub}
+      onPointerMove={(e) => (e.buttons || e.pointerType === 'mouse') && scrub(e)}
+      onPointerLeave={(e) => e.pointerType === 'mouse' && setPick(null)}
+    >
       <line x1={P} y1={H - P} x2={W - P} y2={H - P} className="axis" />
       <line x1={P} y1={sy(y1)} x2={W - P} y2={sy(y1)} className="grid" />
-      <text x={P} y={sy(y1) - 6} className="lbl">
-        {format(y1)}
-      </text>
-      <text x={P} y={H - P - 4} className="lbl">
-        {format(y0)}
-      </text>
+      {!sel && (
+        <>
+          <text x={P} y={sy(y1) - 6} className="lbl">
+            {format(y1)}
+          </text>
+          <text x={P} y={H - P - 4} className="lbl">
+            {format(y0)}
+          </text>
+        </>
+      )}
       <text x={P} y={H - P + 14} className="lbl">
         {date(x0)}
       </text>
@@ -38,9 +61,19 @@ export default function LineChart({ points, format = (v) => String(v), timeAxis 
           <title>{`${date(p.x)}: ${format(p.y)}`}</title>
         </circle>
       ))}
-      <text x={sx(last.x)} y={sy(last.y) - 9} className="lbl strong" textAnchor="end">
-        {format(last.y)}
-      </text>
+      {sel ? (
+        <g className="pick">
+          <line x1={sx(sel.x)} x2={sx(sel.x)} y1={P / 2} y2={H - P} />
+          <circle cx={sx(sel.x)} cy={sy(sel.y)} r={6} />
+          <text x={Math.min(Math.max(sx(sel.x), P + 40), W - P - 40)} y={P / 2 - 3} className="lbl strong" textAnchor="middle">
+            {`${format(sel.y)} · ${date(sel.x)}`}
+          </text>
+        </g>
+      ) : (
+        <text x={sx(last.x)} y={sy(last.y) - 9} className="lbl strong" textAnchor="end">
+          {format(last.y)}
+        </text>
+      )}
     </svg>
   );
 }

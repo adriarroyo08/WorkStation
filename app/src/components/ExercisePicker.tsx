@@ -38,7 +38,7 @@ export function useExerciseFilter(exercises: Exercise[]) {
       </div>
     </>
   );
-  return { q, list, filters };
+  return { q, list, filters, muscle, setMuscle };
 }
 
 export function ExerciseRow({ e, right, onClick, selected }: { e: Exercise; right?: React.ReactNode; onClick?: () => void; selected?: boolean }) {

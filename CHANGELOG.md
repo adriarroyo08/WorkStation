@@ -3,6 +3,13 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.7.0] - 2026-10-29
+
+### Añadido
+- Historial: cabecera con los entrenos del mes (comparados con el mes pasado hasta el mismo día), volumen, tiempo y series; `SessionMap` en cada fila; mantener pulsado abre Repetir / Borrar (con deshacer).
+- Ejercicios: filtro por músculo tocando el cuerpo (`MuscleFilter`), con el número de ejercicios en grande.
+- Ficha del ejercicio: valor de la métrica elegida en la última sesión y diferencia en el rango; `LineChart` muestra el punto más cercano al tocar o arrastrar (en todas sus gráficas).
+
 ## [1.6.0] - 2026-10-29
 
 ### Cambiado
