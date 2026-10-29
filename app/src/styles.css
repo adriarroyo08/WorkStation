@@ -3421,3 +3421,95 @@ button.today-go {
     font-size: 20px;
   }
 }
+
+/* ===== Historial: el mes en grande y el mapa de cada entreno ===== */
+.month-hero {
+  margin-bottom: 10px;
+}
+.month-hero .weekstrip-head {
+  margin-bottom: 2px;
+}
+.metric-diff {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.metric-diff.up {
+  color: var(--ok-ink);
+}
+.metric-diff.down {
+  color: var(--danger);
+}
+.hrow {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.hrow-grid {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.hrow-main {
+  flex: 1;
+  min-width: 0;
+}
+.hrow-grid .bm-session {
+  width: 64px;
+  height: 68px;
+}
+
+/* ===== Ejercicios: filtrar tocando el cuerpo, cifra de progreso y gráfica que se recorre ===== */
+.mfilter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 4px;
+}
+.bm-filter {
+  width: 128px;
+  height: 128px;
+  flex: none;
+}
+.bm-filter .bm-muscle.sel {
+  fill: var(--accent);
+}
+.mfilter-info {
+  display: grid;
+  gap: 2px;
+}
+.mfilter-info b {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.mfilter-info span {
+  font-weight: 600;
+}
+.metric-head {
+  display: grid;
+  gap: 2px;
+  margin: 10px 0 8px;
+}
+.metric-head > b {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.chart.scrub {
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+.chart .pick line {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.chart .pick circle {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 2;
+}

@@ -493,3 +493,43 @@ test('selector de descanso propio: chip y ajuste libre', async ({ page, errors }
   await dlg.getByRole('button', { name: 'Usar' }).click();
   await expect(trigger).toContainText('2:15');
 });
+
+test('historial: el mes en grande, mapa por entreno y mantener pulsado para borrar', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await tab(page, 'Historial').click();
+  await expect(page.locator('.month-hero .week-count')).toBeVisible();
+  const rows = page.locator('.hrow');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.first().locator('svg.bm-session')).toHaveCount(1);
+  const box = (await rows.first().locator('b').first().boundingBox())!;
+  await page.mouse.move(box.x + 5, box.y + 5);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await page.mouse.up();
+  await expect(page.getByRole('button', { name: 'Repetir entrenamiento' })).toBeVisible();
+  await page.getByRole('button', { name: 'Borrar entrenamiento' }).click();
+  await expect(rows).toHaveCount(2);
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await expect(rows).toHaveCount(3);
+});
+
+test('ejercicios: filtrar tocando un músculo y recorrer la gráfica', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await tab(page, 'Ejercicios').click();
+  await expect(page.locator('.exrow').first()).toBeVisible();
+  const all = await page.locator('.exrow').count();
+  await page.locator('.bm-filter path', { has: page.locator('title', { hasText: /^Pecho$/ }) }).first().click();
+  await expect(page.locator('.mfilter-info')).toContainText('Pecho');
+  const n = await page.locator('.exrow').count();
+  expect(n).toBeGreaterThan(0);
+  expect(n).toBeLessThan(all);
+  await expect(page.locator('.mfilter-info b')).toHaveText(String(n));
+  await page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first().click();
+  await expect(page.locator('.metric-head')).toContainText('1RM estimado');
+  await expect(page.locator('.metric-head .metric-diff')).toHaveClass(/up/);
+  const chart = page.getByRole('img', { name: 'Progresión' });
+  await chart.click({ position: { x: 40, y: 60 } });
+  await expect(chart.locator('.pick')).toHaveCount(1);
+});

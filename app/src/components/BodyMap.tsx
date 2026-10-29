@@ -235,3 +235,22 @@ export function SessionMap({ items, big = false }: { items: { exercise: Exercise
     </svg>
   );
 }
+
+// Filtro de la biblioteca: tocar un músculo del cuerpo filtra por ese grupo; tocarlo otra vez lo quita.
+export function MuscleFilter({ value, onPick }: { value: MuscleGroup | ''; onPick: (m: MuscleGroup | '') => void }) {
+  return (
+    <svg className="bm-filter" viewBox="14 4 172 168" role="group" aria-label="Filtrar tocando un músculo">
+      {PEC_CLIP}
+      {SHAPES.map((s, i) => {
+        const m = s.m;
+        return m ? (
+          <path key={i} d={s.d} clipPath={s.clip} className={value === m ? 'bm-muscle on sel' : 'bm-muscle on'} onClick={() => onPick(value === m ? '' : m)}>
+            <title>{MUSCLE_LABELS[m]}</title>
+          </path>
+        ) : (
+          <path key={i} d={s.d} className="bm-base" />
+        );
+      })}
+    </svg>
+  );
+}

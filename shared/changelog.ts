@@ -7,6 +7,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.7.0',
+    date: '2026-10-29',
+    items: [
+      'Historial renovado: los entrenos del mes en grande comparados con el mes pasado, y el mapa de músculos de cada entreno en la lista.',
+      'Mantén pulsado un entreno del historial para repetirlo o borrarlo.',
+      'Ejercicios: toca un músculo del cuerpo para filtrar la biblioteca.',
+      'En la ficha de cada ejercicio, tu cifra en grande y cuánto has progresado; toca o arrastra el dedo por la gráfica para ver cada sesión.',
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-10-29',
     items: [
