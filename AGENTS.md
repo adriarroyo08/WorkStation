@@ -37,6 +37,7 @@ Las issues mandan. Etiquetas:
 | `agent:claude` | Necesita criterio: diseño, bug difícil, arquitectura. |
 | `agent:codex` | Bien especificada: implementar siguiendo los criterios. |
 | `agent:gemini` | Mecánica: tests, docs, refactor, renombrados, leer mucho código. |
+| `necesita:pc` | Para verificarla hay que ver la interfaz, sacar capturas, usar emulador o dispositivo, o compilar la app Android: solo en el PC, no en el servidor. |
 | `needs-spec` | Le faltan criterios de aceptación o cómo verificar: no se reparte. |
 | `size:s` / `size:m` / `size:l` | Tamaño estimado. |
 
