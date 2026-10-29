@@ -228,3 +228,14 @@ export function exerciseActivation(e: Pick<Exercise, 'id' | 'muscle' | 'secondar
 }
 
 export const intensityLabel = (pct: number) => (pct >= 80 ? 'Principal' : pct >= 45 ? 'Secundario' : 'Estabilizador');
+
+// Músculos de una sesión: suma la intensidad de cada ejercicio por sus series y normaliza a 0-100.
+export function sessionMuscles(items: { exercise: Pick<Exercise, 'id' | 'muscle' | 'secondary' | 'media'>; sets: number }[]) {
+  const score = new Map<MuscleGroup, number>();
+  for (const { exercise, sets } of items) for (const a of exerciseActivation(exercise)) score.set(a.group, (score.get(a.group) ?? 0) + (a.pct / 100) * sets);
+  const max = Math.max(0, ...score.values());
+  return [...score]
+    .filter(([g]) => g !== 'cardio' && g !== 'cuerpo_completo' && g !== 'otro')
+    .map(([group, v]) => ({ group, label: MUSCLE_LABELS[group], pct: Math.round((v / max) * 100) }))
+    .sort((a, b) => b.pct - a.pct);
+}

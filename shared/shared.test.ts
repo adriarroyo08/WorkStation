@@ -203,3 +203,16 @@ describe('activación muscular', () => {
     expect(exerciseActivation({ id: 'db-x', muscle: 'pecho', media: 'Barbell_Bench_Press_-_Medium_Grip' })[0].parts).toHaveLength(3);
   });
 });
+
+describe('músculos de una sesión', () => {
+  it('pondera por series y normaliza', async () => {
+    const { sessionMuscles } = await import('./muscle-detail');
+    const ex = (id: string) => DEFAULT_EXERCISES.find((e) => e.id === id)!;
+    const r = sessionMuscles([
+      { exercise: ex('sentadilla'), sets: 4 },
+      { exercise: ex('curl-femoral'), sets: 2 },
+    ]);
+    expect(r[0]).toMatchObject({ group: 'cuadriceps', pct: 100 });
+    expect(r.find((m) => m.group === 'isquios')!.pct).toBe(Math.round(((0.4 * 4 + 2) / 4) * 100));
+  });
+});

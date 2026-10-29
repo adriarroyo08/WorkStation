@@ -7,6 +7,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.6.0',
+    date: '2026-10-29',
+    items: [
+      'Entrenar renovado: tu semana en grande y "Hoy toca" con el mapa de los músculos que vas a trabajar, series y tiempo estimado.',
+      'Desliza una serie a la derecha para marcarla como hecha (a la izquierda sigue borrándola).',
+      'Mantén pulsada una rutina para abrir sus opciones.',
+      'Barra de progreso del entreno con las series hechas y el mapa muscular por partes en el detalle de cada entreno.',
+    ],
+  },
+  {
     version: '1.5.1',
     date: '2026-10-28',
     items: [

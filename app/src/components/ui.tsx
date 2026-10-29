@@ -234,13 +234,40 @@ export function PrList({ prs }: { prs: { exerciseName: string; kind: PrKind; val
 }
 
 // Semana en 7 casillas: las de los días entrenados en acento.
+// Respuesta táctil corta al confirmar una acción (el móvil la ignora si el usuario la tiene desactivada en el sistema).
+export const haptic = (ms = 10) => void navigator.vibrate?.(ms);
+
+// Mantener pulsado (~0,45 s sin moverse) dispara onLong y anula el clic que vendría después.
+export function useLongPress(onLong: () => void) {
+  const t = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const fired = useRef(false);
+  const cancel = () => (clearTimeout(t.current), (start.current = null));
+  return {
+    onPointerDown: (e: React.PointerEvent) => {
+      fired.current = false;
+      start.current = { x: e.clientX, y: e.clientY };
+      t.current = setTimeout(() => ((fired.current = true), haptic(15), onLong()), 450);
+    },
+    onPointerMove: (e: React.PointerEvent) => start.current && Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) > 8 && cancel(),
+    onPointerUp: cancel,
+    onPointerCancel: cancel,
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    onClickCapture: (e: React.MouseEvent) => fired.current && (e.stopPropagation(), (fired.current = false)),
+  };
+}
+
 export function WeekStrip({ days, goal, mondayFirst = true }: { days: boolean[]; goal: number; mondayFirst?: boolean }) {
   const letters = mondayFirst ? 'LMXJVSD' : 'DLMXJVS';
   const today = (new Date().getDay() + (mondayFirst ? 6 : 0)) % 7;
   return (
     <div className="weekstrip">
-      <div className="sec">
-        Esta semana · {days.filter(Boolean).length} de {goal}
+      <div className="weekstrip-head">
+        <b className="week-count">
+          {days.filter(Boolean).length}
+          <span>/{goal}</span>
+        </b>
+        <span className="muted small">{days.filter(Boolean).length >= goal ? 'Objetivo semanal cumplido' : 'sesiones esta semana'}</span>
       </div>
       <div className="weekstrip-days" aria-hidden="true">
         {days.map((on, i) => (

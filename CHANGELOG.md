@@ -3,6 +3,16 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.6.0] - 2026-10-29
+
+### Cambiado
+- Entrenar: contador semanal grande y tarjeta "Hoy toca" con `SessionMap` (músculos de la rutina ponderados por series, `sessionMuscles`), series, minutos estimados y botón principal; "Empezar entrenamiento vacío" pasa a secundario cuando hay rutina sugerida.
+- Detalle del entreno: mapa muscular por partes. Perfil: cifras más grandes.
+
+### Añadido
+- Deslizar una serie a la derecha la marca/desmarca como hecha; mantener pulsada una rutina abre su menú (`useLongPress`); vibración corta al empezar.
+- Barra de progreso (series hechas / previstas) bajo la cabecera del entreno en curso.
+
 ## [1.5.1] - 2026-10-28
 
 ### Añadido

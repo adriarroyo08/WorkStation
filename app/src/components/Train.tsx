@@ -5,11 +5,12 @@ import { uid } from '../../../shared/types';
 import { hasPendingData } from '../../../shared/session';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { muscleRecovery, nextRoutine } from '../../../shared/planning';
+import { sessionMuscles } from '../../../shared/muscle-detail';
 import { discardActive, finishActive, launchEmpty, launchWorkout, summary, useSummary } from '../controller';
 import { useStore } from '../store';
-import { BatteryCharging, CalendarCheck, ChevronDown, ChevronRight, Copy, Download, FolderInput, FolderPlus, Link2, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2 } from 'lucide-react';
-import BodyMap from './BodyMap';
-import { Sheet, useScrollTop, WeekStrip } from './ui';
+import { BatteryCharging, ChevronDown, ChevronRight, Copy, Download, FolderInput, FolderPlus, Link2, MoreHorizontal, Pencil, Play, Plus, Search, Share2, Trash2 } from 'lucide-react';
+import BodyMap, { SessionMap } from './BodyMap';
+import { haptic, Sheet, useLongPress, useScrollTop, WeekStrip } from './ui';
 import { fmtWeight } from '../../../shared/units';
 import { shareRoutineLink } from './SharedRoutine';
 import { native } from '../native';
@@ -96,21 +97,7 @@ function Today() {
   const tired = recovery.filter((r) => r.recovery < 0.6);
   return (
     <>
-      {next && (
-        <div className="today">
-          <div className="sec">Hoy toca{folder ? ` · ${folder.name}` : ''}</div>
-          <div className="line">
-            <CalendarCheck size={18} className="tile-ico" />
-            <div className="grow">
-              <h3>{next.routine.name}</h3>
-              {next.last && <small className="muted">Última vez {ago(next.last.startedAt)}</small>}
-            </div>
-            <button className="link" onClick={() => launchWorkout(store, workoutFromRoutine(next.routine))}>
-              Empezar
-            </button>
-          </div>
-        </div>
-      )}
+      {next && <TodayHero routine={next.routine} folder={folder?.name} last={next.last?.startedAt} />}
       {recovery.length > 0 && (
         <button className="recovery-row line" onClick={() => setShowRecovery(true)}>
           <BatteryCharging size={18} className="tile-ico" />
@@ -158,6 +145,57 @@ function Today() {
   );
 }
 
+// Lo protagonista de la pantalla: la siguiente rutina con los músculos que va a trabajar.
+function TodayHero({ routine, folder, last }: { routine: Routine; folder?: string; last?: string }) {
+  const store = useStore();
+  const byId = new Map(store.data.exercises.map((e) => [e.id, e]));
+  const items = routine.exercises.flatMap((e) => {
+    const exercise = byId.get(e.exerciseId);
+    return exercise ? [{ exercise, sets: e.sets.length || 1 }] : [];
+  });
+  const sets = routine.exercises.reduce((n, e) => n + e.sets.length, 0);
+  // Estimación: cada serie ~45 s más su descanso.
+  const minutes = Math.round(routine.exercises.reduce((t, e) => t + e.sets.length * (45 + e.restSec), 0) / 60 / 5) * 5;
+  const muscles = sessionMuscles(items).filter((m) => m.pct >= 45);
+  return (
+    <div className="today">
+      <div className="sec">Hoy toca{folder ? ` · ${folder}` : ''}</div>
+      <div className="today-card">
+        <SessionMap items={items} />
+        <div className="today-info">
+          <h3>{routine.name}</h3>
+          <p className="today-meta">
+            {routine.exercises.length} ejercicios · {sets} series{minutes ? ` · ~${minutes} min` : ''}
+          </p>
+          {muscles.length > 0 && (
+            <ul className="today-muscles" aria-label="Músculos que trabaja">
+              {muscles.slice(0, 4).map((m) => (
+                <li key={m.group}>
+                  <span>{m.label}</span>
+                  <i style={{ width: `${m.pct}%` }} aria-hidden="true" />
+                </li>
+              ))}
+            </ul>
+          )}
+          {last && <small className="muted">Última vez {ago(last)}</small>}
+        </div>
+      </div>
+      <button className="primary big icon-btn today-go" onClick={() => (haptic(), launchWorkout(store, workoutFromRoutine(routine)))} disabled={!routine.exercises.length}>
+        <Play size={18} fill="currentColor" /> Empezar
+      </button>
+    </div>
+  );
+}
+
+// Fila de rutina: mantenerla pulsada abre su menú (igual que el botón de opciones).
+function RoutineRow({ onLong, children }: { onLong: () => void; children: React.ReactNode }) {
+  return (
+    <div className="routine line" {...useLongPress(onLong)}>
+      {children}
+    </div>
+  );
+}
+
 function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: string) => void; onEdit: (r: Routine) => void; onExplore: () => void }) {
   const store = useStore();
   const { data, settings, update } = store;
@@ -177,6 +215,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
     { name: 'Mis rutinas', routines: data.routines.filter((r) => !r.folderId || !data.folders.some((f) => f.id === r.folderId)) },
   ];
   const exName = new Map(data.exercises.map((e) => [e.id, e.name]));
+  const hasNext = !!nextRoutine(data);
 
   return (
     <section>
@@ -221,7 +260,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
           </button>
         </div>
       )}
-      <button className="primary big icon-btn" onClick={() => launchEmpty(store)}>
+      <button className={`${hasNext ? 'outline' : 'primary big'} full icon-btn`} onClick={() => (haptic(), launchEmpty(store))}>
         <Plus size={20} strokeWidth={2.6} /> Empezar entrenamiento vacío
       </button>
       <div className="row actions">
@@ -280,7 +319,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             </div>
             {!collapsed.has(g.name) &&
               g.routines.map((r) => (
-                <div key={r.id} className="routine line">
+                <RoutineRow key={r.id} onLong={() => setMenu(r)}>
                   <div className="grow" onClick={() => onEdit(r)}>
                     <b>{r.name}</b>
                     <p className="muted small">{r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}</p>
@@ -291,7 +330,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                   <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
                     <MoreHorizontal size={20} />
                   </button>
-                </div>
+                </RoutineRow>
               ))}
           </div>
         ),

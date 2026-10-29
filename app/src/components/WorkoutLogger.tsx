@@ -153,7 +153,7 @@ export default function WorkoutLogger({
     edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id }));
 
   const elapsed = Math.round((now - Date.parse(w.startedAt)) / 1000);
-  const totals = { sets: workoutSetCount(w), volume: workoutVolume(w, data.exercises) };
+  const totals = { sets: workoutSetCount(w), planned: w.exercises.reduce((n, e) => n + e.sets.length, 0), volume: workoutVolume(w, data.exercises) };
 
   return (
     <section className={`active ${mode === 'live' && restState.end && restLeft > 0 ? 'resting' : ''}`}>
@@ -179,7 +179,7 @@ export default function WorkoutLogger({
             <Weight size={14} /> {fmtMass(totals.volume)}
           </span>
           <span className="icon-btn">
-            <ListChecks size={14} /> {totals.sets} series
+            <ListChecks size={14} /> {mode === 'live' && totals.planned ? `${totals.sets}/${totals.planned}` : totals.sets} series
           </span>
           {mode === 'live' && (
             <button className="ghost small devices-btn" onClick={() => setDevices(true)} aria-label="Reloj y sensores">
@@ -187,6 +187,11 @@ export default function WorkoutLogger({
             </button>
           )}
         </div>
+        {mode === 'live' && totals.planned > 0 && (
+          <div className="wprog" role="progressbar" aria-label="Series completadas" aria-valuemin={0} aria-valuemax={totals.planned} aria-valuenow={totals.sets}>
+            <i style={{ width: `${(totals.sets / totals.planned) * 100}%` }} />
+          </div>
+        )}
       </div>
 
       {mode === 'edit' && <EditTimes w={w} edit={edit} />}
@@ -544,7 +549,7 @@ function SetRow(props: {
 }) {
   const { id, isNext, n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
-  const swipe = useSwipeToDelete(onRemove);
+  const swipe = useSwipeSet(onRemove, onToggle);
   const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const kind = ex?.kind ?? 'weight_reps';
   const prevTxt = prev
@@ -564,9 +569,12 @@ function SetRow(props: {
     />
   );
   return (
-    <div className={`swipe ${swipe.armed ? 'armed' : ''}`}>
+    <div className={`swipe ${swipe.armed ? `armed ${swipe.armed}` : ''} ${swipe.dir ?? ''}`}>
       <div className="swipe-bg" aria-hidden="true">
         <Trash2 size={18} /> Borrar
+      </div>
+      <div className="swipe-bg to-done" aria-hidden="true">
+        <Check size={18} strokeWidth={3} /> {s.done ? 'Desmarcar' : 'Hecha'}
       </div>
       <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`} {...swipe.handlers} style={swipe.style}>
         <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
@@ -638,15 +646,16 @@ function SetRow(props: {
   );
 }
 
-// Deslizar una serie hacia la izquierda la borra (como en Hevy). Solo actúa en gestos horizontales,
-// así que el scroll vertical y escribir en los campos siguen funcionando igual.
+// Deslizar una serie a la izquierda la borra (como en Hevy) y a la derecha la marca como hecha (o la desmarca).
+// Solo actúa en gestos horizontales, así que el scroll vertical y escribir en los campos siguen funcionando igual.
 const SWIPE_DELETE_PX = 96;
-function useSwipeToDelete(onDelete: () => void) {
+const SWIPE_DONE_PX = 72;
+function useSwipeSet(onDelete: () => void, onToggle: () => void) {
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const g = useRef<{ x: number; y: number; id: number; active: boolean } | null>(null);
   const swiped = useRef(false);
-  const armed = dx <= -SWIPE_DELETE_PX;
+  const armed = dx <= -SWIPE_DELETE_PX ? 'delete' : dx >= SWIPE_DONE_PX ? 'done' : null;
   useEffect(() => {
     if (armed) navigator.vibrate?.(12);
   }, [armed]);
@@ -657,13 +666,17 @@ function useSwipeToDelete(onDelete: () => void) {
     setDragging(false);
     swiped.current = true;
     setTimeout(() => (swiped.current = false), 50);
-    if (armed) {
+    if (armed === 'delete') {
       setDx(-window.innerWidth);
       setTimeout(() => (onDelete(), setDx(0)), 180);
-    } else setDx(0);
+    } else {
+      if (armed === 'done') onToggle();
+      setDx(0);
+    }
   };
   return {
     armed,
+    dir: dx > 0 ? 'right' : dx < 0 ? 'left' : null,
     style: dx ? { transform: `translateX(${dx}px)`, transition: dragging ? 'none' : 'transform 0.18s var(--ease)' } : undefined,
     handlers: {
       onPointerDown: (e: React.PointerEvent) => {
@@ -677,12 +690,13 @@ function useSwipeToDelete(onDelete: () => void) {
         const my = e.clientY - st.y;
         if (!st.active) {
           if (Math.abs(my) > 10) return void (g.current = null); // es scroll vertical
-          if (mx > -12 || Math.abs(mx) < Math.abs(my) * 1.5) return;
+          if (Math.abs(mx) < 12 || Math.abs(mx) < Math.abs(my) * 1.5) return;
           st.active = true;
           setDragging(true);
           e.currentTarget.setPointerCapture(e.pointerId);
         }
-        setDx(Math.min(0, mx));
+        // Hacia la derecha se frena pasado el umbral: basta con armarlo.
+        setDx(mx > 0 ? Math.min(mx, SWIPE_DONE_PX + (mx - SWIPE_DONE_PX) * 0.25) : mx);
       },
       onPointerUp: end,
       onPointerCancel: end,

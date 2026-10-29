@@ -216,3 +216,22 @@ export function MuscleMap({ exercise }: { exercise: ExerciseLike }) {
     </div>
   );
 }
+
+// Músculos de una sesión (rutina): cada parte suma la intensidad de cada ejercicio por sus series.
+// big: a todo el ancho (detalle de un entreno), con título accesible; si no, miniatura decorativa.
+export function SessionMap({ items, big = false }: { items: { exercise: ExerciseLike; sets: number }[]; big?: boolean }) {
+  const levels = items.map((it) => ({ level: shapeLevels(it.exercise), sets: it.sets }));
+  const raw = SHAPES.map((s) => levels.reduce((sum, l) => sum + l.level(s) * l.sets, 0));
+  const max = Math.max(...raw);
+  if (!max) return null;
+  return (
+    <svg className={big ? 'bm-session big' : 'bm-session'} viewBox={big ? '0 0 200 180' : '14 4 172 168'} {...(big ? { role: 'img', 'aria-label': 'Músculos trabajados' } : { 'aria-hidden': true })}>
+      {PEC_CLIP}
+      {SHAPES.map((s, i) => {
+        const v = raw[i] / max;
+        return <path key={i} d={s.d} clipPath={s.clip} className={s.m ? 'bm-muscle' : 'bm-base'} style={v ? { fill: 'var(--accent)', fillOpacity: 0.15 + 0.85 * v } : undefined} />;
+      })}
+      {big && <Labels />}
+    </svg>
+  );
+}

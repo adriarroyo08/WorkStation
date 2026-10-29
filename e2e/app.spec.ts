@@ -197,6 +197,45 @@ test('deslizar una serie a la izquierda la borra y se puede deshacer', async ({ 
   await expect(rows).toHaveCount(before);
 });
 
+test('deslizar una serie a la derecha la marca como hecha y otra vez la desmarca', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  const rows = page.locator('.swipe');
+  await rows.first().waitFor();
+  await page.waitForTimeout(600);
+  const swipeRight = async () => {
+    const box = (await rows.first().locator('.prev').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    for (let k = 1; k <= 6; k++) await page.mouse.move(box.x + box.width / 2 + k * 20, box.y + box.height / 2);
+    await expect(rows.first()).toHaveClass(/armed done/);
+    await page.mouse.up();
+  };
+  const count = await rows.count();
+  await swipeRight();
+  await expect(rows.first().locator('.set')).toHaveClass(/done/);
+  await expect(rows).toHaveCount(count);
+  await page.waitForTimeout(600); // desplazamiento automático a la siguiente serie: la primera queda bajo la cabecera
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await swipeRight();
+  await expect(rows.first().locator('.set')).not.toHaveClass(/done/);
+});
+
+test('mantener pulsada una rutina abre su menú', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  const row = page.locator('.routine', { hasText: 'Torso A' }).locator('b').first();
+  const box = (await row.boundingBox())!;
+  await page.mouse.move(box.x + 5, box.y + 5);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await page.mouse.up();
+  await expect(page.getByRole('button', { name: 'Duplicar' })).toBeVisible();
+  // El clic de soltar no abre el editor de la rutina
+  await expect(page.locator('h1', { hasText: 'Entrenar' })).toBeVisible();
+});
+
 test('copia automática diaria: borrar todo y restaurar', async ({ page, errors }) => {
   void errors;
   page.on('dialog', (d) => d.accept());

@@ -2106,12 +2106,28 @@ pre.code {
 .swipe:has(> .set[style]) .swipe-bg {
   opacity: 1;
 }
-.swipe.armed .swipe-bg {
+.swipe.armed.delete .swipe-bg {
   background: var(--danger);
+}
+/* Deslizar a la derecha: completar. Cada fondo solo se ve hacia su lado. */
+.swipe-bg.to-done {
+  justify-content: flex-start;
+  padding: 0 0 0 16px;
+  background: color-mix(in srgb, var(--ok) 55%, var(--surface));
+  color: var(--on-ok);
+}
+.swipe.armed.done .swipe-bg.to-done {
+  background: var(--ok);
+}
+.swipe.right .swipe-bg:not(.to-done),
+.swipe.left .swipe-bg.to-done {
+  display: none;
 }
 .swipe > .set:not(.head) {
   position: relative;
   touch-action: pan-y;
+  /* Arrastrar no selecciona texto (con ratón, una selección cancela el siguiente gesto) */
+  user-select: none;
   background-color: var(--surface);
 }
 .swipe > .set.done {
@@ -3288,4 +3304,120 @@ a.line {
 }
 .account-actions .icon-btn {
   justify-content: center;
+}
+
+/* ===== Entrenar: semana y "Hoy toca" protagonistas ===== */
+.weekstrip-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 4px 0 10px;
+}
+.week-count {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.week-count span {
+  font-size: 22px;
+  color: var(--muted);
+  letter-spacing: -0.02em;
+}
+.today-card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 14px 14px 14px 6px;
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.bm-session {
+  width: 112px;
+  height: 116px;
+  flex: none;
+}
+.today-info {
+  flex: 1;
+  min-width: 0;
+}
+.today-info h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.today-meta {
+  margin: 2px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.today-muscles {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+  display: grid;
+  gap: 5px;
+}
+.today-muscles li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.today-muscles span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.today-muscles i {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  justify-self: start;
+}
+button.today-go {
+  width: 100%;
+  border-radius: 0 0 var(--radius) var(--radius);
+  margin-bottom: 12px;
+}
+/* Mantener pulsada una rutina abre su menú: sin selección de texto ni menú del sistema */
+.routine {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.bm-session.big {
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+  display: block;
+  margin: 0 auto;
+}
+/* Progreso del entreno: series hechas sobre las previstas, pegado bajo la cabecera */
+.wprog {
+  height: 3px;
+  margin: 8px -16px 0;
+  background: var(--line);
+}
+.wprog i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.35s var(--ease);
+}
+/* Perfil: las cifras mandan */
+.stat b {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 381px) {
+  .stats.four .stat b {
+    font-size: 20px;
+  }
 }
