@@ -35,9 +35,9 @@ Las issues mandan. Etiquetas:
 
 | Etiqueta | Significado |
 | --- | --- |
-| `agent:claude` | Necesita criterio: diseño, bug difícil, arquitectura. |
-| `agent:codex` | Bien especificada: implementar siguiendo los criterios. |
-| `agent:gemini` | Mecánica: tests, docs, refactor, renombrados, leer mucho código. |
+| `agent:claude` | Arquitectura y diseño de módulos, interfaz y sistema de diseño, seguridad (auth, API keys, permisos), bugs difíciles o de concurrencia, refactors que cruzan el proyecto. |
+| `agent:codex` | Implementar con la spec clara: lógica, endpoints, pantallas ya diseñadas, tests, migraciones de dependencias, arreglos de CI y build, scripts. También revisa los PR de Claude. |
+| `agent:gemini` | Investigar con fuentes web (estudios, noticias, competidores), contenido y datos con citas, documentación, resumir mucho código, revisar capturas e imágenes, generar assets. |
 | `necesita:pc` | Para verificarla hay que ver la interfaz, sacar capturas, usar emulador o dispositivo, o compilar la app Android: solo en el PC, no en el servidor. |
 | `needs-spec` | Le faltan criterios de aceptación o cómo verificar: no se reparte. |
 | `size:s` / `size:m` / `size:l` | Tamaño estimado. |
