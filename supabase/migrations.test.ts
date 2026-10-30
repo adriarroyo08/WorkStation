@@ -43,6 +43,7 @@ beforeAll(async () => {
     `insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_l', 'read'), ($1, encode(extensions.digest($3, 'sha256'), 'hex'), 'ws_e', 'write')`,
     [A, KEY_R, KEY_W],
   );
+  await db.exec(sql('006_api_key_expiry.sql'));
 }, 60_000);
 
 const upsert = (uid: string, id: string, doc: object, ts: string) =>
@@ -92,5 +93,63 @@ describe('migraciones de Supabase', () => {
     expect(n).toBe(1);
     expect(await as(A, `select * from public.records where id = 'ia'`)).toHaveLength(1);
     await expect(anon(`select public.api_key_user($1, false)`, [KEY_R])).rejects.toThrow(/permission denied/);
+  });
+  it('conserva las claves existentes sin caducidad y guarda solo el hash', async () => {
+    const rows = await as<{ expires_at: null; key_hash: string }>(A, 'select expires_at, key_hash from public.api_keys');
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => r.expires_at === null && /^[a-f0-9]{64}$/.test(r.key_hash))).toBe(true);
+    expect(JSON.stringify(rows)).not.toContain(KEY_R);
+    expect(await as(B, 'select * from public.api_keys')).toHaveLength(0);
+  });
+
+  it('valida la caducidad futura en inserts directos y mantiene el aislamiento', async () => {
+    await expect(as(A, `insert into public.api_keys (key_hash, key_prefix, expires_at) values ('pasada', 'ws_', now())`)).rejects.toThrow(/futura/);
+    await expect(as(A, `insert into public.api_keys (user_id, key_hash, key_prefix) values ($1, 'ajena', 'ws_')`, [B])).rejects.toThrow(/row-level security/);
+  });
+
+  it.each(['read', 'write'])('RPC directos: vigencia, caducidad, revocación y permisos %s', async (scope) => {
+    const key = `ws_temporal_${scope}`;
+    await db.query(
+      `insert into public.api_keys (user_id, key_hash, key_prefix, scope, expires_at)
+      values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_tmp', $3, clock_timestamp() + interval '1 hour')`,
+      [A, key, scope],
+    );
+    await anon('select * from public.api_records($1)', [key]);
+    const write = () => anon(`select public.api_upsert($1, '[{"collection":"workouts","id":"temporal-${scope}","doc":{}}]')`, [key]);
+    if (scope === 'write') await write();
+    else await expect(write()).rejects.toThrow(/solo lectura/);
+    const hash = `encode(extensions.digest($1, 'sha256'), 'hex')`;
+    const before = (await db.query(`select last_used_at::text from public.api_keys where key_hash = ${hash}`, [key])).rows;
+    await db.query(`update public.api_keys set expires_at = clock_timestamp() - interval '1 second' where key_hash = ${hash}`, [key]);
+    for (const role of ['anon', 'authenticated']) {
+      const call = role === 'anon' ? anon : <T>(q: string, params: unknown[]) => as<T>(B, q, params);
+      await expect(call('select * from public.api_records($1)', [key])).rejects.toThrow(/caducada/);
+      await expect(call(`select public.api_upsert($1, '[]')`, [key])).rejects.toThrow(/caducada/);
+    }
+    expect((await db.query(`select last_used_at::text from public.api_keys where key_hash = ${hash}`, [key])).rows).toEqual(before);
+    await as(A, 'delete from public.api_keys where key_prefix = $1 and scope = $2', ['ws_tmp', scope]);
+    await expect(anon('select * from public.api_records($1)', [key])).rejects.toThrow(/no válida/);
+    await expect(write()).rejects.toThrow(/no válida/);
+  });
+
+  it('rechaza el límite exacto de caducidad en ambos RPC', async () => {
+    // Reloj SQL fijo para comprobar la igualdad, sin esperas ni carreras de milisegundos.
+    await db.transaction(async (tx) => {
+      await tx.exec('alter function public.api_key_user(text, boolean) set search_path = public, extensions, pg_catalog');
+      await tx.exec(`create function public.clock_timestamp() returns timestamptz language sql as $$ select '2026-10-30T12:00:00Z'::timestamptz $$;`);
+      await tx.query(
+        `insert into public.api_keys (user_id, key_hash, key_prefix, scope, expires_at)
+        values ($1, encode(extensions.digest('ws_limite', 'sha256'), 'hex'), 'ws_lim', 'write', '2099-10-30T12:00:01Z')`,
+        [A],
+      );
+      await tx.exec(`update public.api_keys set expires_at = '2026-10-30T12:00:00Z' where key_prefix = 'ws_lim';`);
+      // Cada error revierte solo su savepoint, conservando el reloj dentro de esta transacción.
+      for (const q of ["select * from public.api_records('ws_limite')", "select public.api_upsert('ws_limite', '[]')"]) {
+        await tx.exec('savepoint boundary');
+        await expect(tx.query(q)).rejects.toThrow(/caducada/);
+        await tx.exec('rollback to savepoint boundary');
+      }
+      await tx.exec('drop function public.clock_timestamp(); alter function public.api_key_user(text, boolean) set search_path = public, extensions');
+    });
   });
 });

@@ -11,6 +11,7 @@ interface KeyRow {
   scope: 'read' | 'write';
   created_at: string;
   last_used_at: string | null;
+  expires_at: string | null;
 }
 
 const copy = (t: string, msg = 'Copiado') => navigator.clipboard.writeText(t).then(() => toast.show(msg));
@@ -37,6 +38,8 @@ export default function ApiKeys() {
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [name, setName] = useState('Claude');
   const [scope, setScope] = useState<'read' | 'write'>('read');
+  const [expiry, setExpiry] = useState('');
+  const [hasExpiry, setHasExpiry] = useState(false);
   const [created, setCreated] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const client = cloud.client();
@@ -44,10 +47,17 @@ export default function ApiKeys() {
 
   const refresh = useCallback(async () => {
     if (!client) return;
-    const { data, error } = await client.from('api_keys').select('id,name,key_prefix,scope,created_at,last_used_at').order('created_at', { ascending: false });
+    const { data, error } = await client.from('api_keys').select('id,name,key_prefix,scope,created_at,last_used_at,expires_at').order('created_at', { ascending: false });
     // Un error sin mensaje (p. ej. 404 sin cuerpo) no debe romper la pantalla.
     const msg = error?.message ?? (error ? 'No se pudieron cargar las API keys' : '');
-    if (error) setErr(msg.includes('api_keys') || error.code === '42P01' || error.code === 'PGRST205' ? 'Falta ejecutar supabase/migrations/002_api_keys.sql en tu proyecto.' : msg);
+    if (error)
+      setErr(
+        msg.includes('expires_at')
+          ? 'Falta ejecutar supabase/migrations/006_api_key_expiry.sql en tu proyecto.'
+          : msg.includes('api_keys') || error.code === '42P01' || error.code === 'PGRST205'
+            ? 'Falta ejecutar supabase/migrations/002_api_keys.sql en tu proyecto.'
+            : msg,
+      );
     else setKeys(Array.isArray(data) ? (data as KeyRow[]) : []);
   }, [client]);
 
@@ -66,7 +76,7 @@ export default function ApiKeys() {
     setErr('');
     let key: string;
     try {
-      key = await cloud.createApiKey(name.trim() || 'IA', scope);
+      key = await cloud.createApiKey(name.trim() || 'IA', scope, hasExpiry ? expiry : null);
     } catch (e) {
       return setErr((e as Error).message);
     }
@@ -96,16 +106,33 @@ export default function ApiKeys() {
         Genera una API key para que una IA (Claude, ChatGPT, Cursor…) lea tus entrenamientos por MCP. Solo se guarda su huella (hash): cópiala al crearla, no se puede volver a ver.
       </p>
       <div className="row">
-        <input className="grow" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (p. ej. Claude)" />
-        <select className="inline" value={scope} onChange={(e) => setScope(e.target.value as 'read' | 'write')}>
+        <input aria-label="Nombre de la API key" className="grow" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (p. ej. Claude)" />
+        <select aria-label="Permisos de la API key" className="inline" value={scope} onChange={(e) => setScope(e.target.value as 'read' | 'write')}>
           <option value="read">Solo lectura</option>
           <option value="write">Lectura y escritura</option>
         </select>
       </div>
+      <label>
+        Caducidad
+        <select aria-label="Caducidad" value={hasExpiry ? 'date' : 'none'} onChange={(e) => setHasExpiry(e.target.value === 'date')}>
+          <option value="none">Sin caducidad</option>
+          <option value="date">Elegir fecha</option>
+        </select>
+      </label>
+      {hasExpiry && (
+        <label>
+          Fecha de caducidad (hora local)
+          <input type="datetime-local" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+        </label>
+      )}
       <button className="primary full icon-btn" onClick={create}>
         <KeyRound size={18} /> Generar API key
       </button>
-      {err && <p className="error small">{err}</p>}
+      {err && (
+        <p role="alert" className="error small">
+          {err}
+        </p>
+      )}
 
       {created && (
         <div className="card new-key">
@@ -173,13 +200,14 @@ export default function ApiKeys() {
         </div>
       )}
 
-      {keys.length > 0 && <h3>Keys activas</h3>}
+      {keys.length > 0 && <h3>API keys</h3>}
       {keys.map((k) => (
         <div key={k.id} className="row key-row">
           <div className="grow">
             <b>{k.name}</b> <span className="pill">{k.scope === 'write' ? 'lectura y escritura' : 'solo lectura'}</span>
             <div className="small muted">
-              {k.key_prefix}… · creada {new Date(k.created_at).toLocaleDateString('es-ES')} · {k.last_used_at ? `último uso ${new Date(k.last_used_at).toLocaleString('es-ES')}` : 'sin usar'}
+              {k.expires_at ? `${new Date(k.expires_at).getTime() <= Date.now() ? 'Caducada desde' : 'Caduca'} ${new Date(k.expires_at).toLocaleString('es-ES')}` : 'Sin caducidad'} · {k.key_prefix}… ·
+              creada {new Date(k.created_at).toLocaleDateString('es-ES')} · {k.last_used_at ? `último uso ${new Date(k.last_used_at).toLocaleString('es-ES')}` : 'sin usar'}
             </div>
           </div>
           <button
