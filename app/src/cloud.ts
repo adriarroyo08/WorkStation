@@ -1,3 +1,4 @@
+import { apiKeyExpiry } from '../../shared/api-keys';
 // Cuenta y sincronización con Supabase (opcional). Sin configurar, la app funciona igual que siempre: todo local.
 // - Cola de cambios pendientes (sobrevive a recargas y a estar sin conexión).
 // - Descarga incremental por `updated_at` y aviso en tiempo real desde otros dispositivos.
@@ -355,10 +356,11 @@ export const cloud = {
   userId: () => userId,
   client: () => client,
   /** Crea una API key (en el servidor solo queda su SHA-256) y la devuelve en claro. */
-  async createApiKey(name: string, scope: 'read' | 'write'): Promise<string> {
+  async createApiKey(name: string, scope: 'read' | 'write', expiresAt: string | null = null): Promise<string> {
     if (!client) throw new Error('Configura primero la URL y la anon key');
+    const expires_at = apiKeyExpiry(expiresAt);
     const key = newKey();
-    const { error } = await client.from('api_keys').insert({ name, key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope });
+    const { error } = await client.from('api_keys').insert({ name, key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope, expires_at });
     if (error) throw new Error(error.message);
     return key;
   },

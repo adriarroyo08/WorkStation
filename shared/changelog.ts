@@ -10,6 +10,7 @@ export const CHANGELOG: Release[] = [
     version: '1.7.0',
     date: '2026-10-29',
     items: [
+      'API keys: elige una caducidad opcional y consulta la fecha y el último uso; las claves caducadas dejan de dar acceso.',
       'Historial renovado: los entrenos del mes en grande comparados con el mes pasado, y el mapa de músculos de cada entreno en la lista.',
       'Mantén pulsado un entreno del historial para repetirlo o borrarlo.',
       'Ejercicios: toca un músculo del cuerpo para filtrar la biblioteca.',
