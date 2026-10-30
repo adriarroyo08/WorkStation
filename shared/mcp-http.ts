@@ -58,7 +58,7 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
             protocolVersion: PROTOCOLS.includes(asked) ? asked : PROTOCOLS[0],
             capabilities: { tools: { listChanged: false } },
             serverInfo: SERVER,
-            instructions: 'Datos de entrenamiento del usuario en Workstation. Empieza por training_summary.',
+            instructions: 'Datos de entrenamiento del usuario en Workstation. Empieza por training_summary. Trabaja siempre con pesos en kg.',
           },
         };
       }

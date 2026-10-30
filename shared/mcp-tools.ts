@@ -190,7 +190,7 @@ export const TOOLS: ToolDef[] = [
           id: r.id,
           name: r.name,
           notes: r.notes,
-          exercises: r.exercises.map((e) => ({ name: names.get(e.exerciseId), sets: e.sets.length, reps: e.sets[0]?.reps, weight: e.sets[0]?.weight, restSec: e.restSec })),
+          exercises: r.exercises.map((e) => ({ name: names.get(e.exerciseId) ?? e.exerciseId, sets: e.sets.length, reps: e.sets[0]?.reps, weight: e.sets[0]?.weight, restSec: e.restSec })),
         })),
       );
     },
@@ -229,7 +229,7 @@ export const TOOLS: ToolDef[] = [
             name: z.string(),
             sets: z.number().int().min(1).max(20),
             reps: z.number().optional(),
-            weight: z.number().optional(),
+            weight: z.number().optional().describe('Peso en kg'),
             durationSec: z.number().optional(),
             restSec: z.number().optional(),
             notes: z.string().optional(),
@@ -261,7 +261,7 @@ export const TOOLS: ToolDef[] = [
             sets: z
               .array(
                 z.object({
-                  weight: z.number().optional(),
+                  weight: z.number().optional().describe('Peso en kg'),
                   reps: z.number().optional(),
                   rpe: z.number().optional(),
                   durationSec: z.number().optional(),
@@ -293,7 +293,7 @@ export const TOOLS: ToolDef[] = [
     name: 'log_measurement',
     description: 'Registra peso corporal y/o % de grasa.',
     write: true,
-    shape: { bodyweight: z.number().optional(), body_fat: z.number().optional(), date: z.string().optional() },
+    shape: { bodyweight: z.number().optional().describe('Peso corporal en kg'), body_fat: z.number().optional().describe('Porcentaje de grasa corporal (%)'), date: z.string().optional() },
     run: async (src, { bodyweight, body_fat, date }) => {
       const data = await src.load();
       data.measurements.push({ id: uid(), date: date ? new Date(date).toISOString() : new Date().toISOString(), bodyweight, bodyFat: body_fat });
