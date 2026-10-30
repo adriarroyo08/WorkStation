@@ -197,8 +197,8 @@ export interface GroupActivation {
   parts: { region: Region; label: string; pct: number }[];
 }
 
-export const isRegion = (id: string): id is Region => id in REGIONS;
-export const isGroup = (id: string): id is MuscleGroup => id in MUSCLE_LABELS;
+export const isRegion = (id: string): id is Region => Object.hasOwn(REGIONS, id);
+export const isGroup = (id: string): id is MuscleGroup => Object.hasOwn(MUSCLE_LABELS, id);
 
 export function parseActivation(spec: string): { id: Region | MuscleGroup; pct: number }[] {
   return spec.split(',').map((t) => {

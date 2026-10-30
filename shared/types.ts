@@ -1,3 +1,5 @@
+import type { Region } from './muscle-detail';
+
 // Modelo de datos compartido entre la app (PWA) y el servidor MCP.
 // El fichero de backup JSON (WorkstationData) es el formato de intercambio.
 
@@ -27,6 +29,34 @@ export type MuscleGroup =
   | 'cuerpo_completo'
   | 'otro';
 
+export const MOVEMENT_PATTERNS = [
+  'sentadilla',
+  'bisagra',
+  'empuje-horizontal',
+  'empuje-vertical',
+  'traccion-horizontal',
+  'traccion-vertical',
+  'zancada',
+  'acarreo',
+  'rotacion',
+  'antirrotacion',
+  'aislamiento',
+] as const;
+export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
+export type MuscleRole = 'principal' | 'secundario' | 'estabilizador';
+export type ScientificSource = {
+  titulo: string;
+  autores: string[];
+  año: number;
+} & ({ doi: string; url?: string } | { doi?: string; url: string });
+
+export interface ExerciseScience {
+  patron: MovementPattern;
+  musculos: { id: MuscleGroup | Region; rol: MuscleRole; intensidad: number }[];
+  evidencia: 'estimada' | 'emg' | 'hipertrofia';
+  fuentes: ScientificSource[];
+}
+
 export interface Exercise {
   id: string;
   name: string;
@@ -42,6 +72,7 @@ export interface Exercise {
   // Nota fija que aparece cada vez que haces el ejercicio.
   stickyNote?: string;
   custom?: boolean;
+  science?: ExerciseScience;
 }
 
 export type SetType = 'normal' | 'warmup' | 'drop' | 'failure';
