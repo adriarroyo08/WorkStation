@@ -8,6 +8,12 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ### Cambiado
 - Resumen de fin de entreno (#48): portada de marcador con antetítulo (nº de entreno · rutina), título grande, `SessionMap` y cuatro cifras que suben con `CountUp` (instantáneas con movimiento reducido), y banda de récords del día. La rejilla de 5 cifras y el mapa grande se mantienen solo al consultar un entreno pasado.
 
+- Sistema de diseño (`docs/diseno.md`) aplicado a las pantallas (#44–#47), cada una con su CSS propio importado desde el componente (`Train.css`, `WorkoutLogger.css`, `History.css`, `ExercisesTab.css`, `Profile.css`):
+  - Entrenar: tarjetas de rutina con `SessionMap`, nombre en `--display`, series y minutos estimados; cifras de marcador en la cabecera del entreno en curso.
+  - Historial: antetítulo de fecha, nombre en `--display`, separadores de mes y calendario con días entrenados rellenos y hoy con borde.
+  - Ejercicio: portada con imagen a sangre, chips de músculos encima de las pestañas, cifras de récord sin cajas y mejor serie resaltada en el historial.
+  - Perfil: portada con inicial, cifras sin caja separadas por líneas, filas de menú con icono en cuadro y aviso de sincronización tras el menú.
+
 ### Corregido
 - Contraste AA: `--danger-fill` (#c62828) para `button.danger-solid` (antes 3,37:1 en oscuro) y `--muted` oscuro a #9a9aa0 (4,40:1 → ≥ 4,5:1 sobre `--field`).
 
