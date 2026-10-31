@@ -83,3 +83,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: apk/*.apk
+
+      - name: Publicar en MyStore (móvil)
+        if: github.event_name == 'push'
+        continue-on-error: true   # la tienda rechaza (409) un versionCode ya publicado; no rompe la release
+        uses: adriarroyo08/mystore@master
+        with:
+          store-url: https://tienda.automatito.win
+          token: ${{ secrets.MYSTORE_TOKEN }}
+          apk: apk/workstation-phone.apk
+
+      - name: Publicar en MyStore (Wear OS)
+        if: github.event_name == 'push'
+        continue-on-error: true   # la tienda rechaza (409) un versionCode ya publicado; no rompe la release
+        uses: adriarroyo08/mystore@master
+        with:
+          store-url: https://tienda.automatito.win
+          token: ${{ secrets.MYSTORE_TOKEN }}
+          apk: apk/workstation-wear.apk

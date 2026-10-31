@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 // Cuenta con email en Perfil: tarjeta, registro, recuperación, cambio de cuenta y pantallas de los enlaces del email.
 import type { Page, Route } from '@playwright/test';
 import { SAMPLE, expect, seed, tab, test } from './fixtures';
@@ -232,3 +233,82 @@ test.describe('enlaces del email', () => {
     await expect(page.getByRole('dialog', { name: 'Bienvenida' })).toHaveCount(0);
   });
 });
+
+for (const scheme of ['light', 'dark'] as const)
+  test(`API keys: caducidad, teclado y accesibilidad ${scheme}`, async ({ page, errors }, testInfo) => {
+    void errors;
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    const mock = new Mock();
+    await mock.attach(page);
+    const rows: Record<string, unknown>[] = [
+      { id: 'old', name: 'Antigua', key_prefix: 'ws_old', scope: 'read', created_at: '2026-01-01T12:00:00Z', last_used_at: '2026-10-29T12:00:00Z', expires_at: null },
+      { id: 'expired', name: 'Caducada', key_prefix: 'ws_exp', scope: 'write', created_at: '2026-01-01T12:00:00Z', last_used_at: null, expires_at: '2026-01-02T12:00:00Z' },
+    ];
+    const inserts: Record<string, unknown>[] = [];
+    await page.context().route(`${URL_}/rest/v1/api_keys**`, async (route) => {
+      const req = route.request();
+      if (req.method() === 'POST') {
+        const body = req.postDataJSON();
+        inserts.push(body);
+        rows.push({ ...body, id: `key-${inserts.length}`, created_at: new Date().toISOString(), last_used_at: null });
+      } else if (req.method() === 'DELETE') {
+        rows.splice(
+          rows.findIndex((r) => `eq.${r.id}` === new URL(req.url()).searchParams.get('id')),
+          1,
+        );
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(req.method() === 'GET' ? rows : {}) });
+    });
+    await configure(page);
+    await login(page, 'ana@example.com');
+    await page.getByRole('button', { name: 'Ajustes', exact: true }).click();
+    const generate = page.getByRole('button', { name: 'Generar API key' });
+    await generate.scrollIntoViewIfNeeded();
+    await expect(page.getByText('Sin caducidad', { exact: false }).last()).toBeVisible();
+    await expect(page.getByText(/Caducada desde/)).toBeVisible();
+    await page.getByLabel('Nombre de la API key').fill('Temporal');
+    await page.getByLabel('Permisos de la API key').selectOption('write');
+    const expiry = page.getByLabel('Caducidad', { exact: true });
+    await expiry.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Tab');
+    const date = page.getByLabel('Fecha de caducidad (hora local)');
+    await expect(date).toBeFocused();
+    await date.fill('2020-01-01T12:00');
+    await generate.click();
+    await expect(page.getByText('Elige una fecha de caducidad futura')).toBeVisible();
+    expect(inserts).toHaveLength(0);
+    await date.fill('2099-12-31T12:00');
+    await generate.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByText('Tu nueva API key', { exact: true })).toBeVisible();
+    expect(inserts[0]).toMatchObject({ name: 'Temporal', scope: 'write', expires_at: await date.evaluate((el) => new Date((el as HTMLInputElement).value).toISOString()) });
+    expect(inserts[0].key_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(inserts[0]).not.toHaveProperty('key');
+    const secret = await page.locator('.new-key .key-text').first().innerText();
+    expect(JSON.stringify(inserts)).not.toContain(secret);
+    await page.getByRole('button', { name: 'Ya la he guardado' }).click();
+    await expect(page.getByText(secret, { exact: true })).toHaveCount(0);
+    await expiry.selectOption('none');
+    await generate.click();
+    await expect.poll(() => inserts.length).toBe(2);
+    expect(inserts[1].expires_at).toBeNull();
+    await page.getByRole('button', { name: 'Ya la he guardado' }).click();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'Revocar Caducada' }).click();
+    await expect(page.getByRole('button', { name: 'Revocar Caducada' })).toHaveCount(0);
+    await expect(page.getByText(/último uso/)).toBeVisible();
+    const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    expect(audit.violations).toEqual([]);
+    await expiry.selectOption('date');
+    await expect(page.getByText('Key revocada', { exact: true })).toHaveCount(0);
+    await page.setViewportSize({ width: 393, height: 1800 });
+    await date.focus();
+    const screenshot = testInfo.outputPath(`api-keys-after-${scheme}.png`);
+    await generate.locator('..').screenshot({ path: screenshot });
+    await testInfo.attach(`API keys ${scheme}, teclado y movimiento reducido`, { path: screenshot, contentType: 'image/png' });
+    await page.reload();
+    await tab(page, 'Perfil').click();
+    await page.getByRole('button', { name: 'Ajustes', exact: true }).click();
+    await expect(page.getByText('Tu nueva API key', { exact: true })).toHaveCount(0);
+  });

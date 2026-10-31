@@ -20,6 +20,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ## [1.7.0] - 2026-10-29
 
 ### Añadido
+- API keys: caducidad opcional validada en servidor para lectura y escritura, con fecha y último uso visibles.
 - Historial: cabecera con los entrenos del mes (comparados con el mes pasado hasta el mismo día), volumen, tiempo y series; `SessionMap` en cada fila; mantener pulsado abre Repetir / Borrar (con deshacer).
 - Ejercicios: filtro por músculo tocando el cuerpo (`MuscleFilter`), con el número de ejercicios en grande.
 - Ficha del ejercicio: valor de la métrica elegida en la última sesión y diferencia en el rango; `LineChart` muestra el punto más cercano al tocar o arrastrar (en todas sus gráficas).
