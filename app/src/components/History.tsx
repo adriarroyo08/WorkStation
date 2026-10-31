@@ -1,4 +1,5 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Heart, ListChecks, Repeat, Timer, Trash2, Trophy, Weight } from 'lucide-react';
+import { ask } from '../dialog';
 import { useMemo, useState } from 'react';
 import { repeatWorkout } from '../../../shared/data';
 import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
@@ -114,8 +115,8 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
           <div className="list">
             <button
               className="item icon-btn"
-              onClick={() => {
-                if (active && !confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?')) return;
+              onClick={async () => {
+                if (active && !(await ask.confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?', { ok: 'Reemplazar', danger: true }))) return;
                 launchWorkout(store, repeatWorkout(menu));
                 setMenu(null);
                 goTrain();

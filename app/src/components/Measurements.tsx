@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ask } from '../dialog';
 import { Camera, Images, Plus, Ruler, Trash2 } from 'lucide-react';
 import { MEASUREMENT_FIELDS, uid, type Measurement, type MeasurementField } from '../../../shared/types';
 import { compressImage, deletePhoto, fmtDate, loadPhoto, savePhoto, useStore } from '../store';
@@ -90,8 +91,8 @@ export default function Measurements({ onBack }: { onBack: () => void }) {
               <button
                 className="ghost icon-btn"
                 aria-label="Borrar registro"
-                onClick={() => {
-                  if (!confirm('¿Borrar registro?')) return;
+                onClick={async () => {
+                  if (!(await ask.confirm('¿Borrar este registro?', { ok: 'Borrar', danger: true }))) return;
                   photoIds(m).forEach(deletePhoto);
                   update((d) => void (d.measurements = d.measurements.filter((x) => x.id !== m.id)));
                 }}
@@ -134,7 +135,7 @@ function AddMeasurement({ onClose }: { onClose: () => void }) {
         const n = Number(v.replace(',', '.'));
         m[k as MeasurementField] = k === 'bodyweight' ? fromUnit(n) : n;
       }
-    if (Object.keys(m).length <= 2 && !ids.length) return alert('Introduce al menos un valor');
+    if (Object.keys(m).length <= 2 && !ids.length) return ask.notice('Introduce al menos un valor');
     update((d) => void d.measurements.push(m));
     onClose();
   };

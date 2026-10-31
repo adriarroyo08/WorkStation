@@ -19,6 +19,7 @@ import { clock, useNow, useStore } from './store';
 import Onboarding from './components/Onboarding';
 import AuthLanding from './components/AuthLanding';
 import { AccountSwitchDialog } from './components/Account';
+import { DialogHost } from './dialog';
 import { ONBOARDED_KEY, shouldShowOnboarding } from '../../shared/onboarding';
 
 const read = (k: string) => {
@@ -43,15 +44,17 @@ export default function App() {
     <>
       <AccountSwitchDialog />
       <AppBody />
+      <DialogHost />
     </>
   );
 }
 
 function AppBody() {
   const { active, data } = useStore();
-  const [tour, setTour] = useState(() =>
-    !openedFromAuthLink && // quien confirma su email en un dispositivo nuevo ve su pantalla, no el tour
-    shouldShowOnboarding({ onboarded: read(ONBOARDED_KEY) === '1', seenVersion: read('ws:seenVersion'), hasData: data.workouts.length + data.routines.length > 0 }),
+  const [tour, setTour] = useState(
+    () =>
+      !openedFromAuthLink && // quien confirma su email en un dispositivo nuevo ve su pantalla, no el tour
+      shouldShowOnboarding({ onboarded: read(ONBOARDED_KEY) === '1', seenVersion: read('ws:seenVersion'), hasData: data.workouts.length + data.routines.length > 0 }),
   );
   // "Ver tour de nuevo" (Ajustes) lo reabre.
   useEffect(() => {

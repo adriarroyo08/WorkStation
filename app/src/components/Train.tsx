@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { ask } from '../dialog';
 import { workoutFromRoutine } from '../../../shared/data';
 import type { Routine } from '../../../shared/types';
 import { uid } from '../../../shared/types';
@@ -61,16 +62,16 @@ function TrainScreen({ onExercise }: { onExercise: (id: string) => void }) {
         }
         onExercise={onExercise}
         onDiscard={() => discardActive(store)}
-        onFinish={() => {
+        onFinish={async () => {
           if (
             hasPendingData(
               active,
               store.data.routines.find((r) => r.id === active.routineId),
             ) &&
-            !confirm('Hay series con datos sin marcar como completadas. Se descartarán. ¿Terminar igualmente?')
+            !(await ask.confirm('Hay series con datos sin marcar como completadas. Se descartarán.', { title: '¿Terminar igualmente?', ok: 'Terminar' }))
           )
             return;
-          if (!finishActive(store) && confirm('No hay series completadas. ¿Descartar el entrenamiento?')) discardActive(store);
+          if (!finishActive(store) && (await ask.confirm('No hay series completadas.', { title: '¿Descartar el entrenamiento?', ok: 'Descartar', danger: true }))) discardActive(store);
         }}
       />
     );
@@ -246,7 +247,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                   const d = structuredClone(data);
                   const r = importHevyCsv(d, t);
                   store.replace(d);
-                  alert(hevySummary(r));
+                  ask.notice(hevySummary(r));
                 });
               input.click();
             }}
@@ -276,8 +277,8 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
         <div className="sec grow">Rutinas</div>
         <button
           className="link icon-btn"
-          onClick={() => {
-            const name = prompt('Nombre de la carpeta');
+          onClick={async () => {
+            const name = (await ask.prompt('Nombre de la carpeta', '', { ok: 'Crear', placeholder: 'Ej.: Fuerza' }))?.trim();
             if (name) update((d) => void d.folders.push({ id: uid(), name }));
           }}
         >
@@ -300,8 +301,8 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
                   <button
                     className="ghost small icon-btn gray"
                     aria-label="Renombrar carpeta"
-                    onClick={() => {
-                      const name = prompt('Renombrar carpeta (vacío = borrar carpeta; las rutinas se conservan)', g.name);
+                    onClick={async () => {
+                      const name = await ask.prompt('Nombre de la carpeta', g.name, { title: 'Renombrar carpeta', placeholder: 'Vacío = borrar la carpeta (las rutinas se conservan)' });
                       if (name === null) return;
                       update((d) => {
                         if (name.trim()) d.folders.find((f) => f.id === g.id)!.name = name.trim();
@@ -367,7 +368,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
               onClick={() => {
                 const txt = `${menu.name}\n${menu.exercises.map((e) => `- ${exName.get(e.exerciseId)}: ${e.sets.length}×${e.sets[0]?.reps ?? e.sets[0]?.durationSec + 's'}${e.sets[0]?.weight ? ` @ ${fmtWeight(e.sets[0].weight, { space: false })}` : ''}`).join('\n')}`;
                 if (!native.shareText(menu.name, txt))
-                  navigator.share ? navigator.share({ title: menu.name, text: txt }).catch(() => {}) : navigator.clipboard.writeText(txt).then(() => alert('Copiado al portapapeles'));
+                  navigator.share ? navigator.share({ title: menu.name, text: txt }).catch(() => {}) : navigator.clipboard.writeText(txt).then(() => ask.notice('Copiado al portapapeles'));
                 setMenu(null);
               }}
             >
@@ -385,7 +386,9 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
             </button>
             <button
               className="item danger icon-btn"
-              onClick={() => confirm(`¿Borrar "${menu.name}"?`) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))}
+              onClick={async () =>
+                (await ask.confirm(`¿Borrar "${menu.name}"?`, { ok: 'Borrar', danger: true })) && (update((d) => void (d.routines = d.routines.filter((r) => r.id !== menu.id))), setMenu(null))
+              }
             >
               <Trash2 size={16} /> Borrar rutina
             </button>

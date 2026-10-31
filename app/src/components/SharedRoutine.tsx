@@ -10,6 +10,7 @@ import { useStore } from '../store';
 import { toast } from '../toast';
 import { native } from '../native';
 import { ExerciseMedia, Sheet } from './ui';
+import ExerciseInfo from './ExerciseInfo';
 
 const PUBLIC_URL = 'https://adriarroyo08.github.io/WorkStation/';
 const HASH = '#rutina=';
@@ -33,6 +34,8 @@ export async function shareRoutineLink(r: Routine, exercises: Parameters<typeof 
 export function SharedRoutineImport() {
   const store = useStore();
   const [shared, setShared] = useState<SharedRoutine | null>(null);
+  // La ficha abierta va ligada a la rutina mostrada: si llega otro enlace, no se arrastra.
+  const [info, setInfo] = useState<{ of: SharedRoutine; id: string } | null>(null);
   useEffect(() => {
     const read = () => {
       if (!location.hash.startsWith(HASH)) return;
@@ -66,7 +69,7 @@ export function SharedRoutineImport() {
       {shared.notes && <p className="small muted">{shared.notes}</p>}
       <div className="list">
         {shared.exercises.map((e, i) => (
-          <div key={i} className="row exline">
+          <button key={i} className="plain row exline full left" disabled={!exById.has(e.exerciseId)} onClick={() => setInfo({ of: shared, id: e.exerciseId })}>
             <ExerciseMedia exercise={exById.get(e.exerciseId)} size="thumb" />
             <span className="grow">
               <b>{e.name}</b>
@@ -76,7 +79,7 @@ export function SharedRoutineImport() {
               {e.sets.length} × {e.sets[0]?.durationSec ? `${e.sets[0].durationSec}s` : (e.sets[0]?.reps ?? '–')}
               {e.sets[0]?.weight ? ` · ${fmtWeight(e.sets[0].weight)}` : ''}
             </span>
-          </div>
+          </button>
         ))}
       </div>
       {shared.custom.length > 0 && <p className="small muted">Incluye {shared.custom.length} ejercicio(s) personalizado(s) que se añadirán a tu biblioteca.</p>}
@@ -88,6 +91,7 @@ export function SharedRoutineImport() {
           Guardar y empezar ahora
         </button>
       )}
+      {info?.of === shared && <ExerciseInfo id={info.id} onClose={() => setInfo(null)} />}
     </Sheet>
   );
 }

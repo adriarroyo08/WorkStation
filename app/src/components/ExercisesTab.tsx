@@ -1,4 +1,5 @@
 import { Check, ChevronRight, Film, Pin, Plus, Search, Trophy } from 'lucide-react';
+import { ask } from '../dialog';
 import { useEffect, useState } from 'react';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
@@ -6,7 +7,7 @@ import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleFilter, MuscleMap } from './BodyMap';
 import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
-import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
+import type { Exercise, ExerciseKind } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
@@ -14,6 +15,7 @@ import LineChart from './LineChart';
 import { StrengthCard } from './Strength';
 import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
 import { Back, ExerciseMedia, Sheet, Stat } from './ui';
+import { loadCatalog, type CatalogItem } from '../catalog';
 
 export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: string | null; onOpened?: () => void; onClose?: () => void }) {
   const { data } = useStore();
@@ -68,7 +70,8 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
               right={
                 pr ? (
                   <small className="muted right">
-                    <Trophy size={16} className="ico" /> {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
+                    <Trophy size={16} className="ico" />{' '}
+                    {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
                     <br />
                     {pr.sessions} ses.
                   </small>
@@ -86,21 +89,6 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
     </section>
   );
 }
-
-interface CatalogItem {
-  id: string;
-  name: string;
-  muscle: MuscleGroup;
-  secondary: MuscleGroup[];
-  equipment: string;
-  category: string;
-  level: string;
-  kind: ExerciseKind;
-  instructions: string[];
-}
-
-let catalogCache: Promise<CatalogItem[]> | null = null;
-export const loadCatalog = (): Promise<CatalogItem[]> => (catalogCache ??= fetch('catalog.json').then((r) => (r.ok ? r.json() : Promise.reject(new Error(`catalog ${r.status}`)))));
 
 function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) => void }) {
   const { data, update } = useStore();
@@ -147,9 +135,13 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
             key={e.id}
             e={e}
             onClick={() => setPreview(items!.find((c) => c.id === e.media)!)}
-            right={libraryByMedia.has(e.media!) || have.has(e.id) ? <small className="muted icon-btn in-lib">
+            right={
+              libraryByMedia.has(e.media!) || have.has(e.id) ? (
+                <small className="muted icon-btn in-lib">
                   <Check size={14} /> En tu biblioteca
-                </small> : undefined}
+                </small>
+              ) : undefined
+            }
           />
         ))}
         {list.length > 150 && <p className="muted small">Mostrando 150. Afina la búsqueda para ver más.</p>}
@@ -238,7 +230,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       setInstructions(steps);
       update((d) => void (d.exercises.find((x) => x.id === id)!.instructions = steps));
     } catch (err) {
-      alert((err as Error).message);
+      ask.error((err as Error).message);
     } finally {
       setTranslating(false);
     }
@@ -317,7 +309,11 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
           <MetricHead points={pts} label={METRICS[m]} range={{ '3m': 'en 3 meses', '1y': 'en un año', all: 'desde el principio' }[range]} format={(v) => fmtMetric(m, v)} />
           <LineChart points={pts} format={(v) => fmtMetric(m, v)} />
-          {e.stickyNote && <p className="sticky-note"><Pin size={16} className="ico" /> {e.stickyNote}</p>}
+          {e.stickyNote && (
+            <p className="sticky-note">
+              <Pin size={16} className="ico" /> {e.stickyNote}
+            </p>
+          )}
           <StrengthCard exerciseId={id} />
         </>
       )}
@@ -351,7 +347,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
           ) : (
             instructions && <p className="muted">Sin instrucciones para este ejercicio.</p>
           )}
-          {!!instructions?.length && ai.baseUrl && (
+          {!!instructions?.length && ai.baseUrl && /\b(the|your|with)\b/i.test(instructions.join(' ')) && (
             <button className="ghost" disabled={translating} onClick={translate}>
               {translating ? 'Traduciendo…' : 'Traducir al español con IA'}
             </button>
@@ -383,7 +379,12 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <Sheet title="Editar ejercicio" onClose={() => setEditing(false)}>
           <ExerciseEditor initial={e} onSaved={() => setEditing(false)} />
           {e.custom && !data.workouts.some((w) => w.exercises.some((x) => x.exerciseId === id)) && (
-            <button className="danger full" onClick={() => confirm('¿Borrar este ejercicio?') && (update((d) => void (d.exercises = d.exercises.filter((x) => x.id !== id))), onBack())}>
+            <button
+              className="danger full"
+              onClick={async () =>
+                (await ask.confirm('¿Borrar este ejercicio?', { ok: 'Borrar', danger: true })) && (update((d) => void (d.exercises = d.exercises.filter((x) => x.id !== id))), onBack())
+              }
+            >
               Borrar ejercicio
             </button>
           )}

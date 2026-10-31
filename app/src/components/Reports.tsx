@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ask } from '../dialog';
 import { Bot, ChevronLeft, ChevronRight, ClipboardCopy, Printer, Trophy } from 'lucide-react';
 import { chat } from '../../../shared/ai';
 import { period, periodReport, reportToText, type PeriodKind } from '../../../shared/reports';
@@ -34,7 +35,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       ]);
       setAnalysis((a) => ({ ...a, [key]: txt }));
     } catch (e) {
-      alert((e as Error).message);
+      ask.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -82,7 +83,12 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       <div className="stats four">
         {[
           ['Entrenos', t.workouts, prev.workouts, String(t.workouts)],
-          ['Duración', t.durationMin, prev.durationMin, t.durationMin >= 60 ? `${Math.floor(t.durationMin / 60)}h${t.durationMin % 60 ? ` ${t.durationMin % 60}m` : ''}` : formatDuration(t.durationMin * 60)],
+          [
+            'Duración',
+            t.durationMin,
+            prev.durationMin,
+            t.durationMin >= 60 ? `${Math.floor(t.durationMin / 60)}h${t.durationMin % 60 ? ` ${t.durationMin % 60}m` : ''}` : formatDuration(t.durationMin * 60),
+          ],
           ['Volumen', t.volume, prev.volume, fmtMass(t.volume)],
           ['Series', t.sets, prev.sets, String(t.sets)],
         ].map(([label, cur, before, txt]) => (
@@ -120,7 +126,9 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 
       {r.prs.length > 0 && (
         <div className="card">
-          <h3><Trophy size={16} className="ico" /> Récords batidos ({r.prs.length})</h3>
+          <h3>
+            <Trophy size={16} className="ico" /> Récords batidos ({r.prs.length})
+          </h3>
           <PrList prs={r.prs} />
         </div>
       )}
@@ -159,7 +167,9 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 
       {t.workouts > 0 && (
         <div className="card">
-          <h3><Bot size={16} className="ico" /> Análisis del coach</h3>
+          <h3>
+            <Bot size={16} className="ico" /> Análisis del coach
+          </h3>
           {analysis[key] ? <div className="pre small">{analysis[key]}</div> : <p className="muted small">Genera un análisis de este periodo con tu IA configurada.</p>}
           {ai.baseUrl ? (
             <button className="primary no-print" disabled={busy} onClick={analyze}>
@@ -172,7 +182,7 @@ export default function Reports({ onBack }: { onBack: () => void }) {
       )}
       <button
         className="ghost full no-print icon-btn"
-        onClick={() => navigator.clipboard.writeText(reportToText(r) + (analysis[key] ? `\n\nANÁLISIS:\n${analysis[key]}` : '')).then(() => alert('Informe copiado'))}
+        onClick={() => navigator.clipboard.writeText(reportToText(r) + (analysis[key] ? `\n\nANÁLISIS:\n${analysis[key]}` : '')).then(() => ask.notice('Informe copiado'))}
       >
         <ClipboardCopy size={16} /> Copiar informe como texto
       </button>

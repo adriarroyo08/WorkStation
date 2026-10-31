@@ -1,4 +1,5 @@
 import { Copy, KeyRound, Mail, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { ask } from '../dialog';
 import { useCallback, useEffect, useState } from 'react';
 import { cloud, useCloud } from '../cloud';
 import { isNative, native } from '../native';
@@ -214,7 +215,7 @@ export default function ApiKeys() {
             className="ghost danger icon-btn"
             aria-label={`Revocar ${k.name}`}
             onClick={async () => {
-              if (!confirm(`¿Revocar la key "${k.name}"? Dejará de funcionar al instante.`)) return;
+              if (!(await ask.confirm(`¿Revocar la key "${k.name}"? Dejará de funcionar al instante.`, { ok: 'Revocar', danger: true }))) return;
               const { error } = await client!.from('api_keys').delete().eq('id', k.id);
               if (error) setErr(error.message);
               else {

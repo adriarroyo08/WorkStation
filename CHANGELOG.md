@@ -3,6 +3,20 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.8.0] - 2026-10-31
+
+### Añadido
+- Ficha rápida del ejercicio (`ExerciseInfo`, en una hoja): imagen/animación, mapa muscular con partes, instrucciones del catálogo, nota fija y mejor marca. Se abre tocando el ejercicio en el editor de rutinas, en Explorar programas, en una rutina compartida y en el entreno en curso (desde ahí, "Ver ficha completa" lleva a la ficha con historial y récords).
+
+### Cambiado
+- `loadCatalog` pasa a `app/src/catalog.ts` y reintenta si la primera descarga falla.
+- Sin `alert`/`confirm`/`prompt` del navegador: confirmaciones y nombres con diálogos propios (`app/src/dialog.tsx`, `ask.confirm`/`ask.prompt`) y avisos como toast. Los e2e fallan si aparece un diálogo nativo.
+- Tipografía de marcador: Barlow Condensed (OFL, `@fontsource`, solo latin 600–800) en `h1`, título del entreno, "Hoy toca" y cifras grandes (`--display`). Ficha rápida con imagen a sangre, título grande y chips de músculos principales/secundarios.
+- Instrucciones del catálogo en español (`scripts/catalog-es.json`, que `build-catalog.mjs` aplica si cuadra el número de pasos; se quitan los pasos vacíos). El botón "Traducir con IA" solo sale si siguen en inglés.
+
+### Seguridad
+- Migración `007_welcome_revoke.sql`: `notify_welcome()` deja de poder llamarse por RPC (solo la usa el disparador).
+
 ## [1.7.0] - 2026-10-29
 
 ### Añadido

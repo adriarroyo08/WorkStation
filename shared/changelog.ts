@@ -7,6 +7,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.8.0',
+    date: '2026-10-31',
+    items: [
+      'Toca un ejercicio de una rutina, de un programa o del entreno en curso para ver cómo se hace: imágenes, instrucciones y los músculos que trabaja, sin salir de donde estás.',
+      'Desde esa ficha rápida puedes saltar a la ficha completa con tu historial y récords.',
+      'Confirmaciones y avisos con el estilo de la app en lugar de las ventanas del sistema.',
+      'Las instrucciones de los 870+ ejercicios del catálogo, ahora en español.',
+      'Nueva tipografía de marcador en títulos y cifras grandes, y la ficha del ejercicio con la imagen a todo lo ancho y sus músculos principales a la vista.',
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-10-29',
     items: [

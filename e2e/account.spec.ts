@@ -127,8 +127,6 @@ test('¿Olvidaste tu contraseña? pide el email de recuperación', async ({ page
 test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', async ({ page, errors }) => {
   void errors;
   await new Mock().attach(page);
-  let native = 0;
-  page.on('dialog', (d) => (native++, d.accept()));
   await configure(page);
   await login(page, 'ana@example.com');
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
@@ -141,7 +139,6 @@ test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', a
   await expect(dlg.getByRole('button', { name: 'Subir también estos datos' })).toBeVisible();
   await dlg.getByRole('button', { name: 'Empezar de cero' }).click();
   await expect(dlg).toHaveCount(0);
-  expect(native).toBe(0);
 });
 
 test('"Subir también estos datos" sube lo de este dispositivo a la cuenta nueva', async ({ page, errors }) => {
@@ -297,8 +294,8 @@ for (const scheme of ['light', 'dark'] as const)
     await expect.poll(() => inserts.length).toBe(2);
     expect(inserts[1].expires_at).toBeNull();
     await page.getByRole('button', { name: 'Ya la he guardado' }).click();
-    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Revocar Caducada' }).click();
+    await page.locator('form.ask').getByRole('button', { name: 'Revocar' }).click();
     await expect(page.getByRole('button', { name: 'Revocar Caducada' })).toHaveCount(0);
     await expect(page.getByText(/último uso/)).toBeVisible();
     const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
