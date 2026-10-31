@@ -126,8 +126,6 @@ test('¿Olvidaste tu contraseña? pide el email de recuperación', async ({ page
 test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', async ({ page, errors }) => {
   void errors;
   await new Mock().attach(page);
-  let native = 0;
-  page.on('dialog', (d) => (native++, d.accept()));
   await configure(page);
   await login(page, 'ana@example.com');
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
@@ -140,7 +138,6 @@ test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', a
   await expect(dlg.getByRole('button', { name: 'Subir también estos datos' })).toBeVisible();
   await dlg.getByRole('button', { name: 'Empezar de cero' }).click();
   await expect(dlg).toHaveCount(0);
-  expect(native).toBe(0);
 });
 
 test('"Subir también estos datos" sube lo de este dispositivo a la cuenta nueva', async ({ page, errors }) => {

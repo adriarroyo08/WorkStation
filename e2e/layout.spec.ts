@@ -1,7 +1,7 @@
 // Diseño en móviles estrechos (360 px): ninguna pantalla se desborda en horizontal ni corta texto sin elipsis.
 // Con SHOTS=/ruta también guarda capturas de cada pantalla para revisarlas.
 import type { Page } from '@playwright/test';
-import { SAMPLE, expect, seed, tab, test } from './fixtures';
+import { SAMPLE, expect, seed, tab, test, acceptDialogs } from './fixtures';
 test.use({ viewport: { width: 360, height: 740 } });
 
 async function overflow(page: Page, label: string) {
@@ -30,7 +30,7 @@ for (const scheme of ['dark', 'light'] as const)
   test(`sin desbordes a 360 px en modo ${scheme}`, async ({ page, errors }) => {
     void errors;
     test.setTimeout(120000);
-    page.on('dialog', (d) => d.accept());
+    await acceptDialogs(page);
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
     await seed(page, { ...SAMPLE, measurements: [...SAMPLE.measurements, { id: 'm2', date: new Date().toISOString(), bodyweight: 79.4, waist: 82 }] });
     await page.waitForTimeout(600);

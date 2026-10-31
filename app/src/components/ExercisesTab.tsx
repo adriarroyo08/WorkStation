@@ -1,4 +1,5 @@
 import { Check, ChevronRight, Film, Pin, Plus, Search, Trophy } from 'lucide-react';
+import { ask } from '../dialog';
 import { useEffect, useState } from 'react';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
@@ -229,7 +230,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       setInstructions(steps);
       update((d) => void (d.exercises.find((x) => x.id === id)!.instructions = steps));
     } catch (err) {
-      alert((err as Error).message);
+      ask.error((err as Error).message);
     } finally {
       setTranslating(false);
     }
@@ -378,7 +379,12 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <Sheet title="Editar ejercicio" onClose={() => setEditing(false)}>
           <ExerciseEditor initial={e} onSaved={() => setEditing(false)} />
           {e.custom && !data.workouts.some((w) => w.exercises.some((x) => x.exerciseId === id)) && (
-            <button className="danger full" onClick={() => confirm('¿Borrar este ejercicio?') && (update((d) => void (d.exercises = d.exercises.filter((x) => x.id !== id))), onBack())}>
+            <button
+              className="danger full"
+              onClick={async () =>
+                (await ask.confirm('¿Borrar este ejercicio?', { ok: 'Borrar', danger: true })) && (update((d) => void (d.exercises = d.exercises.filter((x) => x.id !== id))), onBack())
+              }
+            >
               Borrar ejercicio
             </button>
           )}

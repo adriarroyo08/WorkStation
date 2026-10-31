@@ -1,4 +1,5 @@
 import RestPicker from './RestPicker';
+import { ask } from '../dialog';
 import { useState } from 'react';
 import { AI_PROVIDERS, chat } from '../../../shared/ai';
 import { emptyData, mergeData, normalizeData } from '../../../shared/data';
@@ -270,9 +271,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
               try {
                 await snapshot(data, 'antes de importar');
                 replace(normalizeData(mergeData(data, normalizeData(JSON.parse(t)))));
-                alert('Datos importados y fusionados.');
+                ask.notice('Datos importados y fusionados.');
               } catch (e) {
-                alert(`Error: ${(e as Error).message}`);
+                ask.error(`Error: ${(e as Error).message}`);
               }
             })
           }
@@ -287,18 +288,21 @@ export default function Settings({ onBack }: { onBack: () => void }) {
               const d = structuredClone(data);
               const r = importHevyCsv(d, t);
               replace(d);
-              alert(hevySummary(r));
+              ask.notice(hevySummary(r));
             })
           }
         >
           Importar CSV de Hevy
         </button>
-        <p className="small muted">El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos. Tus rutinas se crean a partir de la última vez que hiciste cada una.</p>
+        <p className="small muted">
+          El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos. Tus rutinas se crean a
+          partir de la última vez que hiciste cada una.
+        </p>
         <button
           className="danger full"
           onClick={async () => {
             const synced = cloud.signedIn() ? ' Tienes la sincronización activa: se borrarán también de la nube y de tus otros dispositivos.' : '';
-            if (!confirm(`¿Borrar TODOS los datos? Se guardará antes una copia automática en este dispositivo.${synced}`) || !confirm('¿Seguro?')) return;
+            if (!(await ask.confirm(`Se guardará antes una copia automática en este dispositivo.${synced}`, { title: '¿Borrar TODOS los datos?', ok: 'Borrar todo', danger: true }))) return;
             await snapshot(data, 'antes de borrar');
             replace(emptyData());
           }}

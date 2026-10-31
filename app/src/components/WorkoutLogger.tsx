@@ -21,6 +21,7 @@ import {
   Watch,
   Weight,
 } from 'lucide-react';
+import { ask } from '../dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
@@ -308,7 +309,10 @@ export default function WorkoutLogger({
       <button className="primary full icon-btn" onClick={() => setPicker({})}>
         <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>
-      <button className="danger full" onClick={() => confirm(mode === 'live' ? '¿Descartar este entrenamiento?' : '¿Descartar los cambios?') && onDiscard()}>
+      <button
+        className="danger full"
+        onClick={async () => (await ask.confirm(mode === 'live' ? '¿Descartar este entrenamiento?' : '¿Descartar los cambios?', { ok: 'Descartar', danger: true })) && onDiscard()}
+      >
         {mode === 'live' ? 'Descartar entrenamiento' : 'Descartar cambios'}
       </button>
 

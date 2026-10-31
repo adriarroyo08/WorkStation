@@ -1,7 +1,7 @@
 // Ficha rápida de un ejercicio en una hoja: cómo se hace (imágenes e instrucciones) y músculos que trabaja.
 // Se abre desde una rutina o en mitad del entreno sin salir de la pantalla.
 import { ChevronRight, Pin } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EXERCISE_KIND_LABELS, catalogLabel } from '../../../shared/exercises';
 import { personalRecords, formatDuration } from '../../../shared/stats';
 import { fmtWeight } from '../../../shared/units';
@@ -14,6 +14,7 @@ export default function ExerciseInfo({ id, onClose, onFull }: { id: string; onCl
   const { data } = useStore();
   const e = data.exercises.find((x) => x.id === id);
   const own = e?.instructions?.length ? e.instructions : null;
+  const pr = useMemo(() => personalRecords(data).find((p) => p.exerciseId === id), [data, id]);
   const [fetched, setFetched] = useState<{ media: string; steps: string[] } | null>(null);
   useEffect(() => {
     if (own || !e?.media) return;
@@ -28,7 +29,6 @@ export default function ExerciseInfo({ id, onClose, onFull }: { id: string; onCl
   }, [own, e?.media]);
   if (!e) return null;
   const steps = own ?? (e.media ? (fetched?.media === e.media ? fetched.steps : null) : []);
-  const pr = personalRecords(data).find((p) => p.exerciseId === id);
   const best =
     pr &&
     (e.kind === 'weight_reps'

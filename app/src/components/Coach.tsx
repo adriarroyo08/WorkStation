@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { ask } from '../dialog';
 import { Save } from 'lucide-react';
 import { chat, COACH_SYSTEM_PROMPT, extractJsonBlock, type ChatMessage } from '../../../shared/ai';
 import { routineFromDraft, type RoutineDraft } from '../../../shared/data';
@@ -58,9 +59,9 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
         if (program && folderId) d.folders.push({ id: folderId, name: program });
         for (const dr of drafts) d.routines.push(routineFromDraft(d, dr, folderId));
       });
-      alert(program ? `Programa "${program}" guardado (${drafts.length} rutinas).` : `Rutina "${drafts[0].name}" guardada en Entrenar.`);
+      ask.notice(program ? `Programa "${program}" guardado (${drafts.length} rutinas).` : `Rutina "${drafts[0].name}" guardada en Entrenar.`);
     } catch (e) {
-      alert((e as Error).message);
+      ask.error((e as Error).message);
     }
   };
 

@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
     items: [
       'Toca un ejercicio de una rutina, de un programa o del entreno en curso para ver cómo se hace: imágenes, instrucciones y los músculos que trabaja, sin salir de donde estás.',
       'Desde esa ficha rápida puedes saltar a la ficha completa con tu historial y récords.',
+      'Confirmaciones y avisos con el estilo de la app en lugar de las ventanas del sistema.',
     ],
   },
   {

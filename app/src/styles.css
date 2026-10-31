@@ -3533,3 +3533,25 @@ button.today-go {
 .exinfo-steps li + li {
   margin-top: 6px;
 }
+
+/* Diálogos propios (confirmar / pedir un nombre) */
+.ask {
+  display: grid;
+  gap: 14px;
+  padding-top: 4px;
+}
+.ask-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.ask-actions {
+  gap: 10px;
+}
+.ask-actions button {
+  min-height: 48px;
+}
+button.danger-solid {
+  background: var(--danger);
+  color: #fff;
+}

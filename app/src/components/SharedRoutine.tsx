@@ -34,7 +34,8 @@ export async function shareRoutineLink(r: Routine, exercises: Parameters<typeof 
 export function SharedRoutineImport() {
   const store = useStore();
   const [shared, setShared] = useState<SharedRoutine | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  // La ficha abierta va ligada a la rutina mostrada: si llega otro enlace, no se arrastra.
+  const [info, setInfo] = useState<{ of: SharedRoutine; id: string } | null>(null);
   useEffect(() => {
     const read = () => {
       if (!location.hash.startsWith(HASH)) return;
@@ -68,7 +69,7 @@ export function SharedRoutineImport() {
       {shared.notes && <p className="small muted">{shared.notes}</p>}
       <div className="list">
         {shared.exercises.map((e, i) => (
-          <button key={i} className="plain row exline full left" disabled={!exById.has(e.exerciseId)} onClick={() => setInfo(e.exerciseId)}>
+          <button key={i} className="plain row exline full left" disabled={!exById.has(e.exerciseId)} onClick={() => setInfo({ of: shared, id: e.exerciseId })}>
             <ExerciseMedia exercise={exById.get(e.exerciseId)} size="thumb" />
             <span className="grow">
               <b>{e.name}</b>
@@ -90,7 +91,7 @@ export function SharedRoutineImport() {
           Guardar y empezar ahora
         </button>
       )}
-      {info && <ExerciseInfo id={info} onClose={() => setInfo(null)} />}
+      {info?.of === shared && <ExerciseInfo id={info.id} onClose={() => setInfo(null)} />}
     </Sheet>
   );
 }

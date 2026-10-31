@@ -1,4 +1,5 @@
 // Editor de rutinas serie a serie (se carga bajo demanda).
+import { ask } from '../dialog';
 import { useState } from 'react';
 import { ReorderSheet, moveItem } from './Reorder';
 import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
@@ -27,7 +28,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
   const exists = data.routines.some((x) => x.id === r.id);
 
   const save = () => {
-    if (!r.name.trim()) return alert('Ponle un nombre a la rutina');
+    if (!r.name.trim()) return ask.notice('Ponle un nombre a la rutina');
     update((d) => {
       const i = d.routines.findIndex((x) => x.id === r.id);
       if (i >= 0) d.routines[i] = r;
@@ -45,7 +46,9 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
   return (
     <section>
       <Back
-        onClick={() => (JSON.stringify(r) === JSON.stringify(initial) || confirm('¿Salir sin guardar?')) && onClose()}
+        onClick={async () =>
+          (JSON.stringify(r) === JSON.stringify(initial) || (await ask.confirm('Perderás los cambios de esta rutina.', { title: '¿Salir sin guardar?', ok: 'Salir', danger: true }))) && onClose()
+        }
         label="Cancelar"
         right={
           <button className="primary" onClick={save}>
@@ -101,7 +104,12 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
           <div key={i} className={`excard ${e.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''}`}>
             {e.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
             <div className="row">
-              <button className="plain row grow left exinfo-open" aria-label={`Ver cómo se hace ${ex.get(e.exerciseId)?.name ?? ''}`} onClick={() => setInfo(e.exerciseId)}>
+              <button
+                className="plain row grow left exinfo-open"
+                aria-label={`Ver cómo se hace ${ex.get(e.exerciseId)?.name ?? ''}`}
+                disabled={!ex.has(e.exerciseId)}
+                onClick={() => setInfo(e.exerciseId)}
+              >
                 <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
                 <b className="grow">{ex.get(e.exerciseId)?.name ?? e.exerciseId}</b>
               </button>
@@ -172,7 +180,10 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
         <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>
       {exists && (
-        <button className="danger full" onClick={() => confirm('¿Borrar esta rutina?') && (update((d) => void (d.routines = d.routines.filter((x) => x.id !== r.id))), onClose())}>
+        <button
+          className="danger full"
+          onClick={async () => (await ask.confirm('¿Borrar esta rutina?', { ok: 'Borrar', danger: true })) && (update((d) => void (d.routines = d.routines.filter((x) => x.id !== r.id))), onClose())}
+        >
           Borrar rutina
         </button>
       )}

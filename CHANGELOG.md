@@ -10,6 +10,10 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Cambiado
 - `loadCatalog` pasa a `app/src/catalog.ts` y reintenta si la primera descarga falla.
+- Sin `alert`/`confirm`/`prompt` del navegador: confirmaciones y nombres con diálogos propios (`app/src/dialog.tsx`, `ask.confirm`/`ask.prompt`) y avisos como toast. Los e2e fallan si aparece un diálogo nativo.
+
+### Seguridad
+- Migración `006_welcome_revoke.sql`: `notify_welcome()` deja de poder llamarse por RPC (solo la usa el disparador).
 
 ## [1.7.0] - 2026-10-29
 
