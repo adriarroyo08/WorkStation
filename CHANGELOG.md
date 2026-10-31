@@ -12,6 +12,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - `loadCatalog` pasa a `app/src/catalog.ts` y reintenta si la primera descarga falla.
 - Sin `alert`/`confirm`/`prompt` del navegador: confirmaciones y nombres con diálogos propios (`app/src/dialog.tsx`, `ask.confirm`/`ask.prompt`) y avisos como toast. Los e2e fallan si aparece un diálogo nativo.
 - Tipografía de marcador: Barlow Condensed (OFL, `@fontsource`, solo latin 600–800) en `h1`, título del entreno, "Hoy toca" y cifras grandes (`--display`). Ficha rápida con imagen a sangre, título grande y chips de músculos principales/secundarios.
+- Instrucciones del catálogo en español (`scripts/catalog-es.json`, que `build-catalog.mjs` aplica si cuadra el número de pasos; se quitan los pasos vacíos). El botón "Traducir con IA" solo sale si siguen en inglés.
 
 ### Seguridad
 - Migración `006_welcome_revoke.sql`: `notify_welcome()` deja de poder llamarse por RPC (solo la usa el disparador).

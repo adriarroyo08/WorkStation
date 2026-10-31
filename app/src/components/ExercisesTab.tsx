@@ -347,7 +347,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
           ) : (
             instructions && <p className="muted">Sin instrucciones para este ejercicio.</p>
           )}
-          {!!instructions?.length && ai.baseUrl && (
+          {!!instructions?.length && ai.baseUrl && /\b(the|your|with)\b/i.test(instructions.join(' ')) && (
             <button className="ghost" disabled={translating} onClick={translate}>
               {translating ? 'Traduciendo…' : 'Traducir al español con IA'}
             </button>
