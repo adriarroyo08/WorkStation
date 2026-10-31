@@ -25,6 +25,7 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur: 240ms;
+  --display: 'Barlow Condensed', 'Inter Variable', system-ui, sans-serif;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
@@ -3554,4 +3555,110 @@ button.today-go {
 button.danger-solid {
   background: var(--danger);
   color: #fff;
+}
+
+/* ===== Tipografía de marcador =====
+   Títulos y cifras grandes en condensada: más presencia sin colores ni efectos. */
+h1,
+input.title,
+.today-info h3,
+.week-count,
+.mfilter-info b,
+.metric-head > b,
+.stat b,
+.hr-big,
+.w-row b,
+.wrapped .huge,
+.wrapped .big,
+.exinfo-title {
+  font-family: var(--display);
+  letter-spacing: 0;
+  font-feature-settings: 'tnum';
+}
+h1 {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 8px 0 16px;
+}
+input.title {
+  font-size: 30px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.today-info h3 {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.week-count,
+.mfilter-info b {
+  font-size: 60px;
+  font-weight: 800;
+  line-height: 0.9;
+}
+.metric-head > b {
+  font-size: 50px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+.stat b {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+.hr-big {
+  font-size: 40px;
+}
+.w-row b {
+  font-size: 38px;
+}
+.wrapped .huge {
+  font-weight: 800;
+}
+.stats.four .stat b {
+  font-size: 26px;
+}
+@media (max-width: 380px) {
+  .stats.four .stat b {
+    font-size: 22px;
+  }
+}
+
+/* Ficha rápida: imagen a sangre, título de marcador y chips de músculos */
+.exinfo .media.large {
+  margin: 4px -16px 0;
+  width: calc(100% + 32px);
+  border-radius: 0;
+}
+.exinfo-title {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 14px 0 4px;
+}
+.exinfo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.exinfo-chips li {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+.exinfo-chips li.main {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent);
 }

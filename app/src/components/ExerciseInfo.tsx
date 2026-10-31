@@ -8,6 +8,7 @@ import { fmtWeight } from '../../../shared/units';
 import { loadCatalog } from '../catalog';
 import { cap, useStore } from '../store';
 import { MuscleMap } from './BodyMap';
+import { exerciseActivation } from '../../../shared/muscle-detail';
 import { ExerciseMedia, Sheet } from './ui';
 
 export default function ExerciseInfo({ id, onClose, onFull }: { id: string; onClose: () => void; onFull?: (id: string) => void }) {
@@ -40,13 +41,23 @@ export default function ExerciseInfo({ id, onClose, onFull }: { id: string; onCl
           : pr.maxReps > 0 && `Máx. reps: ${pr.maxReps}`);
 
   return (
-    <Sheet title={e.name} onClose={onClose}>
+    <Sheet title="Ficha del ejercicio" onClose={onClose}>
       <div className="exinfo">
+        <ExerciseMedia exercise={e} />
+        <h2 className="exinfo-title">{e.name}</h2>
         <p className="muted small">
           {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
           {best ? ` · ${best}` : ''}
         </p>
-        <ExerciseMedia exercise={e} />
+        <ul className="exinfo-chips" aria-label="Músculos principales y secundarios">
+          {exerciseActivation(e)
+            .filter((a) => a.pct >= 45)
+            .map((a) => (
+              <li key={a.group} className={a.pct >= 80 ? 'main' : undefined}>
+                {a.label}
+              </li>
+            ))}
+        </ul>
         {e.stickyNote && (
           <p className="sticky-note small">
             <Pin size={16} className="ico" /> {e.stickyNote}
