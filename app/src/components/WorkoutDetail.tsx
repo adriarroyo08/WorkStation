@@ -1,4 +1,4 @@
-import { Award, BookmarkPlus, Dumbbell, Heart, RefreshCw, Repeat, Share2, Trophy } from 'lucide-react';
+import { Award, BookmarkPlus, Heart, RefreshCw, Repeat, Share2, Trophy } from 'lucide-react';
 import { ask } from '../dialog';
 import { useState } from 'react';
 import { MUSCLE_REGION } from '../../../shared/exercises';
@@ -13,7 +13,7 @@ import { newlyUnlocked } from '../../../shared/achievements';
 import { AchievementBadge } from './Achievements';
 import { SessionMap } from './BodyMap';
 import LineChart from './LineChart';
-import { Back, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
+import { Back, CountUp, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
 import { compareWithPrevious } from '../../../shared/planning';
 import WorkoutLogger from './WorkoutLogger';
 import { fmtMass, toUnit, weightUnit } from '../../../shared/units';
@@ -76,6 +76,12 @@ export default function WorkoutDetail({
   const cmp = compareWithPrevious(data, id);
   const count = [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)).findIndex((x) => x.id === id) + 1;
 
+  const sessionItems = w.exercises.flatMap((we) => {
+    const exercise = ex.get(we.exerciseId);
+    const sets = we.sets.filter((st) => st.done).length;
+    return exercise && sets ? [{ exercise, sets }] : [];
+  });
+
   const share = async () => shareOrDownload(await (await import('../share')).workoutImage(data, w), `entreno-${w.startedAt.slice(0, 10)}.png`, w.name);
 
   return (
@@ -90,10 +96,47 @@ export default function WorkoutDetail({
         }
       />
       {justFinished && (
-        <div className="congrats">
-          <Dumbbell size={48} className="big-emoji" />
-          <h1>¡Buen trabajo!</h1>
-          <p className="muted">Este es tu entrenamiento nº {count}.</p>
+        <div className="finish">
+          <p className="finish-kicker">
+            Entreno nº {count} · {w.name}
+          </p>
+          <h1 className="finish-title">¡Buen trabajo!</h1>
+          <div className="finish-hero">
+            <SessionMap items={sessionItems} />
+            <dl className="finish-nums">
+              <div>
+                <dt>volumen</dt>
+                <dd>
+                  <CountUp value={workoutVolume(w, data.exercises)} format={fmtMass} />
+                </dd>
+              </div>
+              <div>
+                <dt>duración</dt>
+                <dd>
+                  <CountUp value={workoutDurationMin(w) * 60} format={(v) => formatDuration(Math.round(v))} />
+                </dd>
+              </div>
+              <div>
+                <dt>series</dt>
+                <dd>
+                  <CountUp value={workoutSetCount(w)} format={(v) => String(Math.round(v))} />
+                </dd>
+              </div>
+              <div>
+                <dt>reps</dt>
+                <dd>
+                  <CountUp value={workoutReps(w)} format={(v) => String(Math.round(v))} />
+                </dd>
+              </div>
+            </dl>
+          </div>
+          {prs.length > 0 && (
+            <p className="finish-pr">
+              <Trophy size={22} aria-hidden="true" />
+              <b>{prs.length}</b>
+              <span>{prs.length === 1 ? 'récord batido hoy' : 'récords batidos hoy'}</span>
+            </p>
+          )}
           {unlockedNow.length > 0 && (
             <div className="card new-badges">
               <b>
@@ -113,13 +156,15 @@ export default function WorkoutDetail({
         {fmtDate(w.startedAt)} · {fmtTime(w.startedAt)}
         {routine ? ` · Rutina: ${routine.name}` : ''}
       </p>
-      <div className="stats five">
-        <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
-        <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
-        <Stat value={workoutSetCount(w)} label="series" />
-        <Stat value={workoutReps(w)} label="reps" />
-        <Stat value={prs.length} label="récords" />
-      </div>
+      {!justFinished && (
+        <div className="stats five">
+          <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
+          <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
+          <Stat value={workoutSetCount(w)} label="series" />
+          <Stat value={workoutReps(w)} label="reps" />
+          <Stat value={prs.length} label="récords" />
+        </div>
+      )}
       {cmp && (
         <div className="card vs-last">
           <h3>Frente a la última vez</h3>
@@ -160,14 +205,7 @@ export default function WorkoutDetail({
 
       <div className="card">
         <h3>Distribución muscular</h3>
-        <SessionMap
-          big
-          items={w.exercises.flatMap((we) => {
-            const exercise = ex.get(we.exerciseId);
-            const sets = we.sets.filter((st) => st.done).length;
-            return exercise && sets ? [{ exercise, sets }] : [];
-          })}
-        />
+        {!justFinished && <SessionMap big items={sessionItems} />}
         <HBars rows={[...regions.entries()].sort((a, b) => b[1] - a[1]).map(([label, v]) => ({ label, value: Math.round((v / totalSets) * 100) }))} format={(v) => `${v}%`} />
       </div>
 

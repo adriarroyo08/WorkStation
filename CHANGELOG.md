@@ -3,6 +3,14 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.9.0] - 2026-10-31
+
+### Cambiado
+- Resumen de fin de entreno (#48): portada de marcador con antetítulo (nº de entreno · rutina), título grande, `SessionMap` y cuatro cifras que suben con `CountUp` (instantáneas con movimiento reducido), y banda de récords del día. La rejilla de 5 cifras y el mapa grande se mantienen solo al consultar un entreno pasado.
+
+### Corregido
+- Contraste AA: `--danger-fill` (#c62828) para `button.danger-solid` (antes 3,37:1 en oscuro) y `--muted` oscuro a #9a9aa0 (4,40:1 → ≥ 4,5:1 sobre `--field`).
+
 ## [1.8.0] - 2026-10-31
 
 ### Añadido

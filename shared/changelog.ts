@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.9.0',
+    date: '2026-10-31',
+    items: [
+      'Nuevo resumen al terminar: portada con tus cifras en grande que suben al aparecer, el mapa de músculos trabajados y tus récords del día destacados.',
+      'Mejor contraste en botones de borrar y textos secundarios.',
+    ],
+  },
+  {
     version: '1.8.0',
     date: '2026-10-31',
     items: [
