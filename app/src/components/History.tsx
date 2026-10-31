@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronLeft, ChevronRight, Heart, ListChecks, Repeat, Timer, Trash2, Trophy, Weight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Heart, ListChecks, Repeat, Search, Timer, Trash2, Trophy, Weight, X } from 'lucide-react';
 import { ask } from '../dialog';
 import { useMemo, useState } from 'react';
 import { repeatWorkout } from '../../../shared/data';
@@ -6,11 +6,22 @@ import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '..
 import type { Exercise, Workout } from '../../../shared/types';
 import { launchWorkout } from '../controller';
 import { toast } from '../toast';
-import { cap, fmtDate, useStore } from '../store';
+import { cap, useStore } from '../store';
 import { SessionMap } from './BodyMap';
 import { MonthCalendar, Sheet, useLongPress } from './ui';
 import WorkoutDetail from './WorkoutDetail';
 import { fmtMass } from '../../../shared/units';
+import './History.css';
+
+// Formato de fecha para el antetítulo de la fila: "VIE 30 OCT" (mayúsculas)
+function fmtHrowDate(iso: string): string {
+  const d = new Date(iso);
+  const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' }).replace(/[.,]/g, '').trim().toUpperCase();
+  const day = d.getDate();
+  const month = d.toLocaleDateString('es-ES', { month: 'short' }).replace(/[.,]/g, '').trim().toUpperCase();
+  const year = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
+  return `${weekday} ${day} ${month}${year}`;
+}
 
 export default function History({ onExercise, goTrain }: { onExercise: (id: string) => void; goTrain: () => void }) {
   const store = useStore();
@@ -54,7 +65,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
 
   return (
     <section>
-      <div className="row">
+      <div className="row history-topbar">
         <h1 className="grow">Historial</h1>
         <div className="segmented small">
           <button className={mode === 'list' ? 'on' : ''} onClick={() => setMode('list')}>
@@ -66,20 +77,30 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
         </div>
       </div>
       {mode === 'list' && data.workouts.length > 0 && !q && <MonthHero workouts={data.workouts} exercises={data.exercises} />}
-      {mode === 'list' && data.workouts.length > 0 && <input aria-label="Buscar entrenamientos" placeholder="Buscar por nombre o ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />}
+      {mode === 'list' && data.workouts.length > 0 && (
+        <div className="input-icon history-search">
+          <Search size={18} />
+          <input aria-label="Buscar entrenamientos" placeholder="Buscar por nombre o ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />
+          {q && (
+            <button className="ghost plain icon-btn history-search-clear" aria-label="Limpiar búsqueda" onClick={() => setQ('')}>
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      )}
       {mode === 'calendar' && (
-        <div className="card">
-          <div className="row">
+        <div className="card history-calendar-card">
+          <div className="row history-cal-nav">
             <button className="ghost icon-btn" aria-label="Mes anterior" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)), setDay(null))}>
               <ChevronLeft size={20} />
             </button>
-            <b className="grow center-text">{cap(month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }))}</b>
+            <b className="grow center-text history-cal-title">{cap(month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }))}</b>
             <button className="ghost icon-btn" aria-label="Mes siguiente" onClick={() => (setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)), setDay(null))}>
               <ChevronRight size={20} />
             </button>
           </div>
           <MonthCalendar month={month} trained={trained} mondayFirst={settings.weekStartsMonday} onDay={(d) => setDay(day === d.toDateString() ? null : d.toDateString())} />
-          <p className="muted small center-text">
+          <p className="muted small center-text history-cal-summary">
             {list.length} {list.length === 1 ? 'entrenamiento' : 'entrenamientos'} {day ? 'ese día' : 'este mes'}
           </p>
         </div>
@@ -94,11 +115,18 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
           </button>
         </div>
       )}
-      {data.workouts.length > 0 && !total && <p className="muted center-text">{q ? `Nada coincide con «${q}».` : 'Sin entrenamientos en este periodo.'}</p>}
+      {data.workouts.length > 0 && !total && (
+        <div className="empty-state">
+          <h2>{q ? 'Sin resultados' : 'Sin entrenamientos'}</h2>
+          <p className="muted small center-text">{q ? `Nada coincide con «${q}».` : 'Sin entrenamientos en este periodo.'}</p>
+        </div>
+      )}
       {groups.map((g) => (
         <div key={g.label}>
-          <h2 className="sec">
-            {g.label} · {g.items.length}
+          <h2 className="sec history-month-sep">
+            <span>{g.label}</span>
+            <span className="history-sep-dot"> · </span>
+            <span className="history-sep-count">{g.items.length}</span>
           </h2>
           {g.items.map((w) => (
             <HistoryRow key={w.id} w={w} ex={ex} prs={prCount.get(w.id) ?? 0} onOpen={() => setOpen(w.id)} onMenu={() => setMenu(w)} />
@@ -154,6 +182,10 @@ function MonthHero({ workouts, exercises }: { workouts: Workout[]; exercises: Ex
   const prev = workouts.filter((w) => inMonth(w, 1)).length;
   const diff = cur.length - prev;
   const min = cur.reduce((t, w) => t + workoutDurationMin(w), 0);
+  const volMass = fmtMass(cur.reduce((v, w) => v + workoutVolume(w, exercises), 0));
+  const [volNum, volUnit] = volMass.split(' ');
+  const setsTotal = cur.reduce((n, w) => n + workoutSetCount(w), 0);
+
   return (
     <div className="month-hero">
       <div className="weekstrip-head">
@@ -164,15 +196,31 @@ function MonthHero({ workouts, exercises }: { workouts: Workout[]; exercises: Ex
         </span>
       </div>
       {cur.length > 0 && (
-        <div className="row small muted wstats">
+        <div className="row small muted wstats month-totals">
           <span className="icon-btn">
-            <Weight size={14} /> {fmtMass(cur.reduce((v, w) => v + workoutVolume(w, exercises), 0))}
+            <Timer size={16} />
+            {min >= 60 ? (
+              <>
+                <strong className="month-num">{Math.floor(min / 60)}</strong>
+                <span className="month-unit">h</span> <strong className="month-num">{min % 60}</strong>
+                <span className="month-unit">min</span>
+              </>
+            ) : (
+              <>
+                <strong className="month-num">{min}</strong>
+                <span className="month-unit">min</span>
+              </>
+            )}
           </span>
           <span className="icon-btn">
-            <Timer size={14} /> {min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`}
+            <Weight size={16} />
+            <strong className="month-num">{volNum}</strong>
+            <span className="month-unit">{volUnit}</span>
           </span>
           <span className="icon-btn">
-            <ListChecks size={14} /> {cur.reduce((n, w) => n + workoutSetCount(w), 0)} series
+            <ListChecks size={16} />
+            <strong className="month-num">{setsTotal}</strong>
+            <span className="month-unit">series</span>
           </span>
         </div>
       )}
@@ -188,14 +236,19 @@ function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w: Workout; ex: Map<string
     const exercise = ex.get(e.exerciseId);
     return exercise ? [{ exercise, sets: e.sets.filter((s) => s.done).length }] : [];
   });
+  const volMass = fmtMass(workoutVolume(w, data.exercises));
+  const [volNum, volUnit] = volMass.split(' ');
+  const durMin = workoutDurationMin(w);
+  const setCount = workoutSetCount(w);
+
   return (
     <button className="hrow full left" onClick={onOpen} {...press}>
       <div className="hrow-grid">
         <div className="hrow-main">
-          <div className="row">
+          <div className="row hrow-head">
             <div className="grow">
-              <b>{w.name}</b>
-              <div className="muted small">{fmtDate(w.startedAt)}</div>
+              <div className="muted small hrow-kicker">{fmtHrowDate(w.startedAt)}</div>
+              <b className="hrow-title">{w.name}</b>
             </div>
             {prs ? (
               <span className="pr-pill">
@@ -203,19 +256,19 @@ function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w: Workout; ex: Map<string
               </span>
             ) : null}
           </div>
-          <div className="row small muted wstats">
+          <div className="row small muted wstats hrow-stats">
             <span className="icon-btn">
-              <Timer size={14} /> {workoutDurationMin(w)} min
+              <Timer size={14} /> <strong className="hrow-num">{durMin}</strong> <span className="hrow-unit">min</span>
             </span>
             <span className="icon-btn">
-              <Weight size={14} /> {fmtMass(workoutVolume(w, data.exercises))}
+              <Weight size={14} /> <strong className="hrow-num">{volNum}</strong> <span className="hrow-unit">{volUnit}</span>
             </span>
             <span className="icon-btn">
-              <ListChecks size={14} /> {workoutSetCount(w)} series
+              <ListChecks size={14} /> <strong className="hrow-num">{setCount}</strong> <span className="hrow-unit">series</span>
             </span>
             {w.heartRate && (
               <span className="icon-btn">
-                <Heart size={14} /> {w.heartRate.avg} ppm
+                <Heart size={14} /> <strong className="hrow-num">{w.heartRate.avg}</strong> <span className="hrow-unit">ppm</span>
               </span>
             )}
           </div>
