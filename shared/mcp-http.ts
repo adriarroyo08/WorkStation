@@ -1,15 +1,19 @@
 // Servidor MCP remoto (Streamable HTTP, sin estado) como manejador Request → Response.
 // Sirve en Supabase Edge Functions (Deno) y en Node. La API key llega en
 // `Authorization: Bearer ws_…`, en `x-api-key` o en la URL (`?key=ws_…`, para clientes que solo aceptan una URL).
+import { RateLimitError } from './cloud-source';
 import { callTool, TOOLS, toolJsonSchema, type DataSource } from './mcp-tools';
 
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER = { name: 'workstation', version: '0.4.0' };
+// Máximo de mensajes en una petición agrupada (batch): cada llamada a herramienta gasta cuota de la API key igualmente.
+export const MAX_BATCH = 20;
 
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-headers': 'authorization, content-type, x-api-key, mcp-session-id, mcp-protocol-version',
   'access-control-allow-methods': 'POST, GET, OPTIONS',
+  'access-control-expose-headers': 'retry-after',
 };
 
 interface RpcRequest {
@@ -19,7 +23,8 @@ interface RpcRequest {
   params?: Record<string, unknown>;
 }
 
-const reply = (body: unknown, status = 200) => new Response(body === null ? null : JSON.stringify(body), { status, headers: { ...CORS, 'content-type': 'application/json' } });
+const reply = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
+  new Response(body === null ? null : JSON.stringify(body), { status, headers: { ...CORS, 'content-type': 'application/json', ...extra } });
 const rpcError = (id: RpcRequest['id'], code: number, message: string) => ({ jsonrpc: '2.0', id: id ?? null, error: { code, message } });
 
 export function apiKeyFrom(req: Request): string | null {
@@ -44,7 +49,22 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
   } catch {
     return reply(rpcError(null, -32700, 'JSON no válido'), 400);
   }
-  const src = sourceFor(key);
+  if (Array.isArray(body) && body.length > MAX_BATCH) return reply(rpcError(null, -32600, `Demasiados mensajes en una petición (máximo ${MAX_BATCH})`), 400);
+  // Si la base de datos corta por cuota (429), no se sigue llamando y se responde 429 con Retry-After.
+  const state: { limited?: RateLimitError } = {};
+  const watch = <T>(p: Promise<T>) =>
+    p.catch((e: unknown) => {
+      if (e instanceof RateLimitError) state.limited = e;
+      throw e;
+    });
+  const base = sourceFor(key);
+  const src: DataSource = { ...base, load: () => watch(base.load()), save: (d) => watch(base.save(d)) };
+  const done = (out: unknown) =>
+    state.limited
+      ? reply(out ?? rpcError(null, -32029, state.limited.message), 429, { 'retry-after': String(state.limited.retryAfter) })
+      : out
+        ? reply(out)
+        : new Response(null, { status: 202, headers: CORS });
   const handle = async (m: RpcRequest) => {
     if (!m || typeof m !== 'object' || Array.isArray(m)) return rpcError(null, -32600, 'Petición JSON-RPC no válida');
     if (m.id === undefined) return null; // notificación (p. ej. notifications/initialized)
@@ -71,6 +91,7 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
           result: { tools: TOOLS.map((t) => ({ name: t.name, description: t.description, inputSchema: toolJsonSchema(t), annotations: { readOnlyHint: !t.write } })) },
         };
       case 'tools/call': {
+        if (state.limited) return rpcError(m.id, -32029, state.limited.message);
         const r = await callTool(src, String(m.params?.name ?? ''), m.params?.arguments ?? {});
         return { jsonrpc: '2.0', id: m.id, result: { content: [{ type: 'text', text: r.text }], isError: !!r.isError } };
       }
@@ -85,9 +106,8 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
       const r = await handle(m);
       if (r) out.push(r);
     }
-    return out.length ? reply(out) : new Response(null, { status: 202, headers: CORS });
+    return done(out.length ? out : null);
   }
   if (body === null || typeof body !== 'object') return reply(rpcError(null, -32600, 'Petición JSON-RPC no válida'), 400);
-  const out = await handle(body);
-  return out ? reply(out) : new Response(null, { status: 202, headers: CORS });
+  return done(await handle(body));
 }

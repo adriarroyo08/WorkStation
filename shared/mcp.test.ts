@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cloudSource } from './cloud-source';
-import { handleMcp } from './mcp-http';
+import { cloudSource, RateLimitError } from './cloud-source';
+import { handleMcp, MAX_BATCH } from './mcp-http';
 import { callTool, TOOLS, type DataSource } from './mcp-tools';
 import { emptyData } from './data';
 import type { WorkstationData } from './types';
@@ -112,5 +112,68 @@ describe('auditoría del servidor MCP remoto', () => {
     const batch = await (await post('[null, {"jsonrpc":"2.0","id":1,"method":"ping"}]')).json();
     expect(batch).toHaveLength(2);
     expect(batch[0].error.code).toBe(-32600);
+  });
+});
+
+describe('límite por API key en el MCP', () => {
+  // Supabase simulado con cuota: tras `quota` llamadas responde 429 como PostgREST con SQLSTATE PGRST.
+  function limited(quota: number) {
+    let n = 0;
+    const f = (async () => {
+      if (++n > quota)
+        return new Response(JSON.stringify({ code: 'WS429', message: 'Demasiadas peticiones con esta API key (máximo 60 por minuto). Reintenta en 42 s.' }), {
+          status: 429,
+          headers: { 'retry-after': '42' },
+        });
+      return new Response('[]');
+    }) as unknown as typeof fetch;
+    return { f, count: () => n };
+  }
+  const call = (id: number) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name: 'training_summary', arguments: {} } });
+  const post = (f: typeof fetch, body: unknown) =>
+    handleMcp(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body: JSON.stringify(body) }), (key) =>
+      cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: key, fetch: f }),
+    );
+
+  it('cloudSource convierte el 429 en RateLimitError con Retry-After', async () => {
+    const sb = limited(0);
+    const err = await cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: 'ws_ok', fetch: sb.f })
+      .load()
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RateLimitError);
+    expect((err as RateLimitError).retryAfter).toBe(42);
+  });
+
+  it('responde 429 con Retry-After y el motivo', async () => {
+    const res = await post(limited(0).f, call(1));
+    expect(res.status).toBe(429);
+    expect(res.headers.get('retry-after')).toBe('42');
+    expect(res.headers.get('access-control-expose-headers')).toContain('retry-after');
+    const body = await res.json();
+    expect(body.result.isError).toBe(true);
+    expect(body.result.content[0].text).toMatch(/Demasiadas peticiones/);
+  });
+
+  it('en una petición agrupada deja de llamar a la base de datos al primer 429', async () => {
+    const sb = limited(2);
+    const res = await post(sb.f, [call(1), call(2), call(3), call(4), call(5)]);
+    expect(res.status).toBe(429);
+    const out = await res.json();
+    expect(out).toHaveLength(5);
+    expect(out.slice(0, 2).every((r: { result?: { isError: boolean } }) => r.result && !r.result.isError)).toBe(true);
+    expect(out[2].result.isError).toBe(true);
+    expect(out[3].error.code).toBe(-32029);
+    expect(out[4].error.code).toBe(-32029);
+    expect(sb.count()).toBe(3); // la 4.ª y la 5.ª no llegan a la base de datos
+  });
+
+  it('rechaza lotes de más de MAX_BATCH mensajes sin llamar a nada', async () => {
+    const sb = limited(1000);
+    const res = await post(
+      sb.f,
+      Array.from({ length: MAX_BATCH + 1 }, (_, i) => call(i)),
+    );
+    expect(res.status).toBe(400);
+    expect(sb.count()).toBe(0);
   });
 });
