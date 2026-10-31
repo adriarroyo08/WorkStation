@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import './Profile.css';
 import { MUSCLE_LABELS, MUSCLE_REGION } from '../../../shared/exercises';
 import { totals, weekStreak, weeklySeries } from '../../../shared/reports';
 import { muscleSets, personalRecords } from '../../../shared/stats';
@@ -17,6 +18,7 @@ import Reports from './Reports';
 import Settings from './Settings';
 import Coach from './Coach';
 import { AccountCard, EmailAuth } from './Account';
+import { useCloud } from '../cloud';
 import { BarChart, HBars, MonthCalendar, Stat } from './ui';
 import { fmtMass, fmtWeight, toUnit } from '../../../shared/units';
 
@@ -64,14 +66,37 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
   const trainedIn = (y: number) => data.workouts.some((w) => new Date(w.startedAt).getFullYear() === y);
   const wrappedYear = trainedIn(thisYear) ? thisYear : trainedIn(thisYear - 1) ? thisYear - 1 : undefined;
 
+  const cloud = useCloud();
+  const profileName = (cloud.name || cloud.email || 'Tu perfil').trim();
+  const initial = (profileName[0] || 'T').toUpperCase();
+
+  const sinceText = useMemo(() => {
+    if (!data.workouts.length) return 'Empieza tu primer entreno';
+    let earliest = data.workouts[0];
+    for (let i = 1; i < data.workouts.length; i++) {
+      if (Date.parse(data.workouts[i].startedAt) < Date.parse(earliest.startedAt)) {
+        earliest = data.workouts[i];
+      }
+    }
+    const d = new Date(earliest.startedAt);
+    const monthYear = d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const count = data.workouts.length;
+    return `${count} ${count === 1 ? 'entreno' : 'entrenos'} desde ${monthYear}`;
+  }, [data.workouts]);
+
+  const isSyncInfoOnly = !cloud.configured || cloud.status === 'off';
+
   const backHome = () => setView('home');
-  if (view === 'email') return <EmailAuth
+  if (view === 'email')
+    return (
+      <EmailAuth
         onBack={() => {
           setSignUpMode(false);
           backHome();
         }}
         signUp={signUpMode}
-      />;
+      />
+    );
   if (view === 'reports') return <Reports onBack={() => setView('home')} />;
   if (view === 'achievements') return <Achievements onBack={() => setView('home')} />;
   if (view === 'measures') return <Measurements onBack={() => setView('home')} />;
@@ -96,7 +121,11 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
     );
 
   const fmt = (v: number) =>
-    metric === 'volume' ? ((x) => (x >= 1000 ? `${(Math.round(x / 100) / 10).toLocaleString('es-ES')}k` : String(Math.round(x))))(toUnit(v)) : metric === 'durationMin' ? `${(Math.round(v / 6) / 10).toLocaleString('es-ES')}h` : String(Math.round(v));
+    metric === 'volume'
+      ? ((x) => (x >= 1000 ? `${(Math.round(x / 100) / 10).toLocaleString('es-ES')}k` : String(Math.round(x))))(toUnit(v))
+      : metric === 'durationMin'
+        ? `${(Math.round(v / 6) / 10).toLocaleString('es-ES')}h`
+        : String(Math.round(v));
 
   return (
     <section>
@@ -124,7 +153,16 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
           <SettingsIcon size={20} /> Ajustes
         </button>
       </div>
-      <AccountCard onEmail={() => setView('email')} />
+      {!isSyncInfoOnly && <AccountCard onEmail={() => setView('email')} />}
+      <div className="profile-hero">
+        <div className="profile-avatar" aria-hidden="true">
+          {initial}
+        </div>
+        <div className="profile-hero-info">
+          <div className="profile-name">{profileName}</div>
+          <div className="profile-since">{sinceText}</div>
+        </div>
+      </div>
       <div className="stats four">
         <Stat value={all.workouts} label="entrenos" />
         <Stat value={`${Math.round(all.durationMin / 60)}h`} label="entrenando" />
@@ -134,7 +172,9 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
 
       <div className="lines">
         <button className="line" onClick={() => setView('reports')}>
-          <FileBarChart size={20} className="tile-ico" />
+          <span className="line-icon-box" aria-hidden="true">
+            <FileBarChart size={20} className="tile-ico" />
+          </span>
           <span className="grow">
             <b>Informes</b>
             <small className="muted">semanal · mensual · anual</small>
@@ -142,7 +182,9 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
           <ChevronRight size={16} className="muted" />
         </button>
         <button className="line" onClick={() => setView('measures')}>
-          <Ruler size={20} className="tile-ico" />
+          <span className="line-icon-box" aria-hidden="true">
+            <Ruler size={20} className="tile-ico" />
+          </span>
           <span className="grow">
             <b>Medidas</b>
             <small className="muted">peso · cuerpo · fotos</small>
@@ -150,7 +192,9 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
           <ChevronRight size={16} className="muted" />
         </button>
         <button className="line" onClick={() => setView('coach')}>
-          <Bot size={20} className="tile-ico" />
+          <span className="line-icon-box" aria-hidden="true">
+            <Bot size={20} className="tile-ico" />
+          </span>
           <span className="grow">
             <b>Coach IA</b>
             <small className="muted">pregunta, analiza y crea rutinas</small>
@@ -159,7 +203,9 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
         </button>
         {wrappedYear && (
           <button className="line" onClick={() => setWrapped(true)}>
-            <Sparkles size={20} className="tile-ico" />
+            <span className="line-icon-box" aria-hidden="true">
+              <Sparkles size={20} className="tile-ico" />
+            </span>
             <span className="grow">
               <b>Tu {wrappedYear} en Workstation</b>
               <small className="muted">tus cifras del año, en historias</small>
@@ -168,7 +214,9 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
           </button>
         )}
         <button className="line" onClick={() => setView('achievements')}>
-          <Award size={20} className="tile-ico" />
+          <span className="line-icon-box" aria-hidden="true">
+            <Award size={20} className="tile-ico" />
+          </span>
           <span className="grow">
             <b>Logros</b>
             <small className="muted">
@@ -186,9 +234,10 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
         </button>
       </div>
       {wrapped && wrappedYear && <Wrapped year={wrappedYear} onClose={() => setWrapped(false)} />}
+      {isSyncInfoOnly && <AccountCard onEmail={() => setView('email')} />}
 
       <div className="card">
-        <h3>Últimas 12 semanas</h3>
+        <h3 className="profile-weeks-title">Últimas 12 semanas</h3>
         <div className="chips small scroll" role="group" aria-label="Métrica">
           {(Object.keys(METRICS) as Metric[]).map((m) => (
             <button key={m} className={metric === m ? 'on' : ''} aria-pressed={metric === m} onClick={() => setMetric(m)}>
