@@ -533,3 +533,26 @@ test('ejercicios: filtrar tocando un músculo y recorrer la gráfica', async ({ 
   await chart.click({ position: { x: 40, y: 60 } });
   await expect(chart.locator('.pick')).toHaveCount(1);
 });
+
+test('tocar un ejercicio en la rutina o en el entreno abre cómo se hace y sus músculos', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  // Editor de rutina
+  await page.locator('.routine .grow').first().click();
+  await page.locator('.excard .exinfo-open').first().click();
+  let sheet = page.getByRole('dialog');
+  await expect(sheet.getByText('Músculos que trabaja')).toBeVisible();
+  await expect(sheet.getByRole('img', { name: 'Músculos que trabaja' })).toBeVisible();
+  await expect(sheet.locator('.exinfo-steps li').first()).toBeVisible();
+  await expect(sheet.locator('.media.large')).toHaveCount(1);
+  await sheet.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(sheet).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancelar' }).click();
+  // En mitad del entreno: la hoja no saca del registro y lleva a la ficha completa
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  await page.locator('.excard .exinfo-open').first().click();
+  sheet = page.getByRole('dialog');
+  await expect(sheet.getByText('Cómo se hace')).toBeVisible();
+  await sheet.getByRole('button', { name: /Ver ficha completa/ }).click();
+  await expect(page.getByRole('button', { name: 'Récords' })).toBeVisible();
+});

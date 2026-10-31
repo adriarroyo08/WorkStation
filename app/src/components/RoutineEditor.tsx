@@ -6,6 +6,7 @@ import { uid } from '../../../shared/types';
 import { useStore } from '../store';
 import RestPicker from './RestPicker';
 import ExercisePicker from './ExercisePicker';
+import ExerciseInfo from './ExerciseInfo';
 import { ArrowUpDown, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { Back, ExerciseMedia, NumberField, WeightField } from './ui';
 import { weightUnit } from '../../../shared/units';
@@ -15,6 +16,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
   const [r, setR] = useState<Routine>(structuredClone(initial));
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
   const [reorder, setReorder] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
   const ex = new Map(data.exercises.map((e) => [e.id, e]));
   const edit = (fn: (r: Routine) => void) =>
     setR((cur) => {
@@ -99,8 +101,10 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
           <div key={i} className={`excard ${e.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''}`}>
             {e.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
             <div className="row">
-              <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
-              <b className="grow">{ex.get(e.exerciseId)?.name ?? e.exerciseId}</b>
+              <button className="plain row grow left exinfo-open" aria-label={`Ver cómo se hace ${ex.get(e.exerciseId)?.name ?? ''}`} onClick={() => setInfo(e.exerciseId)}>
+                <ExerciseMedia exercise={ex.get(e.exerciseId)} size="thumb" />
+                <b className="grow">{ex.get(e.exerciseId)?.name ?? e.exerciseId}</b>
+              </button>
               <button className="ghost small icon-btn gray" aria-label="Quitar ejercicio" onClick={() => edit((n) => void n.exercises.splice(i, 1))}>
                 <Trash2 size={16} />
               </button>
@@ -172,6 +176,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
           Borrar rutina
         </button>
       )}
+      {info && <ExerciseInfo id={info} onClose={() => setInfo(null)} />}
       {picker && (
         <ExercisePicker
           single={picker.replace !== undefined}

@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.8.0',
+    date: '2026-10-31',
+    items: [
+      'Toca un ejercicio de una rutina, de un programa o del entreno en curso para ver cómo se hace: imágenes, instrucciones y los músculos que trabaja, sin salir de donde estás.',
+      'Desde esa ficha rápida puedes saltar a la ficha completa con tu historial y récords.',
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-10-29',
     items: [

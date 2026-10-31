@@ -36,6 +36,7 @@ import { clock, useNow, useStore, useWakeLock } from '../store';
 import RestPicker from './RestPicker';
 import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
+import ExerciseInfo from './ExerciseInfo';
 import { ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
 import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB, fmtMass, fmtWeight, fromUnit, toUnit, weightUnit } from '../../../shared/units';
 import { ReorderSheet, moveItem } from './Reorder';
@@ -69,6 +70,7 @@ export default function WorkoutLogger({
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
   const [menu, setMenu] = useState<number | null>(null);
   const [reorder, setReorder] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
   const [plates, setPlates] = useState<number | null>(null);
   const [stopwatch, setStopwatch] = useState<{ ei: number; si: number; start: number } | null>(null);
   const exMap = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
@@ -212,12 +214,10 @@ export default function WorkoutLogger({
           <div key={ei} className={`card excard ${we.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''} ${ssNext ? 'ss-next' : ''}`}>
             {we.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
             <div className="row">
-              <button className="plain" onClick={() => onExercise?.(we.exerciseId)}>
+              <button className="plain row grow left exinfo-open" aria-label={`Ver cómo se hace ${ex?.name ?? ''}`} disabled={!ex} onClick={() => setInfo(we.exerciseId)}>
                 <ExerciseMedia exercise={ex} size="thumb" />
+                <b className="grow">{ex?.name ?? we.exerciseId}</b>
               </button>
-              <b className="grow" onClick={() => onExercise?.(we.exerciseId)}>
-                {ex?.name ?? we.exerciseId}
-              </b>
               <button className="ghost" onClick={() => setMenu(ei)} aria-label="Opciones">
                 <MoreHorizontal size={20} />
               </button>
@@ -344,6 +344,7 @@ export default function WorkoutLogger({
           }}
         />
       )}
+      {info && <ExerciseInfo id={info} onClose={() => setInfo(null)} onFull={onExercise && ((id) => (setInfo(null), onExercise(id)))} />}
       {menu !== null && w.exercises[menu] && (
         <ExerciseMenu
           w={w}

@@ -3513,3 +3513,23 @@ button.today-go {
   stroke: var(--bg);
   stroke-width: 2;
 }
+
+/* Ficha rápida del ejercicio (hoja desde rutina o entreno) */
+.exinfo-open {
+  min-width: 0;
+  text-align: left;
+}
+.exinfo-open b {
+  overflow-wrap: anywhere;
+}
+.exinfo .sec:first-of-type {
+  margin-top: 12px;
+}
+.exinfo-steps {
+  padding-left: 20px;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.exinfo-steps li + li {
+  margin-top: 6px;
+}
