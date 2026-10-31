@@ -15,7 +15,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Instrucciones del catálogo en español (`scripts/catalog-es.json`, que `build-catalog.mjs` aplica si cuadra el número de pasos; se quitan los pasos vacíos). El botón "Traducir con IA" solo sale si siguen en inglés.
 
 ### Seguridad
-- Migración `006_welcome_revoke.sql`: `notify_welcome()` deja de poder llamarse por RPC (solo la usa el disparador).
+- Migración `007_welcome_revoke.sql`: `notify_welcome()` deja de poder llamarse por RPC (solo la usa el disparador).
 
 ## [1.7.0] - 2026-10-29
 

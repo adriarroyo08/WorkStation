@@ -294,8 +294,8 @@ for (const scheme of ['light', 'dark'] as const)
     await expect.poll(() => inserts.length).toBe(2);
     expect(inserts[1].expires_at).toBeNull();
     await page.getByRole('button', { name: 'Ya la he guardado' }).click();
-    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Revocar Caducada' }).click();
+    await page.locator('form.ask').getByRole('button', { name: 'Revocar' }).click();
     await expect(page.getByRole('button', { name: 'Revocar Caducada' })).toHaveCount(0);
     await expect(page.getByText(/último uso/)).toBeVisible();
     const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
