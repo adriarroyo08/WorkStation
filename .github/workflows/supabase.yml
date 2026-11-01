@@ -30,7 +30,7 @@ jobs:
       - name: Empaquetar función
         if: steps.check.outputs.skip != 'true'
         run: npm --prefix mcp ci && npm --prefix mcp run build:edge
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         if: steps.check.outputs.skip != 'true'
       - name: Desplegar
         if: steps.check.outputs.skip != 'true'
