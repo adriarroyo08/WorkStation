@@ -1,4 +1,5 @@
 import type { Exercise, ExerciseKind, MuscleGroup } from './types';
+import { EXERCISE_EVIDENCE_MATRIX } from './exercise-evidence';
 
 // Biblioteca base en español. `media` apunta al catálogo libre free-exercise-db (Unlicense / dominio público),
 // de donde salen las imágenes animadas y las instrucciones. El catálogo completo (870+) se puede explorar en la app.
@@ -153,6 +154,7 @@ export const DEFAULT_EXERCISES: Exercise[] = raw.map(([id, name, muscle, equipme
   kind: kind ?? 'weight_reps',
   ...(media ? { media } : {}),
   ...(secondary ? { secondary } : {}),
+  science: EXERCISE_EVIDENCE_MATRIX[id],
 }));
 
 export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
