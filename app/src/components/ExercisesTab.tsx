@@ -1,13 +1,15 @@
 import { Check, ChevronRight, Film, Pin, Plus, Search, Trophy } from 'lucide-react';
 import { ask } from '../dialog';
 import { useEffect, useState } from 'react';
+import './ExercisesTab.css';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleFilter, MuscleMap } from './BodyMap';
-import { exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
-import type { Exercise, ExerciseKind } from '../../../shared/types';
+import { exerciseActivation } from '../../../shared/muscle-detail';
+import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
+import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
@@ -16,6 +18,21 @@ import { StrengthCard } from './Strength';
 import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
 import { Back, ExerciseMedia, Sheet, Stat } from './ui';
 import { loadCatalog, type CatalogItem } from '../catalog';
+
+function bestSetIndex(sets: WorkoutSet[], kind: ExerciseKind): number {
+  let best = -1;
+  let maxScore = -Infinity;
+  for (let i = 0; i < sets.length; i++) {
+    const s = sets[i];
+    const score =
+      kind === 'weight_reps' ? estimate1RM(s.weight ?? 0, s.reps ?? 0) || (s.weight ?? 0) : kind === 'duration' ? (s.durationSec ?? 0) : kind === 'distance' ? (s.distanceM ?? 0) : (s.reps ?? 0);
+    if (score > maxScore) {
+      maxScore = score;
+      best = i;
+    }
+  }
+  return best;
+}
 
 export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: string | null; onOpened?: () => void; onClose?: () => void }) {
   const { data } = useStore();
@@ -69,11 +86,13 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
               onClick={() => setSel(e.id)}
               right={
                 pr ? (
-                  <small className="muted right">
-                    <Trophy size={16} className="ico" />{' '}
-                    {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
+                  <small className="muted right exrow-pr">
+                    <span className="exrow-trophy">
+                      <Trophy size={16} className="ico" />{' '}
+                      {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
+                    </span>
                     <br />
-                    {pr.sessions} ses.
+                    <span>{pr.sessions} ses.</span>
                   </small>
                 ) : undefined
               }
@@ -246,10 +265,22 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
           </button>
         }
       />
+      <div className="exdetail-hero-media">
+        <ExerciseMedia exercise={e} />
+      </div>
       <h1>{e.name}</h1>
       <p className="muted small">
         {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>
+      <ul className="exinfo-chips exdetail-chips" aria-label="Músculos principales y secundarios">
+        {exerciseActivation(e)
+          .filter((a) => a.pct >= 45)
+          .map((a) => (
+            <li key={a.group} className={a.pct >= 80 ? 'main' : undefined}>
+              {a.label}
+            </li>
+          ))}
+      </ul>
       <div className="segmented fit">
         {(['summary', 'history', 'howto', 'records'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
@@ -260,7 +291,6 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {tab === 'summary' && (
         <>
-          <ExerciseMedia exercise={e} />
           <MuscleMap exercise={e} />
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
@@ -268,7 +298,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
             </button>
           )}
           {pr && (
-            <div className="stats">
+            <div className="stats exdetail-stats">
               {e.kind === 'weight_reps' ? (
                 <>
                   <Stat value={toUnit(pr.best1RM)} label={`${weightUnit()} 1RM est.`} />
@@ -320,23 +350,29 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {tab === 'history' && (
         <>
-          {[...h].reverse().map((s) => (
-            <div key={s.workoutId + s.date} className="card small">
-              <b>{fmtDate(s.date)}</b> <span className="muted">· {data.workouts.find((w) => w.id === s.workoutId)?.name}</span>
-              <ol>
-                {s.sets.map((x, i) => (
-                  <li key={i}>{formatSet(x, e)}</li>
-                ))}
-              </ol>
-            </div>
-          ))}
+          {[...h].reverse().map((s) => {
+            const bestIdx = bestSetIndex(s.sets, e.kind);
+            const wName = data.workouts.find((w) => w.id === s.workoutId)?.name;
+            return (
+              <div key={s.workoutId + s.date} className="card small exhistory-session">
+                <div className="exhistory-date">{fmtDate(s.date)}</div>
+                {wName && <div className="exhistory-wname">{wName}</div>}
+                <ol className="exhistory-sets">
+                  {s.sets.map((x, i) => (
+                    <li key={i} className={i === bestIdx ? 'best' : undefined}>
+                      {formatSet(x, e)}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })}
           {!h.length && <p className="muted">Sin registros todavía.</p>}
         </>
       )}
 
       {tab === 'howto' && (
         <>
-          <ExerciseMedia exercise={e} />
           {instructions === null && <p className="muted">Cargando instrucciones…</p>}
           {instructions?.length ? (
             <ol>
@@ -431,38 +467,38 @@ function Records({ id, e }: { id: string; e: Exercise }) {
               <>
                 <tr>
                   <td>Peso máximo</td>
-                  <td>{fmtWeight(pr.bestWeight)}</td>
+                  <td className="rec-val">{fmtWeight(pr.bestWeight)}</td>
                 </tr>
                 <tr>
                   <td>1RM estimado</td>
-                  <td>{fmtWeight(pr.best1RM)}</td>
+                  <td className="rec-val">{fmtWeight(pr.best1RM)}</td>
                 </tr>
                 <tr>
                   <td>Mejor serie (peso × reps)</td>
-                  <td>{fmtWeight(pr.bestSetVolume, { decimals: 0 })}</td>
+                  <td className="rec-val">{fmtWeight(pr.bestSetVolume, { decimals: 0 })}</td>
                 </tr>
                 <tr>
                   <td>Mejor volumen en una sesión</td>
-                  <td>{fmtWeight(pr.bestVolumeSession, { decimals: 0 })}</td>
+                  <td className="rec-val">{fmtWeight(pr.bestVolumeSession, { decimals: 0 })}</td>
                 </tr>
               </>
             )}
             {pr.maxReps > 0 && (
               <tr>
                 <td>Más repeticiones</td>
-                <td>{pr.maxReps}</td>
+                <td className="rec-val">{pr.maxReps}</td>
               </tr>
             )}
             {pr.maxDuration > 0 && (
               <tr>
                 <td>Más tiempo</td>
-                <td>{formatDuration(pr.maxDuration)}</td>
+                <td className="rec-val">{formatDuration(pr.maxDuration)}</td>
               </tr>
             )}
             {pr.maxDistance > 0 && (
               <tr>
                 <td>Más distancia</td>
-                <td>{pr.maxDistance} m</td>
+                <td className="rec-val">{pr.maxDistance} m</td>
               </tr>
             )}
           </tbody>
@@ -483,7 +519,7 @@ function Records({ id, e }: { id: string; e: Exercise }) {
               {reps.map((r) => (
                 <tr key={r.reps}>
                   <td>{r.reps}</td>
-                  <td>{fmtWeight(r.weight)}</td>
+                  <td className="rec-val">{fmtWeight(r.weight)}</td>
                   <td className="muted">{fmtDate(r.date)}</td>
                 </tr>
               ))}
@@ -528,22 +564,22 @@ function Records({ id, e }: { id: string; e: Exercise }) {
           <tbody>
             <tr>
               <td>Sesiones</td>
-              <td>{pr.sessions}</td>
+              <td className="rec-val">{pr.sessions}</td>
             </tr>
             <tr>
               <td>Series</td>
-              <td>{h.reduce((v, s) => v + s.sets.length, 0)}</td>
+              <td className="rec-val">{h.reduce((v, s) => v + s.sets.length, 0)}</td>
             </tr>
             {totalReps > 0 && (
               <tr>
                 <td>Repeticiones</td>
-                <td>{totalReps.toLocaleString('es-ES')}</td>
+                <td className="rec-val">{totalReps.toLocaleString('es-ES')}</td>
               </tr>
             )}
             {totalVol > 0 && (
               <tr>
                 <td>Volumen</td>
-                <td>{fmtWeight(totalVol, { decimals: 0 })}</td>
+                <td className="rec-val">{fmtWeight(totalVol, { decimals: 0 })}</td>
               </tr>
             )}
           </tbody>

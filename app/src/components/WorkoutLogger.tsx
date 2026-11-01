@@ -41,6 +41,7 @@ import ExerciseInfo from './ExerciseInfo';
 import { ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
 import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB, fmtMass, fmtWeight, fromUnit, toUnit, weightUnit } from '../../../shared/units';
 import { ReorderSheet, moveItem } from './Reorder';
+import './WorkoutLogger.css';
 
 const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
 const SET_LABEL: Record<SetType, string> = { normal: '', warmup: 'C', drop: 'D', failure: 'F' };
@@ -169,21 +170,33 @@ export default function WorkoutLogger({
         </div>
         <div className="row live-stats small muted">
           {mode === 'live' && (
-            <span className="icon-btn">
-              <Timer size={14} /> {formatDuration(elapsed)}
-            </span>
+            <div className="live-stat icon-btn">
+              <b className="live-stat-val live-time">{formatDuration(elapsed)}</b>
+              <span className="live-stat-lbl muted small">
+                <Timer size={12} aria-hidden="true" /> duración
+              </span>
+            </div>
           )}
           {mode === 'live' && hr.live && (
-            <span className="hr-live">
-              <Heart size={16} className="ico" /> {hr.bpm}
-            </span>
+            <div className="live-stat hr-live">
+              <b className="live-stat-val">{hr.bpm}</b>
+              <span className="live-stat-lbl small">
+                <Heart size={12} className="ico" aria-hidden="true" /> ppm
+              </span>
+            </div>
           )}
-          <span className="icon-btn">
-            <Weight size={14} /> {fmtMass(totals.volume)}
-          </span>
-          <span className="icon-btn">
-            <ListChecks size={14} /> {mode === 'live' && totals.planned ? `${totals.sets}/${totals.planned}` : totals.sets} series
-          </span>
+          <div className="live-stat icon-btn">
+            <b className="live-stat-val">{fmtMass(totals.volume)}</b>
+            <span className="live-stat-lbl muted small">
+              <Weight size={12} aria-hidden="true" /> volumen
+            </span>
+          </div>
+          <div className="live-stat icon-btn">
+            <b className="live-stat-val">{mode === 'live' && totals.planned ? `${totals.sets}/${totals.planned}` : totals.sets}</b>
+            <span className="live-stat-lbl muted small">
+              <ListChecks size={12} aria-hidden="true" /> series
+            </span>
+          </div>
           {mode === 'live' && (
             <button className="ghost small devices-btn" onClick={() => setDevices(true)} aria-label="Reloj y sensores">
               <Watch size={18} />
