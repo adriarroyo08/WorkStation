@@ -11,12 +11,12 @@
     "capture": "node scripts/capture-screens.mjs"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.538",
-    "@remotion/transitions": "4.0.538",
-    "lucide-react": "^1.59.0",
+    "@remotion/cli": "4.0.539",
+    "@remotion/transitions": "4.0.539",
+    "lucide-react": "^1.63.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "remotion": "4.0.538"
+    "remotion": "4.0.539"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
