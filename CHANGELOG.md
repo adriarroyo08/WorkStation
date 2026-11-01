@@ -14,6 +14,9 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
   - Ejercicio: portada con imagen a sangre, chips de músculos encima de las pestañas, cifras de récord sin cajas y mejor serie resaltada en el historial.
   - Perfil: portada con inicial, cifras sin caja separadas por líneas, filas de menú con icono en cuadro y aviso de sincronización tras el menú.
 
+### Seguridad
+- Límite por API key (#40): 60 llamadas/minuto y 1000/hora contadas en la base de datos (`008_api_key_rate_limit.sql`, tabla `api_key_usage`, dentro de `api_key_user()`), así que también cubre las RPC llamadas directamente. Responde 429 con `Retry-After`; el MCP lo propaga, corta los lotes al primer 429 y rechaza lotes de más de 20 mensajes. Política y amenazas en `docs/mcp-limites.md`.
+
 ### Corregido
 - Contraste AA: `--danger-fill` (#c62828) para `button.danger-solid` (antes 3,37:1 en oscuro) y `--muted` oscuro a #9a9aa0 (4,40:1 → ≥ 4,5:1 sobre `--field`).
 
