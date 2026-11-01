@@ -5,6 +5,9 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [1.9.0] - 2026-10-31
 
+### Añadido
+- Metadatos científicos de la biblioteca (#51): los 130 ejercicios base incorporan su patrón de movimiento, músculos clasificados por rol e intensidad (0–100), nivel de evidencia explícito (hipertrofia, emg o estimada) y fuentes científicas verificadas sin citas inventadas.
+
 ### Cambiado
 - Resumen de fin de entreno (#48): portada de marcador con antetítulo (nº de entreno · rutina), título grande, `SessionMap` y cuatro cifras que suben con `CountUp` (instantáneas con movimiento reducido), y banda de récords del día. La rejilla de 5 cifras y el mapa grande se mantienen solo al consultar un entreno pasado.
 
