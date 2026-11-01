@@ -576,3 +576,27 @@ test('diálogos propios: nombre de carpeta y confirmar borrado (Cancelar no borr
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.routine')).toHaveCount(1);
 });
+
+test('resumen de fin de entreno: portada con cifras, mapa y récords', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  await page.locator('.swipe .set').first().waitFor();
+  for (const r of await page.locator('.swipe .set').all()) {
+    await r.getByLabel('Peso (kg)').fill('110');
+    await r.getByLabel('Repeticiones').fill('8');
+    await r.getByLabel('Completar serie').click();
+  }
+  await page.getByRole('button', { name: 'Terminar' }).click();
+  const finish = page.locator('.finish');
+  await expect(finish.getByRole('heading', { name: '¡Buen trabajo!' })).toBeVisible();
+  await expect(finish.locator('.finish-kicker')).toContainText('Pierna A');
+  // Las cifras suben hasta su valor final
+  await expect(finish.locator('.finish-nums div', { hasText: 'series' }).locator('dd')).toHaveText('2');
+  await expect(finish.locator('.finish-nums div', { hasText: 'reps' }).locator('dd')).toHaveText('16');
+  await expect(finish.locator('.finish-nums div', { hasText: 'volumen' }).locator('dd')).toHaveText('1,8 t');
+  await expect(finish.locator('.finish-pr')).toContainText('récords batidos hoy');
+  await expect(finish.locator('svg.bm-session')).toHaveCount(1);
+  // El mapa grande no se repite más abajo
+  await expect(page.locator('svg.bm-session.big')).toHaveCount(0);
+});

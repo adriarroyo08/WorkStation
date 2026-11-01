@@ -102,6 +102,25 @@ export function ExerciseMedia({ exercise, media, exdbId, size = 'large' }: { exe
   );
 }
 
+// Cifra que sube desde 0 al aparecer (800 ms). Con movimiento reducido se muestra directamente.
+export function CountUp({ value, format }: { value: number; format: (v: number) => string }) {
+  const [still] = useState(() => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [v, setV] = useState(still ? value : 0);
+  useEffect(() => {
+    if (still) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 800);
+      setV(value * (1 - (1 - p) ** 3));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, still]);
+  return <>{format(still ? value : v)}</>;
+}
+
 export function Delta({ cur, prev, unit = '' }: { cur: number; prev: number; unit?: string }) {
   if (!prev && !cur) return null;
   if (!prev) return <span className="delta up">nuevo</span>;

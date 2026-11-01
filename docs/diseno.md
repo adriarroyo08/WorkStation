@@ -20,7 +20,7 @@ Referencia común para las pantallas de la app (`app/`). Todo lo que se cita aqu
 
 | Decisión de la spec | Estado |
 |---|---|
-| Fondo `#141414`, superficies `#1f1f1f`, divisores `#2a2a2a`, texto `#f2f2f2`, secundario `#8e8e93`, acento `#f2600c` | Vigente tal cual (`--bg`, `--surface`, `--line`, `--text`, `--muted`, `--accent`). |
+| Fondo `#141414`, superficies `#1f1f1f`, divisores `#2a2a2a`, texto `#f2f2f2`, secundario `#9a9aa0` (antes `#8e8e93`), acento `#f2600c` | Vigente tal cual (`--bg`, `--surface`, `--line`, `--text`, `--muted`, `--accent`). |
 | Claro/oscuro automático más ajuste manual | Vigente (`prefers-color-scheme` y `:root[data-theme]`). |
 | Sin degradados, brillos, emojis; solo iconos lucide | Vigente y con test. Única excepción: el degradado del `.skeleton` (carga), que el test omite expresamente. |
 | Filas con divisores en lugar de tarjetas grandes | Vigente (`.line`, `.lines`). |
@@ -44,7 +44,7 @@ Tres bloques definen los mismos nombres: `:root` (oscuro, por defecto), `@media 
 | `--line` | `#2a2a2a` | `#ececec` | Divisores, bordes de tarjeta, fondo de botón neutro, casillas vacías |
 | `--line-strong` | `#3a3a3a` | `#dcdce0` | Borde de `.outline`, tirador de hoja, hover de tarjeta |
 | `--text` | `#f2f2f2` | `#111111` | Texto principal; fondo del toast |
-| `--muted` | `#8e8e93` | `#6b6b70` | Texto secundario, etiquetas `.sec`, iconos de fila |
+| `--muted` | `#9a9aa0` | `#636368` | Texto secundario, etiquetas `.sec`, iconos de fila |
 | `--accent` | `#f2600c` | `#f2600c` | Solo elementos no textuales: barras, casillas activas, anillo de foco, relleno de mapa muscular |
 | `--accent-ink` | `#ff7a2e` | `#b23a08` | Texto de acento: enlaces, `button.ghost`, `button.link`, borde de campo enfocado |
 | `--accent-fill` | `#c2410c` | `#c2410c` | Relleno con texto blanco: `button.primary`, chip/segmento activo, banner de entreno, descanso |
@@ -64,14 +64,14 @@ Mínimos: 4,5:1 texto normal, 3:1 texto grande (≥24 px, o ≥18,66 px en negri
 |---|---|---|---|
 | `--text` sobre `--bg` | 16,46 | 18,88 | AA |
 | `--text` sobre `--surface` | 14,72 | — | AA |
-| `--muted` sobre `--bg` | 5,65 | 5,30 | AA |
-| `--muted` sobre `--surface` | 5,06 | 4,83 | AA |
-| `--muted` sobre `--field` | **4,40** | 4,49 | **No llega a 4,5**: no pongas texto `--muted` pequeño sobre `--field` (chips inactivos); usar `--text` o tamaño grande |
+| `--muted` sobre `--bg` | 6,58 | 5,97 | AA |
+| `--muted` sobre `--surface` | 5,89 | 5,44 | AA |
+| `--muted` sobre `--field` | 5,13 | 5,07 | AA (corregido en 1.9.0; antes 4,40 / 4,49) |
 | `--accent-ink` sobre `--bg` / `--surface` | 7,08 / 6,34 | 6,00 / 5,46 | AA |
 | `--on-accent` sobre `--accent-fill` | 5,18 | 5,18 | AA (mismo valor en ambos temas) |
 | `--accent` sobre `--bg` (no texto) | 5,66 | **3,25** | AA para gráficos y foco (≥3:1); **prohibido como color de texto en claro** |
 | `--danger` sobre `--bg` / `--surface` | 5,46 / 4,88 | 5,47 / 4,98 | AA como texto |
-| `#fff` sobre `--danger` (`.danger-solid`) | **3,37** | 5,47 | **Falla en oscuro** (ver «Incoherencias») |
+| `#fff` sobre `--danger-fill` (`.danger-solid`) | 5,62 | 5,62 | AA (`--danger-fill: #c62828`, desde 1.9.0) |
 | `--ok-ink` sobre `--bg` | 8,32 | 5,32 | AA |
 | `--warn-ink` sobre `--bg` | 8,19 | 7,09 | AA |
 | `--on-ok` sobre `--ok` | 5,99 | 5,99 | AA |
@@ -163,7 +163,7 @@ El toast usa una sombra literal (`0 6px 24px rgba(0,0,0,.3)`). Las sombras deben
 | `.ghost` | Sin fondo, texto `--accent-ink` | Acciones terciarias, cerrar hoja (icono solo), «Deshacer» |
 | `.link` | Sin fondo, `--accent-ink`, 600 | Enlace de acción dentro de una fila o texto |
 | `.danger` | Sin fondo, texto `--danger` | Acción destructiva reversible o con confirmación aparte |
-| `.danger-solid` | Fondo `--danger`, texto `#fff` | Confirmación final destructiva (botón OK de `ask.confirm({ danger: true })`) |
+| `.danger-solid` | Fondo `--danger-fill`, texto `#fff` | Confirmación final destructiva (botón OK de `ask.confirm({ danger: true })`) |
 | `.plain` | Sin fondo ni padding, hereda color | Envolver contenido pulsable propio |
 | `.big` | Ancho completo, 17 px, radio `--radius` | CTA de pantalla («Empezar entrenamiento») |
 | `.small` | `4px 8px`, 13 px | Controles en línea densos |
@@ -261,8 +261,8 @@ Antes de abrir PR de cualquier cambio visual:
 No se han corregido aquí (esta tarea es solo documentación):
 
 1. **Reglas duplicadas que se pisan** en `styles.css`: `.stat b` aparece 4 veces (tamaños 19 → 24 → 30 px; gana la última, en el bloque de marcador), `.week-count` y `.mfilter-info b` 2-3 veces (40 → 60 px), `.metric-head > b` (36 → 50 px), `h1` (24 → 34 px), `input.title` (21 → 30 px), además de `.card`, `.tabs`, `.chips`, `.segmented.mini`, `button.primary` y `.big-emoji` definidos más de una vez. Consolidar en una sola regla por selector.
-2. **`.danger-solid` en oscuro**: texto `#fff` sobre `--danger` `#f2555a` da 3,37:1, por debajo de AA. En claro cumple (5,47). Sugerencia: añadir `--on-danger` (oscuro `#140404`) o usar un `--danger-fill` propio.
-3. **`--muted` sobre `--field` en oscuro** da 4,40:1 (claro 4,49:1), justo bajo AA para texto pequeño (chips inactivos).
+2. ~~**`.danger-solid` en oscuro**~~ Resuelto en 1.9.0 con `--danger-fill`.: texto `#fff` sobre `--danger` `#f2555a` da 3,37:1, por debajo de AA. En claro cumple (5,47). Sugerencia: añadir `--on-danger` (oscuro `#140404`) o usar un `--danger-fill` propio.
+3. ~~**`--muted` sobre `--field`**~~ Resuelto en 1.9.0 (`#9a9aa0` oscuro, `#636368` claro). da 4,40:1 (claro 4,49:1), justo bajo AA para texto pequeño (chips inactivos).
 4. **`--on-accent` solo se define en `:root`**; los bloques claros lo heredan. Funciona, pero conviene declararlo también ahí por simetría.
 5. **Radios literales** (10 px en `button`/`input`/`.set`/`.swipe`, 12 px en `.toast`) conviviendo con `--radius` y `--radius-sm`. Falta un token de 10 px o unificar con `--radius-sm`.
 6. **Sombra del toast literal** en lugar de `--shadow-lg`; `--shadow` es `none` y se consume en `.media`/`.excard` sin efecto.
