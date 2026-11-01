@@ -22,6 +22,8 @@ const source = z
       .regex(/^10\.\d{4,9}\/[^\s]+$/i)
       .optional(),
     url: safeUrl.optional(),
+    fechaConsulta: z.string().optional(),
+    ejercicioEstudiado: z.string().optional(),
   })
   .refine((value) => value.doi !== undefined || value.url !== undefined, 'Falta DOI o URL');
 
