@@ -6,6 +6,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ## [1.9.0] - 2026-10-31
 
 ### Cambiado
+- Guías de conexión IA (#41): instrucciones oficiales fechadas para Claude remoto, ChatGPT, Gemini CLI y Claude Code; copia con Authorization e incompatibilidad OAuth de ChatGPT explícita.
 - Resumen de fin de entreno (#48): portada de marcador con antetítulo (nº de entreno · rutina), título grande, `SessionMap` y cuatro cifras que suben con `CountUp` (instantáneas con movimiento reducido), y banda de récords del día. La rejilla de 5 cifras y el mapa grande se mantienen solo al consultar un entreno pasado.
 
 - Sistema de diseño (`docs/diseno.md`) aplicado a las pantallas (#44–#47), cada una con su CSS propio importado desde el componente (`Train.css`, `WorkoutLogger.css`, `History.css`, `ExercisesTab.css`, `Profile.css`):
