@@ -274,6 +274,35 @@ test('reordenar ejercicios arrastrando y con teclado', async ({ page, errors }) 
   await expect(page.locator('.excard').first()).toContainText('Sentadilla');
 });
 
+test('editor de rutina: menú de tipo de serie, mover manteniendo pulsado y ficha al tocar', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.routine .grow', { hasText: 'Pierna A' }).first().click();
+  const cards = page.locator('.excard .exinfo-open b');
+  await expect(cards).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
+  // Tipo de serie: se elige en un menú, no cambia al tocar.
+  await page.getByRole('button', { name: 'Serie 1: Normal. Cambiar tipo' }).first().click();
+  const menu = page.getByRole('dialog', { name: 'Tipo de la serie 1' });
+  await menu.getByRole('button', { name: /Calentamiento/ }).click();
+  await expect(menu).toHaveCount(0);
+  await expect(page.locator('.excard').first().locator('.settype').first()).toHaveText('C');
+  // Mantener pulsado y arrastrar hacia abajo: pasa al segundo puesto.
+  const head = page.locator('.excard .exinfo-open').first();
+  const box = (await head.boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await expect(page.locator('.rx-list.compact')).toBeVisible();
+  const first = (await page.locator('.excard').first().boundingBox())!;
+  for (let k = 1; k <= 8; k++) await page.mouse.move(box.x + 40, first.y + first.height / 2 + k * 15);
+  await page.mouse.up();
+  await expect(cards).toHaveText(['Curl femoral tumbado', 'Sentadilla (barra)']);
+  await expect(page.getByRole('dialog', { name: 'Ficha del ejercicio' })).toHaveCount(0);
+  // Un toque normal abre la ficha.
+  await page.locator('.excard .exinfo-open').first().click();
+  await expect(page.getByRole('dialog', { name: 'Ficha del ejercicio' })).toBeVisible();
+});
+
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
   void errors;
   await page.goto('/');

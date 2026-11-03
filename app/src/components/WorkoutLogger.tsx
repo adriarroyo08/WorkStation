@@ -42,10 +42,8 @@ import { ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
 import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB, fmtMass, fmtWeight, fromUnit, toUnit, weightUnit } from '../../../shared/units';
 import { ReorderSheet, moveItem } from './Reorder';
 import './WorkoutLogger.css';
+import { SET_LABEL, SET_NAMES, SET_TYPES } from '../../../shared/set-types';
 
-const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
-const SET_LABEL: Record<SetType, string> = { normal: '', warmup: 'C', drop: 'D', failure: 'F' };
-const SET_NAMES: Record<SetType, string> = { normal: 'Normal', warmup: 'Calentamiento', drop: 'Drop set', failure: 'Al fallo' };
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 type Edit = (fn: (w: Workout) => void) => void;
@@ -643,7 +641,7 @@ function SetRow(props: {
         {typeMenu && (
           <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
             <div className="list">
-              {SET_CYCLE.map((t) => (
+              {SET_TYPES.map((t) => (
                 <button key={t} className={`item settype-item ${t}`} onClick={() => (onChange({ type: t }), setTypeMenu(false))}>
                   <b>{SET_LABEL[t] || '1'}</b> {SET_NAMES[t]}
                 </button>
