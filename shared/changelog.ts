@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.10.0',
+    date: '2026-11-03',
+    items: [
+      'Editor de rutinas: al tocar el número de una serie se abre un menú para elegir el tipo (normal, calentamiento, drop set o al fallo).',
+      'Mantén pulsado un ejercicio de la rutina y arrástralo arriba o abajo para cambiarlo de sitio.',
+    ],
+  },
+  {
     version: '1.9.0',
     date: '2026-10-31',
     items: [

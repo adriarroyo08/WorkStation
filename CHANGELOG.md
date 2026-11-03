@@ -3,6 +3,14 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.10.0] - 2026-11-03
+
+### Cambiado
+- Editor de rutinas: el tipo de serie se elige en un menú (antes cambiaba en ciclo con cada toque). Tipos, letras y nombres comunes en `shared/set-types.ts`, también usados por el entreno en curso.
+
+### Añadido
+- Editor de rutinas: mantener pulsado (450 ms) la cabecera de un ejercicio pliega las tarjetas y permite arrastrarlo sin soltar el dedo; un toque normal sigue abriendo la ficha. Cálculo del destino en `shared/reorder.ts`. «Reordenar ejercicios» se mantiene como alternativa con teclado.
+
 ## [1.9.0] - 2026-10-31
 
 ### Cambiado
