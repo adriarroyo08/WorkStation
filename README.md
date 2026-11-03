@@ -233,7 +233,7 @@ La app genera **API keys personales** (`ws_…`) para que una IA (Claude, Cursor
   ```
   Sin cuenta en la nube, el servidor local también funciona con un fichero: `WORKSTATION_DATA=/ruta/backup.json`, el backup exportado desde la app.
 
-Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `today_plan`, `strength_levels`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
+Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `today_plan`, `strength_levels`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `update_routine` (renombrar, cambiar series, repeticiones, peso, descanso u orden, sustituir, quitar o añadir ejercicios), `delete_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
 
 ## Importar desde Hevy
 
