@@ -112,7 +112,14 @@ export default function Settings({ onBack }: { onBack: () => void }) {
             ))}
           </select>
         </label>
-        <Toggle label="Mostrar columna RPE" checked={settings.showRpe} onChange={(v) => setSettings({ showRpe: v })} />
+        <Toggle label={`Mostrar columna ${(settings.effortScale ?? 'rpe').toUpperCase()}`} checked={settings.showRpe} onChange={(v) => setSettings({ showRpe: v })} />
+        <label>
+          Escala de esfuerzo
+          <select value={settings.effortScale ?? 'rpe'} onChange={(e) => setSettings({ effortScale: e.target.value as 'rpe' | 'rir' })}>
+            <option value="rpe">RPE</option>
+            <option value="rir">RIR</option>
+          </select>
+        </label>
         <Toggle label="Sonido al terminar el descanso" checked={settings.sound} onChange={(v) => setSettings({ sound: v })} />
         <Toggle label="Vibrar al terminar el descanso" checked={settings.vibrate} onChange={(v) => setSettings({ vibrate: v })} />
         <Toggle label="Mantener pantalla encendida" checked={settings.keepAwake} onChange={(v) => setSettings({ keepAwake: v })} />

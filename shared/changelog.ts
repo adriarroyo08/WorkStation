@@ -10,6 +10,7 @@ export const CHANGELOG: Release[] = [
     version: '1.10.0',
     date: '2026-11-03',
     items: [
+      'Elige RPE o RIR en Ajustes para registrar y editar el esfuerzo, conservando las series en RPE.',
       'Editor de rutinas: al tocar el número de una serie se abre un menú para elegir el tipo (normal, calentamiento, drop set o al fallo).',
       'Mantén pulsado un ejercicio de la rutina y arrástralo arriba o abajo para cambiarlo de sitio.',
       'Noticias de fitness e investigación: catálogo auditado de fuentes abiertas (PubMed, PLOS, Frontiers, JISSN, Fisiología del Ejercicio y Stronger by Science) con contratos de reutilización legal y extractos breves.',
