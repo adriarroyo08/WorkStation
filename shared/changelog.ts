@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.11.0',
+    date: '2026-11-05',
+    items: [
+      'Todos los ejercicios a mano: al añadir uno a una rutina o al entreno, y en la pestaña Ejercicios, aparecen también los 870+ del catálogo (por ejemplo, unos 50 de bíceps). Al elegirlo pasa a tu biblioteca.',
+      'Los ejercicios del catálogo tienen ahora su nombre en español.',
+    ],
+  },
+  {
     version: '1.10.0',
     date: '2026-11-03',
     items: [

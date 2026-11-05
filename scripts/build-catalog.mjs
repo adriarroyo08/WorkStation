@@ -54,12 +54,19 @@ try {
 } catch {
   /* sin traducciones */
 }
+// Nombres en español (id → nombre). Si falta un id, queda el nombre original en inglés.
+let NAMES = {};
+try {
+  NAMES = JSON.parse(readFileSync(new URL('./catalog-names-es.json', import.meta.url), 'utf8'));
+} catch {
+  /* sin nombres traducidos */
+}
 const list = process.argv[2] ? JSON.parse(readFileSync(process.argv[2], 'utf8')) : await (await fetch(SRC)).json();
 const out = list.map((x) => {
   const kind = x.category === 'cardio' ? 'duration' : x.category === 'stretching' ? 'duration' : x.equipment === 'body only' ? 'reps' : 'weight_reps';
   return {
     id: x.id,
-    name: x.name,
+    name: NAMES[x.id] ?? x.name,
     muscle: x.category === 'cardio' ? 'cardio' : (MUSCLE[x.primaryMuscles[0]] ?? 'otro'),
     secondary: [...new Set(x.secondaryMuscles.map((m) => MUSCLE[m]).filter(Boolean))],
     equipment: EQUIP[x.equipment] ?? 'otro',

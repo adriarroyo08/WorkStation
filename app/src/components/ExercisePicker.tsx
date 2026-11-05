@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { catalogExtras } from '../../../shared/catalog';
+import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
 import { EQUIPMENT, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleThumb } from './BodyMap';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
@@ -57,6 +59,8 @@ export function ExerciseRow({ e, right, onClick, selected }: { e: Exercise; righ
   );
 }
 
+const CATALOG_PAGE = 40;
+
 // Selector: un toque añade; con "Selección múltiple" puedes añadir varios o como superserie.
 export default function ExercisePicker({
   onPick,
@@ -69,7 +73,12 @@ export default function ExercisePicker({
   title?: string;
   single?: boolean;
 }) {
-  const { data } = useStore();
+  const { data, update } = useStore();
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [more, setMore] = useState(CATALOG_PAGE);
+  useEffect(() => {
+    loadCatalog().then(setCatalog, () => {}); // sin red: solo la biblioteca
+  }, []);
   const [sel, setSel] = useState<string[]>([]);
   const [multi, setMulti] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -83,10 +92,23 @@ export default function ExercisePicker({
       const i = recent.indexOf(id);
       return i < 0 ? 1e6 : i;
     };
-    return [...data.exercises].sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name));
-  }, [data.exercises, recent]);
-  const { q, list, filters } = useExerciseFilter(sorted);
-  const byId = new Map(data.exercises.map((e) => [e.id, e]));
+    const extra = catalogExtras(data.exercises, catalog)
+      .map(catalogToExercise)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return [...[...data.exercises].sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name)), ...extra];
+  }, [data.exercises, recent, catalog]);
+  const { q, list: all, filters } = useExerciseFilter(sorted);
+  const own = new Set(data.exercises.map((e) => e.id));
+  const mine = all.filter((e) => own.has(e.id));
+  const fromCatalog = all.filter((e) => !own.has(e.id));
+  const list = [...mine, ...fromCatalog.slice(0, more)];
+  const byId = new Map(sorted.map((e) => [e.id, e]));
+  // Los del catálogo pasan a la biblioteca al elegirlos.
+  const pick = (es: Exercise[], superset: boolean) => {
+    const add = es.filter((e) => !own.has(e.id));
+    if (add.length) update((d) => void d.exercises.push(...add.filter((e) => !d.exercises.some((x) => x.id === e.id)).map((e) => structuredClone(e))));
+    onPick(es, superset);
+  };
 
   if (creating)
     return (
@@ -117,7 +139,7 @@ export default function ExercisePicker({
             <button
               className="primary grow"
               onClick={() =>
-                onPick(
+                pick(
                   sel.map((id) => byId.get(id)!),
                   false,
                 )
@@ -129,7 +151,7 @@ export default function ExercisePicker({
               <button
                 className="primary grow"
                 onClick={() =>
-                  onPick(
+                  pick(
                     sel.map((id) => byId.get(id)!),
                     true,
                   )
@@ -149,15 +171,21 @@ export default function ExercisePicker({
         {list.map((e, i) => (
           <div key={e.id}>
             {i === 0 && recent.includes(e.id) && !q && <h3 className="muted small">Recientes</h3>}
-            {i > 0 && recent.includes(list[i - 1].id) && !recent.includes(e.id) && !q && <h3 className="muted small">Todos</h3>}
+            {i > 0 && recent.includes(list[i - 1].id) && !recent.includes(e.id) && !q && own.has(e.id) && <h3 className="muted small">Todos</h3>}
+            {i === mine.length && <h3 className="muted small">Del catálogo ({fromCatalog.length})</h3>}
             <ExerciseRow
               e={e}
               selected={sel.includes(e.id)}
               right={multi ? <span className="checkmark">{sel.includes(e.id) ? sel.indexOf(e.id) + 1 : ''}</span> : undefined}
-              onClick={() => (multi ? setSel((s) => (s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])) : onPick([e], false))}
+              onClick={() => (multi ? setSel((s) => (s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])) : pick([e], false))}
             />
           </div>
         ))}
+        {fromCatalog.length > more && (
+          <button className="ghost full" onClick={() => setMore((m) => m + CATALOG_PAGE)}>
+            Mostrar más del catálogo ({fromCatalog.length - more})
+          </button>
+        )}
       </div>
     </Sheet>
   );

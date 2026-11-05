@@ -303,6 +303,26 @@ test('editor de rutina: menú de tipo de serie, mover manteniendo pulsado y fich
   await expect(page.getByRole('dialog', { name: 'Ficha del ejercicio' })).toBeVisible();
 });
 
+test('el selector incluye el catálogo completo y lo añade a la biblioteca', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.routine .grow', { hasText: 'Pierna A' }).first().click();
+  await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Añadir ejercicio' });
+  await sheet.getByPlaceholder('Buscar ejercicio…').fill('zottman');
+  await expect(sheet.getByText(/^Del catálogo/)).toBeVisible();
+  await sheet
+    .locator('.exrow', { hasText: /Zottman/ })
+    .first()
+    .click();
+  await expect(page.locator('.excard .exinfo-open b').last()).toContainText('Zottman');
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await tab(page, 'Ejercicios').click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('zottman');
+  // Ya está en la biblioteca: sale antes de la sección del catálogo.
+  await expect(page.locator('.list .exrow').first()).toContainText('Zottman');
+});
+
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
   void errors;
   await page.goto('/');
