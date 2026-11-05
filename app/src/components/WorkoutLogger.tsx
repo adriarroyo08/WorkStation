@@ -44,7 +44,7 @@ import { ReorderSheet, moveItem } from './Reorder';
 import './WorkoutLogger.css';
 import { SET_LABEL, SET_NAMES, SET_TYPES } from '../../../shared/set-types';
 
-const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+import { EFFORT_OPTIONS, effortFromRpe, effortToRpe, type EffortScale } from '../../../shared/effort';
 
 type Edit = (fn: (w: Workout) => void) => void;
 
@@ -253,7 +253,7 @@ export default function WorkoutLogger({
                 <span>Anterior</span>
                 <span>{c1}</span>
                 <span>{c2}</span>
-                {settings.showRpe && <span>RPE</span>}
+                {settings.showRpe && <span>{(settings.effortScale ?? 'rpe').toUpperCase()}</span>}
                 <span>
                   <Check size={14} aria-label="Hecha" />
                 </span>
@@ -269,6 +269,7 @@ export default function WorkoutLogger({
                   ex={ex}
                   pr={isPr(we, s, ex)}
                   showRpe={settings.showRpe}
+                  effortScale={settings.effortScale ?? 'rpe'}
                   running={stopwatch?.ei === ei && stopwatch.si === si ? Math.round((now - stopwatch.start) / 1000) : undefined}
                   onStopwatch={() => {
                     if (stopwatch?.ei === ei && stopwatch.si === si) {
@@ -556,6 +557,7 @@ function SetRow(props: {
   ex?: Exercise;
   pr: boolean;
   showRpe: boolean;
+  effortScale: EffortScale;
   running?: number;
   onStopwatch: () => void;
   onChange: (p: Partial<WorkoutSet>) => void;
@@ -563,10 +565,9 @@ function SetRow(props: {
   onRemove: () => void;
   onPlates: () => void;
 }) {
-  const { id, isNext, n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
+  const { id, isNext, n, s, prev, ex, pr, showRpe, effortScale, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
   const swipe = useSwipeSet(onRemove, onToggle);
-  const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const kind = ex?.kind ?? 'weight_reps';
   const prevTxt = prev
     ? kind === 'duration'
@@ -626,9 +627,14 @@ function SetRow(props: {
           <NumberField decimals={false} aria-label="Repeticiones" placeholder={prev?.reps?.toString() ?? ''} value={s.reps} onChange={(reps) => onChange({ reps })} />
         )}
         {showRpe && (
-          <select aria-label="RPE" className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
+          <select
+            aria-label={effortScale.toUpperCase()}
+            className="rpe-select"
+            value={effortFromRpe(s.rpe, effortScale) ?? ''}
+            onChange={(e) => onChange({ rpe: effortToRpe(e.target.value === '' ? undefined : Number(e.target.value), effortScale) })}
+          >
             <option value="">–</option>
-            {RPE_OPTIONS.map((r) => (
+            {EFFORT_OPTIONS[effortScale].map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
