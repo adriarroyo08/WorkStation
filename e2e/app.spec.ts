@@ -501,13 +501,17 @@ test('cada ejercicio marca sus músculos con intensidad y partes', async ({ page
   const row = page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first();
   await expect(row.locator('svg.bm-thumb')).toHaveCount(1);
   await row.click();
-  const groups = page.getByRole('list', { name: 'Músculos por rol' });
-  await expect(groups).toContainText('Pecho');
-  await expect(groups).toContainText('principal');
-  await expect(groups).toContainText('100%');
-  await expect(groups).toContainText('secundario');
-  await expect(page.getByRole('img', { name: 'Intensidad muscular según los metadatos' })).toBeVisible();
-  await expect(groups).toContainText('Pecho medio (esternal)');
+  const groups = page.locator('.act-list > li');
+  await expect(groups.first()).toContainText('Pecho');
+  await expect(groups.first()).toContainText('Principal');
+  await expect(groups.first()).toContainText('100%');
+  await expect(page.locator('.act-list')).toContainText('Secundario');
+  await expect(page.getByRole('img', { name: 'Músculos que trabaja' })).toBeVisible();
+  // Tocar el grupo despliega sus partes con su intensidad
+  await groups.first().getByRole('button').click();
+  await expect(groups.first().getByRole('button')).toHaveAttribute('aria-expanded', 'true');
+  await expect(groups.first().locator('.act-parts')).toContainText('Pecho medio (esternal)');
+  await expect(groups.first().locator('.act-parts li')).toHaveCount(3);
 });
 
 test('marcar una serie activa el estilo hecho y aria-pressed', async ({ page, errors }) => {

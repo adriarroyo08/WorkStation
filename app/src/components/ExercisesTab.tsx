@@ -6,7 +6,8 @@ import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exer
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
-import { MuscleFilter, ScienceMap } from './BodyMap';
+import { MuscleFilter, MuscleMap } from './BodyMap';
+import { exerciseActivation, isRegion, REGIONS } from '../../../shared/muscle-detail';
 import { availableExerciseScience } from '../../../shared/exercise-filter';
 import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
@@ -285,6 +286,15 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       <p className="muted small">
         {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>
+      <ul className="exinfo-chips exdetail-chips" aria-label="Músculos principales y secundarios">
+        {exerciseActivation(e)
+          .filter((a) => a.pct >= 45)
+          .map((a) => (
+            <li key={a.group} className={a.pct >= 80 ? 'main' : undefined}>
+              {a.label}
+            </li>
+          ))}
+      </ul>
       <div className="segmented fit">
         {(['summary', 'history', 'howto', 'records'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
@@ -299,16 +309,26 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
             <section aria-label="Evidencia del ejercicio">
               <h2>Patrón: {cap(science.patron.replaceAll('-', ' '))}</h2>
               <p>{science.evidencia === 'estimada' ? 'Evidencia estimada: intensidades orientativas, sin fuentes medidas.' : `Evidencia: ${science.evidencia === 'emg' ? 'EMG' : 'hipertrofia'}`}</p>
-              <ScienceMap exercise={e} />
+              <ul aria-label="Músculos por rol">
+                {science.musculos.map((m) => (
+                  <li key={m.id}>
+                    {isRegion(m.id) ? REGIONS[m.id][1] : MUSCLE_LABELS[m.id]} · {m.rol} · {m.intensidad}%
+                  </li>
+                ))}
+              </ul>
               {science.fuentes.length > 0 && (
                 <>
                   <h3>Fuentes</h3>
                   <ul>
                     {science.fuentes.map((source, i) => (
                       <li key={i}>
-                        <a href={source.url ?? `https://doi.org/${source.doi}`} target="_blank" rel="noopener noreferrer">
-                          {source.titulo}
-                        </a>{' '}
+                        {source.url || source.doi ? (
+                          <a href={source.url ?? `https://doi.org/${source.doi}`} target="_blank" rel="noopener noreferrer">
+                            {source.titulo}
+                          </a>
+                        ) : (
+                          <span>{source.titulo}</span>
+                        )}{' '}
                         · {source.autores.join(', ')} ({source.año})
                       </li>
                     ))}
@@ -317,6 +337,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
               )}
             </section>
           )}
+          <MuscleMap exercise={e} />
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}

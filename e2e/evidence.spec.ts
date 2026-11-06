@@ -59,9 +59,13 @@ test('catalogo y personalizado sin metadatos no atribuyen evidencia', async ({ p
   await page.locator('.exrow').first().click();
   await expect(page.getByRole('heading', { name: 'Prueba sin ciencia' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Evidencia del ejercicio' })).toHaveCount(0);
+  await expect(page.getByRole('img', { name: 'M\u00fasculos que trabaja' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'M\u00fasculos principales y secundarios' })).toBeVisible();
   await page.getByRole('button', { name: 'Volver', exact: true }).click();
   await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('zottman');
   await page.locator('.exrow').first().click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Zottman');
   await expect(page.getByRole('region', { name: 'Evidencia del ejercicio' })).toHaveCount(0);
+  await expect(page.getByRole('img', { name: 'M\u00fasculos que trabaja' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'M\u00fasculos principales y secundarios' })).toBeVisible();
 });

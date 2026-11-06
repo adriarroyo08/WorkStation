@@ -34,3 +34,8 @@ describe('filtro de ejercicios', () => {
     expect(availableExerciseScience(estimated)).toEqual(estimated.science);
   });
 });
+
+it('conserva las fuentes sin enlace como texto sin impedir consultar los metadatos', () => {
+  const science = { ...availableExerciseScience(sourced)!, fuentes: [{ titulo: 'Referencia sin enlace', autores: ['Autor'], año: 2024 }] };
+  expect(availableExerciseScience({ ...sourced, science })).toEqual(science);
+});
