@@ -29,6 +29,7 @@ export const CHANGELOG: Release[] = [
     version: '1.9.0',
     date: '2026-10-31',
     items: [
+      'Guías MCP para Claude remoto, ChatGPT, Gemini CLI y Claude Code, con requisitos comprobados y copia segura mediante Authorization.',
       'Nuevo resumen al terminar: portada con tus cifras en grande que suben al aparecer, el mapa de músculos trabajados y tus récords del día destacados.',
       'Entrenar, Historial, Ejercicio y Perfil renovados: rutinas con su mapa de músculos, fechas y nombres en grande, calendario con tus días entrenados, ficha del ejercicio con portada y perfil con tus cifras de un vistazo.',
       'Mejor contraste en botones de borrar y textos secundarios.',
