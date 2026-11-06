@@ -162,6 +162,9 @@ export const ACTIVATION: Record<string, string> = {
   // Core
   plancha: 'abd-sup 100, abd-inf 95, oblicuos 75, hombro-ant 45, gluteo-mayor 40, recto-femoral 30, pecho-med 25',
   'plancha-lateral': 'oblicuos 100, gluteo-medio 70, abd-sup 50, abd-inf 50, lumbar 45, hombro-lat 40, abductores 35, aductores 30',
+  'plancha-copenhague': 'aductores 100, oblicuos 70, abd-sup 45, abd-inf 45, gluteo-medio 40, hombro-lat 30',
+  'step-down': 'vasto-medial 100, vasto-lateral 90, recto-femoral 55, gluteo-medio 60, gluteo-mayor 55, soleo 25',
+  'equilibrio-monopodal': 'soleo 100, gastrocnemio 70, gluteo-medio 65, abductores 55, abd-sup 30, abd-inf 30, oblicuos 30',
   crunch: 'abd-sup 100, abd-inf 60, oblicuos 50',
   'crunch-polea': 'abd-sup 100, abd-inf 70, oblicuos 55',
   'crunch-maquina': 'abd-sup 100, abd-inf 65, oblicuos 50',

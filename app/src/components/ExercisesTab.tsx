@@ -1,6 +1,6 @@
 import { Check, ChevronRight, Film, Pin, Plus, Search, Trophy } from 'lucide-react';
 import { ask } from '../dialog';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './ExercisesTab.css';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
@@ -16,8 +16,9 @@ import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
 import { StrengthCard } from './Strength';
 import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
-import { Back, ExerciseMedia, Sheet, Stat } from './ui';
-import { loadCatalog, type CatalogItem } from '../catalog';
+import { Back, ExerciseMedia, Sheet, Stat, useGrowingList } from './ui';
+import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
+import { catalogExtras } from '../../../shared/catalog';
 
 function bestSetIndex(sets: WorkoutSet[], kind: ExerciseKind): number {
   let best = -1;
@@ -35,9 +36,13 @@ function bestSetIndex(sets: WorkoutSet[], kind: ExerciseKind): number {
 }
 
 export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: string | null; onOpened?: () => void; onClose?: () => void }) {
-  const { data } = useStore();
+  const { data, update } = useStore();
   const [sel, setSel] = useState<string | null>(openId ?? null);
   const [catalog, setCatalog] = useState(false);
+  const [items, setItems] = useState<CatalogItem[]>([]);
+  useEffect(() => {
+    loadCatalog().then(setItems, () => {}); // sin red: solo la biblioteca
+  }, []);
   const [creating, setCreating] = useState(false);
   useEffect(() => {
     if (!openId) return;
@@ -45,8 +50,20 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
     onOpened?.();
   }, [openId, onOpened]);
   const prs = new Map(personalRecords(data).map((p) => [p.exerciseId, p]));
-  const sorted = [...data.exercises].sort((a, b) => Number(prs.has(b.id)) - Number(prs.has(a.id)) || a.name.localeCompare(b.name));
+  const sorted = useMemo(
+    // Una sola lista: los que tienen récord primero y después todos (biblioteca y catálogo) por orden alfabético.
+    () => [...data.exercises, ...catalogExtras(data.exercises, items).map(catalogToExercise)].sort((a, b) => Number(prs.has(b.id)) - Number(prs.has(a.id)) || a.name.localeCompare(b.name, 'es')),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, items],
+  );
   const { list, filters, muscle, setMuscle } = useExerciseFilter(sorted);
+  const { shown, end } = useGrowingList(list);
+  const own = new Set(data.exercises.map((e) => e.id));
+  // Uno del catálogo pasa a la biblioteca al abrirlo.
+  const open = (e: Exercise) => {
+    if (!own.has(e.id)) update((d) => void (d.exercises.some((x) => x.id === e.id) || d.exercises.push(structuredClone(e))));
+    setSel(e.id);
+  };
 
   if (sel) return <ExerciseDetail id={sel} onBack={() => (onClose ? onClose() : setSel(null))} />;
   if (catalog) return <CatalogBrowser onBack={() => setCatalog(false)} onOpen={(id) => (setCatalog(false), setSel(id))} />;
@@ -77,13 +94,13 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
       </div>
       {filters}
       <div className="list">
-        {list.map((e) => {
+        {shown.map((e) => {
           const pr = prs.get(e.id);
           return (
             <ExerciseRow
               key={e.id}
               e={e}
-              onClick={() => setSel(e.id)}
+              onClick={() => open(e)}
               right={
                 pr ? (
                   <small className="muted right exrow-pr">
@@ -99,6 +116,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
             />
           );
         })}
+        {end}
       </div>
       {creating && (
         <Sheet title="Nuevo ejercicio" onClose={() => setCreating(false)}>
@@ -117,17 +135,7 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
   useEffect(() => {
     loadCatalog().then(setItems, (e) => setErr(String(e)));
   }, []);
-  const asExercise = (c: CatalogItem): Exercise => ({
-    id: `db-${c.id}`,
-    name: c.name,
-    muscle: c.muscle,
-    secondary: c.secondary,
-    equipment: c.equipment,
-    kind: c.kind,
-    media: c.id,
-    instructions: c.instructions,
-    custom: true,
-  });
+  const asExercise = catalogToExercise;
   const { list, filters } = useExerciseFilter((items ?? []).map(asExercise));
   const have = new Set(data.exercises.map((e) => e.id));
   const libraryByMedia = new Map(data.exercises.filter((e) => e.media).map((e) => [e.media!, e.id]));

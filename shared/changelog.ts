@@ -7,6 +7,15 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.11.0',
+    date: '2026-11-05',
+    items: [
+      'Lista completa de ejercicios siempre: al añadir uno a una rutina o al entreno, y en la pestaña Ejercicios, salen los 880+ en una sola lista (por ejemplo, unos 50 de bíceps). Al elegir uno del catálogo pasa a tu biblioteca.',
+      'Nuevos ejercicios: plancha Copenhague, step down y equilibrio monopodal.',
+      'Los ejercicios del catálogo tienen ahora su nombre en español.',
+    ],
+  },
+  {
     version: '1.10.0',
     date: '2026-11-03',
     items: [
