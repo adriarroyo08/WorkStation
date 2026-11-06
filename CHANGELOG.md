@@ -14,7 +14,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ## [1.11.0] - 2026-11-05
 
 ### Añadido
-- El selector de ejercicios y la pestaña Ejercicios incluyen, tras la biblioteca, la sección «Del catálogo» con los ejercicios del catálogo libre que aún no tienes (`catalogExtras` en `shared/catalog.ts`), con los mismos filtros y de 40 en 40. Al elegir uno se copia a la biblioteca (`catalogToExercise`).
+- El selector de ejercicios y la pestaña Ejercicios muestran una sola lista con la biblioteca y los ejercicios del catálogo libre que aún no tienes (`catalogExtras` en `shared/catalog.ts`), en orden alfabético tras recientes o récords. Se pinta por tramos al desplazarse (`useGrowingList`), sin botones. Al elegir uno del catálogo se copia a la biblioteca (`catalogToExercise`).
+- Biblioteca: plancha Copenhague, step down y equilibrio monopodal (sin imágenes; no están en el catálogo libre), con su tabla de activación.
 - Nombres del catálogo en español (`scripts/catalog-names-es.json`, aplicado por `scripts/build-catalog.mjs`).
 
 ## [1.10.0] - 2026-11-03

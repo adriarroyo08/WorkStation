@@ -6,7 +6,7 @@ import { MuscleThumb } from './BodyMap';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
 import { cap, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
-import { ExerciseMedia, Sheet } from './ui';
+import { ExerciseMedia, Sheet, useGrowingList } from './ui';
 
 export function useExerciseFilter(exercises: Exercise[]) {
   const [q, setQ] = useState('');
@@ -59,8 +59,6 @@ export function ExerciseRow({ e, right, onClick, selected }: { e: Exercise; righ
   );
 }
 
-const CATALOG_PAGE = 40;
-
 // Selector: un toque añade; con "Selección múltiple" puedes añadir varios o como superserie.
 export default function ExercisePicker({
   onPick,
@@ -75,7 +73,6 @@ export default function ExercisePicker({
 }) {
   const { data, update } = useStore();
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [more, setMore] = useState(CATALOG_PAGE);
   useEffect(() => {
     loadCatalog().then(setCatalog, () => {}); // sin red: solo la biblioteca
   }, []);
@@ -92,16 +89,12 @@ export default function ExercisePicker({
       const i = recent.indexOf(id);
       return i < 0 ? 1e6 : i;
     };
-    const extra = catalogExtras(data.exercises, catalog)
-      .map(catalogToExercise)
-      .sort((a, b) => a.name.localeCompare(b.name));
-    return [...[...data.exercises].sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name)), ...extra];
+    // Una sola lista: recientes primero y después todos (biblioteca y catálogo) por orden alfabético.
+    return [...data.exercises, ...catalogExtras(data.exercises, catalog).map(catalogToExercise)].sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name, 'es'));
   }, [data.exercises, recent, catalog]);
-  const { q, list: all, filters } = useExerciseFilter(sorted);
+  const { q, list, filters } = useExerciseFilter(sorted);
+  const { shown, end } = useGrowingList(list);
   const own = new Set(data.exercises.map((e) => e.id));
-  const mine = all.filter((e) => own.has(e.id));
-  const fromCatalog = all.filter((e) => !own.has(e.id));
-  const list = [...mine, ...fromCatalog.slice(0, more)];
   const byId = new Map(sorted.map((e) => [e.id, e]));
   // Los del catálogo pasan a la biblioteca al elegirlos.
   const pick = (es: Exercise[], superset: boolean) => {
@@ -168,11 +161,10 @@ export default function ExercisePicker({
         <button className="item accent" onClick={() => setCreating(true)}>
           + Crear ejercicio personalizado{q ? ` “${q}”` : ''}
         </button>
-        {list.map((e, i) => (
+        {shown.map((e, i) => (
           <div key={e.id}>
             {i === 0 && recent.includes(e.id) && !q && <h3 className="muted small">Recientes</h3>}
-            {i > 0 && recent.includes(list[i - 1].id) && !recent.includes(e.id) && !q && own.has(e.id) && <h3 className="muted small">Todos</h3>}
-            {i === mine.length && <h3 className="muted small">Del catálogo ({fromCatalog.length})</h3>}
+            {i > 0 && recent.includes(list[i - 1].id) && !recent.includes(e.id) && !q && <h3 className="muted small">Todos</h3>}
             <ExerciseRow
               e={e}
               selected={sel.includes(e.id)}
@@ -181,11 +173,7 @@ export default function ExercisePicker({
             />
           </div>
         ))}
-        {fromCatalog.length > more && (
-          <button className="ghost full" onClick={() => setMore((m) => m + CATALOG_PAGE)}>
-            Mostrar más del catálogo ({fromCatalog.length - more})
-          </button>
-        )}
+        {end}
       </div>
     </Sheet>
   );

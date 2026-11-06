@@ -143,6 +143,10 @@ const raw: Row[] = [
   ['codo-rodilla', 'Codo a rodilla', 'core', 'peso corporal', 'Elbow_to_Knee', 'reps'],
   ['flexion-lateral', 'Flexión lateral (mancuerna)', 'core', 'mancuernas', 'Dumbbell_Side_Bend'],
   ['muscle-up', 'Muscle-up', 'dorsales', 'peso corporal', 'Muscle_Up', 'reps', ['triceps', 'pecho']],
+  // Ejercicios de estabilidad y prevención que no están en el catálogo libre (sin imágenes).
+  ['plancha-copenhague', 'Plancha Copenhague', 'aductores', 'peso corporal', undefined, 'duration', ['core']],
+  ['step-down', 'Step down', 'cuadriceps', 'peso corporal', undefined, 'reps', ['gluteos']],
+  ['equilibrio-monopodal', 'Equilibrio monopodal', 'gemelos', 'peso corporal', undefined, 'duration', ['abductores', 'core']],
 ];
 
 export const DEFAULT_EXERCISES: Exercise[] = raw.map(([id, name, muscle, equipment, media, kind, secondary]) => ({

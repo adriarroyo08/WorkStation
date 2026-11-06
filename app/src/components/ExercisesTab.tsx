@@ -16,7 +16,7 @@ import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
 import { StrengthCard } from './Strength';
 import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
-import { Back, ExerciseMedia, Sheet, Stat } from './ui';
+import { Back, ExerciseMedia, Sheet, Stat, useGrowingList } from './ui';
 import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
 import { catalogExtras } from '../../../shared/catalog';
 
@@ -35,14 +35,11 @@ function bestSetIndex(sets: WorkoutSet[], kind: ExerciseKind): number {
   return best;
 }
 
-const CATALOG_PAGE = 40;
-
 export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: string | null; onOpened?: () => void; onClose?: () => void }) {
   const { data, update } = useStore();
   const [sel, setSel] = useState<string | null>(openId ?? null);
   const [catalog, setCatalog] = useState(false);
   const [items, setItems] = useState<CatalogItem[]>([]);
-  const [more, setMore] = useState(CATALOG_PAGE);
   useEffect(() => {
     loadCatalog().then(setItems, () => {}); // sin red: solo la biblioteca
   }, []);
@@ -54,19 +51,14 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
   }, [openId, onOpened]);
   const prs = new Map(personalRecords(data).map((p) => [p.exerciseId, p]));
   const sorted = useMemo(
-    () => [
-      ...[...data.exercises].sort((a, b) => Number(prs.has(b.id)) - Number(prs.has(a.id)) || a.name.localeCompare(b.name)),
-      ...catalogExtras(data.exercises, items)
-        .map(catalogToExercise)
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    ],
+    // Una sola lista: los que tienen récord primero y después todos (biblioteca y catálogo) por orden alfabético.
+    () => [...data.exercises, ...catalogExtras(data.exercises, items).map(catalogToExercise)].sort((a, b) => Number(prs.has(b.id)) - Number(prs.has(a.id)) || a.name.localeCompare(b.name, 'es')),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, items],
   );
-  const { list: all, filters, muscle, setMuscle } = useExerciseFilter(sorted);
+  const { list, filters, muscle, setMuscle } = useExerciseFilter(sorted);
+  const { shown, end } = useGrowingList(list);
   const own = new Set(data.exercises.map((e) => e.id));
-  const list = all.filter((e) => own.has(e.id));
-  const fromCatalog = all.filter((e) => !own.has(e.id));
   // Uno del catálogo pasa a la biblioteca al abrirlo.
   const open = (e: Exercise) => {
     if (!own.has(e.id)) update((d) => void (d.exercises.some((x) => x.id === e.id) || d.exercises.push(structuredClone(e))));
@@ -95,14 +87,14 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
       <div className="mfilter">
         <MuscleFilter value={muscle} onPick={setMuscle} />
         <div className="mfilter-info">
-          <b>{all.length}</b>
+          <b>{list.length}</b>
           <span>{muscle ? MUSCLE_LABELS[muscle] : 'ejercicios'}</span>
           <small className="muted">{muscle ? 'Toca otra vez para quitar el filtro' : 'Toca un músculo para filtrar'}</small>
         </div>
       </div>
       {filters}
       <div className="list">
-        {list.map((e) => {
+        {shown.map((e) => {
           const pr = prs.get(e.id);
           return (
             <ExerciseRow
@@ -124,15 +116,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
             />
           );
         })}
-        {fromCatalog.length > 0 && <h3 className="muted small">Del catálogo ({fromCatalog.length})</h3>}
-        {fromCatalog.slice(0, more).map((e) => (
-          <ExerciseRow key={e.id} e={e} onClick={() => open(e)} />
-        ))}
-        {fromCatalog.length > more && (
-          <button className="ghost full" onClick={() => setMore((m) => m + CATALOG_PAGE)}>
-            Mostrar más del catálogo ({fromCatalog.length - more})
-          </button>
-        )}
+        {end}
       </div>
       {creating && (
         <Sheet title="Nuevo ejercicio" onClose={() => setCreating(false)}>

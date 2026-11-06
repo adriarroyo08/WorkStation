@@ -310,7 +310,6 @@ test('el selector incluye el catálogo completo y lo añade a la biblioteca', as
   await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
   const sheet = page.getByRole('dialog', { name: 'Añadir ejercicio' });
   await sheet.getByPlaceholder('Buscar ejercicio…').fill('zottman');
-  await expect(sheet.getByText(/^Del catálogo/)).toBeVisible();
   await sheet
     .locator('.exrow', { hasText: /Zottman/ })
     .first()
@@ -319,8 +318,17 @@ test('el selector incluye el catálogo completo y lo añade a la biblioteca', as
   await page.getByRole('button', { name: 'Guardar' }).click();
   await tab(page, 'Ejercicios').click();
   await page.getByPlaceholder('Buscar ejercicio…').fill('zottman');
-  // Ya está en la biblioteca: sale antes de la sección del catálogo.
-  await expect(page.locator('.list .exrow').first()).toContainText('Zottman');
+  await expect(page.locator('.list .exrow', { hasText: 'Curl Zottman' }).first()).toBeVisible();
+  // Lista completa siempre: también los del catálogo que no has usado, sin «mostrar más».
+  await page.getByPlaceholder('Buscar ejercicio…').fill('pallof');
+  await expect(page.locator('.list .exrow', { hasText: 'Press Pallof' })).toHaveCount(2);
+  await page.getByPlaceholder('Buscar ejercicio…').fill('');
+  // Las filas siguientes aparecen solas al bajar, sin botón.
+  const rows = page.locator('.list .exrow');
+  const before = await rows.count();
+  await rows.last().scrollIntoViewIfNeeded();
+  await expect.poll(() => rows.count()).toBeGreaterThan(before);
+  await expect(page.locator('.mfilter-info b')).toHaveText(/^8[5-9]\d$/);
 });
 
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
@@ -488,6 +496,7 @@ test('cada ejercicio marca sus músculos con intensidad y partes', async ({ page
   void errors;
   await page.goto('/');
   await tab(page, 'Ejercicios').click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('press de banca');
   const row = page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first();
   await expect(row.locator('svg.bm-thumb')).toHaveCount(1);
   await row.click();
