@@ -61,7 +61,7 @@ export default defineConfig({
           { urlPattern: /catalog\.json$/, handler: 'StaleWhileRevalidate', options: { cacheName: 'catalog' } },
           { urlPattern: /\/anim\/.+\.webp$/, handler: 'CacheFirst', options: { cacheName: 'anim', expiration: { maxEntries: 300 } } },
           {
-            urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,
+            urlPattern: /^https:\/\/(raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\/|wger\.de\/media\/)/,
             handler: 'CacheFirst',
             options: { cacheName: 'exercise-images', expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 180 }, cacheableResponse: { statuses: [0, 200] } },
           },

@@ -340,7 +340,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <h2>
         <Info size={16} className="ico" /> Acerca de
       </h2>
-      <p className="small muted">Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público).</p>
+      <p className="small muted">
+        Workstation · app personal de entrenamiento. Imágenes e instrucciones de ejercicios: free-exercise-db (dominio público) y wger (wger.de, CC BY-SA 4.0; cada ejercicio indica su autor).
+      </p>
       <div className="lines">
         <button className="line" onClick={() => setNotes(true)}>
           <Sparkles size={20} className="tile-ico" />
