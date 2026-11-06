@@ -5,7 +5,7 @@ import './ExercisesTab.css';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
-import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
+import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, MOVEMENT_PATTERN_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleFilter, MuscleMap } from './BodyMap';
 import { exerciseActivation } from '../../../shared/muscle-detail';
 import { availableExerciseScience, formatScientificAuthors } from '../../../shared/exercise-filter';
@@ -310,7 +310,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
             <section className="exercise-evidence" aria-label="Evidencia del ejercicio">
               <div className="evidence-heading">
                 <ul className="exinfo-chips" aria-label="Patrón de movimiento">
-                  <li>{cap(science.patron.replaceAll('-', ' '))}</li>
+                  <li>{MOVEMENT_PATTERN_LABELS[science.patron]}</li>
                 </ul>
                 <span className={`evidence-badge ${science.evidencia === 'estimada' ? 'muted' : ''}`}>
                   {science.evidencia === 'emg' ? 'EMG' : science.evidencia === 'hipertrofia' ? 'Hipertrofia' : 'Estimada'}

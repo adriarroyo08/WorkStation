@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { catalogExtras } from '../../../shared/catalog';
 import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
-import { EQUIPMENT, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
+import { EQUIPMENT, MUSCLE_LABELS, MOVEMENT_PATTERN_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleThumb } from './BodyMap';
 import { filterExercises } from '../../../shared/exercise-filter';
 import { MOVEMENT_PATTERNS, type MovementPattern } from '../../../shared/types';
@@ -40,7 +40,7 @@ export function useExerciseFilter(exercises: Exercise[]) {
           <option value="">Todos los patrones</option>
           {MOVEMENT_PATTERNS.map((p) => (
             <option key={p} value={p}>
-              {cap(p.replaceAll('-', ' '))}
+              {MOVEMENT_PATTERN_LABELS[p]}
             </option>
           ))}
         </select>

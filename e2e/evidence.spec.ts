@@ -28,6 +28,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('copenhague');
     await page.locator('.exrow').first().click();
     await expect(evidence).toContainText('Estimada: intensidades orientativas, sin medici\u00f3n directa');
+    await expect(evidence.getByRole('list', { name: 'Patr\u00f3n de movimiento' })).toHaveText('Antirrotaci\u00f3n');
     await expect(evidence.getByRole('link')).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `artifacts/evidence-estimated-${colorScheme}.png`, fullPage: true });
