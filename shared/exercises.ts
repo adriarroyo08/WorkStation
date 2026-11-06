@@ -146,6 +146,7 @@ const raw: Row[] = [
   // Ejercicios de estabilidad y prevención que no están en el catálogo libre (sin imágenes).
   ['plancha-copenhague', 'Plancha Copenhague', 'aductores', 'peso corporal', undefined, 'duration', ['core']],
   ['step-down', 'Step down', 'cuadriceps', 'peso corporal', undefined, 'reps', ['gluteos']],
+  ['seal-row', 'Seal row (remo tumbado en banco alto)', 'espalda', 'barra', undefined, undefined, ['dorsales', 'trapecio', 'biceps']],
   ['equilibrio-monopodal', 'Equilibrio monopodal', 'gemelos', 'peso corporal', undefined, 'duration', ['abductores', 'core']],
 ];
 
@@ -221,4 +222,5 @@ export const catalogLabel = (s: string): string => CATALOG_ES[s] ?? s;
 export const EQUIPMENT = ['barra', 'mancuernas', 'máquina', 'polea', 'peso corporal', 'kettlebell', 'bandas', 'disco', 'ninguno', 'otro'];
 
 const MEDIA_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises';
-export const mediaUrls = (media?: string): string[] => (media ? [`${MEDIA_BASE}/${media}/0.jpg`, `${MEDIA_BASE}/${media}/1.jpg`] : []);
+// `media` es un id de free-exercise-db o, para ejercicios de wger, sus URLs de imagen separadas por «|».
+export const mediaUrls = (media?: string): string[] => (!media ? [] : media.includes('://') ? media.split('|') : [`${MEDIA_BASE}/${media}/0.jpg`, `${MEDIA_BASE}/${media}/1.jpg`]);

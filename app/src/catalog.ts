@@ -12,6 +12,10 @@ export interface CatalogItem {
   level: string;
   kind: ExerciseKind;
   instructions: string[];
+  /** Solo wger: URLs de sus imágenes (las de free-exercise-db salen del id). */
+  images?: string[];
+  source?: 'wger';
+  author?: string;
 }
 
 let catalogCache: Promise<CatalogItem[]> | null = null;
@@ -32,7 +36,7 @@ export const catalogToExercise = (c: CatalogItem): Exercise => ({
   secondary: c.secondary,
   equipment: c.equipment,
   kind: c.kind,
-  media: c.id,
+  media: c.source === 'wger' ? c.images?.join('|') : c.id,
   instructions: c.instructions,
   custom: true,
 });

@@ -5,7 +5,7 @@
   "scripts": {
     "test": "vitest run",
     "build": "npm --prefix app run build && npm --prefix mcp run build",
-    "catalog": "node scripts/build-catalog.mjs",
+    "catalog": "node --experimental-strip-types --no-warnings scripts/build-catalog.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"app/src/**/*.{ts,tsx,css}\" \"shared/**/*.ts\" \"mcp/src/**/*.ts\" \"video/src/**/*.tsx\"",
     "typecheck": "tsc --noEmit -p app && tsc --noEmit -p app/tsconfig.node.json && tsc --noEmit -p mcp && tsc --noEmit -p video",

@@ -11,6 +11,12 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
 - MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
 
+## [1.12.0] - 2026-11-06
+
+### Añadido
+- Catálogo: 154 ejercicios nuevos de wger (CC BY-SA 4.0). Cruce con el catálogo actual en `scripts/wger-map.json` (753 repetidos, 45 duplicados internos y 46 descartados); `scripts/build-catalog.mjs` los añade con id `wger-<id>`, nombre en español, imágenes (`images`) y autor. Pasos a partir de la descripción HTML (`wgerSteps` en `shared/wger.ts`). `mediaUrls` acepta URLs de imagen; el service worker también guarda las imágenes de wger.de.
+- Biblioteca: seal row.
+
 ## [1.11.0] - 2026-11-05
 
 ### Añadido

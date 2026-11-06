@@ -328,7 +328,7 @@ test('el selector incluye el catálogo completo y lo añade a la biblioteca', as
   const before = await rows.count();
   await rows.last().scrollIntoViewIfNeeded();
   await expect.poll(() => rows.count()).toBeGreaterThan(before);
-  await expect(page.locator('.mfilter-info b')).toHaveText(/^8[5-9]\d$/);
+  await expect(page.locator('.mfilter-info b')).toHaveText(/^1\d{3}$/);
 });
 
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {

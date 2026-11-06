@@ -7,6 +7,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.12.0',
+    date: '2026-11-06',
+    items: [
+      'Catálogo ampliado a más de 1.000 ejercicios: 150+ nuevos de la base abierta wger (paseo de la maleta, almeja, sentadilla cosaca, dragon flag, front lever, Trap-3, estiramientos y movilidad…), en español.',
+      'Nuevo ejercicio: seal row (remo tumbado en banco alto).',
+    ],
+  },
+  {
     version: '1.11.0',
     date: '2026-11-05',
     items: [
