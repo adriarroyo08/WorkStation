@@ -5,6 +5,17 @@ import type { DataSource } from './mcp-tools';
 import { applyRemote, diff, snapshot, type SyncRecord } from './sync';
 import type { WorkstationData } from './types';
 
+// La API key ha superado su cuota (429 de la base de datos, ver supabase/migrations/008). retryAfter en segundos.
+export class RateLimitError extends Error {
+  constructor(
+    message: string,
+    readonly retryAfter: number,
+  ) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
 export interface CloudSourceOptions {
   url: string; // https://xxxx.supabase.co
   anonKey: string;
@@ -30,6 +41,7 @@ export function cloudSource(o: CloudSourceOptions): DataSource {
       } catch {
         /* texto plano */
       }
+      if (res.status === 429) throw new RateLimitError(`Workstation cloud: ${msg}`, Math.max(1, Number(res.headers.get('retry-after')) || 60));
       throw new Error(`Workstation cloud: ${msg}`);
     }
     return text ? JSON.parse(text) : null;

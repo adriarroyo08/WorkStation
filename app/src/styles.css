@@ -6,7 +6,7 @@
   --line: #2a2a2a;
   --line-strong: #3a3a3a;
   --text: #f2f2f2;
-  --muted: #8e8e93;
+  --muted: #9a9aa0;
   --accent: #f2600c;
   /* Texto de acento y rellenos con texto blanco encima (contraste AA) */
   --accent-ink: #ff7a2e;
@@ -18,6 +18,8 @@
   --warn-ink: var(--warn);
   --ok-ink: #4cc38a;
   --danger: #f2555a;
+  /* Relleno rojo con texto blanco encima (≥ 4,5:1) */
+  --danger-fill: #c62828;
   --shadow: none;
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
   --radius: 12px;
@@ -36,7 +38,7 @@
     --line: #ececec;
     --line-strong: #dcdce0;
     --text: #111111;
-    --muted: #6b6b70;
+    --muted: #636368;
     --accent: #f2600c;
     --accent-ink: #b23a08;
     --accent-fill: #c2410c;
@@ -58,7 +60,7 @@
   --line: #ececec;
   --line-strong: #dcdce0;
   --text: #111111;
-  --muted: #6b6b70;
+  --muted: #636368;
   --accent: #f2600c;
   --accent-ink: #b23a08;
   --accent-fill: #c2410c;
@@ -3553,7 +3555,7 @@ button.today-go {
   min-height: 48px;
 }
 button.danger-solid {
-  background: var(--danger);
+  background: var(--danger-fill);
   color: #fff;
 }
 
@@ -3661,4 +3663,98 @@ input.title {
   background: var(--accent-fill);
   border-color: var(--accent-fill);
   color: var(--on-accent);
+}
+
+/* ===== Resumen de fin de entreno: portada de marcador ===== */
+.finish {
+  padding: 2px 0 6px;
+}
+.finish > * {
+  animation: rise-in 0.42s var(--ease) backwards;
+}
+.finish > :nth-child(2) {
+  animation: finish-stamp 0.5s var(--spring) 60ms backwards;
+}
+.finish > :nth-child(3) {
+  animation-delay: 160ms;
+}
+.finish > :nth-child(4) {
+  animation-delay: 260ms;
+}
+.finish > :nth-child(5) {
+  animation-delay: 340ms;
+}
+@keyframes finish-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+.finish-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  overflow-wrap: anywhere;
+}
+h1.finish-title {
+  font-size: clamp(46px, 14vw, 64px);
+  line-height: 0.9;
+  margin: 6px 0 18px;
+  transform-origin: left center;
+}
+.finish-hero {
+  display: grid;
+  grid-template-columns: minmax(96px, 34%) 1fr;
+  gap: 14px;
+  align-items: center;
+}
+.finish-hero .bm-session {
+  width: 100%;
+  height: auto;
+}
+.finish-nums {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 12px;
+  margin: 0;
+}
+.finish-nums div {
+  display: flex;
+  flex-direction: column-reverse;
+  min-width: 0;
+}
+.finish-nums dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(32px, 10vw, 46px);
+  font-weight: 800;
+  line-height: 0.95;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+}
+.finish-nums dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+.finish-pr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.finish-pr b {
+  font-family: var(--display);
+  font-size: 36px;
+  line-height: 1;
+}
+.finish .new-badges {
+  margin-top: 14px;
 }

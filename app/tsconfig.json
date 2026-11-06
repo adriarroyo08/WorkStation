@@ -11,5 +11,5 @@
     "types": ["vite/client"]
   },
   "include": ["src", "../shared"],
-  "exclude": ["../shared/**/*.test.ts", "../shared/mcp-tools.ts", "../shared/mcp-http.ts", "../shared/cloud-source.ts"]
+  "exclude": ["../shared/**/*.test.ts", "../shared/mcp-tools.ts", "../shared/mcp-http.ts", "../shared/cloud-source.ts", "../shared/exercise-science.ts"]
 }

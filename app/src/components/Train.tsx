@@ -15,6 +15,7 @@ import { haptic, Sheet, useLongPress, useScrollTop, WeekStrip } from './ui';
 import { fmtWeight } from '../../../shared/units';
 import { shareRoutineLink } from './SharedRoutine';
 import { native } from '../native';
+import './Train.css';
 
 // Pantallas que no hacen falta al abrir la app: se descargan aparte y se precargan cuando el navegador está libre.
 const loadLogger = () => import('./WorkoutLogger');
@@ -215,6 +216,7 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
     ...data.folders.map((f) => ({ id: f.id, name: f.name, routines: data.routines.filter((r) => r.folderId === f.id) })),
     { name: 'Mis rutinas', routines: data.routines.filter((r) => !r.folderId || !data.folders.some((f) => f.id === r.folderId)) },
   ];
+  const byId = new Map(data.exercises.map((e) => [e.id, e]));
   const exName = new Map(data.exercises.map((e) => [e.id, e.name]));
   const hasNext = !!nextRoutine(data);
 
@@ -319,24 +321,42 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
               )}
             </div>
             {!collapsed.has(g.name) &&
-              g.routines.map((r) => (
-                <RoutineRow key={r.id} onLong={() => setMenu(r)}>
-                  <div className="grow" onClick={() => onEdit(r)}>
-                    <b>{r.name}</b>
-                    <p className="muted small">{r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}</p>
-                  </div>
-                  <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => launchWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
-                    Empezar
-                  </button>
-                  <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
-                    <MoreHorizontal size={20} />
-                  </button>
-                </RoutineRow>
-              ))}
+              g.routines.map((r) => {
+                const items = r.exercises.flatMap((e) => {
+                  const exercise = byId.get(e.exerciseId);
+                  return exercise ? [{ exercise, sets: e.sets.length || 1 }] : [];
+                });
+                const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0);
+                const minutes = Math.round(r.exercises.reduce((t, e) => t + e.sets.length * (45 + e.restSec), 0) / 60 / 5) * 5;
+                return (
+                  <RoutineRow key={r.id} onLong={() => setMenu(r)}>
+                    <SessionMap items={items} />
+                    <div className="grow" onClick={() => onEdit(r)}>
+                      <b className="routine-title">{r.name}</b>
+                      <div className="routine-meta">
+                        {r.exercises.length} {r.exercises.length === 1 ? 'ejercicio' : 'ejercicios'} · {sets} {sets === 1 ? 'serie' : 'series'}
+                        {minutes ? ` · ~${minutes} min` : ''}
+                      </div>
+                      <p className="muted small">{r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}</p>
+                    </div>
+                    <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => launchWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
+                      Empezar
+                    </button>
+                    <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
+                      <MoreHorizontal size={20} />
+                    </button>
+                  </RoutineRow>
+                );
+              })}
           </div>
         ),
       )}
-      {!data.routines.length && <p className="muted small">Crea una rutina, guarda un programa desde Explorar o pídesela al Coach IA (Perfil → Coach IA).</p>}
+      {!data.routines.length && (
+        <div className="empty-routines">
+          <h2 className="empty-routines-title">Sin rutinas todavía</h2>
+          <p className="muted small">Crea una rutina, guarda un programa desde Explorar o pídesela al Coach IA (Perfil → Coach IA).</p>
+        </div>
+      )}
 
       {menu && (
         <Sheet title={menu.name} onClose={() => setMenu(null)}>
