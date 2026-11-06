@@ -15,6 +15,11 @@ export const CHANGELOG: Release[] = [
     ],
   },
   {
+    version: '1.11.1',
+    date: '2026-11-06',
+    items: ['Busca ejercicios también por su nombre en inglés (por ejemplo, «bench press» o «ez bar curl») y con las palabras en cualquier orden.'],
+  },
+  {
     version: '1.11.0',
     date: '2026-11-05',
     items: [

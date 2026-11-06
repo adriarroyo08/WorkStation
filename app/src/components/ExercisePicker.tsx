@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { catalogExtras } from '../../../shared/catalog';
 import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
-import { EQUIPMENT, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
+import { EQUIPMENT, MUSCLE_LABELS, catalogLabel, matchesExercise } from '../../../shared/exercises';
 import { MuscleThumb } from './BodyMap';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
 import { cap, useStore } from '../store';
@@ -12,9 +12,8 @@ export function useExerciseFilter(exercises: Exercise[]) {
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | ''>('');
   const [equipment, setEquipment] = useState('');
-  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const list = useMemo(
-    () => exercises.filter((e) => (!muscle || e.muscle === muscle || e.secondary?.includes(muscle)) && (!equipment || e.equipment === equipment) && norm(e.name).includes(norm(q))),
+    () => exercises.filter((e) => (!muscle || e.muscle === muscle || e.secondary?.includes(muscle)) && (!equipment || e.equipment === equipment) && matchesExercise(e, q)),
     [exercises, q, muscle, equipment],
   );
   const filters = (
