@@ -47,6 +47,7 @@ export const CHANGELOG: Release[] = [
       'Entrenar, Historial, Ejercicio y Perfil renovados: rutinas con su mapa de músculos, fechas y nombres en grande, calendario con tus días entrenados, ficha del ejercicio con portada y perfil con tus cifras de un vistazo.',
       'Mejor contraste en botones de borrar y textos secundarios.',
       'Conexión con IAs (MCP): límite de 60 peticiones por minuto y 1000 por hora por API key para proteger tu cuenta; al pasarte, la IA recibe cuándo puede reintentar.',
+      'Biblioteca de ejercicios: metadatos científicos con patrón de movimiento, desglose muscular por roles (principal, secundario y estabilizador con intensidad) y nivel de evidencia con fuentes contrastadas.',
       'Base de evidencia científica para artículos: fichas de investigación contrastada para diez temas clave (creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión) con DOIs resueltos y límites claros entre asociación y causalidad.',
     ],
   },

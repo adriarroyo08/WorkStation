@@ -21,6 +21,9 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [1.11.1] - 2026-11-06
 
+### Añadido
+- Metadatos científicos de la biblioteca (#51): los 130 ejercicios base incorporan su patrón de movimiento, músculos clasificados por rol e intensidad (0–100), nivel de evidencia explícito (hipertrofia, emg o estimada) y fuentes científicas verificadas sin citas inventadas.
+
 ### Cambiado
 
 - Búsqueda de ejercicios (`matchesExercise` en `shared/exercises.ts`): también por el nombre original en inglés del catálogo (sale del id de free-exercise-db) y con todas las palabras en cualquier orden.

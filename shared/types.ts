@@ -1,4 +1,5 @@
 import type { Region } from './muscle-detail';
+export type { Region };
 
 // Modelo de datos compartido entre la app (PWA) y el servidor MCP.
 // El fichero de backup JSON (WorkstationData) es el formato de intercambio.
@@ -48,6 +49,8 @@ export type ScientificSource = {
   titulo: string;
   autores: string[];
   año: number;
+  fechaConsulta?: string;
+  ejercicioEstudiado?: string;
 } & ({ doi: string; url?: string } | { doi?: string; url: string });
 
 export interface ExerciseScience {
