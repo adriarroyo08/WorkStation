@@ -61,10 +61,10 @@ tasks.named("preBuild") { dependsOn(copyWebApp) }
 dependencies {
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.appcompat:appcompat:1.8.0")
-    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.webkit:webkit:1.18.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("androidx.wear:wear-remote-interactions:1.1.0")
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
 }
