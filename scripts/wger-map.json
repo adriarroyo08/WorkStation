@@ -1,0 +1,3771 @@
+{
+ "9": {
+  "dup": "One-Arm_Kettlebell_Swings"
+ },
+ "12": {
+  "dup": "Thigh_Adductor"
+ },
+ "20": {
+  "dup": "Arnold_Dumbbell_Press"
+ },
+ "31": {
+  "dup": "Crucifix"
+ },
+ "41": {
+  "dup": "Barbell_Ab_Rollout"
+ },
+ "43": {
+  "dup": "Barbell_Hack_Squat"
+ },
+ "46": {
+  "dup": "Barbell_Lunge"
+ },
+ "48": {
+  "dup": "Palms-Down_Wrist_Curl_Over_A_Bench"
+ },
+ "50": {
+  "dup": "Lying_Triceps_Press"
+ },
+ "51": {
+  "dup": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench"
+ },
+ "56": {
+  "skip": true
+ },
+ "57": {
+  "es": "Paso del oso",
+  "muscle": "cuerpo_completo",
+  "secondary": [
+   "core",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "71": {
+  "dup": "Single-Leg_Leg_Extension"
+ },
+ "73": {
+  "dup": "Barbell_Bench_Press_-_Medium_Grip"
+ },
+ "75": {
+  "dup": "Dumbbell_Bench_Press"
+ },
+ "76": {
+  "dup": "Close-Grip_Barbell_Bench_Press"
+ },
+ "79": {
+  "es": "Tirón alto inclinado con mancuernas",
+  "muscle": "trapecio",
+  "secondary": [
+   "hombros",
+   "espalda"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "81": {
+  "dup": "One-Arm_Dumbbell_Row"
+ },
+ "82": {
+  "dup": "Seated_Bent-Over_Rear_Delt_Raise"
+ },
+ "83": {
+  "dup": "Bent_Over_Barbell_Row"
+ },
+ "84": {
+  "dup": "Reverse_Grip_Bent-Over_Rows"
+ },
+ "91": {
+  "dup": "Barbell_Curl"
+ },
+ "92": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "94": {
+  "dup": "EZ-Bar_Curl"
+ },
+ "95": {
+  "dup": "Standing_Biceps_Cable_Curl"
+ },
+ "112": {
+  "dup": "Body-Up"
+ },
+ "124": {
+  "es": "Sentadilla con disco al frente",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "hombros",
+   "core"
+  ],
+  "equipment": "disco",
+  "kind": "weight_reps"
+ },
+ "129": {
+  "dup": "Machine_Bench_Press"
+ },
+ "132": {
+  "skip": true,
+  "reason": "ya en la biblioteca"
+ },
+ "135": {
+  "dup": "Butterfly"
+ },
+ "137": {
+  "dup": "Butterfly"
+ },
+ "139": {
+  "dup": "Reverse_Machine_Flyes"
+ },
+ "142": {
+  "dup": "External_Rotation_with_Cable"
+ },
+ "145": {
+  "dup": "Standing_Cable_Wood_Chop"
+ },
+ "146": {
+  "dup": "Calf_Press_On_The_Leg_Press_Machine"
+ },
+ "148": {
+  "dup": "Calf_Press"
+ },
+ "152": {
+  "dup": "Chin-Up"
+ },
+ "158": {
+  "dup": "Close-Grip_Front_Lat_Pulldown"
+ },
+ "161": {
+  "dup": "Straight-Arm_Dumbbell_Pullover"
+ },
+ "165": {
+  "dup": "Exercise_Ball_Crunch"
+ },
+ "167": {
+  "dup": "Crunches"
+ },
+ "171": {
+  "dup": "Decline_Crunch"
+ },
+ "172": {
+  "dup": "Ab_Crunch_Machine"
+ },
+ "173": {
+  "dup": "Cable_Crunch"
+ },
+ "174": {
+  "dup": "Crunches"
+ },
+ "177": {
+  "dup": "Bicycling"
+ },
+ "178": {
+  "dup": "Dead_Bug"
+ },
+ "182": {
+  "es": "Suspensión colgado en barra",
+  "muscle": "dorsales",
+  "secondary": [
+   "antebrazo",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "184": {
+  "dup": "Barbell_Deadlift"
+ },
+ "185": {
+  "dup": "Decline_Barbell_Bench_Press"
+ },
+ "186": {
+  "dup": "Decline_Dumbbell_Bench_Press"
+ },
+ "189": {
+  "dup": "Deficit_Deadlift"
+ },
+ "193": {
+  "es": "Press diagonal de hombro en banco",
+  "muscle": "hombros",
+  "secondary": [
+   "triceps",
+   "pecho"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "194": {
+  "dup": "Parallel_Bar_Dip"
+ },
+ "197": {
+  "dup": "Bench_Dips"
+ },
+ "202": {
+  "dup": "Concentration_Curls"
+ },
+ "203": {
+  "dup": "Goblet_Squat"
+ },
+ "204": {
+  "dup": "Incline_Dumbbell_Curl"
+ },
+ "205": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "206": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "208": {
+  "dup": "Two-Arm_Dumbbell_Preacher_Curl"
+ },
+ "211": {
+  "dup": "Standing_Dumbbell_Triceps_Extension"
+ },
+ "222": {
+  "dup": "Face_Pull"
+ },
+ "235": {
+  "dup": "Flutter_Kicks"
+ },
+ "237": {
+  "dup": "Cable_Crossover"
+ },
+ "238": {
+  "dup": "Dumbbell_Flyes"
+ },
+ "239": {
+  "dup": "Decline_Dumbbell_Flyes"
+ },
+ "245": {
+  "dup": "Lying_Dumbbell_Tricep_Extension"
+ },
+ "246": {
+  "dup": "EZ-Bar_Skullcrusher"
+ },
+ "254": {
+  "dup": "Front_Plate_Raise"
+ },
+ "256": {
+  "dup": "Front_Dumbbell_Raise"
+ },
+ "257": {
+  "dup": "Front_Barbell_Squat"
+ },
+ "258": {
+  "dup": "Bent_Over_Barbell_Row"
+ },
+ "259": {
+  "dup": "Bent_Over_Barbell_Row"
+ },
+ "260": {
+  "es": "Sit-out completo",
+  "muscle": "core",
+  "secondary": [
+   "hombros",
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "265": {
+  "dup": "Butt_Lift_Bridge"
+ },
+ "272": {
+  "dup": "Hammer_Curls"
+ },
+ "275": {
+  "dup": "Cable_Hammer_Curls_-_Rope_Attachment"
+ },
+ "279": {
+  "es": "Fortalecedor de agarre (hand grip)",
+  "muscle": "antebrazo",
+  "secondary": [],
+  "equipment": "otro",
+  "kind": "reps"
+ },
+ "282": {
+  "dup": "Handstand_Push-Ups"
+ },
+ "283": {
+  "dup": "Hanging_Leg_Raise"
+ },
+ "284": {
+  "es": "Pilares de Hércules en poleas",
+  "muscle": "antebrazo",
+  "secondary": [
+   "biceps",
+   "hombros"
+  ],
+  "equipment": "polea",
+  "kind": "duration"
+ },
+ "285": {
+  "dup": "Knee_Tuck_Jump"
+ },
+ "289": {
+  "dup": "Clean_Pull"
+ },
+ "291": {
+  "es": "Sentadilla hindú",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gemelos",
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "292": {
+  "dup": "Butt_Lift_Bridge"
+ },
+ "294": {
+  "dup": "Barbell_Hip_Thrust"
+ },
+ "297": {
+  "es": "Hollow body hold",
+  "muscle": "core",
+  "secondary": [
+   "cuadriceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "301": {
+  "dup": "Hyperextensions_Back_Extensions"
+ },
+ "308": {
+  "dup": "Incline_Dumbbell_Flyes"
+ },
+ "310": {
+  "dup": "Dumbbell_Incline_Row"
+ },
+ "312": {
+  "es": "Plancha inclinada con toques al suelo",
+  "muscle": "core",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "314": {
+  "dup": "Isometric_Wipers"
+ },
+ "319": {
+  "dup": "Jogging_Treadmill"
+ },
+ "320": {
+  "es": "Jumping jacks",
+  "muscle": "cardio",
+  "secondary": [
+   "gemelos",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "323": {
+  "dup": "Cable_Crossover"
+ },
+ "331": {
+  "dup": "One-Arm_Kettlebell_Swings"
+ },
+ "341": {
+  "dup": "Smith_Machine_Squat"
+ },
+ "346": {
+  "dup": "Landmine_Linear_Jammer"
+ },
+ "348": {
+  "dup": "Side_Lateral_Raise"
+ },
+ "349": {
+  "dup": "Seated_One-arm_Cable_Pulley_Rows"
+ },
+ "351": {
+  "dup": "Side_Laterals_to_Front_Raise"
+ },
+ "354": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "355": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "364": {
+  "dup": "Lying_Leg_Curls"
+ },
+ "365": {
+  "dup": "Lying_Leg_Curls"
+ },
+ "366": {
+  "dup": "Seated_Leg_Curl"
+ },
+ "367": {
+  "dup": "Standing_Leg_Curl"
+ },
+ "369": {
+  "dup": "Leg_Extensions"
+ },
+ "371": {
+  "dup": "Leg_Press"
+ },
+ "373": {
+  "dup": "Narrow_Stance_Leg_Press"
+ },
+ "374": {
+  "dup": "Leg_Press"
+ },
+ "375": {
+  "dup": "Hack_Squat"
+ },
+ "376": {
+  "dup": "Flat_Bench_Lying_Leg_Raise"
+ },
+ "377": {
+  "dup": "Flat_Bench_Lying_Leg_Raise"
+ },
+ "378": {
+  "dup": "Front_Leg_Raises"
+ },
+ "379": {
+  "dup": "Leverage_Chest_Press"
+ },
+ "380": {
+  "dup": "Leverage_Iso_Row"
+ },
+ "382": {
+  "dupWger": "1852"
+ },
+ "386": {
+  "dup": "Push-Ups_-_Close_Triceps_Position"
+ },
+ "394": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "395": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "397": {
+  "dup": "Box_Squat"
+ },
+ "406": {
+  "dup": "External_Rotation"
+ },
+ "418": {
+  "dup": "Standing_Military_Press"
+ },
+ "423": {
+  "dup": "Muscle_Up"
+ },
+ "427": {
+  "dup": "Crunches"
+ },
+ "439": {
+  "dup": "Reverse_Cable_Curl"
+ },
+ "441": {
+  "dup": "Overhead_Squat"
+ },
+ "445": {
+  "dup": "Barbell_Bench_Press_-_Medium_Grip"
+ },
+ "448": {
+  "dup": "Bent_Over_Barbell_Row"
+ },
+ "454": {
+  "es": "Flexiones en pica",
+  "muscle": "hombros",
+  "secondary": [
+   "triceps",
+   "pecho"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "456": {
+  "es": "Sentadilla pistol",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "458": {
+  "dup": "Plank"
+ },
+ "465": {
+  "dup": "Preacher_Curl"
+ },
+ "468": {
+  "es": "Retracción escapular en prono",
+  "muscle": "trapecio",
+  "secondary": [
+   "espalda"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "475": {
+  "dup": "Pullups"
+ },
+ "477": {
+  "dup": "Band_Assisted_Pull-Up"
+ },
+ "478": {
+  "dup": "Push_Press"
+ },
+ "484": {
+  "dup": "Rack_Pulls"
+ },
+ "487": {
+  "dup": "Seated_Bent-Over_Rear_Delt_Raise"
+ },
+ "490": {
+  "dup": "Alternating_Renegade_Row"
+ },
+ "493": {
+  "dup": "Reverse_Barbell_Curl"
+ },
+ "495": {
+  "dup": "Reverse_Barbell_Curl"
+ },
+ "498": {
+  "dup": "Reverse_Triceps_Bench_Press"
+ },
+ "500": {
+  "es": "Plancha inversa",
+  "muscle": "core",
+  "secondary": [
+   "gluteos",
+   "lumbar",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "501": {
+  "dup": "Ring_Dips"
+ },
+ "505": {
+  "dup": "Decline_Crunch"
+ },
+ "507": {
+  "dup": "Romanian_Deadlift"
+ },
+ "508": {
+  "dup": "Bent_Over_Barbell_Row"
+ },
+ "510": {
+  "dup": "Straight_Bar_Bench_Mid_Rows"
+ },
+ "512": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "513": {
+  "dup": "T-Bar_Row_with_Handle"
+ },
+ "516": {
+  "dup": "Standing_Cable_Wood_Chop"
+ },
+ "527": {
+  "dup": "Running_Treadmill"
+ },
+ "529": {
+  "dup": "Running_Treadmill"
+ },
+ "530": {
+  "dup": "Running_Treadmill"
+ },
+ "537": {
+  "dup": "Incline_Dumbbell_Press"
+ },
+ "538": {
+  "dup": "Barbell_Incline_Bench_Press_-_Medium_Grip"
+ },
+ "539": {
+  "dup": "Smith_Machine_Incline_Bench_Press"
+ },
+ "543": {
+  "dup": "Leverage_Shoulder_Press"
+ },
+ "545": {
+  "dup": "Scissor_Kick"
+ },
+ "549": {
+  "dup": "Seated_Triceps_Press"
+ },
+ "556": {
+  "dup": "Barbell_Side_Bend"
+ },
+ "562": {
+  "dup": "Shotgun_Row"
+ },
+ "566": {
+  "dup": "Barbell_Shoulder_Press"
+ },
+ "567": {
+  "dup": "Dumbbell_Shoulder_Press"
+ },
+ "569": {
+  "dup": "Smith_Machine_Overhead_Shoulder_Press"
+ },
+ "570": {
+  "dup": "Barbell_Shrug"
+ },
+ "571": {
+  "dup": "Barbell_Shrug"
+ },
+ "572": {
+  "dup": "Dumbbell_Shrug"
+ },
+ "575": {
+  "dup": "Smith_Machine_Behind_the_Back_Shrug"
+ },
+ "576": {
+  "dup": "Oblique_Crunches"
+ },
+ "577": {
+  "dup": "Dumbbell_Side_Bend"
+ },
+ "578": {
+  "dup": "External_Rotation"
+ },
+ "580": {
+  "dup": "Side_Bridge"
+ },
+ "583": {
+  "es": "Flexiones de lado a lado",
+  "muscle": "pecho",
+  "secondary": [
+   "triceps",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "584": {
+  "dup": "One_Arm_Dumbbell_Preacher_Curl"
+ },
+ "590": {
+  "dup": "Seated_Calf_Raise"
+ },
+ "591": {
+  "dup": "Sit-Up"
+ },
+ "595": {
+  "dup": "Rope_Jumping"
+ },
+ "598": {
+  "dup": "Smith_Machine_Close-Grip_Bench_Press"
+ },
+ "599": {
+  "dup": "Snatch"
+ },
+ "604": {
+  "dup": "Barbell_Deadlift"
+ },
+ "607": {
+  "es": "Sit-up de velocista",
+  "muscle": "core",
+  "secondary": [
+   "cuadriceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "614": {
+  "dup": "Freehand_Jump_Squat"
+ },
+ "615": {
+  "dup": "Barbell_Squat"
+ },
+ "616": {
+  "es": "Squat thrust",
+  "muscle": "cuerpo_completo",
+  "secondary": [
+   "core",
+   "cuadriceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "621": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "622": {
+  "dup": "Standing_Calf_Raises"
+ },
+ "623": {
+  "dup": "Wrist_Roller"
+ },
+ "624": {
+  "dup": "Bicycling_Stationary"
+ },
+ "627": {
+  "dup": "Stiff-Legged_Barbell_Deadlift"
+ },
+ "628": {
+  "dup": "Straight-Arm_Pulldown"
+ },
+ "629": {
+  "dup": "Rope_Straight-Arm_Pulldown"
+ },
+ "630": {
+  "dup": "Sumo_Deadlift"
+ },
+ "632": {
+  "dup": "Wide_Stance_Barbell_Squat"
+ },
+ "636": {
+  "dup": "Superman"
+ },
+ "650": {
+  "es": "Thruster con barra",
+  "muscle": "hombros",
+  "secondary": [
+   "cuadriceps",
+   "gluteos"
+  ],
+  "equipment": "barra",
+  "kind": "weight_reps"
+ },
+ "655": {
+  "dup": "Tricep_Dumbbell_Kickback"
+ },
+ "659": {
+  "dup": "Triceps_Pushdown"
+ },
+ "660": {
+  "dup": "Triceps_Pushdown"
+ },
+ "661": {
+  "dup": "Machine_Triceps_Extension"
+ },
+ "672": {
+  "dup": "Standing_Cable_Wood_Chop"
+ },
+ "674": {
+  "dup": "Suspended_Row"
+ },
+ "675": {
+  "dup": "Kettlebell_Turkish_Get-Up_Lunge_style"
+ },
+ "683": {
+  "dup": "Power_Clean"
+ },
+ "684": {
+  "dup": "Underhand_Cable_Pulldowns"
+ },
+ "687": {
+  "dup": "Standing_Military_Press"
+ },
+ "688": {
+  "dup": "Hanging_Leg_Raise"
+ },
+ "691": {
+  "dup": "Smith_Machine_Upright_Row"
+ },
+ "693": {
+  "dup": "Upright_Barbell_Row"
+ },
+ "694": {
+  "dup": "Standing_Dumbbell_Upright_Row"
+ },
+ "695": {
+  "dup": "V-Bar_Pulldown"
+ },
+ "702": {
+  "dup": "Standing_Calf_Raises"
+ },
+ "711": {
+  "dup": "Handstand_Push-Ups"
+ },
+ "713": {
+  "dup": "Pushups"
+ },
+ "716": {
+  "es": "Deslizamientos en pared",
+  "muscle": "hombros",
+  "secondary": [
+   "trapecio",
+   "espalda"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "718": {
+  "es": "Sentadilla isométrica en pared",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "722": {
+  "dup": "Dumbbell_Step_Ups"
+ },
+ "723": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "801": {
+  "dup": "Close-Grip_Push-Up_off_of_a_Dumbbell"
+ },
+ "802": {
+  "dup": "Barbell_Walking_Lunge"
+ },
+ "803": {
+  "dup": "Cable_One_Arm_Tricep_Extension"
+ },
+ "804": {
+  "es": "Suspensión en romos",
+  "muscle": "antebrazo",
+  "secondary": [
+   "dorsales"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "805": {
+  "dup": "Triceps_Pushdown"
+ },
+ "820": {
+  "es": "Suspensión en regleta de 20 mm",
+  "muscle": "antebrazo",
+  "secondary": [
+   "dorsales"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "821": {
+  "dup": "Pullups"
+ },
+ "822": {
+  "dup": "Cable_Rear_Delt_Fly"
+ },
+ "828": {
+  "dup": "Seated_Bent-Over_Rear_Delt_Raise"
+ },
+ "908": {
+  "dup": "Running_Treadmill"
+ },
+ "909": {
+  "es": "Curl nórdico inverso",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "910": {
+  "dup": "Natural_Glute_Ham_Raise"
+ },
+ "911": {
+  "dup": "Incline_Barbell_Triceps_Extension"
+ },
+ "912": {
+  "dup": "Standing_Biceps_Cable_Curl"
+ },
+ "913": {
+  "dup": "Reverse_Barbell_Preacher_Curls"
+ },
+ "914": {
+  "dup": "Reverse_Cable_Curl"
+ },
+ "915": {
+  "dup": "Car_Drivers"
+ },
+ "916": {
+  "dup": "Smith_Machine_Overhead_Shoulder_Press"
+ },
+ "917": {
+  "dup": "Front_Cable_Raise"
+ },
+ "918": {
+  "dup": "Seated_Side_Lateral_Raise"
+ },
+ "919": {
+  "dup": "T-Bar_Row_with_Handle"
+ },
+ "922": {
+  "dup": "Middle_Back_Shrug"
+ },
+ "923": {
+  "skip": true
+ },
+ "925": {
+  "dup": "Smith_Machine_Incline_Bench_Press"
+ },
+ "926": {
+  "dup": "Butterfly"
+ },
+ "927": {
+  "dup": "Suspended_Push-Up"
+ },
+ "957": {
+  "dupWger": "1572"
+ },
+ "958": {
+  "es": "Curl de bíceps en suspensión TRX",
+  "muscle": "biceps",
+  "secondary": [
+   "antebrazo"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "959": {
+  "dup": "Suspended_Row"
+ },
+ "960": {
+  "dup": "One-Arm_Kettlebell_Swings"
+ },
+ "961": {
+  "es": "Sprints de natación 50 m",
+  "muscle": "cardio",
+  "secondary": [
+   "dorsales",
+   "hombros"
+  ],
+  "equipment": "ninguno",
+  "kind": "distance"
+ },
+ "962": {
+  "dup": "Elliptical_Trainer"
+ },
+ "974": {
+  "es": "Curl con kettlebell a dos manos",
+  "muscle": "biceps",
+  "secondary": [
+   "antebrazo"
+  ],
+  "equipment": "kettlebell",
+  "kind": "weight_reps"
+ },
+ "975": {
+  "es": "Curl con kettlebell a una mano",
+  "muscle": "biceps",
+  "secondary": [
+   "antebrazo"
+  ],
+  "equipment": "kettlebell",
+  "kind": "weight_reps"
+ },
+ "976": {
+  "dup": "Jackknife_Sit-Up"
+ },
+ "977": {
+  "dup": "Box_Squat"
+ },
+ "978": {
+  "dup": "Hanging_Leg_Raise"
+ },
+ "979": {
+  "dup": "Hanging_Leg_Raise"
+ },
+ "980": {
+  "dup": "Mixed_Grip_Chin"
+ },
+ "981": {
+  "dup": "Dumbbell_Step_Ups"
+ },
+ "983": {
+  "es": "Elevaciones de rodillas en el sitio",
+  "muscle": "cardio",
+  "secondary": [
+   "cuadriceps",
+   "gemelos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "984": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "985": {
+  "dup": "Push_Up_to_Side_Plank"
+ },
+ "986": {
+  "dup": "Barbell_Side_Split_Squat"
+ },
+ "987": {
+  "dupWger": "986"
+ },
+ "988": {
+  "dup": "Split_Squats"
+ },
+ "989": {
+  "dupWger": "988"
+ },
+ "990": {
+  "dup": "Glute_Kickback"
+ },
+ "991": {
+  "dup": "Split_Squats"
+ },
+ "992": {
+  "dupWger": "991"
+ },
+ "993": {
+  "dup": "Rope_Jumping"
+ },
+ "994": {
+  "dup": "Arm_Circles"
+ },
+ "995": {
+  "dupWger": "994"
+ },
+ "996": {
+  "dup": "Mountain_Climbers"
+ },
+ "997": {
+  "dupWger": "132"
+ },
+ "998": {
+  "dupWger": "616"
+ },
+ "999": {
+  "dup": "Dumbbell_Rear_Lunge"
+ },
+ "1000": {
+  "dup": "Bench_Dips"
+ },
+ "1001": {
+  "dup": "Plank"
+ },
+ "1002": {
+  "dup": "Childs_Pose"
+ },
+ "1003": {
+  "dup": "Barbell_Deadlift"
+ },
+ "1004": {
+  "dup": "Shoulder_Circles"
+ },
+ "1005": {
+  "dupWger": "1004"
+ },
+ "1006": {
+  "dup": "Chin_To_Chest_Stretch"
+ },
+ "1007": {
+  "dup": "Side_Neck_Stretch"
+ },
+ "1008": {
+  "dup": "Side_Neck_Stretch"
+ },
+ "1009": {
+  "dupWger": "1008"
+ },
+ "1010": {
+  "dup": "Chin_To_Chest_Stretch"
+ },
+ "1011": {
+  "dup": "Looking_At_Ceiling"
+ },
+ "1012": {
+  "dup": "Dumbbell_Alternate_Bicep_Curl"
+ },
+ "1013": {
+  "es": "Estiramiento del elevador de la escápula",
+  "muscle": "cuello",
+  "secondary": [
+   "trapecio"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1014": {
+  "dupWger": "1013"
+ },
+ "1015": {
+  "es": "Círculos de cuello",
+  "muscle": "cuello",
+  "secondary": [
+   "trapecio"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "1016": {
+  "dupWger": "1015"
+ },
+ "1017": {
+  "dupWger": "1015"
+ },
+ "1018": {
+  "dup": "Side_Neck_Stretch"
+ },
+ "1019": {
+  "dupWger": "580"
+ },
+ "1020": {
+  "dupWger": "456"
+ },
+ "1021": {
+  "dupWger": "702"
+ },
+ "1022": {
+  "dup": "Alternating_Renegade_Row"
+ },
+ "1027": {
+  "es": "Estiramiento de dorsal en banco (prayer stretch)",
+  "muscle": "dorsales",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1028": {
+  "es": "Rotación torácica en cuadrupedia",
+  "muscle": "espalda",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1029": {
+  "dupWger": "1028"
+ },
+ "1080": {
+  "es": "Flexiones hindúes",
+  "muscle": "pecho",
+  "secondary": [
+   "hombros",
+   "triceps",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1081": {
+  "dup": "Round_The_World_Shoulder_Stretch"
+ },
+ "1082": {
+  "dup": "Reverse_Flyes_With_External_Rotation"
+ },
+ "1083": {
+  "es": "Elevaciones Y-W-T",
+  "muscle": "trapecio",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1084": {
+  "dup": "Dumbbell_Floor_Press"
+ },
+ "1086": {
+  "dup": "Push-Ups_-_Close_Triceps_Position"
+ },
+ "1087": {
+  "dup": "Dumbbell_Clean"
+ },
+ "1088": {
+  "dup": "Sumo_Deadlift"
+ },
+ "1089": {
+  "dup": "Russian_Twist"
+ },
+ "1090": {
+  "dupWger": "454"
+ },
+ "1091": {
+  "es": "Plancha con toques al hombro",
+  "muscle": "core",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1092": {
+  "es": "Entrenamiento con saco de boxeo",
+  "muscle": "cardio",
+  "secondary": [
+   "hombros",
+   "core"
+  ],
+  "equipment": "otro",
+  "kind": "duration"
+ },
+ "1093": {
+  "dup": "Rowing_Stationary"
+ },
+ "1094": {
+  "dup": "Machine_Bench_Press"
+ },
+ "1096": {
+  "es": "Abducción de cadera de pie",
+  "muscle": "abductores",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1098": {
+  "dup": "Seated_Bent-Over_Rear_Delt_Raise"
+ },
+ "1099": {
+  "dup": "Dumbbell_Side_Bend"
+ },
+ "1100": {
+  "es": "Wall balls",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "hombros",
+   "gluteos"
+  ],
+  "equipment": "otro",
+  "kind": "weight_reps"
+ },
+ "1101": {
+  "dup": "Inverted_Row"
+ },
+ "1102": {
+  "dup": "Dumbbell_Rear_Lunge"
+ },
+ "1103": {
+  "dup": "Butt_Lift_Bridge"
+ },
+ "1104": {
+  "dup": "Walking_Treadmill"
+ },
+ "1105": {
+  "dup": "Seated_Leg_Tucks"
+ },
+ "1109": {
+  "dup": "Concentration_Curls"
+ },
+ "1111": {
+  "dup": "Incline_Push-Up"
+ },
+ "1112": {
+  "dup": "Decline_Push-Up"
+ },
+ "1113": {
+  "dup": "Pushups"
+ },
+ "1114": {
+  "skip": true
+ },
+ "1115": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "1116": {
+  "dup": "Farmers_Walk"
+ },
+ "1117": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "1119": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "1120": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "1125": {
+  "dup": "Underhand_Cable_Pulldowns"
+ },
+ "1127": {
+  "dup": "Underhand_Cable_Pulldowns"
+ },
+ "1131": {
+  "dup": "One-Legged_Cable_Kickback"
+ },
+ "1132": {
+  "dup": "Glute_Kickback"
+ },
+ "1136": {
+  "dup": "V-Bar_Pulldown"
+ },
+ "1137": {
+  "dup": "Straight-Arm_Pulldown"
+ },
+ "1138": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "1141": {
+  "dup": "Rear_Leg_Raises"
+ },
+ "1143": {
+  "dup": "Hyperextensions_Back_Extensions"
+ },
+ "1185": {
+  "dup": "Triceps_Pushdown_-_Rope_Attachment"
+ },
+ "1186": {
+  "dup": "One-Arm_Dumbbell_Row"
+ },
+ "1188": {
+  "dup": "Dumbbell_Side_Bend"
+ },
+ "1192": {
+  "dup": "Dumbbell_Alternate_Bicep_Curl"
+ },
+ "1193": {
+  "dup": "Russian_Twist"
+ },
+ "1194": {
+  "dup": "Pallof_Press"
+ },
+ "1195": {
+  "dup": "Squat_with_Plate_Movers"
+ },
+ "1196": {
+  "dup": "Linear_Acceleration_Wall_Drill"
+ },
+ "1198": {
+  "dup": "Inverted_Row"
+ },
+ "1200": {
+  "es": "Elevación de tibiales",
+  "muscle": "gemelos",
+  "secondary": [],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1201": {
+  "es": "Dragon squat",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1202": {
+  "dup": "Side_Leg_Raises"
+ },
+ "1203": {
+  "dupWger": "702"
+ },
+ "1204": {
+  "skip": true
+ },
+ "1205": {
+  "dup": "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench"
+ },
+ "1207": {
+  "es": "Patada de escorpión",
+  "muscle": "lumbar",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1208": {
+  "dup": "Bodyweight_Squat"
+ },
+ "1209": {
+  "dup": "Pushups"
+ },
+ "1210": {
+  "dup": "Superman"
+ },
+ "1214": {
+  "es": "Front lever agrupado",
+  "muscle": "core",
+  "secondary": [
+   "dorsales",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1215": {
+  "es": "Ángeles de nieve invertidos",
+  "muscle": "trapecio",
+  "secondary": [
+   "lumbar",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1216": {
+  "skip": true
+ },
+ "1217": {
+  "dup": "Pushups"
+ },
+ "1218": {
+  "dup": "Pushups"
+ },
+ "1219": {
+  "dup": "Inverted_Row"
+ },
+ "1223": {
+  "skip": true
+ },
+ "1224": {
+  "dup": "Drag_Curl"
+ },
+ "1225": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "1226": {
+  "es": "Curl de bíceps a press de hombro con mancuernas",
+  "muscle": "biceps",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1227": {
+  "dup": "Barbell_Rear_Delt_Row"
+ },
+ "1228": {
+  "dup": "Close-Grip_Dumbbell_Press"
+ },
+ "1230": {
+  "dup": "Triceps_Stretch"
+ },
+ "1231": {
+  "dupWger": "1230"
+ },
+ "1232": {
+  "dup": "Standing_Biceps_Stretch"
+ },
+ "1233": {
+  "dupWger": "1232"
+ },
+ "1234": {
+  "dup": "Single_Leg_Glute_Bridge"
+ },
+ "1238": {
+  "es": "Postura de la rana (frog stand)",
+  "muscle": "hombros",
+  "secondary": [
+   "antebrazo",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1239": {
+  "dup": "Standing_Gastrocnemius_Calf_Stretch"
+ },
+ "1240": {
+  "dup": "Standing_Soleus_And_Achilles_Stretch"
+ },
+ "1241": {
+  "es": "Dorsiflexión con banda",
+  "muscle": "gemelos",
+  "secondary": [],
+  "equipment": "bandas",
+  "kind": "reps"
+ },
+ "1242": {
+  "dup": "Calf_Raises_-_With_Bands"
+ },
+ "1243": {
+  "dup": "Standing_Calf_Raises"
+ },
+ "1244": {
+  "dup": "Cat_Stretch"
+ },
+ "1245": {
+  "es": "Front lever",
+  "muscle": "core",
+  "secondary": [
+   "dorsales",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1246": {
+  "dup": "Suspended_Fallout"
+ },
+ "1248": {
+  "es": "Ice cream maker",
+  "muscle": "dorsales",
+  "secondary": [
+   "core",
+   "biceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1252": {
+  "es": "Dominadas en front lever",
+  "muscle": "dorsales",
+  "secondary": [
+   "core",
+   "biceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1259": {
+  "dup": "Suspended_Reverse_Crunch"
+ },
+ "1260": {
+  "dupWger": "958"
+ },
+ "1261": {
+  "dupWger": "958"
+ },
+ "1262": {
+  "dupWger": "958"
+ },
+ "1263": {
+  "es": "Puente de espalda completo",
+  "muscle": "lumbar",
+  "secondary": [
+   "gluteos",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1266": {
+  "dup": "Body_Tricep_Press"
+ },
+ "1269": {
+  "dup": "Ring_Dips"
+ },
+ "1270": {
+  "dup": "Low_Cable_Crossover"
+ },
+ "1273": {
+  "dup": "Straight-Arm_Dumbbell_Pullover"
+ },
+ "1274": {
+  "dup": "Seated_Calf_Stretch"
+ },
+ "1275": {
+  "dup": "Peroneals_Stretch"
+ },
+ "1280": {
+  "dup": "Underhand_Cable_Pulldowns"
+ },
+ "1282": {
+  "dup": "Chin-Up"
+ },
+ "1283": {
+  "dup": "Dumbbell_Incline_Row"
+ },
+ "1284": {
+  "es": "Flexiones pseudo planche",
+  "muscle": "hombros",
+  "secondary": [
+   "pecho",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1285": {
+  "dup": "Double_Leg_Butt_Kick"
+ },
+ "1286": {
+  "es": "Planche dinámica",
+  "muscle": "hombros",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1287": {
+  "dup": "Toe_Touchers"
+ },
+ "1288": {
+  "dup": "Side_Bridge"
+ },
+ "1289": {
+  "dup": "Seated_Dumbbell_Curl"
+ },
+ "1290": {
+  "dup": "Reverse_Barbell_Curl"
+ },
+ "1292": {
+  "dup": "Chin-Up"
+ },
+ "1293": {
+  "dup": "Single-Arm_Push-Up"
+ },
+ "1294": {
+  "dup": "Standing_Leg_Curl"
+ },
+ "1296": {
+  "dup": "Low_Cable_Crossover"
+ },
+ "1298": {
+  "dup": "Cable_Rope_Overhead_Triceps_Extension"
+ },
+ "1302": {
+  "dup": "JM_Press"
+ },
+ "1303": {
+  "dup": "Dumbbell_Incline_Row"
+ },
+ "1304": {
+  "dup": "Bent_Over_One-Arm_Long_Bar_Row"
+ },
+ "1307": {
+  "dup": "Plank"
+ },
+ "1312": {
+  "dup": "Bodyweight_Squat"
+ },
+ "1314": {
+  "dupWger": "320"
+ },
+ "1318": {
+  "dupWger": "983"
+ },
+ "1320": {
+  "dup": "Bench_Dips"
+ },
+ "1324": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "1325": {
+  "dup": "Single_Leg_Push-off"
+ },
+ "1333": {
+  "dup": "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench"
+ },
+ "1336": {
+  "dup": "Standing_Dumbbell_Triceps_Extension"
+ },
+ "1338": {
+  "dup": "Shoulder_Raise"
+ },
+ "1348": {
+  "dup": "Hyperextensions_Back_Extensions"
+ },
+ "1353": {
+  "dup": "Close-Grip_Dumbbell_Press"
+ },
+ "1360": {
+  "es": "Clean and press con dos kettlebells",
+  "muscle": "hombros",
+  "secondary": [
+   "isquios",
+   "core"
+  ],
+  "equipment": "kettlebell",
+  "kind": "weight_reps"
+ },
+ "1361": {
+  "dup": "Front_Squats_With_Two_Kettlebells"
+ },
+ "1363": {
+  "skip": true
+ },
+ "1366": {
+  "dup": "Split_Squat_with_Dumbbells"
+ },
+ "1370": {
+  "dup": "Barbell_Deadlift"
+ },
+ "1372": {
+  "dup": "Dip_Machine"
+ },
+ "1373": {
+  "dup": "Front_Box_Jump"
+ },
+ "1374": {
+  "dup": "Torso_Rotation"
+ },
+ "1376": {
+  "dup": "Recumbent_Bike"
+ },
+ "1377": {
+  "dup": "Russian_Twist"
+ },
+ "1378": {
+  "dup": "Standing_Low-Pulley_Deltoid_Raise"
+ },
+ "1380": {
+  "dup": "Band_Pull_Apart"
+ },
+ "1381": {
+  "dup": "Leverage_High_Row"
+ },
+ "1384": {
+  "es": "Pullover en máquina",
+  "muscle": "dorsales",
+  "secondary": [
+   "pecho"
+  ],
+  "equipment": "máquina",
+  "kind": "weight_reps"
+ },
+ "1387": {
+  "dup": "Single_Leg_Butt_Kick"
+ },
+ "1388": {
+  "dup": "Kettlebell_One-Legged_Deadlift"
+ },
+ "1390": {
+  "dup": "Standing_Toe_Touches"
+ },
+ "1391": {
+  "es": "Paso del elefante",
+  "muscle": "isquios",
+  "secondary": [
+   "gemelos",
+   "lumbar"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1392": {
+  "dup": "Good_Morning"
+ },
+ "1393": {
+  "dup": "Seated_Hamstring"
+ },
+ "1394": {
+  "dup": "Seated_Floor_Hamstring_Stretch"
+ },
+ "1395": {
+  "es": "Balanceo de pierna cruzado",
+  "muscle": "abductores",
+  "secondary": [
+   "isquios",
+   "aductores"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1396": {
+  "es": "Estiramiento pancake de pie",
+  "muscle": "aductores",
+  "secondary": [
+   "isquios"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1397": {
+  "es": "Buenos días con piernas abiertas",
+  "muscle": "isquios",
+  "secondary": [
+   "aductores",
+   "lumbar"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1398": {
+  "dup": "Hamstring-SMR"
+ },
+ "1399": {
+  "dup": "Standing_Toe_Touches"
+ },
+ "1400": {
+  "dup": "Lying_Hamstring"
+ },
+ "1406": {
+  "dup": "Body-Up"
+ },
+ "1407": {
+  "es": "Sentadilla cosaca",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "aductores",
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1408": {
+  "es": "Sentadilla apoyada en pared",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1409": {
+  "es": "Dragon flag",
+  "muscle": "core",
+  "secondary": [
+   "lumbar"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1410": {
+  "dup": "Plank"
+ },
+ "1411": {
+  "dup": "Alternate_Heel_Touchers"
+ },
+ "1412": {
+  "dup": "Air_Bike"
+ },
+ "1414": {
+  "dup": "Hack_Squat"
+ },
+ "1415": {
+  "dup": "Weighted_Crunches"
+ },
+ "1424": {
+  "dup": "Machine_Bicep_Curl"
+ },
+ "1425": {
+  "dup": "Toe_Touchers"
+ },
+ "1426": {
+  "dup": "Oblique_Crunches"
+ },
+ "1429": {
+  "dup": "External_Rotation"
+ },
+ "1430": {
+  "dup": "Plate_Pinch"
+ },
+ "1433": {
+  "dup": "Standing_Cable_Lift"
+ },
+ "1434": {
+  "dup": "One-Arm_Dumbbell_Row"
+ },
+ "1435": {
+  "dup": "Scapular_Pull-Up"
+ },
+ "1436": {
+  "dup": "Pin_Presses"
+ },
+ "1437": {
+  "es": "Sentadilla con pines",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "barra",
+  "kind": "weight_reps"
+ },
+ "1438": {
+  "dup": "Clean"
+ },
+ "1439": {
+  "dup": "Barbell_Shoulder_Press"
+ },
+ "1440": {
+  "dup": "Push_Press"
+ },
+ "1441": {
+  "dup": "Incline_Dumbbell_Press"
+ },
+ "1442": {
+  "dup": "Arnold_Dumbbell_Press"
+ },
+ "1443": {
+  "dup": "Side_Laterals_to_Front_Raise"
+ },
+ "1445": {
+  "dup": "Power_Jerk"
+ },
+ "1446": {
+  "dup": "Clean_and_Jerk"
+ },
+ "1447": {
+  "dup": "Snatch"
+ },
+ "1448": {
+  "dup": "Incline_Inner_Biceps_Curl"
+ },
+ "1449": {
+  "dup": "Step_Mill"
+ },
+ "1450": {
+  "es": "Postura de la cobra",
+  "muscle": "core",
+  "secondary": [
+   "lumbar"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "1451": {
+  "dup": "Spinal_Stretch"
+ },
+ "1452": {
+  "dup": "Hug_Knees_To_Chest"
+ },
+ "1455": {
+  "dup": "Superman"
+ },
+ "1457": {
+  "dup": "Single-Arm_Cable_Crossover"
+ },
+ "1458": {
+  "es": "Elevaciones en Y cruzadas en polea",
+  "muscle": "trapecio",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "polea",
+  "kind": "weight_reps"
+ },
+ "1461": {
+  "dup": "Dumbbell_Bench_Press"
+ },
+ "1462": {
+  "es": "Golpes de boxeo al aire",
+  "muscle": "cardio",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1463": {
+  "dup": "Bent_Over_Two-Dumbbell_Row"
+ },
+ "1464": {
+  "dup": "Hack_Squat"
+ },
+ "1465": {
+  "dup": "Spider_Curl"
+ },
+ "1466": {
+  "dup": "Calf_Press"
+ },
+ "1467": {
+  "dup": "Close-Grip_Barbell_Bench_Press"
+ },
+ "1468": {
+  "dup": "EZ-Bar_Skullcrusher"
+ },
+ "1469": {
+  "dup": "Cable_Rear_Delt_Fly"
+ },
+ "1470": {
+  "dup": "Kneeling_Single-Arm_High_Pulley_Row"
+ },
+ "1471": {
+  "dup": "One-Arm_Dumbbell_Row"
+ },
+ "1472": {
+  "dup": "Cable_Shrugs"
+ },
+ "1473": {
+  "dup": "Cable_Rear_Delt_Fly"
+ },
+ "1474": {
+  "es": "Elevaciones en W",
+  "muscle": "trapecio",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1475": {
+  "es": "Deslizamiento de rodillas Black Widow",
+  "muscle": "core",
+  "secondary": [],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1476": {
+  "dup": "Frog_Sit-Ups"
+ },
+ "1477": {
+  "dup": "Cross-Body_Crunch"
+ },
+ "1478": {
+  "dup": "Crunches"
+ },
+ "1479": {
+  "dup": "Sit-Up"
+ },
+ "1480": {
+  "dup": "Lying_Triceps_Press"
+ },
+ "1481": {
+  "dup": "Triceps_Pushdown"
+ },
+ "1482": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "1483": {
+  "skip": true
+ },
+ "1484": {
+  "dup": "Cable_Crossover"
+ },
+ "1485": {
+  "dup": "Triceps_Pushdown"
+ },
+ "1486": {
+  "dup": "Elevated_Cable_Rows"
+ },
+ "1487": {
+  "skip": true
+ },
+ "1489": {
+  "es": "Plank jacks",
+  "muscle": "core",
+  "secondary": [
+   "gluteos",
+   "cardio"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1490": {
+  "dup": "Tricep_Dumbbell_Kickback"
+ },
+ "1492": {
+  "dup": "Elevated_Cable_Rows"
+ },
+ "1493": {
+  "dup": "Standing_Biceps_Cable_Curl"
+ },
+ "1496": {
+  "skip": true
+ },
+ "1497": {
+  "dup": "Reverse_Triceps_Bench_Press"
+ },
+ "1498": {
+  "dup": "Close-Grip_Dumbbell_Press"
+ },
+ "1501": {
+  "es": "Remo gorila con mancuernas",
+  "muscle": "espalda",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1502": {
+  "dup": "Cross_Body_Hammer_Curl"
+ },
+ "1503": {
+  "es": "Prensa rana con mancuerna",
+  "muscle": "gluteos",
+  "secondary": [
+   "aductores"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1504": {
+  "dup": "Bradford_Rocky_Presses"
+ },
+ "1508": {
+  "dup": "Smith_Machine_Incline_Bench_Press"
+ },
+ "1509": {
+  "dup": "Tricep_Dumbbell_Kickback"
+ },
+ "1510": {
+  "dup": "V-Bar_Pulldown"
+ },
+ "1511": {
+  "skip": true
+ },
+ "1512": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "1513": {
+  "dup": "Cable_Rope_Overhead_Triceps_Extension"
+ },
+ "1514": {
+  "dup": "Monster_Walk"
+ },
+ "1515": {
+  "dup": "Calf_Press_On_The_Leg_Press_Machine"
+ },
+ "1516": {
+  "es": "Pino estático",
+  "muscle": "hombros",
+  "secondary": [
+   "core",
+   "triceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1519": {
+  "dup": "Standing_Overhead_Barbell_Triceps_Extension"
+ },
+ "1521": {
+  "dupWger": "1527"
+ },
+ "1523": {
+  "dup": "Sled_Push"
+ },
+ "1524": {
+  "dup": "Battling_Ropes"
+ },
+ "1525": {
+  "dup": "Overhead_Slam"
+ },
+ "1526": {
+  "es": "Máquina de esquí (SkiErg)",
+  "muscle": "cardio",
+  "secondary": [
+   "dorsales",
+   "core",
+   "triceps"
+  ],
+  "equipment": "máquina",
+  "kind": "distance"
+ },
+ "1527": {
+  "es": "Sentadilla pendular",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "máquina",
+  "kind": "weight_reps"
+ },
+ "1528": {
+  "dup": "Barbell_Hip_Thrust"
+ },
+ "1529": {
+  "dup": "Hanging_Pike"
+ },
+ "1530": {
+  "dup": "Lying_Supine_Dumbbell_Curl"
+ },
+ "1531": {
+  "dup": "Standing_Biceps_Cable_Curl"
+ },
+ "1536": {
+  "dup": "Shoulder_Stretch"
+ },
+ "1537": {
+  "dup": "Pullups"
+ },
+ "1545": {
+  "es": "Dominadas de arquero",
+  "muscle": "dorsales",
+  "secondary": [
+   "biceps",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1546": {
+  "dup": "Barbell_Bench_Press_-_Medium_Grip"
+ },
+ "1548": {
+  "dup": "Stairmaster"
+ },
+ "1551": {
+  "dup": "Pushups"
+ },
+ "1554": {
+  "dup": "Plyo_Push-up"
+ },
+ "1556": {
+  "es": "Devil press con mancuernas",
+  "muscle": "cuerpo_completo",
+  "secondary": [
+   "hombros",
+   "pecho"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1567": {
+  "dup": "Alternate_Hammer_Curl"
+ },
+ "1572": {
+  "es": "Bird dog",
+  "muscle": "core",
+  "secondary": [
+   "gluteos",
+   "lumbar"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1573": {
+  "dup": "Ab_Roller"
+ },
+ "1574": {
+  "skip": true
+ },
+ "1575": {
+  "skip": true
+ },
+ "1576": {
+  "es": "Snap down",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1577": {
+  "es": "Estiramiento Bretzel",
+  "muscle": "gluteos",
+  "secondary": [
+   "cuadriceps",
+   "espalda"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1578": {
+  "dup": "Good_Morning"
+ },
+ "1579": {
+  "skip": true
+ },
+ "1580": {
+  "dup": "Bent_Over_One-Arm_Long_Bar_Row"
+ },
+ "1581": {
+  "skip": true
+ },
+ "1582": {
+  "dup": "Internal_Rotation_with_Band"
+ },
+ "1583": {
+  "dup": "Floor_Press"
+ },
+ "1584": {
+  "dup": "Jogging_Treadmill"
+ },
+ "1589": {
+  "skip": true
+ },
+ "1590": {
+  "skip": true
+ },
+ "1591": {
+  "skip": true
+ },
+ "1592": {
+  "skip": true
+ },
+ "1593": {
+  "dup": "Smith_Single-Leg_Split_Squat"
+ },
+ "1602": {
+  "dup": "Dumbbell_Scaption"
+ },
+ "1603": {
+  "dup": "Seated_Band_Hamstring_Curl"
+ },
+ "1604": {
+  "es": "Zancada lateral deslizante",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "aductores",
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1605": {
+  "skip": true,
+  "reason": "ya en la biblioteca"
+ },
+ "1606": {
+  "dupWger": "1083"
+ },
+ "1607": {
+  "dup": "Side_To_Side_Chins"
+ },
+ "1608": {
+  "es": "Curl de bíceps con peso corporal",
+  "muscle": "biceps",
+  "secondary": [
+   "antebrazo"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1612": {
+  "dup": "Sumo_Deadlift"
+ },
+ "1613": {
+  "dup": "Hip_Extension_with_Bands"
+ },
+ "1615": {
+  "dup": "Running_Treadmill"
+ },
+ "1616": {
+  "dup": "Glute_Kickback"
+ },
+ "1618": {
+  "dup": "Bicycling_Stationary"
+ },
+ "1620": {
+  "dup": "Dumbbell_Seated_One-Leg_Calf_Raise"
+ },
+ "1621": {
+  "dup": "Seated_One-arm_Cable_Pulley_Rows"
+ },
+ "1630": {
+  "skip": true
+ },
+ "1634": {
+  "dup": "Rope_Straight-Arm_Pulldown"
+ },
+ "1635": {
+  "skip": true
+ },
+ "1637": {
+  "dup": "One-Arm_Dumbbell_Row"
+ },
+ "1638": {
+  "dup": "Clean_and_Press"
+ },
+ "1639": {
+  "dup": "Face_Pull"
+ },
+ "1640": {
+  "es": "Sentadilla frontal con mancuernas",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos",
+   "core"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1641": {
+  "dup": "Kettlebell_One-Legged_Deadlift"
+ },
+ "1642": {
+  "dup": "Barbell_Hip_Thrust"
+ },
+ "1648": {
+  "dup": "Weighted_Crunches"
+ },
+ "1650": {
+  "dup": "Dumbbell_Side_Bend"
+ },
+ "1651": {
+  "dup": "Dumbbell_Rear_Lunge"
+ },
+ "1652": {
+  "dup": "Romanian_Deadlift"
+ },
+ "1653": {
+  "es": "Sentadilla cosaca con mancuerna",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "aductores",
+   "gluteos"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1654": {
+  "skip": true,
+  "reason": "ya en la biblioteca"
+ },
+ "1656": {
+  "dup": "Cable_Chest_Press"
+ },
+ "1657": {
+  "dup": "Preacher_Curl"
+ },
+ "1658": {
+  "dup": "Preacher_Curl"
+ },
+ "1659": {
+  "dup": "One_Arm_Lat_Pulldown"
+ },
+ "1660": {
+  "dup": "Incline_Cable_Chest_Press"
+ },
+ "1661": {
+  "dup": "Triceps_Pushdown"
+ },
+ "1662": {
+  "dup": "Triceps_Pushdown"
+ },
+ "1666": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "1668": {
+  "dup": "Cable_Rope_Overhead_Triceps_Extension"
+ },
+ "1670": {
+  "es": "Balanceo de piernas adelante y atrás",
+  "muscle": "isquios",
+  "secondary": [
+   "cuadriceps",
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1672": {
+  "dup": "Thigh_Abductor"
+ },
+ "1679": {
+  "es": "Ángeles en la pared",
+  "muscle": "trapecio",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1680": {
+  "dup": "Ankle_On_The_Knee"
+ },
+ "1683": {
+  "dup": "Zottman_Curl"
+ },
+ "1684": {
+  "es": "Thruster con mancuernas",
+  "muscle": "hombros",
+  "secondary": [
+   "cuadriceps",
+   "gluteos"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1686": {
+  "dup": "One_Arm_Floor_Press"
+ },
+ "1687": {
+  "es": "Paso de oso con arrastre",
+  "muscle": "core",
+  "secondary": [
+   "hombros",
+   "cuadriceps"
+  ],
+  "equipment": "mancuernas",
+  "kind": "reps"
+ },
+ "1688": {
+  "es": "Peso muerto rumano en kickstand",
+  "muscle": "isquios",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1689": {
+  "dup": "Cable_Crossover"
+ },
+ "1690": {
+  "dup": "Low_Cable_Crossover"
+ },
+ "1691": {
+  "dup": "Cable_Crossover"
+ },
+ "1693": {
+  "skip": true
+ },
+ "1694": {
+  "dup": "Machine_Bench_Press"
+ },
+ "1695": {
+  "dup": "Pullups"
+ },
+ "1696": {
+  "dup": "V-Bar_Pullup"
+ },
+ "1698": {
+  "dup": "Bent_Over_Barbell_Row"
+ },
+ "1699": {
+  "dup": "Reverse_Grip_Bent-Over_Rows"
+ },
+ "1700": {
+  "dup": "Romanian_Deadlift"
+ },
+ "1701": {
+  "dup": "One-Arm_Dumbbell_Row"
+ },
+ "1702": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "1703": {
+  "dup": "Tricep_Dumbbell_Kickback"
+ },
+ "1704": {
+  "es": "L-sit agrupado",
+  "muscle": "core",
+  "secondary": [
+   "triceps",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1706": {
+  "dup": "Split_Squat_with_Dumbbells"
+ },
+ "1709": {
+  "dup": "Bent_Over_Low-Pulley_Side_Lateral"
+ },
+ "1710": {
+  "es": "Estiramiento butcher's block",
+  "muscle": "triceps",
+  "secondary": [
+   "dorsales"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1711": {
+  "es": "Estiramiento sleeper para hombro",
+  "muscle": "hombros",
+  "secondary": [],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1712": {
+  "dup": "Shoulder_Stretch"
+ },
+ "1713": {
+  "dup": "One_Arm_Against_Wall"
+ },
+ "1714": {
+  "es": "Ejercicio pendular de hombro con mancuerna",
+  "muscle": "hombros",
+  "secondary": [],
+  "equipment": "mancuernas",
+  "kind": "duration"
+ },
+ "1715": {
+  "dup": "External_Rotation"
+ },
+ "1716": {
+  "es": "Flexión escapular en banco inclinado",
+  "muscle": "pecho",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1717": {
+  "skip": true
+ },
+ "1718": {
+  "dup": "Elevated_Cable_Rows"
+ },
+ "1723": {
+  "dup": "Glute_Kickback"
+ },
+ "1724": {
+  "dup": "Cable_Hip_Adduction"
+ },
+ "1725": {
+  "dup": "Leverage_Iso_Row"
+ },
+ "1726": {
+  "dup": "Straight-Arm_Pulldown"
+ },
+ "1727": {
+  "dup": "Straight-Arm_Pulldown"
+ },
+ "1728": {
+  "dup": "Cable_Internal_Rotation"
+ },
+ "1729": {
+  "dup": "External_Rotation_with_Cable"
+ },
+ "1730": {
+  "dup": "Cable_Seated_Lateral_Raise"
+ },
+ "1731": {
+  "dup": "Front_Cable_Raise"
+ },
+ "1732": {
+  "dup": "Face_Pull"
+ },
+ "1733": {
+  "dupWger": "718"
+ },
+ "1734": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "1735": {
+  "dup": "Leg_Press"
+ },
+ "1736": {
+  "dup": "Kettlebell_One-Legged_Deadlift"
+ },
+ "1737": {
+  "dup": "Band_Assisted_Pull-Up"
+ },
+ "1738": {
+  "skip": true
+ },
+ "1739": {
+  "es": "Sentadilla camarón (shrimp squat)",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1740": {
+  "dup": "Single_Leg_Glute_Bridge"
+ },
+ "1741": {
+  "es": "Dominadas en L-sit",
+  "muscle": "dorsales",
+  "secondary": [
+   "core",
+   "biceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1742": {
+  "es": "Back lever",
+  "muscle": "espalda",
+  "secondary": [
+   "hombros",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1743": {
+  "es": "Limpiaparabrisas en barra",
+  "muscle": "core",
+  "secondary": [
+   "dorsales"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1744": {
+  "dupWger": "1654"
+ },
+ "1745": {
+  "dup": "Front_Cable_Raise"
+ },
+ "1747": {
+  "dup": "Smith_Machine_Squat"
+ },
+ "1748": {
+  "dup": "Thigh_Abductor"
+ },
+ "1751": {
+  "dup": "Pull_Through"
+ },
+ "1752": {
+  "dup": "Cable_Seated_Lateral_Raise"
+ },
+ "1753": {
+  "dup": "Cable_Seated_Lateral_Raise"
+ },
+ "1754": {
+  "dup": "Side_Lateral_Raise"
+ },
+ "1755": {
+  "dupWger": "1458"
+ },
+ "1766": {
+  "es": "Plancha con alcance frontal",
+  "muscle": "core",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1771": {
+  "dup": "Cable_Wrist_Curl"
+ },
+ "1772": {
+  "dup": "Reverse_Crunch"
+ },
+ "1773": {
+  "dup": "Barbell_Incline_Bench_Press_-_Medium_Grip"
+ },
+ "1774": {
+  "dup": "Bench_Dips"
+ },
+ "1775": {
+  "dup": "Reverse_Machine_Flyes"
+ },
+ "1776": {
+  "es": "Paseo de la maleta",
+  "muscle": "core",
+  "secondary": [
+   "antebrazo",
+   "trapecio"
+  ],
+  "equipment": "mancuernas",
+  "kind": "duration"
+ },
+ "1777": {
+  "es": "Flexiones con déficit",
+  "muscle": "pecho",
+  "secondary": [
+   "triceps",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1778": {
+  "dup": "Barbell_Incline_Bench_Press_-_Medium_Grip"
+ },
+ "1779": {
+  "dup": "Landmine_180s"
+ },
+ "1795": {
+  "dup": "One_Arm_Lat_Pulldown"
+ },
+ "1801": {
+  "dup": "Barbell_Full_Squat"
+ },
+ "1803": {
+  "dup": "Trap_Bar_Deadlift"
+ },
+ "1804": {
+  "es": "Movilidad de dorsiflexión de tobillo",
+  "muscle": "gemelos",
+  "secondary": [],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1807": {
+  "es": "Elevaciones laterales en polea tras la espalda",
+  "muscle": "hombros",
+  "secondary": [],
+  "equipment": "polea",
+  "kind": "weight_reps"
+ },
+ "1808": {
+  "es": "Sujeción isométrica en barras paralelas",
+  "muscle": "triceps",
+  "secondary": [
+   "pecho",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1809": {
+  "dup": "Reverse_Hyperextension"
+ },
+ "1810": {
+  "es": "Postura de la esfinge",
+  "muscle": "lumbar",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "1822": {
+  "es": "Ejercicio del libro abierto",
+  "muscle": "espalda",
+  "secondary": [
+   "pecho"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1823": {
+  "es": "Almeja (clamshell)",
+  "muscle": "gluteos",
+  "secondary": [
+   "abductores"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1824": {
+  "dup": "Tate_Press"
+ },
+ "1825": {
+  "dup": "Lying_Rear_Delt_Raise"
+ },
+ "1826": {
+  "dup": "Band_Pull_Apart"
+ },
+ "1827": {
+  "dup": "Dead_Bug"
+ },
+ "1828": {
+  "dup": "Stomach_Vacuum"
+ },
+ "1829": {
+  "es": "Sentadilla y press con landmine",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "hombros",
+   "gluteos"
+  ],
+  "equipment": "barra",
+  "kind": "weight_reps"
+ },
+ "1830": {
+  "dup": "Barbell_Lunge"
+ },
+ "1831": {
+  "dup": "Leverage_Decline_Chest_Press"
+ },
+ "1832": {
+  "es": "Sujeción isométrica en anillas",
+  "muscle": "hombros",
+  "secondary": [
+   "pecho",
+   "triceps",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1833": {
+  "dup": "Platform_Hamstring_Slides"
+ },
+ "1834": {
+  "es": "Elevación Trap-3",
+  "muscle": "trapecio",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1835": {
+  "dup": "Shoulder_Stretch"
+ },
+ "1838": {
+  "skip": true
+ },
+ "1839": {
+  "dup": "Kneeling_Hip_Flexor"
+ },
+ "1840": {
+  "dup": "90_90_Hamstring"
+ },
+ "1841": {
+  "dup": "Seated_Front_Deltoid"
+ },
+ "1842": {
+  "dupWger": "1823"
+ },
+ "1843": {
+  "dup": "Adductor_Groin"
+ },
+ "1844": {
+  "es": "Estiramiento de la rana",
+  "muscle": "aductores",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1845": {
+  "dup": "Seated_Good_Mornings"
+ },
+ "1846": {
+  "es": "Postura del jinete (horse stance)",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "aductores",
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1847": {
+  "es": "L-sit en straddle",
+  "muscle": "core",
+  "secondary": [
+   "cuadriceps",
+   "triceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1852": {
+  "es": "L-sit en suelo",
+  "muscle": "core",
+  "secondary": [
+   "triceps",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1853": {
+  "dupWger": "1852"
+ },
+ "1854": {
+  "dup": "Calves-SMR"
+ },
+ "1855": {
+  "dup": "Hamstring-SMR"
+ },
+ "1856": {
+  "dup": "Anterior_Tibialis-SMR"
+ },
+ "1857": {
+  "dup": "Iliotibial_Tract-SMR"
+ },
+ "1858": {
+  "dup": "Quadriceps-SMR"
+ },
+ "1859": {
+  "dup": "Piriformis-SMR"
+ },
+ "1860": {
+  "es": "Automasaje con rodillo en aductores",
+  "muscle": "aductores",
+  "secondary": [],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "1861": {
+  "dup": "Standing_Lateral_Stretch"
+ },
+ "1862": {
+  "dup": "Standing_Hip_Circles"
+ },
+ "1863": {
+  "dup": "Lying_Crossover"
+ },
+ "1864": {
+  "dup": "Ankle_Circles"
+ },
+ "1865": {
+  "es": "Movilidad de tobillo con banda",
+  "muscle": "gemelos",
+  "secondary": [],
+  "equipment": "bandas",
+  "kind": "reps"
+ },
+ "1867": {
+  "dup": "Kneeling_Hip_Flexor"
+ },
+ "1868": {
+  "dup": "Worlds_Greatest_Stretch"
+ },
+ "1869": {
+  "dup": "Ankle_On_The_Knee"
+ },
+ "1870": {
+  "dup": "Lying_Hamstring"
+ },
+ "1872": {
+  "es": "Postura de la paloma",
+  "muscle": "gluteos",
+  "secondary": [
+   "cuadriceps"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "1874": {
+  "dup": "Runners_Stretch"
+ },
+ "1875": {
+  "dup": "IT_Band_and_Glute_Stretch"
+ },
+ "1876": {
+  "dup": "Calf_Stretch_Hands_Against_Wall"
+ },
+ "1877": {
+  "dup": "Band_Pull_Apart"
+ },
+ "1879": {
+  "dup": "Straight_Raises_on_Incline_Bench"
+ },
+ "1881": {
+  "dup": "Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench"
+ },
+ "1882": {
+  "dup": "Cable_Seated_Lateral_Raise"
+ },
+ "1884": {
+  "es": "Estiramiento de rotación interna en 90/90",
+  "muscle": "gluteos",
+  "secondary": [
+   "abductores"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "1885": {
+  "dupWger": "1083"
+ },
+ "1886": {
+  "es": "Abducción de cadera supina",
+  "muscle": "abductores",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1889": {
+  "dup": "Decline_Reverse_Crunch"
+ },
+ "1893": {
+  "dup": "Standing_Military_Press"
+ },
+ "1900": {
+  "dup": "Triceps_Pushdown_-_Rope_Attachment"
+ },
+ "1901": {
+  "dup": "Clean_and_Press"
+ },
+ "1902": {
+  "es": "Flexiones con lastre",
+  "muscle": "pecho",
+  "secondary": [
+   "triceps",
+   "hombros"
+  ],
+  "equipment": "disco",
+  "kind": "weight_reps"
+ },
+ "1904": {
+  "dup": "Butterfly"
+ },
+ "1905": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "1906": {
+  "dup": "Butt_Lift_Bridge"
+ },
+ "1907": {
+  "dup": "Dumbbell_Lunges"
+ },
+ "1908": {
+  "dup": "Superman"
+ },
+ "1909": {
+  "es": "Círculos con piernas tumbado",
+  "muscle": "core",
+  "secondary": [
+   "cuadriceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1910": {
+  "dupWger": "1572"
+ },
+ "1911": {
+  "dup": "Plank"
+ },
+ "1912": {
+  "dup": "Russian_Twist"
+ },
+ "1913": {
+  "dup": "Single_Leg_Glute_Bridge"
+ },
+ "1914": {
+  "dupWger": "1808"
+ },
+ "1915": {
+  "es": "Patada de hidrante en cuadrupedia",
+  "muscle": "gluteos",
+  "secondary": [
+   "abductores"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1916": {
+  "es": "Tuck planche",
+  "muscle": "hombros",
+  "secondary": [
+   "core",
+   "pecho"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "1918": {
+  "dup": "Machine_Bench_Press"
+ },
+ "1919": {
+  "skip": true
+ },
+ "1920": {
+  "skip": true
+ },
+ "1921": {
+  "skip": true
+ },
+ "1922": {
+  "dup": "Cable_Crossover"
+ },
+ "1924": {
+  "skip": true
+ },
+ "1925": {
+  "es": "Encogimientos Silverback con barra",
+  "muscle": "trapecio",
+  "secondary": [
+   "lumbar"
+  ],
+  "equipment": "barra",
+  "kind": "weight_reps"
+ },
+ "1927": {
+  "dup": "Underhand_Cable_Pulldowns"
+ },
+ "1928": {
+  "dup": "Seated_Cable_Rows"
+ },
+ "1929": {
+  "dup": "Band_Assisted_Pull-Up"
+ },
+ "1931": {
+  "dup": "Dumbbell_Bicep_Curl"
+ },
+ "1933": {
+  "dup": "Crunches"
+ },
+ "1935": {
+  "es": "Sentadilla con cinturón (belt squat)",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "máquina",
+  "kind": "weight_reps"
+ },
+ "1936": {
+  "dup": "Cable_Rear_Delt_Fly"
+ },
+ "1938": {
+  "dup": "Cat_Stretch"
+ },
+ "1939": {
+  "skip": true
+ },
+ "1940": {
+  "skip": true
+ },
+ "1947": {
+  "es": "Arrancada con mancuerna a una mano",
+  "muscle": "hombros",
+  "secondary": [
+   "isquios",
+   "gluteos"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "1948": {
+  "dup": "Single-Leg_High_Box_Squat"
+ },
+ "1949": {
+  "skip": true
+ },
+ "1950": {
+  "dup": "Iliotibial_Tract-SMR"
+ },
+ "1952": {
+  "dup": "Piriformis-SMR"
+ },
+ "1953": {
+  "dup": "Iron_Crosses_stretch"
+ },
+ "1954": {
+  "es": "Rodar a posición en V",
+  "muscle": "core",
+  "secondary": [
+   "lumbar"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1956": {
+  "dup": "Hip_Circles_prone"
+ },
+ "1959": {
+  "dup": "Ankle_On_The_Knee"
+ },
+ "1960": {
+  "dup": "Kneeling_Hip_Flexor"
+ },
+ "1962": {
+  "dupWger": "320"
+ },
+ "1963": {
+  "dup": "Bodyweight_Squat"
+ },
+ "1964": {
+  "dup": "Push-Up_Wide"
+ },
+ "1965": {
+  "dupWger": "983"
+ },
+ "1966": {
+  "es": "Rotación torácica en posición de caballero",
+  "muscle": "espalda",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "1967": {
+  "dup": "Seated_Dumbbell_Press"
+ },
+ "1968": {
+  "dup": "Dumbbell_One-Arm_Shoulder_Press"
+ },
+ "1969": {
+  "dup": "Cable_One_Arm_Tricep_Extension"
+ },
+ "1970": {
+  "dup": "Kettlebell_Sumo_High_Pull"
+ },
+ "1971": {
+  "dup": "Underhand_Cable_Pulldowns"
+ },
+ "1972": {
+  "dup": "One_Arm_Lat_Pulldown"
+ },
+ "2447": {
+  "es": "Hip airplane",
+  "muscle": "gluteos",
+  "secondary": [
+   "core",
+   "isquios"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2448": {
+  "es": "Almeja inversa",
+  "muscle": "gluteos",
+  "secondary": [
+   "abductores"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2449": {
+  "dupWger": "1823"
+ },
+ "2452": {
+  "dup": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench"
+ },
+ "2454": {
+  "dupWger": "1083"
+ },
+ "2478": {
+  "dup": "Glute_Ham_Raise"
+ },
+ "2480": {
+  "es": "Natación estilo libre continuo",
+  "muscle": "cardio",
+  "secondary": [
+   "dorsales",
+   "hombros"
+  ],
+  "equipment": "ninguno",
+  "kind": "distance"
+ },
+ "2481": {
+  "es": "Patada de natación con tabla",
+  "muscle": "cardio",
+  "secondary": [
+   "cuadriceps",
+   "gluteos"
+  ],
+  "equipment": "otro",
+  "kind": "distance"
+ },
+ "2482": {
+  "skip": true
+ },
+ "2483": {
+  "skip": true
+ },
+ "2484": {
+  "dupWger": "2481"
+ },
+ "2485": {
+  "skip": true
+ },
+ "2486": {
+  "skip": true
+ },
+ "2487": {
+  "dupWger": "2480"
+ },
+ "2488": {
+  "dup": "Standing_Pelvic_Tilt"
+ },
+ "2494": {
+  "es": "Extensión terminal de rodilla con banda (TKE)",
+  "muscle": "cuadriceps",
+  "secondary": [],
+  "equipment": "bandas",
+  "kind": "reps"
+ },
+ "2523": {
+  "dupWger": "716"
+ },
+ "2525": {
+  "es": "Estiramiento del sofá (couch stretch)",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "2526": {
+  "dup": "Runners_Stretch"
+ },
+ "2527": {
+  "es": "Split frontal (spagat)",
+  "muscle": "isquios",
+  "secondary": [
+   "cuadriceps",
+   "aductores"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "2528": {
+  "es": "Sentadilla profunda con torsión y alcance",
+  "muscle": "espalda",
+  "secondary": [
+   "gluteos",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2529": {
+  "dup": "Plyo_Push-up"
+ },
+ "2530": {
+  "es": "Flexiones rusas",
+  "muscle": "triceps",
+  "secondary": [
+   "pecho",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2531": {
+  "es": "Palanca sobre codos (elbow lever)",
+  "muscle": "core",
+  "secondary": [
+   "antebrazo",
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "2532": {
+  "es": "Inclinación para planche (planche lean)",
+  "muscle": "hombros",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "2533": {
+  "dup": "Scapular_Pull-Up"
+ },
+ "2535": {
+  "dup": "Leg_Extensions"
+ },
+ "2536": {
+  "dup": "Barbell_Bench_Press_-_Medium_Grip"
+ },
+ "2537": {
+  "dup": "Standing_Military_Press"
+ },
+ "2538": {
+  "dup": "Side_Lateral_Raise"
+ },
+ "2539": {
+  "dup": "Preacher_Curl"
+ },
+ "2540": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "2541": {
+  "dup": "Triceps_Pushdown"
+ },
+ "2542": {
+  "dupWger": "1092"
+ },
+ "2543": {
+  "dup": "Wrist_Circles"
+ },
+ "2549": {
+  "es": "Caminar hacia atrás en cinta",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gemelos",
+   "cardio"
+  ],
+  "equipment": "máquina",
+  "kind": "duration"
+ },
+ "2555": {
+  "skip": true
+ },
+ "2557": {
+  "dup": "Split_Squats"
+ },
+ "2564": {
+  "skip": true
+ },
+ "2613": {
+  "es": "Transiciones de cadera 90/90",
+  "muscle": "gluteos",
+  "secondary": [
+   "abductores",
+   "aductores"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2614": {
+  "es": "Balanceos en cuadrupedia para aductores",
+  "muscle": "aductores",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2615": {
+  "dup": "Leg-Up_Hamstring_Stretch"
+ },
+ "2616": {
+  "dup": "Balance_Board"
+ },
+ "2617": {
+  "es": "Contracción isométrica de cuádriceps en suelo",
+  "muscle": "cuadriceps",
+  "secondary": [],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "2618": {
+  "dup": "Monster_Walk"
+ },
+ "2619": {
+  "dup": "Single-Leg_Hop_Progression"
+ },
+ "2620": {
+  "dup": "Hack_Squat"
+ },
+ "2621": {
+  "es": "Flexiones de pino con pies en cajón",
+  "muscle": "hombros",
+  "secondary": [
+   "triceps",
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2622": {
+  "es": "Elevaciones frontales con banda",
+  "muscle": "hombros",
+  "secondary": [],
+  "equipment": "bandas",
+  "kind": "reps"
+ },
+ "2623": {
+  "dup": "Wide-Grip_Lat_Pulldown"
+ },
+ "2624": {
+  "dupWger": "1378"
+ },
+ "2633": {
+  "dup": "Machine_Preacher_Curls"
+ },
+ "2635": {
+  "es": "Remo sentado con banda",
+  "muscle": "espalda",
+  "secondary": [
+   "biceps"
+  ],
+  "equipment": "bandas",
+  "kind": "reps"
+ },
+ "2636": {
+  "skip": true
+ },
+ "2637": {
+  "skip": true
+ },
+ "2638": {
+  "skip": true
+ },
+ "2645": {
+  "skip": true
+ },
+ "2655": {
+  "skip": true
+ },
+ "2656": {
+  "es": "Postura del bebé feliz",
+  "muscle": "gluteos",
+  "secondary": [
+   "aductores"
+  ],
+  "equipment": "ninguno",
+  "kind": "duration"
+ },
+ "2661": {
+  "dup": "Standing_Dumbbell_Calf_Raise"
+ },
+ "2662": {
+  "dup": "Barbell_Squat"
+ },
+ "2663": {
+  "dup": "Seated_One-arm_Cable_Pulley_Rows"
+ },
+ "2664": {
+  "skip": true
+ },
+ "2665": {
+  "dup": "Monster_Walk"
+ },
+ "2666": {
+  "dup": "Standing_Soleus_And_Achilles_Stretch"
+ },
+ "2667": {
+  "skip": true
+ },
+ "2668": {
+  "skip": true
+ },
+ "2669": {
+  "dup": "Bent_Over_Two-Dumbbell_Row"
+ },
+ "2670": {
+  "dup": "Walking_Treadmill"
+ },
+ "2671": {
+  "skip": true
+ },
+ "2672": {
+  "dup": "Middle_Back_Shrug"
+ },
+ "2673": {
+  "dup": "Stomach_Vacuum"
+ },
+ "2674": {
+  "dup": "Knee_Hip_Raise_On_Parallel_Bars"
+ },
+ "2675": {
+  "es": "Elevación de rodillas para oblicuos en paralelas",
+  "muscle": "core",
+  "secondary": [],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2676": {
+  "dup": "Lying_Face_Up_Plate_Neck_Resistance"
+ },
+ "2677": {
+  "dup": "Leg_Press"
+ },
+ "2678": {
+  "dup": "Suspended_Row"
+ },
+ "2679": {
+  "es": "Flexiones Mike Tyson",
+  "muscle": "pecho",
+  "secondary": [
+   "cuadriceps",
+   "hombros",
+   "triceps"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2680": {
+  "dup": "Kneeling_Forearm_Stretch"
+ },
+ "2681": {
+  "es": "Flexiones escapulares",
+  "muscle": "pecho",
+  "secondary": [
+   "hombros"
+  ],
+  "equipment": "peso corporal",
+  "kind": "reps"
+ },
+ "2682": {
+  "es": "Sentadilla ciclista con mancuernas",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos"
+  ],
+  "equipment": "mancuernas",
+  "kind": "weight_reps"
+ },
+ "2684": {
+  "dup": "Push-Ups_-_Close_Triceps_Position"
+ },
+ "2685": {
+  "dup": "Shoulder_Stretch"
+ },
+ "2686": {
+  "dup": "Kneeling_Forearm_Stretch"
+ },
+ "2687": {
+  "dup": "Quad_Stretch"
+ },
+ "2689": {
+  "dup": "Jackknife_Sit-Up"
+ },
+ "2690": {
+  "es": "Suspensión activa en barra",
+  "muscle": "dorsales",
+  "secondary": [
+   "trapecio",
+   "antebrazo"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "2691": {
+  "es": "Posición de pica isométrica en suelo",
+  "muscle": "hombros",
+  "secondary": [
+   "core"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "2692": {
+  "skip": true
+ },
+ "2693": {
+  "dup": "One_Arm_Against_Wall"
+ },
+ "2694": {
+  "skip": true
+ },
+ "2695": {
+  "dupWger": "2480"
+ },
+ "2696": {
+  "es": "Sentadilla profunda isométrica con apoyo",
+  "muscle": "cuadriceps",
+  "secondary": [
+   "gluteos",
+   "aductores"
+  ],
+  "equipment": "peso corporal",
+  "kind": "duration"
+ },
+ "2699": {
+  "dupWger": "12"
+ },
+ "2700": {
+  "dupWger": "73"
+ },
+ "2701": {
+  "dupWger": "92"
+ },
+ "2702": {
+  "dupWger": "135"
+ },
+ "2703": {
+  "dupWger": "139"
+ },
+ "2704": {
+  "dupWger": "167"
+ },
+ "2705": {
+  "dupWger": "173"
+ },
+ "2706": {
+  "dupWger": "194"
+ },
+ "2707": {
+  "dupWger": "283"
+ },
+ "2708": {
+  "dupWger": "366"
+ },
+ "2709": {
+  "dupWger": "369"
+ },
+ "2710": {
+  "dupWger": "507"
+ },
+ "2711": {
+  "dupWger": "543"
+ },
+ "2712": {
+  "dupWger": "628"
+ },
+ "2713": {
+  "dupWger": "723"
+ },
+ "2714": {
+  "dupWger": "918"
+ },
+ "2715": {
+  "dupWger": "475"
+ },
+ "2716": {
+  "dupWger": "1185"
+ },
+ "2717": {
+  "dupWger": "1414"
+ },
+ "2718": {
+  "dupWger": "1672"
+ },
+ "2719": {
+  "dupWger": "1699"
+ },
+ "2720": {
+  "dupWger": "1725"
+ },
+ "2721": {
+  "dupWger": "1879"
+ },
+ "2722": {
+  "dupWger": "1972"
+ },
+ "2723": {
+  "dup": "Leverage_Incline_Chest_Press"
+ },
+ "2724": {
+  "dupWger": "348"
+ }
+}
