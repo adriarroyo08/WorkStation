@@ -222,3 +222,17 @@ export const EQUIPMENT = ['barra', 'mancuernas', 'máquina', 'polea', 'peso corp
 
 const MEDIA_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises';
 export const mediaUrls = (media?: string): string[] => (media ? [`${MEDIA_BASE}/${media}/0.jpg`, `${MEDIA_BASE}/${media}/1.jpg`] : []);
+
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[_-]+/g, ' ');
+
+/** Texto en el que se busca un ejercicio: su nombre y, si viene del catálogo, el nombre original en inglés (sale de su id). */
+export const exerciseSearchText = (e: Pick<Exercise, 'name' | 'media'>): string => fold(`${e.name} ${e.media && !e.media.includes('://') ? e.media : ''}`);
+
+/** ¿Coincide la búsqueda? Todas las palabras deben aparecer, en cualquier orden y en español o en inglés. */
+export const matchesExercise = (e: Pick<Exercise, 'name' | 'media'>, q: string): boolean => {
+  const text = exerciseSearchText(e);
+  return fold(q)
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((w) => text.includes(w));
+};

@@ -13,3 +13,20 @@ describe('catalogExtras', () => {
     expect(catalogExtras(lib, items).map((c) => c.id)).toEqual(['Barbell_Curl', 'Zottman_Curl']);
   });
 });
+
+describe('búsqueda en español o en inglés', async () => {
+  const { matchesExercise } = await import('./exercises');
+  const curl = { name: 'Curl con barra Z', media: 'EZ-Bar_Curl' };
+  it('encuentra por el nombre en español sin tildes ni mayúsculas', () => {
+    expect(matchesExercise({ name: 'Elevación de gemelos', media: undefined }, 'elevacion GEMELOS')).toBe(true);
+  });
+  it('encuentra por el nombre original en inglés', () => {
+    expect(matchesExercise(curl, 'ez bar curl')).toBe(true);
+    expect(matchesExercise(curl, 'curl ez')).toBe(true);
+    expect(matchesExercise({ name: 'Press de banca (barra)', media: 'Barbell_Bench_Press_-_Medium_Grip' }, 'bench press')).toBe(true);
+  });
+  it('no inventa coincidencias', () => {
+    expect(matchesExercise(curl, 'squat')).toBe(false);
+    expect(matchesExercise({ name: 'X', media: 'https://wger.de/a.png' }, 'wger')).toBe(false);
+  });
+});
