@@ -18,7 +18,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
     const evidence = page.getByRole('region', { name: 'Evidencia del ejercicio' });
     await expect(evidence).toContainText('EMG');
     await expect(evidence.getByRole('link').first()).toHaveAttribute('href', /^https?:/);
-    await expect(evidence.getByRole('list', { name: 'Músculos por rol' })).toContainText('principal');
+    await expect(page.locator('.act-list')).toContainText('Principal');
+    await expect(page.getByRole('img', { name: 'M\u00fasculos que trabaja' })).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `artifacts/evidence-sourced-${colorScheme}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
@@ -26,7 +27,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await expect(page.getByRole('combobox', { name: 'Filtrar por patrón' })).toHaveValue('');
     await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('copenhague');
     await page.locator('.exrow').first().click();
-    await expect(evidence).toContainText('Evidencia estimada');
+    await expect(evidence).toContainText('Estimada: intensidades orientativas, sin medici\u00f3n directa');
     await expect(evidence.getByRole('link')).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `artifacts/evidence-estimated-${colorScheme}.png`, fullPage: true });

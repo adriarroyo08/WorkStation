@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableExerciseScience, filterExercises } from './exercise-filter';
+import { availableExerciseScience, filterExercises, formatScientificAuthors } from './exercise-filter';
 import { DEFAULT_EXERCISES } from './exercises';
 import type { Exercise } from './types';
 
@@ -38,4 +38,10 @@ describe('filtro de ejercicios', () => {
 it('conserva las fuentes sin enlace como texto sin impedir consultar los metadatos', () => {
   const science = { ...availableExerciseScience(sourced)!, fuentes: [{ titulo: 'Referencia sin enlace', autores: ['Autor'], año: 2024 }] };
   expect(availableExerciseScience({ ...sourced, science })).toEqual(science);
+});
+
+it('abrevia autores solo cuando hay mas de tres', () => {
+  expect(formatScientificAuthors(['A', 'B', 'C'])).toBe('A, B, C');
+  expect(formatScientificAuthors(['A', 'B', 'C', 'D'])).toBe('A et al.');
+  expect(formatScientificAuthors(['A'])).toBe('A');
 });

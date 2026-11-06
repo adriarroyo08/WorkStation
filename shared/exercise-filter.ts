@@ -17,3 +17,7 @@ export function filterExercises(exercises: Exercise[], filters: { q?: string; mu
       matchesExercise(exercise, filters.q ?? ''),
   );
 }
+
+export function formatScientificAuthors(authors: string[]): string {
+  return authors.length > 3 ? `${authors[0]} et al.` : authors.join(', ');
+}

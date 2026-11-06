@@ -7,8 +7,8 @@ import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleFilter, MuscleMap } from './BodyMap';
-import { exerciseActivation, isRegion, REGIONS } from '../../../shared/muscle-detail';
-import { availableExerciseScience } from '../../../shared/exercise-filter';
+import { exerciseActivation } from '../../../shared/muscle-detail';
+import { availableExerciseScience, formatScientificAuthors } from '../../../shared/exercise-filter';
 import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
@@ -305,31 +305,34 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {tab === 'summary' && (
         <>
+          <MuscleMap exercise={e} />
           {science && (
-            <section aria-label="Evidencia del ejercicio">
-              <h2>Patrón: {cap(science.patron.replaceAll('-', ' '))}</h2>
-              <p>{science.evidencia === 'estimada' ? 'Evidencia estimada: intensidades orientativas, sin fuentes medidas.' : `Evidencia: ${science.evidencia === 'emg' ? 'EMG' : 'hipertrofia'}`}</p>
-              <ul aria-label="Músculos por rol">
-                {science.musculos.map((m) => (
-                  <li key={m.id}>
-                    {isRegion(m.id) ? REGIONS[m.id][1] : MUSCLE_LABELS[m.id]} · {m.rol} · {m.intensidad}%
-                  </li>
-                ))}
-              </ul>
+            <section className="exercise-evidence" aria-label="Evidencia del ejercicio">
+              <div className="evidence-heading">
+                <ul className="exinfo-chips" aria-label="Patrón de movimiento">
+                  <li>{cap(science.patron.replaceAll('-', ' '))}</li>
+                </ul>
+                <span className={`evidence-badge ${science.evidencia === 'estimada' ? 'muted' : ''}`}>
+                  {science.evidencia === 'emg' ? 'EMG' : science.evidencia === 'hipertrofia' ? 'Hipertrofia' : 'Estimada'}
+                </span>
+              </div>
+              {science.evidencia === 'estimada' && <p className="muted small">Estimada: intensidades orientativas, sin medición directa</p>}
               {science.fuentes.length > 0 && (
                 <>
-                  <h3>Fuentes</h3>
-                  <ul>
+                  <h2 className="evidence-sources-heading">Fuentes ({science.fuentes.length})</h2>
+                  <ul className="evidence-sources">
                     {science.fuentes.map((source, i) => (
                       <li key={i}>
                         {source.url || source.doi ? (
-                          <a href={source.url ?? `https://doi.org/${source.doi}`} target="_blank" rel="noopener noreferrer">
+                          <a className="evidence-source-title" href={source.url ?? `https://doi.org/${source.doi}`} target="_blank" rel="noopener noreferrer">
                             {source.titulo}
                           </a>
                         ) : (
-                          <span>{source.titulo}</span>
-                        )}{' '}
-                        · {source.autores.join(', ')} ({source.año})
+                          <span className="evidence-source-title">{source.titulo}</span>
+                        )}
+                        <p className="muted small">
+                          {formatScientificAuthors(source.autores)} ({source.año})
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -337,7 +340,6 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
               )}
             </section>
           )}
-          <MuscleMap exercise={e} />
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}
