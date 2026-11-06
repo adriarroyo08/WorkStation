@@ -487,8 +487,9 @@ test('añadir ejercicio ocupa toda la pantalla y se puede elegir tras desplazar'
   for (let i = 0; i < 5; i++) expect(Math.abs((await rows.nth(i).boundingBox())!.width - listW)).toBeLessThanOrEqual(2);
   await page.locator('.sheet-body').evaluate((el) => (el.scrollTop = 2500));
   await expect(page.getByPlaceholder('Buscar ejercicio…')).toBeVisible();
-  await page.locator('.exrow', { hasText: 'Elevación de gemelos de pie' }).first().click();
-  await expect(page.getByText('Elevación de gemelos de pie').first()).toBeVisible();
+  const name = (await rows.nth(40).locator('b').textContent())!;
+  await rows.nth(40).click();
+  await expect(page.getByText(name).first()).toBeVisible();
   await expect(dialog).toHaveCount(0);
 });
 
@@ -576,13 +577,16 @@ test('ejercicios: filtrar tocando un músculo y recorrer la gráfica', async ({ 
   await seed(page, SAMPLE);
   await tab(page, 'Ejercicios').click();
   await expect(page.locator('.exrow').first()).toBeVisible();
-  const all = await page.locator('.exrow').count();
+  // Total con el catálogo ya cargado (la lista solo pinta las primeras filas).
+  const total = () => page.locator('.mfilter-info b').textContent().then(Number);
+  await expect.poll(total).toBeGreaterThan(800);
+  const all = await total();
   await page
     .locator('.bm-filter path', { has: page.locator('title', { hasText: /^Pecho$/ }) })
     .first()
     .click();
   await expect(page.locator('.mfilter-info')).toContainText('Pecho');
-  const n = await page.locator('.exrow').count();
+  const n = Number(await page.locator('.mfilter-info b').textContent());
   expect(n).toBeGreaterThan(0);
   expect(n).toBeLessThan(all);
   await expect(page.locator('.mfilter-info b')).toHaveText(String(n));

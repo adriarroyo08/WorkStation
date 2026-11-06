@@ -345,12 +345,8 @@ export function WeightField({ kg, onChange, ...rest }: { kg?: number; onChange: 
 
 /** Pinta una lista larga poco a poco: las siguientes filas aparecen solas al acercarse al final, sin botones. */
 export function useGrowingList<T>(items: T[], step = 60) {
+  // No vuelve a empezar al cambiar la lista (p. ej. cuando llega el catálogo): no salta mientras desplazas.
   const [count, setCount] = useState(step);
-  const [prev, setPrev] = useState(items);
-  if (prev !== items) {
-    setPrev(items);
-    setCount(step);
-  }
   const sentinel = useRef<HTMLDivElement>(null);
   const more = count < items.length;
   useEffect(() => {
