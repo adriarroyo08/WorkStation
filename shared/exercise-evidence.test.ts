@@ -17,12 +17,12 @@ import type { Exercise } from './types';
 import { exerciseActivation, isGroup, isRegion, REGIONS, sessionMuscles } from './muscle-detail';
 
 describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
-  it('cubre exactamente los 130 ejercicios de DEFAULT_EXERCISES sin omitir ninguno', () => {
+  it('cubre exactamente todos los ejercicios de DEFAULT_EXERCISES sin omitir ninguno', () => {
     const defaultIds = new Set(DEFAULT_EXERCISES.map((e) => e.id));
     const matrixIds = new Set(Object.keys(EXERCISE_EVIDENCE_MATRIX));
 
-    expect(matrixIds.size).toBe(130);
-    expect(defaultIds.size).toBe(130);
+    expect(matrixIds.size).toBe(DEFAULT_EXERCISES.length);
+    expect(defaultIds.size).toBe(DEFAULT_EXERCISES.length);
     expect(matrixIds).toEqual(defaultIds);
   });
 
@@ -66,12 +66,12 @@ describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
 
   it('distingue correctamente EMG, hipertrofia y estimaciones sin citas inventadas', () => {
     const stats = getLibraryEvidenceStats();
-    expect(stats.total).toBe(130);
+    expect(stats.total).toBe(DEFAULT_EXERCISES.length);
     expect(stats.directHypertrophyCount).toBe(9);
     expect(stats.directEmgCount).toBe(60);
     expect(stats.directEvidenceCount).toBe(69);
-    expect(stats.estimatedCount).toBe(61);
-    expect(stats.directEvidenceCount + stats.estimatedCount).toBe(130);
+    expect(stats.estimatedCount).toBe(DEFAULT_EXERCISES.length - 69);
+    expect(stats.directEvidenceCount + stats.estimatedCount).toBe(DEFAULT_EXERCISES.length);
 
     // Comprobar ejercicios clave de hipertrofia
     const sentadilla = getExerciseEvidence('sentadilla');
@@ -107,7 +107,7 @@ describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
       expect(pStat.total).toBe(pStat.emg + pStat.hipertrofia + pStat.estimada);
       sumPatterns += pStat.total;
     }
-    expect(sumPatterns).toBe(130);
+    expect(sumPatterns).toBe(DEFAULT_EXERCISES.length);
   });
 
   it('resuelve ejercicios del catálogo externo y personalizados sin atribuir evidencia heredada', () => {
@@ -149,7 +149,7 @@ describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
   });
 
   it('todos los ejercicios de DEFAULT_EXERCISES tienen propiedad science poblada con patrón, músculos, roles, intensidades y evidencia explícito', () => {
-    expect(DEFAULT_EXERCISES.length).toBe(130);
+    expect(DEFAULT_EXERCISES.length).toBe(Object.keys(EXERCISE_EVIDENCE_MATRIX).length);
     for (const ex of DEFAULT_EXERCISES) {
       expect(ex.science, `Falta science en ${ex.id}`).toBeDefined();
       const s = ex.science!;
@@ -294,7 +294,7 @@ describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
 
     let md = `# Investigación de evidencia científica y cobertura de la biblioteca de ejercicios
 
-Documento entregable de investigación y matriz científica para los 130 ejercicios base de WorkStation (Issue #49, parte de la épica #34).
+Documento entregable de investigación y matriz científica para los ${stats.total} ejercicios base de WorkStation (Issue #49, parte de la épica #34).
 
 ---
 
@@ -316,13 +316,13 @@ El propósito de esta investigación es verificar fuentes científicas primarias
 
 ## 2. Contabilidad y Cobertura de la Biblioteca Base
 
-La biblioteca base (\`DEFAULT_EXERCISES\`) contiene exactamente **130 ejercicios**. La cobertura de la investigación se resume en las siguientes métricas cuantitativas:
+La biblioteca base (\`DEFAULT_EXERCISES\`) contiene exactamente **${stats.total} ejercicios**. La cobertura de la investigación se resume en las siguientes métricas cuantitativas:
 
 ### 2.1 Resumen Global
 
 | Métrica | Ejercicios | Porcentaje |
 | :--- | :---: | :---: |
-| **Total biblioteca base** | **130** | **100,0 %** |
+| **Total biblioteca base** | **${stats.total}** | **100,0 %** |
 | **Evidencia directa medida total** | **69** | **53,1 %** |
 | ↳ *Estudios de hipertrofia por MRI/ecografía* (\`hipertrofia\`) | 9 | 6,9 % |
 | ↳ *Estudios de electromiografía de superficie* (\`emg\`) | 60 | 46,2 % |
@@ -476,9 +476,9 @@ Todas las fuentes citadas a continuación han sido consultadas y comprobadas en 
 
 ---
 
-## 5. Matriz Completa por ID de \`DEFAULT_EXERCISES\` (130 ejercicios)
+## 5. Matriz Completa por ID de \`DEFAULT_EXERCISES\` (${stats.total} ejercicios)
 
-A continuación se detalla la matriz científica completa de los 130 ejercicios base. Cada entrada incluye su identificador único, nombre oficial, patrón biomecánico propuesto, desglose muscular con roles e intensidades finitas (0–100), estado de evidencia y citas comprobadas.
+A continuación se detalla la matriz científica completa de los ${stats.total} ejercicios base. Cada entrada incluye su identificador único, nombre oficial, patrón biomecánico propuesto, desglose muscular con roles e intensidades finitas (0–100), estado de evidencia y citas comprobadas.
 
 | # | ID (\`id\`) | Nombre | Patrón (\`patron\`) | Músculos (Rol e Intensidad) | Evidencia | Citas / Estudios |
 | :---: | :--- | :--- | :--- | :--- | :---: | :--- |

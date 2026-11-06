@@ -7,14 +7,48 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.12.0',
+    date: '2026-11-06',
+    items: [
+      'Catálogo ampliado a más de 1.000 ejercicios: 150+ nuevos de la base abierta wger (paseo de la maleta, almeja, sentadilla cosaca, dragon flag, front lever, Trap-3, estiramientos y movilidad…), en español.',
+      'Nuevo ejercicio: seal row (remo tumbado en banco alto).',
+    ],
+  },
+  {
+    version: '1.11.1',
+    date: '2026-11-06',
+    items: ['Busca ejercicios también por su nombre en inglés (por ejemplo, «bench press» o «ez bar curl») y con las palabras en cualquier orden.'],
+  },
+  {
+    version: '1.11.0',
+    date: '2026-11-05',
+    items: [
+      'Lista completa de ejercicios siempre: al añadir uno a una rutina o al entreno, y en la pestaña Ejercicios, salen los 880+ en una sola lista (por ejemplo, unos 50 de bíceps). Al elegir uno del catálogo pasa a tu biblioteca.',
+      'Nuevos ejercicios: plancha Copenhague, step down y equilibrio monopodal.',
+      'Los ejercicios del catálogo tienen ahora su nombre en español.',
+    ],
+  },
+  {
+    version: '1.10.0',
+    date: '2026-11-03',
+    items: [
+      'Elige RPE o RIR en Ajustes para registrar y editar el esfuerzo, conservando las series en RPE.',
+      'Editor de rutinas: al tocar el número de una serie se abre un menú para elegir el tipo (normal, calentamiento, drop set o al fallo).',
+      'Mantén pulsado un ejercicio de la rutina y arrástralo arriba o abajo para cambiarlo de sitio.',
+      'Noticias de fitness e investigación: catálogo auditado de fuentes abiertas (PubMed, PLOS, Frontiers, JISSN, Fisiología del Ejercicio y Stronger by Science) con contratos de reutilización legal y extractos breves.',
+    ],
+  },
+  {
     version: '1.9.0',
     date: '2026-10-31',
     items: [
+      'Guías MCP para Claude remoto, ChatGPT, Gemini CLI y Claude Code, con requisitos comprobados y copia segura mediante Authorization.',
       'Nuevo resumen al terminar: portada con tus cifras en grande que suben al aparecer, el mapa de músculos trabajados y tus récords del día destacados.',
       'Entrenar, Historial, Ejercicio y Perfil renovados: rutinas con su mapa de músculos, fechas y nombres en grande, calendario con tus días entrenados, ficha del ejercicio con portada y perfil con tus cifras de un vistazo.',
       'Mejor contraste en botones de borrar y textos secundarios.',
       'Conexión con IAs (MCP): límite de 60 peticiones por minuto y 1000 por hora por API key para proteger tu cuenta; al pasarte, la IA recibe cuándo puede reintentar.',
       'Biblioteca de ejercicios: metadatos científicos con patrón de movimiento, desglose muscular por roles (principal, secundario y estabilizador con intensidad) y nivel de evidencia con fuentes contrastadas.',
+      'Base de evidencia científica para artículos: fichas de investigación contrastada para diez temas clave (creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión) con DOIs resueltos y límites claros entre asociación y causalidad.',
     ],
   },
   {

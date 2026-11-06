@@ -1,18 +1,19 @@
-import { useMemo, useState } from 'react';
-import { EQUIPMENT, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
+import { useEffect, useMemo, useState } from 'react';
+import { catalogExtras } from '../../../shared/catalog';
+import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
+import { EQUIPMENT, MUSCLE_LABELS, catalogLabel, matchesExercise } from '../../../shared/exercises';
 import { MuscleThumb } from './BodyMap';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
 import { cap, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
-import { ExerciseMedia, Sheet } from './ui';
+import { ExerciseMedia, Sheet, useGrowingList } from './ui';
 
 export function useExerciseFilter(exercises: Exercise[]) {
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | ''>('');
   const [equipment, setEquipment] = useState('');
-  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const list = useMemo(
-    () => exercises.filter((e) => (!muscle || e.muscle === muscle || e.secondary?.includes(muscle)) && (!equipment || e.equipment === equipment) && norm(e.name).includes(norm(q))),
+    () => exercises.filter((e) => (!muscle || e.muscle === muscle || e.secondary?.includes(muscle)) && (!equipment || e.equipment === equipment) && matchesExercise(e, q)),
     [exercises, q, muscle, equipment],
   );
   const filters = (
@@ -69,7 +70,11 @@ export default function ExercisePicker({
   title?: string;
   single?: boolean;
 }) {
-  const { data } = useStore();
+  const { data, update } = useStore();
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  useEffect(() => {
+    loadCatalog().then(setCatalog, () => {}); // sin red: solo la biblioteca
+  }, []);
   const [sel, setSel] = useState<string[]>([]);
   const [multi, setMulti] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -83,10 +88,19 @@ export default function ExercisePicker({
       const i = recent.indexOf(id);
       return i < 0 ? 1e6 : i;
     };
-    return [...data.exercises].sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name));
-  }, [data.exercises, recent]);
+    // Una sola lista: recientes primero y después todos (biblioteca y catálogo) por orden alfabético.
+    return [...data.exercises, ...catalogExtras(data.exercises, catalog).map(catalogToExercise)].sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name, 'es'));
+  }, [data.exercises, recent, catalog]);
   const { q, list, filters } = useExerciseFilter(sorted);
-  const byId = new Map(data.exercises.map((e) => [e.id, e]));
+  const { shown, end } = useGrowingList(list);
+  const own = new Set(data.exercises.map((e) => e.id));
+  const byId = new Map(sorted.map((e) => [e.id, e]));
+  // Los del catálogo pasan a la biblioteca al elegirlos.
+  const pick = (es: Exercise[], superset: boolean) => {
+    const add = es.filter((e) => !own.has(e.id));
+    if (add.length) update((d) => void d.exercises.push(...add.filter((e) => !d.exercises.some((x) => x.id === e.id)).map((e) => structuredClone(e))));
+    onPick(es, superset);
+  };
 
   if (creating)
     return (
@@ -117,7 +131,7 @@ export default function ExercisePicker({
             <button
               className="primary grow"
               onClick={() =>
-                onPick(
+                pick(
                   sel.map((id) => byId.get(id)!),
                   false,
                 )
@@ -129,7 +143,7 @@ export default function ExercisePicker({
               <button
                 className="primary grow"
                 onClick={() =>
-                  onPick(
+                  pick(
                     sel.map((id) => byId.get(id)!),
                     true,
                   )
@@ -146,7 +160,7 @@ export default function ExercisePicker({
         <button className="item accent" onClick={() => setCreating(true)}>
           + Crear ejercicio personalizado{q ? ` “${q}”` : ''}
         </button>
-        {list.map((e, i) => (
+        {shown.map((e, i) => (
           <div key={e.id}>
             {i === 0 && recent.includes(e.id) && !q && <h3 className="muted small">Recientes</h3>}
             {i > 0 && recent.includes(list[i - 1].id) && !recent.includes(e.id) && !q && <h3 className="muted small">Todos</h3>}
@@ -154,10 +168,11 @@ export default function ExercisePicker({
               e={e}
               selected={sel.includes(e.id)}
               right={multi ? <span className="checkmark">{sel.includes(e.id) ? sel.indexOf(e.id) + 1 : ''}</span> : undefined}
-              onClick={() => (multi ? setSel((s) => (s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])) : onPick([e], false))}
+              onClick={() => (multi ? setSel((s) => (s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])) : pick([e], false))}
             />
           </div>
         ))}
+        {end}
       </div>
     </Sheet>
   );

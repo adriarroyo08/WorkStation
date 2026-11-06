@@ -9,6 +9,7 @@ import { suggestNext } from './progression';
 import { LEVELS, latestBodyweight, strengthLevels } from './strength';
 import { period, periodReport, reportToText, weekStreak } from './reports';
 import { exerciseHistory, formatSet, lastSessionSets, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from './stats';
+import { applyRoutinePatch, findRoutine, routineView } from './routine-edit';
 import { PROGRAMS, instantiateProgram } from './templates';
 import { uid, type Workout, type WorkstationData } from './types';
 
@@ -26,6 +27,8 @@ export interface ToolDef<S extends z.ZodRawShape = z.ZodRawShape> {
   description: string;
   shape: S;
   write?: boolean;
+  // Cambia o borra datos que ya existían (no solo añade): los clientes MCP suelen pedir confirmación.
+  destructive?: boolean;
   run(src: DataSource, args: z.infer<z.ZodObject<S>>): Promise<string>;
 }
 
@@ -190,7 +193,7 @@ export const TOOLS: ToolDef[] = [
           id: r.id,
           name: r.name,
           notes: r.notes,
-          exercises: r.exercises.map((e) => ({ name: names.get(e.exerciseId), sets: e.sets.length, reps: e.sets[0]?.reps, weight: e.sets[0]?.weight, restSec: e.restSec })),
+          exercises: r.exercises.map((e) => ({ name: names.get(e.exerciseId) ?? e.exerciseId, sets: e.sets.length, reps: e.sets[0]?.reps, weight: e.sets[0]?.weight, restSec: e.restSec })),
         })),
       );
     },
@@ -229,7 +232,7 @@ export const TOOLS: ToolDef[] = [
             name: z.string(),
             sets: z.number().int().min(1).max(20),
             reps: z.number().optional(),
-            weight: z.number().optional(),
+            weight: z.number().optional().describe('Peso en kg'),
             durationSec: z.number().optional(),
             restSec: z.number().optional(),
             notes: z.string().optional(),
@@ -243,6 +246,71 @@ export const TOOLS: ToolDef[] = [
       const r = routineFromDraft(data, draft);
       data.routines.push(r);
       return write(src, data, `Rutina "${r.name}" creada (id ${r.id}).`);
+    },
+  }),
+  tool({
+    name: 'update_routine',
+    description:
+      'Modifica una rutina guardada: renombrarla, cambiar sus notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo por otro o quitarlo; también añadir ejercicios. Lo que no se menciona no cambia. Los cambios se aplican en orden. Devuelve la rutina completa tal y como queda.',
+    write: true,
+    destructive: true,
+    shape: {
+      routine: z.string().describe('Id o nombre de la rutina (ver list_routines)'),
+      name: z.string().optional().describe('Nombre nuevo'),
+      notes: z.string().optional().describe('Notas nuevas de la rutina ("" para borrarlas)'),
+      changes: z
+        .array(
+          z.object({
+            exercise: z.string().optional().describe('Nombre o id de un ejercicio de la rutina'),
+            position: z.number().int().min(1).optional().describe('O su posición en la rutina (1 = el primero)'),
+            replace_with: z.string().optional().describe('Sustituirlo por este ejercicio (por nombre), conservando las series'),
+            sets: z.number().int().min(1).max(20).optional().describe('Nº de series: se quitan o se añaden por el final, copiando la última'),
+            reps: z.number().min(0).optional().describe('Repeticiones de las series efectivas (no las de calentamiento)'),
+            weight: z.number().min(0).optional().describe('Peso en kg de las series efectivas'),
+            durationSec: z.number().min(0).optional().describe('Duración en segundos de las series efectivas'),
+            restSec: z.number().min(0).max(3600).optional().describe('Descanso entre series en segundos'),
+            notes: z.string().optional().describe('Notas del ejercicio ("" para borrarlas)'),
+            superset: z.string().optional().describe('Mismo valor en ejercicios consecutivos = superserie ("" para quitarla)'),
+            move_to: z.number().int().min(1).optional().describe('Moverlo a esta posición (1 = el primero)'),
+            remove: z.boolean().optional().describe('Quitarlo de la rutina'),
+          }),
+        )
+        .optional(),
+      add: z
+        .array(
+          z.object({
+            name: z.string(),
+            sets: z.number().int().min(1).max(20).optional().describe('Por defecto 3'),
+            reps: z.number().min(0).optional(),
+            weight: z.number().min(0).optional(),
+            durationSec: z.number().min(0).optional(),
+            restSec: z.number().min(0).max(3600).optional(),
+            notes: z.string().optional(),
+            superset: z.string().optional(),
+            position: z.number().int().min(1).optional().describe('Dónde ponerlo (por defecto, al final)'),
+          }),
+        )
+        .optional()
+        .describe('Ejercicios nuevos; se buscan por nombre en la biblioteca (o se crean)'),
+    },
+    run: async (src, { routine, ...patch }) => {
+      const data = await src.load();
+      const r = findRoutine(data, routine);
+      const done = applyRoutinePatch(data, r, patch);
+      return write(src, data, `Rutina "${r.name}" actualizada (${done.join('; ')}).\n${json(routineView(data, r))}\n`);
+    },
+  }),
+  tool({
+    name: 'delete_routine',
+    description: 'Borra una rutina guardada (no toca los entrenamientos ya registrados con ella). Pide confirmación al usuario antes. Devuelve la rutina borrada por si hay que volver a crearla.',
+    write: true,
+    destructive: true,
+    shape: { routine: z.string().describe('Id o nombre exacto de la rutina') },
+    run: async (src, { routine }) => {
+      const data = await src.load();
+      const r = findRoutine(data, routine, true);
+      data.routines = data.routines.filter((x) => x.id !== r.id);
+      return write(src, data, `Rutina "${r.name}" borrada (id ${r.id}). Era:\n${json(routineView(data, r))}\n`);
     },
   }),
   tool({
@@ -261,7 +329,7 @@ export const TOOLS: ToolDef[] = [
             sets: z
               .array(
                 z.object({
-                  weight: z.number().optional(),
+                  weight: z.number().optional().describe('Peso en kg'),
                   reps: z.number().optional(),
                   rpe: z.number().optional(),
                   durationSec: z.number().optional(),
@@ -293,7 +361,7 @@ export const TOOLS: ToolDef[] = [
     name: 'log_measurement',
     description: 'Registra peso corporal y/o % de grasa.',
     write: true,
-    shape: { bodyweight: z.number().optional(), body_fat: z.number().optional(), date: z.string().optional() },
+    shape: { bodyweight: z.number().optional().describe('Peso corporal en kg'), body_fat: z.number().optional().describe('Porcentaje de grasa corporal (%)'), date: z.string().optional() },
     run: async (src, { bodyweight, body_fat, date }) => {
       const data = await src.load();
       data.measurements.push({ id: uid(), date: date ? new Date(date).toISOString() : new Date().toISOString(), bodyweight, bodyFat: body_fat });
@@ -325,5 +393,8 @@ export async function callTool(src: DataSource, name: string, args: unknown): Pr
     return { text: (e as Error).message, isError: true };
   }
 }
+
+// Pistas MCP: de solo lectura o, si escribe, si cambia o borra lo que ya había.
+export const toolAnnotations = (t: ToolDef) => (t.write ? { readOnlyHint: false, destructiveHint: !!t.destructive } : { readOnlyHint: true });
 
 export const toolJsonSchema = (t: ToolDef) => z.toJSONSchema(z.object(t.shape)) as Record<string, unknown>;

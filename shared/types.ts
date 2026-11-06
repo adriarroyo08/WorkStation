@@ -146,6 +146,7 @@ export interface Settings {
   sound: boolean;
   vibrate: boolean;
   showRpe: boolean;
+  effortScale?: 'rpe' | 'rir';
   theme: 'auto' | 'dark' | 'light';
   barKg: number;
   platesKg: number[];

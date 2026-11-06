@@ -342,3 +342,20 @@ export function NumberField({
 export function WeightField({ kg, onChange, ...rest }: { kg?: number; onChange: (kg: number | undefined) => void } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   return <NumberField value={kg === undefined ? undefined : toUnit(kg)} onChange={(v) => onChange(v === undefined ? undefined : fromUnit(v))} {...rest} />;
 }
+
+/** Pinta una lista larga poco a poco: las siguientes filas aparecen solas al acercarse al final, sin botones. */
+export function useGrowingList<T>(items: T[], step = 60) {
+  // No vuelve a empezar al cambiar la lista (p. ej. cuando llega el catálogo): no salta mientras desplazas.
+  const [count, setCount] = useState(step);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const more = count < items.length;
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !more) return;
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setCount((c) => c + step), { rootMargin: '800px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [more, count, step]);
+  const end = more ? <div ref={sentinel} className="grow-sentinel" aria-hidden="true" style={{ height: 1 }} /> : null;
+  return { shown: items.slice(0, count), end };
+}
