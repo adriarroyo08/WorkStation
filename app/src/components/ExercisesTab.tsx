@@ -6,8 +6,8 @@ import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exer
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
 import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
-import { MuscleFilter, MuscleMap } from './BodyMap';
-import { exerciseActivation } from '../../../shared/muscle-detail';
+import { MuscleFilter, ScienceMap } from './BodyMap';
+import { availableExerciseScience } from '../../../shared/exercise-filter';
 import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
@@ -236,6 +236,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   }, [e?.media, instructions]);
 
   if (!e) return <Back onClick={onBack} />;
+  const science = availableExerciseScience(e);
   const h = exerciseHistory(data, id);
   const pr = personalRecords(data).find((p) => p.exerciseId === id);
   const metrics = METRICS_BY_KIND[e.kind];
@@ -284,15 +285,6 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       <p className="muted small">
         {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>
-      <ul className="exinfo-chips exdetail-chips" aria-label="Músculos principales y secundarios">
-        {exerciseActivation(e)
-          .filter((a) => a.pct >= 45)
-          .map((a) => (
-            <li key={a.group} className={a.pct >= 80 ? 'main' : undefined}>
-              {a.label}
-            </li>
-          ))}
-      </ul>
       <div className="segmented fit">
         {(['summary', 'history', 'howto', 'records'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
@@ -303,7 +295,28 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {tab === 'summary' && (
         <>
-          <MuscleMap exercise={e} />
+          {science && (
+            <section aria-label="Evidencia del ejercicio">
+              <h2>Patrón: {cap(science.patron.replaceAll('-', ' '))}</h2>
+              <p>{science.evidencia === 'estimada' ? 'Evidencia estimada: intensidades orientativas, sin fuentes medidas.' : `Evidencia: ${science.evidencia === 'emg' ? 'EMG' : 'hipertrofia'}`}</p>
+              <ScienceMap exercise={e} />
+              {science.fuentes.length > 0 && (
+                <>
+                  <h3>Fuentes</h3>
+                  <ul>
+                    {science.fuentes.map((source, i) => (
+                      <li key={i}>
+                        <a href={source.url ?? `https://doi.org/${source.doi}`} target="_blank" rel="noopener noreferrer">
+                          {source.titulo}
+                        </a>{' '}
+                        · {source.autores.join(', ')} ({source.año})
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </section>
+          )}
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}

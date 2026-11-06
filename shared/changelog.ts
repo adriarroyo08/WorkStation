@@ -6,6 +6,7 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  { version: '1.13.0', date: '2026-11-06', items: ['Consulta el patrón, los roles musculares y las fuentes de cada ejercicio; filtra por patrón en la biblioteca y al elegir ejercicios.'] },
   {
     version: '1.12.0',
     date: '2026-11-06',

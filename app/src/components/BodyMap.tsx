@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { exerciseActivation, intensityLabel, REGIONS, type Region } from '../../../shared/muscle-detail';
+import { availableExerciseScience } from '../../../shared/exercise-filter';
+import { isRegion } from '../../../shared/muscle-detail';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
 
 type Shape = { m: MuscleGroup | null; reg?: Region; d: string; clip?: string };
@@ -109,7 +111,13 @@ export default function BodyMap({ sets, fatigue = false }: { sets: Partial<Recor
           const v = s.m ? (sets[s.m] ?? 0) : 0;
           const ratio = v / max;
           return (
-            <path key={i} d={s.d} clipPath={s.clip} className={s.m ? 'bm-muscle' : 'bm-base'} style={s.m && v ? { fill: fatigue ? 'var(--warn)' : 'var(--accent)', fillOpacity: 0.25 + 0.75 * ratio } : undefined}>
+            <path
+              key={i}
+              d={s.d}
+              clipPath={s.clip}
+              className={s.m ? 'bm-muscle' : 'bm-base'}
+              style={s.m && v ? { fill: fatigue ? 'var(--warn)' : 'var(--accent)', fillOpacity: 0.25 + 0.75 * ratio } : undefined}
+            >
               {s.m && <title>{fatigue ? `${MUSCLE_LABELS[s.m]}: ${Math.round((1 - v) * 100)}% recuperado` : `${MUSCLE_LABELS[s.m]}: ${Math.round(v * 10) / 10} series`}</title>}
             </path>
           );
@@ -252,5 +260,38 @@ export function MuscleFilter({ value, onPick }: { value: MuscleGroup | ''; onPic
         );
       })}
     </svg>
+  );
+}
+
+/** Mapa científico: colores y roles proceden exclusivamente de metadatos explícitos. */
+export function ScienceMap({ exercise }: { exercise: Exercise }) {
+  const science = availableExerciseScience(exercise);
+  if (!science) return null;
+  return (
+    <div className="bodymap">
+      <svg viewBox="0 0 200 180" role="img" aria-label="Intensidad muscular según los metadatos">
+        {PEC_CLIP}
+        {SHAPES.map((shape, index) => {
+          const activation = science.musculos.find((m) => m.id === shape.reg) ?? science.musculos.find((m) => m.id === shape.m);
+          return (
+            <path
+              key={index}
+              d={shape.d}
+              clipPath={shape.clip}
+              className={shape.m ? 'bm-muscle' : 'bm-base'}
+              style={activation ? { fill: 'var(--accent)', fillOpacity: 0.2 + (0.8 * activation.intensidad) / 100 } : undefined}
+            />
+          );
+        })}
+        <Labels />
+      </svg>
+      <ul aria-label="Músculos por rol">
+        {science.musculos.map((m) => (
+          <li key={m.id}>
+            {isRegion(m.id) ? REGIONS[m.id][1] : MUSCLE_LABELS[m.id]} · {m.rol} · {m.intensidad}%
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
