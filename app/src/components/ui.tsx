@@ -102,6 +102,25 @@ export function ExerciseMedia({ exercise, media, exdbId, size = 'large' }: { exe
   );
 }
 
+// Cifra que sube desde 0 al aparecer (800 ms). Con movimiento reducido se muestra directamente.
+export function CountUp({ value, format }: { value: number; format: (v: number) => string }) {
+  const [still] = useState(() => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [v, setV] = useState(still ? value : 0);
+  useEffect(() => {
+    if (still) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 800);
+      setV(value * (1 - (1 - p) ** 3));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, still]);
+  return <>{format(still ? value : v)}</>;
+}
+
 export function Delta({ cur, prev, unit = '' }: { cur: number; prev: number; unit?: string }) {
   if (!prev && !cur) return null;
   if (!prev) return <span className="delta up">nuevo</span>;
@@ -322,4 +341,21 @@ export function NumberField({
 /** Campo de peso en la unidad del usuario; guarda siempre kg. */
 export function WeightField({ kg, onChange, ...rest }: { kg?: number; onChange: (kg: number | undefined) => void } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   return <NumberField value={kg === undefined ? undefined : toUnit(kg)} onChange={(v) => onChange(v === undefined ? undefined : fromUnit(v))} {...rest} />;
+}
+
+/** Pinta una lista larga poco a poco: las siguientes filas aparecen solas al acercarse al final, sin botones. */
+export function useGrowingList<T>(items: T[], step = 60) {
+  // No vuelve a empezar al cambiar la lista (p. ej. cuando llega el catálogo): no salta mientras desplazas.
+  const [count, setCount] = useState(step);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const more = count < items.length;
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !more) return;
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setCount((c) => c + step), { rootMargin: '800px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [more, count, step]);
+  const end = more ? <div ref={sentinel} className="grow-sentinel" aria-hidden="true" style={{ height: 1 }} /> : null;
+  return { shown: items.slice(0, count), end };
 }

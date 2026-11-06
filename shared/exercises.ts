@@ -143,6 +143,11 @@ const raw: Row[] = [
   ['codo-rodilla', 'Codo a rodilla', 'core', 'peso corporal', 'Elbow_to_Knee', 'reps'],
   ['flexion-lateral', 'Flexión lateral (mancuerna)', 'core', 'mancuernas', 'Dumbbell_Side_Bend'],
   ['muscle-up', 'Muscle-up', 'dorsales', 'peso corporal', 'Muscle_Up', 'reps', ['triceps', 'pecho']],
+  // Ejercicios de estabilidad y prevención que no están en el catálogo libre (sin imágenes).
+  ['plancha-copenhague', 'Plancha Copenhague', 'aductores', 'peso corporal', undefined, 'duration', ['core']],
+  ['step-down', 'Step down', 'cuadriceps', 'peso corporal', undefined, 'reps', ['gluteos']],
+  ['seal-row', 'Seal row (remo tumbado en banco alto)', 'espalda', 'barra', undefined, undefined, ['dorsales', 'trapecio', 'biceps']],
+  ['equilibrio-monopodal', 'Equilibrio monopodal', 'gemelos', 'peso corporal', undefined, 'duration', ['abductores', 'core']],
 ];
 
 export const DEFAULT_EXERCISES: Exercise[] = raw.map(([id, name, muscle, equipment, media, kind, secondary]) => ({
@@ -217,4 +222,19 @@ export const catalogLabel = (s: string): string => CATALOG_ES[s] ?? s;
 export const EQUIPMENT = ['barra', 'mancuernas', 'máquina', 'polea', 'peso corporal', 'kettlebell', 'bandas', 'disco', 'ninguno', 'otro'];
 
 const MEDIA_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises';
-export const mediaUrls = (media?: string): string[] => (media ? [`${MEDIA_BASE}/${media}/0.jpg`, `${MEDIA_BASE}/${media}/1.jpg`] : []);
+// `media` es un id de free-exercise-db o, para ejercicios de wger, sus URLs de imagen separadas por «|».
+export const mediaUrls = (media?: string): string[] => (!media ? [] : media.includes('://') ? media.split('|') : [`${MEDIA_BASE}/${media}/0.jpg`, `${MEDIA_BASE}/${media}/1.jpg`]);
+
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[_-]+/g, ' ');
+
+/** Texto en el que se busca un ejercicio: su nombre y, si viene del catálogo, el nombre original en inglés (sale de su id). */
+export const exerciseSearchText = (e: Pick<Exercise, 'name' | 'media'>): string => fold(`${e.name} ${e.media && !e.media.includes('://') ? e.media : ''}`);
+
+/** ¿Coincide la búsqueda? Todas las palabras deben aparecer, en cualquier orden y en español o en inglés. */
+export const matchesExercise = (e: Pick<Exercise, 'name' | 'media'>, q: string): boolean => {
+  const text = exerciseSearchText(e);
+  return fold(q)
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((w) => text.includes(w));
+};

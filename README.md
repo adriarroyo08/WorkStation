@@ -52,7 +52,7 @@ Hecha desde cero: no contiene ni deriva de código de Hevy. Puedes traer tus dat
 - 115 ejercicios en español con imágenes animadas (inicio/fin del movimiento) e instrucciones.
 - 🎞️ **GIFs animados de ExerciseDB** (1.300+ ejercicios) con tu propia API key de RapidAPI (hay plan gratuito): *Ajustes → GIFs de ejercicios → Guardar y vincular*. Se vinculan solos por nombre y puedes cambiar el GIF desde la ficha de cada ejercicio. La key y los GIFs se guardan solo en tu dispositivo, quedan en caché para usarlos sin conexión, y las miniaturas no gastan cuota.
 - 🎬 **Animaciones propias, gratis e ilimitadas**: 113 ejercicios de la biblioteca traen su propia animación WebP (generada a partir de las fotos de dominio público de free-exercise-db) que se sirve con la app y funciona sin conexión. Si tienes key de ExerciseDB, se usa primero su GIF. Para regenerarlas: `python3 scripts/build-anims.py` (requiere Pillow).
-- Catálogo completo de 870+ ejercicios de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público).
+- Catálogo de 1.000+ ejercicios: [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público) y 150+ de [wger](https://wger.de) (CC BY-SA 4.0; el catálogo generado conserva el autor de cada ejercicio y se comparte con la misma licencia). Los repetidos se descartan con `scripts/wger-map.json`.
 - Ejercicios personalizados con músculos secundarios.
 - Ficha por ejercicio:
   - Gráficas de 1RM estimado, peso máximo, mejor serie, volumen y reps, filtrables por rango.
@@ -200,7 +200,7 @@ Los límites y nombres de modelos gratuitos cambian; si uno falla, cambia el mod
 
 ## 🔌 Conectar una IA a tus datos (MCP + API key)
 
-La app genera **API keys personales** (`ws_…`) para que una IA (Claude, Cursor, ChatGPT con MCP…) lea, y si quieres escriba, tus entrenamientos. Requiere la cuenta de Supabase de la sección anterior.
+La app genera **API keys personales** (`ws_…`) para que un cliente MCP compatible lea, y si quieres escriba, tus entrenamientos. Consulta los requisitos de cada cliente más abajo. Requiere la cuenta de Supabase de la sección anterior.
 
 **1. Prepara Supabase (una vez)**
 - En el SQL Editor, ejecuta `supabase/migrations/002_api_keys.sql`. Crea la tabla `api_keys` (solo guarda hashes) y las funciones seguras `api_records` / `api_upsert`.
@@ -214,7 +214,11 @@ La app genera **API keys personales** (`ws_…`) para que una IA (Claude, Cursor
 **3. Conecta tu IA**
 - **MCP remoto** (HTTP): `https://TU_PROYECTO.supabase.co/functions/v1/mcp` con la cabecera `Authorization: Bearer ws_…`.
   - Claude Code: `claude mcp add --transport http workstation https://TU_PROYECTO.supabase.co/functions/v1/mcp --header "Authorization: Bearer ws_…"`
-  - Clientes que solo aceptan una URL (p. ej. conectores personalizados): `…/functions/v1/mcp?key=ws_…`. La key queda en la URL, así que trátala como una contraseña.
+  - **Claude remoto**: añade un conector web personalizado en Personalizar → Conectores, con el endpoint, «No sign in» y `Authorization: Bearer ws_…` en Request headers. Requiere HTTPS público y permisos del administrador en organizaciones. [Guía oficial](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp).
+  - **Gemini CLI**: combina en `~/.gemini/settings.json` un servidor `mcpServers.workstation` con `httpUrl` igual al endpoint y `headers.Authorization` igual a `Bearer ws_…`. Reinicia y comprueba `/mcp`. [Guía oficial](https://geminicli.com/docs/tools/mcp-server/).
+  - **Claude Code**: también puedes combinar en `.mcp.json` un servidor `mcpServers.workstation` con `type: "http"`, `url` y `headers.Authorization`; acepta el servidor y comprueba `/mcp`. No subas el archivo con la key. [Guía oficial](https://code.claude.com/docs/en/mcp).
+  - **ChatGPT**: la autenticación documentada para datos privados requiere OAuth 2.1; el servidor actual solo implementa API keys, así que no se ofrece conexión directa. No uses acceso anónimo ni la key en la URL. [Autenticación oficial](https://developers.openai.com/plugins/build/auth).
+  - Comprobado el **2026-11-02**. Instala y autentica los clientes CLI previamente; las políticas de la cuenta pueden limitar conectores. Al crear la key, la app permite copiar el endpoint, la cabecera de Claude remoto y JSON para los dos CLI. Ninguna guía necesita `?key=`: los secretos en URLs pueden quedar en historial y registros.
 - **MCP local** (Claude Desktop, Cursor, LM Studio): `cd mcp && npm install && npm run build` y, en la configuración del cliente:
   ```json
   {
@@ -233,7 +237,7 @@ La app genera **API keys personales** (`ws_…`) para que una IA (Claude, Cursor
   ```
   Sin cuenta en la nube, el servidor local también funciona con un fichero: `WORKSTATION_DATA=/ruta/backup.json`, el backup exportado desde la app.
 
-Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `today_plan`, `strength_levels`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
+Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_history`, `period_report`, `personal_records`, `achievements`, `suggest_next`, `today_plan`, `strength_levels`, `list_exercises`, `list_routines`, `list_programs`, y, con permiso de escritura, `create_routine`, `update_routine` (renombrar, cambiar series, repeticiones, peso, descanso u orden, sustituir, quitar o añadir ejercicios), `delete_routine`, `add_program`, `log_workout`, `log_measurement` e `import_from_hevy`. Lo que escribe la IA aparece en la app al sincronizar.
 
 ## Importar desde Hevy
 

@@ -1,5 +1,6 @@
 // Catálogo libre (public/catalog.json): se descarga una vez y se comparte entre pantallas.
-import type { ExerciseKind, MuscleGroup } from '../../shared/types';
+import type { Exercise, ExerciseKind, MuscleGroup } from '../../shared/types';
+import { catalogExerciseId } from '../../shared/catalog';
 
 export interface CatalogItem {
   id: string;
@@ -11,6 +12,10 @@ export interface CatalogItem {
   level: string;
   kind: ExerciseKind;
   instructions: string[];
+  /** Solo wger: URLs de sus imágenes (las de free-exercise-db salen del id). */
+  images?: string[];
+  source?: 'wger';
+  author?: string;
 }
 
 let catalogCache: Promise<CatalogItem[]> | null = null;
@@ -22,3 +27,16 @@ export const loadCatalog = (): Promise<CatalogItem[]> =>
       catalogCache = null;
       throw e;
     }));
+
+/** Ejercicio de la biblioteca creado a partir de uno del catálogo. */
+export const catalogToExercise = (c: CatalogItem): Exercise => ({
+  id: catalogExerciseId(c.id),
+  name: c.name,
+  muscle: c.muscle,
+  secondary: c.secondary,
+  equipment: c.equipment,
+  kind: c.kind,
+  media: c.source === 'wger' ? c.images?.join('|') : c.id,
+  instructions: c.instructions,
+  custom: true,
+});
