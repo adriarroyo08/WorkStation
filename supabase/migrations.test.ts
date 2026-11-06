@@ -3,7 +3,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { readFileSync } from 'node:fs';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const A = '00000000-0000-0000-0000-00000000000a';
 const B = '00000000-0000-0000-0000-00000000000b';
@@ -44,6 +44,7 @@ beforeAll(async () => {
     [A, KEY_R, KEY_W],
   );
   await db.exec(sql('006_api_key_expiry.sql'));
+  await db.exec(sql('008_api_key_rate_limit.sql'));
 }, 60_000);
 
 const upsert = (uid: string, id: string, doc: object, ts: string) =>
@@ -150,6 +151,79 @@ describe('migraciones de Supabase', () => {
         await tx.exec('rollback to savepoint boundary');
       }
       await tx.exec('drop function public.clock_timestamp(); alter function public.api_key_user(text, boolean) set search_path = public, extensions');
+    });
+  });
+
+  describe('límite por API key (008)', () => {
+    const KEY_L = 'ws_rl_limite_8f2';
+    const KEY_O = 'ws_rl_otra_8f2';
+    // Reloj controlado: api_now() lee el ajuste test.now.
+    const at = (iso: string) => db.exec(`select set_config('test.now', '${iso}', false)`);
+    const call = (key: string) => anon(`select count(*) from public.api_records($1)`, [key]);
+    const usage = () =>
+      db.query<{ span: string; calls: number }>(`select span, calls from public.api_key_usage u join public.api_keys k on k.id = u.key_id where k.key_prefix = 'ws_rl8' order by span`);
+
+    beforeAll(async () => {
+      await db.exec(`create or replace function public.api_now() returns timestamptz language sql volatile set search_path = '' as $$ select current_setting('test.now')::timestamptz $$`);
+      await db.query(
+        `insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_rl8', 'write'), ($1, encode(extensions.digest($3, 'sha256'), 'hex'), 'ws_ro8', 'read')`,
+        [B, KEY_L, KEY_O],
+      );
+    });
+    afterAll(() => db.exec(`create or replace function public.api_now() returns timestamptz language sql volatile set search_path = '' as $$ select clock_timestamp() $$`));
+
+    it('deja 60 por minuto, corta la 61 con 429 y Retry-After y no gasta cuota al rechazar', async () => {
+      await at('2026-11-02T10:00:15Z');
+      for (let i = 0; i < 60; i++) await call(KEY_L);
+      const err = await call(KEY_L).catch((e: { message: string; detail?: string; code?: string }) => e);
+      expect((err as { code?: string }).code).toBe('PGRST');
+      expect(JSON.parse((err as { message: string }).message)).toMatchObject({ code: 'WS429' });
+      expect(JSON.parse((err as { detail: string }).detail)).toEqual({ status: 429, headers: { 'Retry-After': '45' } });
+      await expect(call(KEY_L)).rejects.toThrow(/Demasiadas peticiones/);
+      expect((await usage()).rows).toEqual([
+        { span: 'hour', calls: 60 },
+        { span: 'minute', calls: 60 },
+      ]);
+    });
+
+    it('la ventana se reinicia al minuto siguiente', async () => {
+      await at('2026-11-02T10:01:00Z');
+      await expect(call(KEY_L)).resolves.toBeDefined();
+    });
+
+    it('cada clave tiene su propio contador', async () => {
+      await at('2026-11-02T10:01:30Z');
+      for (let i = 0; i < 59; i++) await call(KEY_L);
+      await expect(call(KEY_L)).rejects.toThrow(/Demasiadas/);
+      await expect(call(KEY_O)).resolves.toBeDefined();
+    });
+
+    it('también limita las escrituras y el tope por hora', async () => {
+      await at('2026-11-02T10:05:00Z');
+      await db.exec(`update public.api_key_usage set calls = 1000 where span = 'hour' and key_id = (select id from public.api_keys where key_prefix = 'ws_rl8')`);
+      await expect(anon(`select public.api_upsert($1, '[]')`, [KEY_L])).rejects.toThrow(/máximo 1000 por hora/);
+      await at('2026-11-02T11:00:00Z');
+      await expect(anon(`select public.api_upsert($1, '[]')`, [KEY_L])).resolves.toBeDefined();
+    });
+
+    it('con llamadas simultáneas no se cuela ninguna de más', async () => {
+      await at('2026-11-02T12:00:00Z');
+      const r = await Promise.allSettled(Array.from({ length: 70 }, () => call(KEY_L)));
+      expect(r.filter((x) => x.status === 'fulfilled')).toHaveLength(60);
+    });
+
+    it('nadie de fuera ve los contadores ni puede llamar al límite o al reloj', async () => {
+      await expect(anon(`select * from public.api_key_usage`)).rejects.toThrow(/permission denied/);
+      await expect(as(B, `select * from public.api_key_usage`)).rejects.toThrow(/permission denied/);
+      await expect(anon(`select public.api_key_hit(gen_random_uuid())`)).rejects.toThrow(/permission denied/);
+      await expect(anon(`select public.api_now()`)).rejects.toThrow(/permission denied/);
+    });
+
+    it('al revocar la clave se borran sus contadores y deja de valer', async () => {
+      await at('2026-11-02T13:00:00Z');
+      await db.query(`delete from public.api_keys where key_prefix = 'ws_rl8'`);
+      expect((await usage()).rows).toEqual([]);
+      await expect(call(KEY_L)).rejects.toThrow(/no válida/);
     });
   });
 });

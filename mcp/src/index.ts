@@ -5,7 +5,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { cloudSource } from '../../shared/cloud-source';
-import { TOOLS, callTool, type DataSource } from '../../shared/mcp-tools';
+import { TOOLS, callTool, toolAnnotations, type DataSource } from '../../shared/mcp-tools';
 import { dataPath, loadData, saveData } from './store';
 
 const env = (n: string) => process.env[n];
@@ -28,10 +28,10 @@ function source(): DataSource {
 }
 
 const src = source();
-const server = new McpServer({ name: 'workstation', version: '0.4.0' });
+const server = new McpServer({ name: 'workstation', version: '0.5.0' });
 
 for (const t of TOOLS) {
-  server.registerTool(t.name, { description: t.description, inputSchema: t.shape, annotations: { readOnlyHint: !t.write } }, async (args: unknown) => {
+  server.registerTool(t.name, { description: t.description, inputSchema: t.shape, annotations: toolAnnotations(t) }, async (args: unknown) => {
     const r = await callTool(src, t.name, args);
     return { content: [{ type: 'text' as const, text: r.text }], isError: r.isError };
   });

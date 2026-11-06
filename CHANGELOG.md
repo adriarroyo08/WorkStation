@@ -3,6 +3,64 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [Sin publicar]
+
+- Escala RPE/RIR opcional en Ajustes para registrar y editar esfuerzo con medios puntos, conservando RPE como dato canónico (#85).
+
+### Añadido
+- Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
+- MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
+
+## [1.11.0] - 2026-11-05
+
+### Añadido
+- El selector de ejercicios y la pestaña Ejercicios muestran una sola lista con la biblioteca y los ejercicios del catálogo libre que aún no tienes (`catalogExtras` en `shared/catalog.ts`), en orden alfabético tras recientes o récords. Se pinta por tramos al desplazarse (`useGrowingList`), sin botones. Al elegir uno del catálogo se copia a la biblioteca (`catalogToExercise`).
+- Biblioteca: plancha Copenhague, step down y equilibrio monopodal (sin imágenes; no están en el catálogo libre), con su tabla de activación.
+- Nombres del catálogo en español (`scripts/catalog-names-es.json`, aplicado por `scripts/build-catalog.mjs`).
+
+## [1.10.0] - 2026-11-03
+
+### Cambiado
+- Editor de rutinas: el tipo de serie se elige en un menú (antes cambiaba en ciclo con cada toque). Tipos, letras y nombres comunes en `shared/set-types.ts`, también usados por el entreno en curso.
+
+### Añadido
+- Editor de rutinas: mantener pulsado (450 ms) la cabecera de un ejercicio pliega las tarjetas y permite arrastrarlo sin soltar el dedo; un toque normal sigue abriendo la ficha. Cálculo del destino en `shared/reorder.ts`. «Reordenar ejercicios» se mantiene como alternativa con teclado.
+
+## [1.9.0] - 2026-10-31
+
+### Añadido
+- Base de evidencia científica para artículos (#53): fichas de investigación y bibliografía contrastada para diez temas clave (creatina, proteína, volumen, frecuencia, descanso entre series, sueño, déficit energético, recomposición corporal, cardio y fuerza, y progresión de cargas) en `docs/investigacion-articulos.md` y `shared/article-research.ts`, con DOIs resueltos, delimitación estricta entre asociación y causalidad y registro explícito de límites y ausencia de evidencia sin citas inventadas.
+
+### Cambiado
+- Guías de conexión IA (#41): instrucciones oficiales fechadas para Claude remoto, ChatGPT, Gemini CLI y Claude Code; copia con Authorization e incompatibilidad OAuth de ChatGPT explícita.
+- Resumen de fin de entreno (#48): portada de marcador con antetítulo (nº de entreno · rutina), título grande, `SessionMap` y cuatro cifras que suben con `CountUp` (instantáneas con movimiento reducido), y banda de récords del día. La rejilla de 5 cifras y el mapa grande se mantienen solo al consultar un entreno pasado.
+
+- Sistema de diseño (`docs/diseno.md`) aplicado a las pantallas (#44–#47), cada una con su CSS propio importado desde el componente (`Train.css`, `WorkoutLogger.css`, `History.css`, `ExercisesTab.css`, `Profile.css`):
+  - Entrenar: tarjetas de rutina con `SessionMap`, nombre en `--display`, series y minutos estimados; cifras de marcador en la cabecera del entreno en curso.
+  - Historial: antetítulo de fecha, nombre en `--display`, separadores de mes y calendario con días entrenados rellenos y hoy con borde.
+  - Ejercicio: portada con imagen a sangre, chips de músculos encima de las pestañas, cifras de récord sin cajas y mejor serie resaltada en el historial.
+  - Perfil: portada con inicial, cifras sin caja separadas por líneas, filas de menú con icono en cuadro y aviso de sincronización tras el menú.
+
+### Seguridad
+- Límite por API key (#40): 60 llamadas/minuto y 1000/hora contadas en la base de datos (`008_api_key_rate_limit.sql`, tabla `api_key_usage`, dentro de `api_key_user()`), así que también cubre las RPC llamadas directamente. Responde 429 con `Retry-After`; el MCP lo propaga, corta los lotes al primer 429 y rechaza lotes de más de 20 mensajes. Política y amenazas en `docs/mcp-limites.md`.
+
+### Corregido
+- Contraste AA: `--danger-fill` (#c62828) para `button.danger-solid` (antes 3,37:1 en oscuro) y `--muted` oscuro a #9a9aa0 (4,40:1 → ≥ 4,5:1 sobre `--field`).
+
+## [1.8.0] - 2026-10-31
+
+### Añadido
+- Ficha rápida del ejercicio (`ExerciseInfo`, en una hoja): imagen/animación, mapa muscular con partes, instrucciones del catálogo, nota fija y mejor marca. Se abre tocando el ejercicio en el editor de rutinas, en Explorar programas, en una rutina compartida y en el entreno en curso (desde ahí, "Ver ficha completa" lleva a la ficha con historial y récords).
+
+### Cambiado
+- `loadCatalog` pasa a `app/src/catalog.ts` y reintenta si la primera descarga falla.
+- Sin `alert`/`confirm`/`prompt` del navegador: confirmaciones y nombres con diálogos propios (`app/src/dialog.tsx`, `ask.confirm`/`ask.prompt`) y avisos como toast. Los e2e fallan si aparece un diálogo nativo.
+- Tipografía de marcador: Barlow Condensed (OFL, `@fontsource`, solo latin 600–800) en `h1`, título del entreno, "Hoy toca" y cifras grandes (`--display`). Ficha rápida con imagen a sangre, título grande y chips de músculos principales/secundarios.
+- Instrucciones del catálogo en español (`scripts/catalog-es.json`, que `build-catalog.mjs` aplica si cuadra el número de pasos; se quitan los pasos vacíos). El botón "Traducir con IA" solo sale si siguen en inglés.
+
+### Seguridad
+- Migración `007_welcome_revoke.sql`: `notify_welcome()` deja de poder llamarse por RPC (solo la usa el disparador).
+
 ## [1.7.0] - 2026-10-29
 
 ### Añadido

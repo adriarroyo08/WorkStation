@@ -1,4 +1,4 @@
-import { SAMPLE, expect, seed, tab, test, skipTour } from './fixtures';
+import { SAMPLE, expect, seed, tab, test, skipTour, acceptDialogs } from './fixtures';
 import { CHANGELOG } from '../shared/changelog';
 
 test.describe('tour de bienvenida', () => {
@@ -67,14 +67,13 @@ test.describe('tour de bienvenida', () => {
     await expect(tour(page)).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Ver tour de nuevo' })).toBeVisible();
   });
-
 });
 
 test('entreno completo desde cero', async ({ page, errors }) => {
   void errors;
   await page.goto('/');
   await expect(page.getByText('Bienvenido a Workstation')).toBeVisible();
-  page.on('dialog', (d) => d.accept());
+  await acceptDialogs(page);
   await page.getByRole('button', { name: 'Empezar entrenamiento vacío' }).click();
   await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
   await page.getByPlaceholder('Buscar ejercicio…').fill('press de banca');
@@ -238,7 +237,7 @@ test('mantener pulsada una rutina abre su menú', async ({ page, errors }) => {
 
 test('copia automática diaria: borrar todo y restaurar', async ({ page, errors }) => {
   void errors;
-  page.on('dialog', (d) => d.accept());
+  await acceptDialogs(page);
   await seed(page, SAMPLE);
   await page.waitForTimeout(3500); // la copia diaria se crea unos segundos después de abrir
   await tab(page, 'Perfil').click();
@@ -273,6 +272,63 @@ test('reordenar ejercicios arrastrando y con teclado', async ({ page, errors }) 
   await expect(names).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
   await page.getByRole('button', { name: 'Listo' }).click();
   await expect(page.locator('.excard').first()).toContainText('Sentadilla');
+});
+
+test('editor de rutina: menú de tipo de serie, mover manteniendo pulsado y ficha al tocar', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.routine .grow', { hasText: 'Pierna A' }).first().click();
+  const cards = page.locator('.excard .exinfo-open b');
+  await expect(cards).toHaveText(['Sentadilla (barra)', 'Curl femoral tumbado']);
+  // Tipo de serie: se elige en un menú, no cambia al tocar.
+  await page.getByRole('button', { name: 'Serie 1: Normal. Cambiar tipo' }).first().click();
+  const menu = page.getByRole('dialog', { name: 'Tipo de la serie 1' });
+  await menu.getByRole('button', { name: /Calentamiento/ }).click();
+  await expect(menu).toHaveCount(0);
+  await expect(page.locator('.excard').first().locator('.settype').first()).toHaveText('C');
+  // Mantener pulsado y arrastrar hacia abajo: pasa al segundo puesto.
+  const head = page.locator('.excard .exinfo-open').first();
+  const box = (await head.boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await expect(page.locator('.rx-list.compact')).toBeVisible();
+  const first = (await page.locator('.excard').first().boundingBox())!;
+  for (let k = 1; k <= 8; k++) await page.mouse.move(box.x + 40, first.y + first.height / 2 + k * 15);
+  await page.mouse.up();
+  await expect(cards).toHaveText(['Curl femoral tumbado', 'Sentadilla (barra)']);
+  await expect(page.getByRole('dialog', { name: 'Ficha del ejercicio' })).toHaveCount(0);
+  // Un toque normal abre la ficha.
+  await page.locator('.excard .exinfo-open').first().click();
+  await expect(page.getByRole('dialog', { name: 'Ficha del ejercicio' })).toBeVisible();
+});
+
+test('el selector incluye el catálogo completo y lo añade a la biblioteca', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.routine .grow', { hasText: 'Pierna A' }).first().click();
+  await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Añadir ejercicio' });
+  await sheet.getByPlaceholder('Buscar ejercicio…').fill('zottman');
+  await sheet
+    .locator('.exrow', { hasText: /Zottman/ })
+    .first()
+    .click();
+  await expect(page.locator('.excard .exinfo-open b').last()).toContainText('Zottman');
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await tab(page, 'Ejercicios').click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('zottman');
+  await expect(page.locator('.list .exrow', { hasText: 'Curl Zottman' }).first()).toBeVisible();
+  // Lista completa siempre: también los del catálogo que no has usado, sin «mostrar más».
+  await page.getByPlaceholder('Buscar ejercicio…').fill('pallof');
+  await expect(page.locator('.list .exrow', { hasText: 'Press Pallof' })).toHaveCount(2);
+  await page.getByPlaceholder('Buscar ejercicio…').fill('');
+  // Las filas siguientes aparecen solas al bajar, sin botón.
+  const rows = page.locator('.list .exrow');
+  const before = await rows.count();
+  await rows.last().scrollIntoViewIfNeeded();
+  await expect.poll(() => rows.count()).toBeGreaterThan(before);
+  await expect(page.locator('.mfilter-info b')).toHaveText(/^8[5-9]\d$/);
 });
 
 test('novedades tras actualizar y versión en ajustes', async ({ page, errors }) => {
@@ -315,7 +371,7 @@ test.describe('1.4.0: tour o novedades según de dónde vienes', () => {
 
 test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ page, errors }) => {
   void errors;
-  page.on('dialog', (d) => d.accept());
+  await acceptDialogs(page);
   await seed(page, SAMPLE);
   await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
   const row = page.locator('.swipe .set').first();
@@ -330,7 +386,7 @@ test('decimales con coma en el peso (82,5 no se convierte en 825)', async ({ pag
 
 test('unidades en libras: escribir, calculadora de discos e historial', async ({ page, errors }) => {
   void errors;
-  page.on('dialog', (d) => d.accept());
+  await acceptDialogs(page);
   await seed(page, { ...SAMPLE, settings: { unit: 'lb' } });
   await tab(page, 'Historial').click();
   await expect(page.locator('button.hrow', { hasText: 'Torso A' }).first()).toContainText('lb');
@@ -440,6 +496,7 @@ test('cada ejercicio marca sus músculos con intensidad y partes', async ({ page
   void errors;
   await page.goto('/');
   await tab(page, 'Ejercicios').click();
+  await page.getByPlaceholder('Buscar ejercicio…').fill('press de banca');
   const row = page.locator('.exrow', { hasText: 'Press de banca (barra)' }).first();
   await expect(row.locator('svg.bm-thumb')).toHaveCount(1);
   await row.click();
@@ -520,7 +577,10 @@ test('ejercicios: filtrar tocando un músculo y recorrer la gráfica', async ({ 
   await tab(page, 'Ejercicios').click();
   await expect(page.locator('.exrow').first()).toBeVisible();
   const all = await page.locator('.exrow').count();
-  await page.locator('.bm-filter path', { has: page.locator('title', { hasText: /^Pecho$/ }) }).first().click();
+  await page
+    .locator('.bm-filter path', { has: page.locator('title', { hasText: /^Pecho$/ }) })
+    .first()
+    .click();
   await expect(page.locator('.mfilter-info')).toContainText('Pecho');
   const n = await page.locator('.exrow').count();
   expect(n).toBeGreaterThan(0);
@@ -532,4 +592,69 @@ test('ejercicios: filtrar tocando un músculo y recorrer la gráfica', async ({ 
   const chart = page.getByRole('img', { name: 'Progresión' });
   await chart.click({ position: { x: 40, y: 60 } });
   await expect(chart.locator('.pick')).toHaveCount(1);
+});
+
+test('tocar un ejercicio en la rutina o en el entreno abre cómo se hace y sus músculos', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  // Editor de rutina
+  await page.locator('.routine .grow').first().click();
+  await page.locator('.excard .exinfo-open').first().click();
+  let sheet = page.getByRole('dialog');
+  await expect(sheet.getByText('Músculos que trabaja')).toBeVisible();
+  await expect(sheet.getByRole('img', { name: 'Músculos que trabaja' })).toBeVisible();
+  await expect(sheet.locator('.exinfo-steps li').first()).toBeVisible();
+  await expect(sheet.locator('.media.large')).toHaveCount(1);
+  await sheet.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(sheet).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancelar' }).click();
+  // En mitad del entreno: la hoja no saca del registro y lleva a la ficha completa
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  await page.locator('.excard .exinfo-open').first().click();
+  sheet = page.getByRole('dialog');
+  await expect(sheet.getByText('Cómo se hace')).toBeVisible();
+  await sheet.getByRole('button', { name: /Ver ficha completa/ }).click();
+  await expect(page.getByRole('button', { name: 'Récords' })).toBeVisible();
+});
+
+test('diálogos propios: nombre de carpeta y confirmar borrado (Cancelar no borra)', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.getByRole('button', { name: 'Carpeta', exact: true }).click();
+  const ask = page.locator('form.ask');
+  await ask.getByRole('textbox').fill('Fuerza');
+  await ask.getByRole('button', { name: 'Crear' }).click();
+  await expect(page.locator('.folder', { hasText: 'Fuerza' })).toBeVisible();
+  await page.getByRole('button', { name: 'Opciones' }).first().click();
+  await page.getByRole('button', { name: 'Borrar rutina' }).click();
+  await ask.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(ask).toHaveCount(0);
+  await page.getByRole('button', { name: 'Borrar rutina' }).click();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.routine')).toHaveCount(1);
+});
+
+test('resumen de fin de entreno: portada con cifras, mapa y récords', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await page.locator('.today').getByRole('button', { name: 'Empezar' }).click();
+  await page.locator('.swipe .set').first().waitFor();
+  for (const r of await page.locator('.swipe .set').all()) {
+    await r.getByLabel('Peso (kg)').fill('110');
+    await r.getByLabel('Repeticiones').fill('8');
+    await r.getByLabel('Completar serie').click();
+  }
+  await page.getByRole('button', { name: 'Terminar' }).click();
+  const finish = page.locator('.finish');
+  await expect(finish.getByRole('heading', { name: '¡Buen trabajo!' })).toBeVisible();
+  await expect(finish.locator('.finish-kicker')).toContainText('Pierna A');
+  // Las cifras suben hasta su valor final
+  await expect(finish.locator('.finish-nums div', { hasText: 'series' }).locator('dd')).toHaveText('2');
+  await expect(finish.locator('.finish-nums div', { hasText: 'reps' }).locator('dd')).toHaveText('16');
+  await expect(finish.locator('.finish-nums div', { hasText: 'volumen' }).locator('dd')).toHaveText('1,8 t');
+  await expect(finish.locator('.finish-pr')).toContainText('récords batidos hoy');
+  await expect(finish.locator('svg.bm-session')).toHaveCount(1);
+  // El mapa grande no se repite más abajo
+  await expect(page.locator('svg.bm-session.big')).toHaveCount(0);
 });

@@ -21,6 +21,7 @@ import {
   Watch,
   Weight,
 } from 'lucide-react';
+import { ask } from '../dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
@@ -36,14 +37,14 @@ import { clock, useNow, useStore, useWakeLock } from '../store';
 import RestPicker from './RestPicker';
 import DevicesSheet from './DevicesSheet';
 import ExercisePicker from './ExercisePicker';
+import ExerciseInfo from './ExerciseInfo';
 import { ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
 import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB, fmtMass, fmtWeight, fromUnit, toUnit, weightUnit } from '../../../shared/units';
 import { ReorderSheet, moveItem } from './Reorder';
+import './WorkoutLogger.css';
+import { SET_LABEL, SET_NAMES, SET_TYPES } from '../../../shared/set-types';
 
-const SET_CYCLE: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
-const SET_LABEL: Record<SetType, string> = { normal: '', warmup: 'C', drop: 'D', failure: 'F' };
-const SET_NAMES: Record<SetType, string> = { normal: 'Normal', warmup: 'Calentamiento', drop: 'Drop set', failure: 'Al fallo' };
-const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+import { EFFORT_OPTIONS, effortFromRpe, effortToRpe, type EffortScale } from '../../../shared/effort';
 
 type Edit = (fn: (w: Workout) => void) => void;
 
@@ -69,6 +70,7 @@ export default function WorkoutLogger({
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
   const [menu, setMenu] = useState<number | null>(null);
   const [reorder, setReorder] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
   const [plates, setPlates] = useState<number | null>(null);
   const [stopwatch, setStopwatch] = useState<{ ei: number; si: number; start: number } | null>(null);
   const exMap = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
@@ -166,21 +168,33 @@ export default function WorkoutLogger({
         </div>
         <div className="row live-stats small muted">
           {mode === 'live' && (
-            <span className="icon-btn">
-              <Timer size={14} /> {formatDuration(elapsed)}
-            </span>
+            <div className="live-stat icon-btn">
+              <b className="live-stat-val live-time">{formatDuration(elapsed)}</b>
+              <span className="live-stat-lbl muted small">
+                <Timer size={12} aria-hidden="true" /> duración
+              </span>
+            </div>
           )}
           {mode === 'live' && hr.live && (
-            <span className="hr-live">
-              <Heart size={16} className="ico" /> {hr.bpm}
-            </span>
+            <div className="live-stat hr-live">
+              <b className="live-stat-val">{hr.bpm}</b>
+              <span className="live-stat-lbl small">
+                <Heart size={12} className="ico" aria-hidden="true" /> ppm
+              </span>
+            </div>
           )}
-          <span className="icon-btn">
-            <Weight size={14} /> {fmtMass(totals.volume)}
-          </span>
-          <span className="icon-btn">
-            <ListChecks size={14} /> {mode === 'live' && totals.planned ? `${totals.sets}/${totals.planned}` : totals.sets} series
-          </span>
+          <div className="live-stat icon-btn">
+            <b className="live-stat-val">{fmtMass(totals.volume)}</b>
+            <span className="live-stat-lbl muted small">
+              <Weight size={12} aria-hidden="true" /> volumen
+            </span>
+          </div>
+          <div className="live-stat icon-btn">
+            <b className="live-stat-val">{mode === 'live' && totals.planned ? `${totals.sets}/${totals.planned}` : totals.sets}</b>
+            <span className="live-stat-lbl muted small">
+              <ListChecks size={12} aria-hidden="true" /> series
+            </span>
+          </div>
           {mode === 'live' && (
             <button className="ghost small devices-btn" onClick={() => setDevices(true)} aria-label="Reloj y sensores">
               <Watch size={18} />
@@ -212,12 +226,10 @@ export default function WorkoutLogger({
           <div key={ei} className={`card excard ${we.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''} ${ssNext ? 'ss-next' : ''}`}>
             {we.supersetId && !ssPrev && <div className="ss-label">Superserie</div>}
             <div className="row">
-              <button className="plain" onClick={() => onExercise?.(we.exerciseId)}>
+              <button className="plain row grow left exinfo-open" aria-label={`Ver cómo se hace ${ex?.name ?? ''}`} disabled={!ex} onClick={() => setInfo(we.exerciseId)}>
                 <ExerciseMedia exercise={ex} size="thumb" />
+                <b className="grow">{ex?.name ?? we.exerciseId}</b>
               </button>
-              <b className="grow" onClick={() => onExercise?.(we.exerciseId)}>
-                {ex?.name ?? we.exerciseId}
-              </b>
               <button className="ghost" onClick={() => setMenu(ei)} aria-label="Opciones">
                 <MoreHorizontal size={20} />
               </button>
@@ -241,7 +253,7 @@ export default function WorkoutLogger({
                 <span>Anterior</span>
                 <span>{c1}</span>
                 <span>{c2}</span>
-                {settings.showRpe && <span>RPE</span>}
+                {settings.showRpe && <span>{(settings.effortScale ?? 'rpe').toUpperCase()}</span>}
                 <span>
                   <Check size={14} aria-label="Hecha" />
                 </span>
@@ -257,6 +269,7 @@ export default function WorkoutLogger({
                   ex={ex}
                   pr={isPr(we, s, ex)}
                   showRpe={settings.showRpe}
+                  effortScale={settings.effortScale ?? 'rpe'}
                   running={stopwatch?.ei === ei && stopwatch.si === si ? Math.round((now - stopwatch.start) / 1000) : undefined}
                   onStopwatch={() => {
                     if (stopwatch?.ei === ei && stopwatch.si === si) {
@@ -308,7 +321,10 @@ export default function WorkoutLogger({
       <button className="primary full icon-btn" onClick={() => setPicker({})}>
         <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>
-      <button className="danger full" onClick={() => confirm(mode === 'live' ? '¿Descartar este entrenamiento?' : '¿Descartar los cambios?') && onDiscard()}>
+      <button
+        className="danger full"
+        onClick={async () => (await ask.confirm(mode === 'live' ? '¿Descartar este entrenamiento?' : '¿Descartar los cambios?', { ok: 'Descartar', danger: true })) && onDiscard()}
+      >
         {mode === 'live' ? 'Descartar entrenamiento' : 'Descartar cambios'}
       </button>
 
@@ -344,6 +360,7 @@ export default function WorkoutLogger({
           }}
         />
       )}
+      {info && <ExerciseInfo id={info} onClose={() => setInfo(null)} onFull={onExercise && ((id) => (setInfo(null), onExercise(id)))} />}
       {menu !== null && w.exercises[menu] && (
         <ExerciseMenu
           w={w}
@@ -540,6 +557,7 @@ function SetRow(props: {
   ex?: Exercise;
   pr: boolean;
   showRpe: boolean;
+  effortScale: EffortScale;
   running?: number;
   onStopwatch: () => void;
   onChange: (p: Partial<WorkoutSet>) => void;
@@ -547,10 +565,9 @@ function SetRow(props: {
   onRemove: () => void;
   onPlates: () => void;
 }) {
-  const { id, isNext, n, s, prev, ex, pr, showRpe, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
+  const { id, isNext, n, s, prev, ex, pr, showRpe, effortScale, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
   const swipe = useSwipeSet(onRemove, onToggle);
-  const numVal = (v: string) => (v === '' ? undefined : Number(v.replace(',', '.')));
   const kind = ex?.kind ?? 'weight_reps';
   const prevTxt = prev
     ? kind === 'duration'
@@ -610,9 +627,14 @@ function SetRow(props: {
           <NumberField decimals={false} aria-label="Repeticiones" placeholder={prev?.reps?.toString() ?? ''} value={s.reps} onChange={(reps) => onChange({ reps })} />
         )}
         {showRpe && (
-          <select aria-label="RPE" className="rpe-select" value={s.rpe ?? ''} onChange={(e) => onChange({ rpe: numVal(e.target.value) })}>
+          <select
+            aria-label={effortScale.toUpperCase()}
+            className="rpe-select"
+            value={effortFromRpe(s.rpe, effortScale) ?? ''}
+            onChange={(e) => onChange({ rpe: effortToRpe(e.target.value === '' ? undefined : Number(e.target.value), effortScale) })}
+          >
             <option value="">–</option>
-            {RPE_OPTIONS.map((r) => (
+            {EFFORT_OPTIONS[effortScale].map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
@@ -625,7 +647,7 @@ function SetRow(props: {
         {typeMenu && (
           <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
             <div className="list">
-              {SET_CYCLE.map((t) => (
+              {SET_TYPES.map((t) => (
                 <button key={t} className={`item settype-item ${t}`} onClick={() => (onChange({ type: t }), setTypeMenu(false))}>
                   <b>{SET_LABEL[t] || '1'}</b> {SET_NAMES[t]}
                 </button>

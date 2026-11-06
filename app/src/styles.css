@@ -6,7 +6,7 @@
   --line: #2a2a2a;
   --line-strong: #3a3a3a;
   --text: #f2f2f2;
-  --muted: #8e8e93;
+  --muted: #9a9aa0;
   --accent: #f2600c;
   /* Texto de acento y rellenos con texto blanco encima (contraste AA) */
   --accent-ink: #ff7a2e;
@@ -18,6 +18,8 @@
   --warn-ink: var(--warn);
   --ok-ink: #4cc38a;
   --danger: #f2555a;
+  /* Relleno rojo con texto blanco encima (≥ 4,5:1) */
+  --danger-fill: #c62828;
   --shadow: none;
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
   --radius: 12px;
@@ -25,6 +27,7 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur: 240ms;
+  --display: 'Barlow Condensed', 'Inter Variable', system-ui, sans-serif;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
@@ -35,7 +38,7 @@
     --line: #ececec;
     --line-strong: #dcdce0;
     --text: #111111;
-    --muted: #6b6b70;
+    --muted: #636368;
     --accent: #f2600c;
     --accent-ink: #b23a08;
     --accent-fill: #c2410c;
@@ -57,7 +60,7 @@
   --line: #ececec;
   --line-strong: #dcdce0;
   --text: #111111;
-  --muted: #6b6b70;
+  --muted: #636368;
   --accent: #f2600c;
   --accent-ink: #b23a08;
   --accent-fill: #c2410c;
@@ -3512,4 +3515,246 @@ button.today-go {
   fill: var(--accent);
   stroke: var(--bg);
   stroke-width: 2;
+}
+
+/* Ficha rápida del ejercicio (hoja desde rutina o entreno) */
+.exinfo-open {
+  min-width: 0;
+  text-align: left;
+}
+.exinfo-open b {
+  overflow-wrap: anywhere;
+}
+.exinfo .sec:first-of-type {
+  margin-top: 12px;
+}
+.exinfo-steps {
+  padding-left: 20px;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.exinfo-steps li + li {
+  margin-top: 6px;
+}
+
+/* Diálogos propios (confirmar / pedir un nombre) */
+.ask {
+  display: grid;
+  gap: 14px;
+  padding-top: 4px;
+}
+.ask-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.ask-actions {
+  gap: 10px;
+}
+.ask-actions button {
+  min-height: 48px;
+}
+button.danger-solid {
+  background: var(--danger-fill);
+  color: #fff;
+}
+
+/* ===== Tipografía de marcador =====
+   Títulos y cifras grandes en condensada: más presencia sin colores ni efectos. */
+h1,
+input.title,
+.today-info h3,
+.week-count,
+.mfilter-info b,
+.metric-head > b,
+.stat b,
+.hr-big,
+.w-row b,
+.wrapped .huge,
+.wrapped .big,
+.exinfo-title {
+  font-family: var(--display);
+  letter-spacing: 0;
+  font-feature-settings: 'tnum';
+}
+h1 {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 8px 0 16px;
+}
+input.title {
+  font-size: 30px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.today-info h3 {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.week-count,
+.mfilter-info b {
+  font-size: 60px;
+  font-weight: 800;
+  line-height: 0.9;
+}
+.metric-head > b {
+  font-size: 50px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+.stat b {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+.hr-big {
+  font-size: 40px;
+}
+.w-row b {
+  font-size: 38px;
+}
+.wrapped .huge {
+  font-weight: 800;
+}
+.stats.four .stat b {
+  font-size: 26px;
+}
+@media (max-width: 380px) {
+  .stats.four .stat b {
+    font-size: 22px;
+  }
+}
+
+/* Ficha rápida: imagen a sangre, título de marcador y chips de músculos */
+.exinfo .media.large {
+  margin: 4px -16px 0;
+  width: calc(100% + 32px);
+  border-radius: 0;
+}
+.exinfo-title {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 14px 0 4px;
+}
+.exinfo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.exinfo-chips li {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+.exinfo-chips li.main {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+/* ===== Resumen de fin de entreno: portada de marcador ===== */
+.finish {
+  padding: 2px 0 6px;
+}
+.finish > * {
+  animation: rise-in 0.42s var(--ease) backwards;
+}
+.finish > :nth-child(2) {
+  animation: finish-stamp 0.5s var(--spring) 60ms backwards;
+}
+.finish > :nth-child(3) {
+  animation-delay: 160ms;
+}
+.finish > :nth-child(4) {
+  animation-delay: 260ms;
+}
+.finish > :nth-child(5) {
+  animation-delay: 340ms;
+}
+@keyframes finish-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+.finish-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  overflow-wrap: anywhere;
+}
+h1.finish-title {
+  font-size: clamp(46px, 14vw, 64px);
+  line-height: 0.9;
+  margin: 6px 0 18px;
+  transform-origin: left center;
+}
+.finish-hero {
+  display: grid;
+  grid-template-columns: minmax(96px, 34%) 1fr;
+  gap: 14px;
+  align-items: center;
+}
+.finish-hero .bm-session {
+  width: 100%;
+  height: auto;
+}
+.finish-nums {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 12px;
+  margin: 0;
+}
+.finish-nums div {
+  display: flex;
+  flex-direction: column-reverse;
+  min-width: 0;
+}
+.finish-nums dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(32px, 10vw, 46px);
+  font-weight: 800;
+  line-height: 0.95;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+}
+.finish-nums dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+.finish-pr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.finish-pr b {
+  font-family: var(--display);
+  font-size: 36px;
+  line-height: 1;
+}
+.finish .new-badges {
+  margin-top: 14px;
 }

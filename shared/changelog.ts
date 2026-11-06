@@ -7,6 +7,48 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.11.0',
+    date: '2026-11-05',
+    items: [
+      'Lista completa de ejercicios siempre: al añadir uno a una rutina o al entreno, y en la pestaña Ejercicios, salen los 880+ en una sola lista (por ejemplo, unos 50 de bíceps). Al elegir uno del catálogo pasa a tu biblioteca.',
+      'Nuevos ejercicios: plancha Copenhague, step down y equilibrio monopodal.',
+      'Los ejercicios del catálogo tienen ahora su nombre en español.',
+    ],
+  },
+  {
+    version: '1.10.0',
+    date: '2026-11-03',
+    items: [
+      'Elige RPE o RIR en Ajustes para registrar y editar el esfuerzo, conservando las series en RPE.',
+      'Editor de rutinas: al tocar el número de una serie se abre un menú para elegir el tipo (normal, calentamiento, drop set o al fallo).',
+      'Mantén pulsado un ejercicio de la rutina y arrástralo arriba o abajo para cambiarlo de sitio.',
+      'Noticias de fitness e investigación: catálogo auditado de fuentes abiertas (PubMed, PLOS, Frontiers, JISSN, Fisiología del Ejercicio y Stronger by Science) con contratos de reutilización legal y extractos breves.',
+    ],
+  },
+  {
+    version: '1.9.0',
+    date: '2026-10-31',
+    items: [
+      'Guías MCP para Claude remoto, ChatGPT, Gemini CLI y Claude Code, con requisitos comprobados y copia segura mediante Authorization.',
+      'Nuevo resumen al terminar: portada con tus cifras en grande que suben al aparecer, el mapa de músculos trabajados y tus récords del día destacados.',
+      'Entrenar, Historial, Ejercicio y Perfil renovados: rutinas con su mapa de músculos, fechas y nombres en grande, calendario con tus días entrenados, ficha del ejercicio con portada y perfil con tus cifras de un vistazo.',
+      'Mejor contraste en botones de borrar y textos secundarios.',
+      'Conexión con IAs (MCP): límite de 60 peticiones por minuto y 1000 por hora por API key para proteger tu cuenta; al pasarte, la IA recibe cuándo puede reintentar.',
+      'Base de evidencia científica para artículos: fichas de investigación contrastada para diez temas clave (creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión) con DOIs resueltos y límites claros entre asociación y causalidad.',
+    ],
+  },
+  {
+    version: '1.8.0',
+    date: '2026-10-31',
+    items: [
+      'Toca un ejercicio de una rutina, de un programa o del entreno en curso para ver cómo se hace: imágenes, instrucciones y los músculos que trabaja, sin salir de donde estás.',
+      'Desde esa ficha rápida puedes saltar a la ficha completa con tu historial y récords.',
+      'Confirmaciones y avisos con el estilo de la app en lugar de las ventanas del sistema.',
+      'Las instrucciones de los 870+ ejercicios del catálogo, ahora en español.',
+      'Nueva tipografía de marcador en títulos y cifras grandes, y la ficha del ejercicio con la imagen a todo lo ancho y sus músculos principales a la vista.',
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-10-29',
     items: [

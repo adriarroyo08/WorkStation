@@ -13,11 +13,16 @@ export const test = base.extend<{ errors: string[]; onboarded: boolean }>({
     page.on('pageerror', (e) => errors.push(e.message));
     // Una violación de la CSP no lanza excepción: se detecta en la consola.
     page.on('console', (m) => m.type() === 'error' && /Content Security Policy/i.test(m.text()) && errors.push(m.text()));
+    // La app usa diálogos propios: un alert/confirm/prompt del navegador es un fallo.
+    page.on('dialog', (d) => (errors.push(`diálogo nativo: ${d.message()}`), d.dismiss().catch(() => {})));
     await use(errors);
     expect(errors).toEqual([]);
   },
 });
 export { expect };
+
+// Acepta los diálogos propios de confirmación (sustituyen a confirm()) cada vez que aparezcan.
+export const acceptDialogs = (page: Page) => page.addLocatorHandler(page.locator('form.ask'), (f) => f.locator('button[type=submit]').click());
 
 // Para contextos extra (segundo dispositivo): marca el tour como visto.
 export const skipTour = (ctx: BrowserContext) => ctx.addInitScript(() => localStorage.setItem('ws:onboarded', '1'));

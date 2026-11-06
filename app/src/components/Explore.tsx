@@ -1,5 +1,7 @@
 // Programas predefinidos para guardar como rutinas (se carga bajo demanda).
+import { ask } from '../dialog';
 import { useState } from 'react';
+import ExerciseInfo from './ExerciseInfo';
 import { PROGRAMS, instantiateProgram, type ProgramTemplate } from '../../../shared/templates';
 import { useStore } from '../store';
 import { Back, ExerciseMedia } from './ui';
@@ -7,6 +9,7 @@ import { Back, ExerciseMedia } from './ui';
 export default function Explore({ onBack }: { onBack: () => void }) {
   const { data, update } = useStore();
   const [sel, setSel] = useState<ProgramTemplate | null>(null);
+  const [info, setInfo] = useState<{ of: ProgramTemplate; id: string } | null>(null);
   const exMap = new Map(data.exercises.map((e) => [e.id, e]));
   if (sel) {
     return (
@@ -21,13 +24,13 @@ export default function Explore({ onBack }: { onBack: () => void }) {
           <div key={r.name} className="card">
             <b>{r.name}</b>
             {r.exercises.map(([id, sets, reps]) => (
-              <div key={id} className="row small exline">
+              <button key={id} className="plain row small exline full left" disabled={!exMap.has(id)} onClick={() => setInfo({ of: sel, id })}>
                 <ExerciseMedia exercise={exMap.get(id)} size="thumb" />
                 <span className="grow">{exMap.get(id)?.name ?? id}</span>
                 <span className="muted">
                   {sets} × {reps}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         ))}
@@ -39,12 +42,13 @@ export default function Explore({ onBack }: { onBack: () => void }) {
               d.folders.push(folder);
               d.routines.push(...routines);
             });
-            alert(`Programa guardado en la carpeta "${folder.name}".`);
+            ask.notice(`Programa guardado en la carpeta "${folder.name}"`);
             onBack();
           }}
         >
           Guardar programa en mis rutinas
         </button>
+        {info?.of === sel && <ExerciseInfo id={info.id} onClose={() => setInfo(null)} />}
         <p className="muted small">Después ajusta los pesos en cada rutina o simplemente empieza: la app recordará lo que levantes.</p>
       </section>
     );

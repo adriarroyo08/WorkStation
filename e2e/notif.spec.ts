@@ -7,7 +7,14 @@ const stubNative = (page: import('@playwright/test').Page) =>
     w.__asked = 0;
     const noop = () => {};
     w.WorkstationNative = {
-      sendToWatch: noop, requestWatchStatus: noop, scheduleRest: noop, cancelRest: noop, workoutOngoing: noop, workoutEnded: noop, saveFile: noop, openWatchApp: noop,
+      sendToWatch: noop,
+      requestWatchStatus: noop,
+      scheduleRest: noop,
+      cancelRest: noop,
+      workoutOngoing: noop,
+      workoutEnded: noop,
+      saveFile: noop,
+      openWatchApp: noop,
       notificationsState: () => 'ask',
       requestNotifications: () => {
         w.__asked++;
@@ -20,8 +27,8 @@ const prompt = (page: import('@playwright/test').Page) => page.getByRole('dialog
 const start = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Empezar entrenamiento vacío' }).click();
 const started = (page: import('@playwright/test').Page) => expect(page.getByRole('button', { name: 'Añadir ejercicio' })).toBeVisible();
 const discard = async (page: import('@playwright/test').Page) => {
-  page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Terminar' }).click();
+  await page.locator('form.ask').getByRole('button', { name: 'Descartar' }).click();
 };
 
 test('Activar avisos: explica, pide el permiso, arranca y no vuelve a preguntar', async ({ page, errors }) => {

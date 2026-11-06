@@ -1,8 +1,10 @@
-import { Copy, KeyRound, Mail, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { Copy, KeyRound, Mail, Share2, Trash2 } from 'lucide-react';
+import { ask } from '../dialog';
 import { useCallback, useEffect, useState } from 'react';
 import { cloud, useCloud } from '../cloud';
 import { isNative, native } from '../native';
 import { toast } from '../toast';
+import { MCP_GUIDES, MCP_GUIDES_CHECKED, mcpClientConfig, mcpEndpoint } from '../../../shared/mcp-clients';
 
 interface KeyRow {
   id: string;
@@ -15,13 +17,14 @@ interface KeyRow {
 }
 
 const copy = (t: string, msg = 'Copiado') => navigator.clipboard.writeText(t).then(() => toast.show(msg));
-const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors';
 const keyText = (key: string, url: string) =>
   `API key de Workstation:
 ${key}
 
-Conector MCP (URL para Claude → Conectores → Añadir conector personalizado):
-${url}?key=${key}
+Servidor MCP:
+${url}
+Cabecera Authorization:
+Bearer ${key}
 
 No la compartas: da acceso a tus entrenos.`;
 // En el APK el WebView manda los enlaces externos (https, mailto) a su app; en la web, Claude en otra pestaña.
@@ -84,26 +87,12 @@ export default function ApiKeys() {
     refresh();
   };
 
-  const remoteUrl = `${url}/functions/v1/mcp`;
-  const localCfg = (k: string) =>
-    JSON.stringify(
-      {
-        mcpServers: {
-          workstation: {
-            command: 'node',
-            args: ['/RUTA/A/WorkStation/mcp/dist/index.js'],
-            env: { WORKSTATION_API_KEY: k, WORKSTATION_SUPABASE_URL: url, WORKSTATION_SUPABASE_ANON_KEY: cloud.config().anonKey },
-          },
-        },
-      },
-      null,
-      2,
-    );
+  const remoteUrl = mcpEndpoint(url);
 
   return (
     <div className="card">
       <p className="small muted">
-        Genera una API key para que una IA (Claude, ChatGPT, Cursor…) lea tus entrenamientos por MCP. Solo se guarda su huella (hash): cópiala al crearla, no se puede volver a ver.
+        Genera una API key para que un cliente MCP compatible lea tus entrenamientos. Consulta los requisitos de cada IA en las guías. Solo se guarda su huella (hash): cópiala al crearla, no se puede volver a ver.
       </p>
       <div className="row">
         <input aria-label="Nombre de la API key" className="grow" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (p. ej. Claude)" />
@@ -147,15 +136,6 @@ export default function ApiKeys() {
           <div className="key-actions">
             <button
               className="outline icon-btn"
-              onClick={async () => {
-                await copy(`${remoteUrl}?key=${created}`, 'URL copiada: pégala en Claude → Añadir conector personalizado');
-                openExternal(CLAUDE_CONNECTORS);
-              }}
-            >
-              <Sparkles size={16} /> Añadir a Claude
-            </button>
-            <button
-              className="outline icon-btn"
               onClick={() => openExternal(`mailto:${st.email}?subject=${encodeURIComponent('Tu API key de Workstation')}&body=${encodeURIComponent(keyText(created, remoteUrl))}`)}
             >
               <Mail size={16} /> Enviar a mi email
@@ -165,40 +145,44 @@ export default function ApiKeys() {
             </button>
           </div>
           <p className="small muted">Quien tenga la key puede {scope === 'write' ? 'leer y cambiar' : 'leer'} tus entrenos: mándala solo a ti y revócala si se filtra.</p>
-          <h3>Conectar</h3>
-          <p className="small">
-            <b>MCP remoto</b> (Claude Code, conectores personalizados, clientes HTTP). URL del servidor:
-          </p>
-          <div className="row">
-            <code className="grow key-text">{remoteUrl}</code>
-            <button className="ghost icon-btn" onClick={() => copy(remoteUrl)} aria-label="Copiar URL">
-              <Copy size={16} />
-            </button>
-          </div>
-          <p className="small muted">
-            Envía la key en la cabecera <code>Authorization: Bearer {created.slice(0, 8)}…</code>. Si tu cliente solo admite una URL, usa la URL con la key al final:
-          </p>
-          <div className="row">
-            <code className="grow key-text">{`${remoteUrl}?key=${created.slice(0, 8)}…`}</code>
-            <button className="ghost icon-btn" onClick={() => copy(`${remoteUrl}?key=${created}`)} aria-label="Copiar URL con key">
-              <Copy size={16} />
-            </button>
-          </div>
-          <p className="small muted">
-            Claude Code: <code>claude mcp add --transport http workstation {remoteUrl} --header "Authorization: Bearer …"</code>
-          </p>
-          <p className="small">
-            <b>MCP local</b> (Claude Desktop): añade esto a <code>claude_desktop_config.json</code>.
-          </p>
-          <pre className="code small">{localCfg(created)}</pre>
-          <button className="ghost small icon-btn" onClick={() => copy(localCfg(created))}>
-            <Copy size={14} /> Copiar configuración
-          </button>
           <button className="ghost small" onClick={() => setCreated(null)}>
             Ya la he guardado
           </button>
         </div>
       )}
+
+      <section aria-label="Guías de conexión MCP">
+        <h3>Conectar tu IA</h3>
+        <p className="small muted">
+          Guías comprobadas el {MCP_GUIDES_CHECKED}. Servidor: <code className="key-text">{remoteUrl}</code>
+        </p>
+        <button className="ghost small icon-btn" onClick={() => copy(remoteUrl)}>
+          <Copy size={14} /> Copiar URL del servidor
+        </button>
+        <p className="small muted">Usamos Authorization. No copies la key en URLs: pueden quedar en historial y registros. Guarda las configuraciones como contraseñas y revoca la key si se filtra.</p>
+        {MCP_GUIDES.map((guide) => (
+          <details key={guide.id}>
+            <summary>{guide.name}</summary>
+            <p className="small">{guide.instructions}</p>
+            <p className="small">
+              <a href={guide.source} target="_blank" rel="noopener noreferrer">
+                Documentación oficial de {guide.name}
+              </a>
+            </p>
+            {created && guide.id === 'claude-remote' && (
+              <button className="ghost small icon-btn" onClick={() => copy(`Bearer ${created}`)}>
+                <Copy size={14} /> Copiar valor de Authorization para Claude remoto
+              </button>
+            )}
+            {created && (guide.id === 'gemini' || guide.id === 'claude-code') && (
+              <button className="ghost small icon-btn" onClick={() => copy(mcpClientConfig(guide.id as 'gemini' | 'claude-code', url, created))}>
+                <Copy size={14} /> Copiar configuración de {guide.name}
+              </button>
+            )}
+            {!created && guide.id !== 'chatgpt' && <p className="small muted">Genera una key para copiar la configuración. Las keys guardadas solo muestran su prefijo.</p>}
+          </details>
+        ))}
+      </section>
 
       {keys.length > 0 && <h3>API keys</h3>}
       {keys.map((k) => (
@@ -214,7 +198,7 @@ export default function ApiKeys() {
             className="ghost danger icon-btn"
             aria-label={`Revocar ${k.name}`}
             onClick={async () => {
-              if (!confirm(`¿Revocar la key "${k.name}"? Dejará de funcionar al instante.`)) return;
+              if (!(await ask.confirm(`¿Revocar la key "${k.name}"? Dejará de funcionar al instante.`, { ok: 'Revocar', danger: true }))) return;
               const { error } = await client!.from('api_keys').delete().eq('id', k.id);
               if (error) setErr(error.message);
               else {

@@ -1,4 +1,5 @@
-import { Award, BookmarkPlus, Dumbbell, Heart, RefreshCw, Repeat, Share2, Trophy } from 'lucide-react';
+import { Award, BookmarkPlus, Heart, RefreshCw, Repeat, Share2, Trophy } from 'lucide-react';
+import { ask } from '../dialog';
 import { useState } from 'react';
 import { MUSCLE_REGION } from '../../../shared/exercises';
 import { repeatWorkout, routineFromWorkout } from '../../../shared/data';
@@ -12,7 +13,7 @@ import { newlyUnlocked } from '../../../shared/achievements';
 import { AchievementBadge } from './Achievements';
 import { SessionMap } from './BodyMap';
 import LineChart from './LineChart';
-import { Back, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
+import { Back, CountUp, Delta, ExerciseMedia, HBars, PrList, Stat } from './ui';
 import { compareWithPrevious } from '../../../shared/planning';
 import WorkoutLogger from './WorkoutLogger';
 import { fmtMass, toUnit, weightUnit } from '../../../shared/units';
@@ -75,6 +76,12 @@ export default function WorkoutDetail({
   const cmp = compareWithPrevious(data, id);
   const count = [...data.workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt)).findIndex((x) => x.id === id) + 1;
 
+  const sessionItems = w.exercises.flatMap((we) => {
+    const exercise = ex.get(we.exerciseId);
+    const sets = we.sets.filter((st) => st.done).length;
+    return exercise && sets ? [{ exercise, sets }] : [];
+  });
+
   const share = async () => shareOrDownload(await (await import('../share')).workoutImage(data, w), `entreno-${w.startedAt.slice(0, 10)}.png`, w.name);
 
   return (
@@ -89,10 +96,47 @@ export default function WorkoutDetail({
         }
       />
       {justFinished && (
-        <div className="congrats">
-          <Dumbbell size={48} className="big-emoji" />
-          <h1>¡Buen trabajo!</h1>
-          <p className="muted">Este es tu entrenamiento nº {count}.</p>
+        <div className="finish">
+          <p className="finish-kicker">
+            Entreno nº {count} · {w.name}
+          </p>
+          <h1 className="finish-title">¡Buen trabajo!</h1>
+          <div className="finish-hero">
+            <SessionMap items={sessionItems} />
+            <dl className="finish-nums">
+              <div>
+                <dt>volumen</dt>
+                <dd>
+                  <CountUp value={workoutVolume(w, data.exercises)} format={fmtMass} />
+                </dd>
+              </div>
+              <div>
+                <dt>duración</dt>
+                <dd>
+                  <CountUp value={workoutDurationMin(w) * 60} format={(v) => formatDuration(Math.round(v))} />
+                </dd>
+              </div>
+              <div>
+                <dt>series</dt>
+                <dd>
+                  <CountUp value={workoutSetCount(w)} format={(v) => String(Math.round(v))} />
+                </dd>
+              </div>
+              <div>
+                <dt>reps</dt>
+                <dd>
+                  <CountUp value={workoutReps(w)} format={(v) => String(Math.round(v))} />
+                </dd>
+              </div>
+            </dl>
+          </div>
+          {prs.length > 0 && (
+            <p className="finish-pr">
+              <Trophy size={22} aria-hidden="true" />
+              <b>{prs.length}</b>
+              <span>{prs.length === 1 ? 'récord batido hoy' : 'récords batidos hoy'}</span>
+            </p>
+          )}
           {unlockedNow.length > 0 && (
             <div className="card new-badges">
               <b>
@@ -112,13 +156,15 @@ export default function WorkoutDetail({
         {fmtDate(w.startedAt)} · {fmtTime(w.startedAt)}
         {routine ? ` · Rutina: ${routine.name}` : ''}
       </p>
-      <div className="stats five">
-        <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
-        <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
-        <Stat value={workoutSetCount(w)} label="series" />
-        <Stat value={workoutReps(w)} label="reps" />
-        <Stat value={prs.length} label="récords" />
-      </div>
+      {!justFinished && (
+        <div className="stats five">
+          <Stat value={formatDuration(workoutDurationMin(w) * 60)} label="duración" />
+          <Stat value={fmtMass(workoutVolume(w, data.exercises))} label="volumen" />
+          <Stat value={workoutSetCount(w)} label="series" />
+          <Stat value={workoutReps(w)} label="reps" />
+          <Stat value={prs.length} label="récords" />
+        </div>
+      )}
       {cmp && (
         <div className="card vs-last">
           <h3>Frente a la última vez</h3>
@@ -134,7 +180,9 @@ export default function WorkoutDetail({
       {w.notes && <p className="card small">{w.notes}</p>}
       {w.heartRate && (
         <div className="card">
-          <h3><Heart size={16} className="ico" /> Frecuencia cardiaca</h3>
+          <h3>
+            <Heart size={16} className="ico" /> Frecuencia cardiaca
+          </h3>
           <div className="stats">
             <Stat value={w.heartRate.avg} label="ppm media" />
             <Stat value={w.heartRate.max} label="ppm máx." />
@@ -148,18 +196,16 @@ export default function WorkoutDetail({
 
       {prs.length > 0 && (
         <div className="card">
-          <h3><Trophy size={16} className="ico" /> Récords batidos</h3>
+          <h3>
+            <Trophy size={16} className="ico" /> Récords batidos
+          </h3>
           <PrList prs={prs.map((p) => ({ ...p, exerciseName: ex.get(p.exerciseId)?.name ?? p.exerciseId }))} />
         </div>
       )}
 
       <div className="card">
         <h3>Distribución muscular</h3>
-        <SessionMap big items={w.exercises.flatMap((we) => {
-          const exercise = ex.get(we.exerciseId);
-          const sets = we.sets.filter((st) => st.done).length;
-          return exercise && sets ? [{ exercise, sets }] : [];
-        })} />
+        {!justFinished && <SessionMap big items={sessionItems} />}
         <HBars rows={[...regions.entries()].sort((a, b) => b[1] - a[1]).map(([label, v]) => ({ label, value: Math.round((v / totalSets) * 100) }))} format={(v) => `${v}%`} />
       </div>
 
@@ -192,8 +238,8 @@ export default function WorkoutDetail({
         </button>
         <button
           className="ghost full icon-btn"
-          onClick={() => {
-            if (active && !confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?')) return;
+          onClick={async () => {
+            if (active && !(await ask.confirm('Ya hay un entrenamiento en curso. ¿Reemplazarlo?', { ok: 'Reemplazar', danger: true }))) return;
             launchWorkout(store, repeatWorkout(w));
             goTrain?.();
           }}
@@ -203,13 +249,13 @@ export default function WorkoutDetail({
         {routine ? (
           <button
             className="ghost full icon-btn"
-            onClick={() => {
-              if (!confirm(`¿Actualizar la rutina "${routine.name}" con los ejercicios, series y pesos de hoy?`)) return;
+            onClick={async () => {
+              if (!(await ask.confirm('Se sustituyen sus ejercicios, series y pesos por los de hoy.', { title: `¿Actualizar "${routine.name}"?`, ok: 'Actualizar' }))) return;
               update((d) => {
                 const i = d.routines.findIndex((r) => r.id === routine.id);
                 d.routines[i] = { ...routineFromWorkout(w, d.settings.defaultRestSec), id: routine.id, name: routine.name, notes: routine.notes, folderId: routine.folderId };
               });
-              alert('Rutina actualizada.');
+              ask.notice('Rutina actualizada');
             }}
           >
             <RefreshCw size={18} /> Actualizar rutina “{routine.name}”
@@ -217,19 +263,19 @@ export default function WorkoutDetail({
         ) : null}
         <button
           className="ghost full icon-btn"
-          onClick={() => {
-            const name = prompt('Nombre de la nueva rutina', w.name);
+          onClick={async () => {
+            const name = (await ask.prompt('Nombre de la nueva rutina', w.name))?.trim();
             if (!name) return;
             update((d) => void d.routines.push({ ...routineFromWorkout(w, d.settings.defaultRestSec), name }));
-            alert('Rutina guardada.');
+            ask.notice(`Rutina "${name}" guardada`);
           }}
         >
           <BookmarkPlus size={18} /> Guardar como nueva rutina
         </button>
         <button
           className="danger full"
-          onClick={() => {
-            if (!confirm('¿Borrar este entrenamiento?')) return;
+          onClick={async () => {
+            if (!(await ask.confirm('Podrás deshacerlo justo después.', { title: '¿Borrar este entrenamiento?', ok: 'Borrar', danger: true }))) return;
             const snap = structuredClone(w);
             update((d) => void (d.workouts = d.workouts.filter((x) => x.id !== id)));
             toast.undo('Entrenamiento borrado', () => update((d) => void d.workouts.push(snap)));

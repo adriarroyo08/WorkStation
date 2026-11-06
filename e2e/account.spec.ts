@@ -127,8 +127,6 @@ test('¿Olvidaste tu contraseña? pide el email de recuperación', async ({ page
 test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', async ({ page, errors }) => {
   void errors;
   await new Mock().attach(page);
-  let native = 0;
-  page.on('dialog', (d) => (native++, d.accept()));
   await configure(page);
   await login(page, 'ana@example.com');
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
@@ -141,7 +139,6 @@ test('al entrar con otra cuenta sale el diálogo propio, no el del navegador', a
   await expect(dlg.getByRole('button', { name: 'Subir también estos datos' })).toBeVisible();
   await dlg.getByRole('button', { name: 'Empezar de cero' }).click();
   await expect(dlg).toHaveCount(0);
-  expect(native).toBe(0);
 });
 
 test('"Subir también estos datos" sube lo de este dispositivo a la cuenta nueva', async ({ page, errors }) => {
@@ -290,15 +287,64 @@ for (const scheme of ['light', 'dark'] as const)
     expect(inserts[0]).not.toHaveProperty('key');
     const secret = await page.locator('.new-key .key-text').first().innerText();
     expect(JSON.stringify(inserts)).not.toContain(secret);
+    // Portapapeles simulado: no se contacta con ningún cliente externo.
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            (window as Window & { copied?: string }).copied = text;
+          },
+        },
+      });
+    });
+    const guides = page.getByRole('region', { name: 'Guías de conexión MCP' });
+    await expect(guides).toContainText('2026-11-02');
+    await guides.getByRole('button', { name: 'Copiar URL del servidor', exact: true }).click();
+    const copied = () => page.evaluate(() => (window as Window & { copied?: string }).copied);
+    expect(await copied()).toBe(`${URL_}/functions/v1/mcp`);
+    for (const name of ['Claude remoto', 'ChatGPT', 'Gemini CLI', 'Claude Code']) {
+      const summary = guides.locator('summary', { hasText: name });
+      await summary.focus();
+      await page.keyboard.press('Enter');
+      const detail = summary.locator('..');
+      const link = detail.getByRole('link', { name: `Documentación oficial de ${name}`, exact: true });
+      await expect(link).toHaveAttribute('href', /^https:\/\//);
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+      if (name === 'ChatGPT') {
+        await expect(detail).toContainText('no está soportada');
+        await expect(detail.getByRole('button')).toHaveCount(0);
+      } else {
+        const button = detail.getByRole('button');
+        await button.focus();
+        await page.keyboard.press('Enter');
+        if (name === 'Claude remoto') expect(await copied()).toBe(`Bearer ${secret}`);
+        else {
+          const config = JSON.parse((await copied())!).mcpServers.workstation;
+          expect(config.headers.Authorization).toBe(`Bearer ${secret}`);
+          expect(config.url ?? config.httpUrl).toBe(`${URL_}/functions/v1/mcp`);
+          expect(config.type).toBe(name === 'Claude Code' ? 'http' : undefined);
+        }
+      }
+    }
+    expect(mock.calls.every((c) => !c.search.includes(secret))).toBe(true);
+    expect(JSON.stringify(mock.calls)).not.toContain(secret);
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+    await expect(page.getByText('Copiado', { exact: true })).toHaveCount(0);
+    await page.setViewportSize({ width: 393, height: 3000 });
+    const guideScreenshot = testInfo.outputPath(`mcp-guides-${scheme}.png`);
+    await guides.screenshot({ path: guideScreenshot });
+    await testInfo.attach(`Guías ${scheme}, teclado y movimiento reducido`, { path: guideScreenshot, contentType: 'image/png' });
     await page.getByRole('button', { name: 'Ya la he guardado' }).click();
     await expect(page.getByText(secret, { exact: true })).toHaveCount(0);
+    await expect(guides.getByRole('button', { name: /Copiar configuración|Copiar valor/ })).toHaveCount(0);
     await expiry.selectOption('none');
     await generate.click();
     await expect.poll(() => inserts.length).toBe(2);
     expect(inserts[1].expires_at).toBeNull();
     await page.getByRole('button', { name: 'Ya la he guardado' }).click();
-    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Revocar Caducada' }).click();
+    await page.locator('form.ask').getByRole('button', { name: 'Revocar' }).click();
     await expect(page.getByRole('button', { name: 'Revocar Caducada' })).toHaveCount(0);
     await expect(page.getByText(/último uso/)).toBeVisible();
     const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();

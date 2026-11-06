@@ -1,4 +1,5 @@
 // Lista de copias automáticas del dispositivo, con restaurar y descargar.
+import { ask } from '../dialog';
 import { useEffect, useState } from 'react';
 import { Download, History } from 'lucide-react';
 import type { BackupMeta } from '../../../shared/backups';
@@ -18,9 +19,9 @@ export default function AutoBackups() {
 
   const restore = async (b: BackupMeta) => {
     const synced = cloud.signedIn() ? '\n\nTienes la sincronización activa: tus otros dispositivos también volverán a este estado (lo que añadiste después se borrará también allí).' : '';
-    if (!confirm(`¿Restaurar la copia del ${fmt(b.at)}? (${b.workouts} entrenamientos). Antes se guarda una copia del estado actual.${synced}`)) return;
+    if (!(await ask.confirm(`¿Restaurar la copia del ${fmt(b.at)}? (${b.workouts} entrenamientos). Antes se guarda una copia del estado actual.${synced}`, { ok: 'Restaurar' }))) return;
     const d = await loadBackup(b.id);
-    if (!d) return alert('No se encontró la copia.');
+    if (!d) return ask.error('No se encontró la copia.');
     await snapshot(data, 'antes de restaurar');
     replace(d);
     toast.show('Copia restaurada');

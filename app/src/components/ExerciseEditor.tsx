@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ask } from '../dialog';
 import { EQUIPMENT, EXERCISE_KIND_LABELS, MUSCLE_LABELS } from '../../../shared/exercises';
 import type { Exercise, ExerciseKind, MuscleGroup } from '../../../shared/types';
 import { uid } from '../../../shared/types';
@@ -8,7 +9,7 @@ export default function ExerciseEditor({ initial, initialName = '', onSaved }: {
   const { update } = useStore();
   const [e, setE] = useState<Exercise>(initial ?? { id: `custom-${uid()}`, name: initialName, muscle: 'pecho', equipment: 'barra', kind: 'weight_reps', custom: true, secondary: [] });
   const save = () => {
-    if (!e.name.trim()) return alert('Ponle un nombre');
+    if (!e.name.trim()) return ask.notice('Ponle un nombre');
     update((d) => {
       const i = d.exercises.findIndex((x) => x.id === e.id);
       if (i >= 0) d.exercises[i] = e;
