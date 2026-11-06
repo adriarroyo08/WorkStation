@@ -69,6 +69,8 @@ export interface Exercise {
   kind: ExerciseKind;
   // Id en el catálogo libre free-exercise-db (imágenes + instrucciones).
   media?: string;
+  // Nombre original en inglés cuando no sale de `media` (ejercicios de wger), para buscar en inglés.
+  nameEn?: string;
   // Id en ExerciseDB (GIF animado, se carga con la API key del usuario).
   exdbId?: string;
   instructions?: string[];

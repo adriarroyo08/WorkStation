@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.12.1',
+    date: '2026-11-06',
+    items: ['Los ejercicios nuevos de wger también se encuentran por su nombre en inglés (por ejemplo, «cossack squat» o «suitcase carry»), y el buscador de GIF de ExerciseDB parte de ese nombre.'],
+  },
+  {
     version: '1.12.0',
     date: '2026-11-06',
     items: [

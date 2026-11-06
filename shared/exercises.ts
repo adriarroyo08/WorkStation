@@ -229,11 +229,12 @@ export const mediaUrls = (media?: string): string[] => (!media ? [] : media.incl
 
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[_-]+/g, ' ');
 
-/** Texto en el que se busca un ejercicio: su nombre y, si viene del catálogo, el nombre original en inglés (sale de su id). */
-export const exerciseSearchText = (e: Pick<Exercise, 'name' | 'media'>): string => fold(`${e.name} ${e.media && !e.media.includes('://') ? e.media : ''}`);
+/** Texto en el que se busca un ejercicio: su nombre y, si viene del catálogo, el nombre original en inglés (sale de su id o, en wger, de `nameEn`). */
+export const exerciseSearchText = (e: Pick<Exercise, 'name' | 'media' | 'nameEn'>): string =>
+  fold(`${e.name} ${e.nameEn ?? ''} ${e.media && !e.media.includes('://') ? e.media : ''}`);
 
 /** ¿Coincide la búsqueda? Todas las palabras deben aparecer, en cualquier orden y en español o en inglés. */
-export const matchesExercise = (e: Pick<Exercise, 'name' | 'media'>, q: string): boolean => {
+export const matchesExercise = (e: Pick<Exercise, 'name' | 'media' | 'nameEn'>, q: string): boolean => {
   const text = exerciseSearchText(e);
   return fold(q)
     .split(/\s+/)

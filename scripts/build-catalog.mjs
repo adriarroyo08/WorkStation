@@ -95,6 +95,7 @@ for (const e of wger) {
   out.push({
     id: `wger-${e.id}`,
     name: m.es,
+    en: e.translations.find((t) => t.language === WGER_EN)?.name?.trim().replace(/\s+\d+$/, '') || undefined,
     muscle: m.muscle,
     secondary: (m.secondary ?? []).filter((g) => g !== m.muscle),
     equipment: m.equipment,
