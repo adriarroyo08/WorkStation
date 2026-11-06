@@ -80,7 +80,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
         <Search size={18} className="tile-ico" />
         <span className="grow">
           <b>Explorar catálogo completo</b>
-          <small className="muted">870+ ejercicios con imágenes e instrucciones</small>
+          <small className="muted">1.000+ ejercicios con imágenes e instrucciones</small>
         </span>
         <ChevronRight size={16} className="muted" />
       </button>
@@ -151,7 +151,9 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
     <section>
       <Back onClick={onBack} />
       <h1>Catálogo</h1>
-      <p className="muted small">Catálogo libre free-exercise-db (dominio público). Nombres e instrucciones en inglés: tradúcelos con el Coach IA desde la ficha.</p>
+      <p className="muted small">
+        Catálogos libres free-exercise-db (dominio público) y wger (CC BY-SA 4.0, wger.de). Algunas instrucciones siguen en inglés: tradúcelas con el Coach IA desde la ficha.
+      </p>
       {err && <p className="error">No se pudo cargar el catálogo: {err}</p>}
       {!items && !err && <p className="muted">Cargando…</p>}
       {filters}
@@ -175,9 +177,11 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
       </div>
       {preview && (
         <Sheet title={preview.name} onClose={() => setPreview(null)}>
-          <ExerciseMedia media={preview.id} />
+          <ExerciseMedia media={catalogToExercise(preview).media} exercise={catalogToExercise(preview)} />
           <p className="muted small">
-            {MUSCLE_LABELS[preview.muscle]} · {catalogLabel(preview.equipment)} · {preview.category} · {catalogLabel(preview.level)}
+            {[MUSCLE_LABELS[preview.muscle], catalogLabel(preview.equipment), preview.category, preview.level && catalogLabel(preview.level), preview.author && `Autor: ${preview.author} (wger)`]
+              .filter(Boolean)
+              .join(' · ')}
           </p>
           <ol className="small">
             {preview.instructions.map((s, i) => (
