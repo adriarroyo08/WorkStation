@@ -35,7 +35,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
 
       # Clave de firma desde secrets (Settings → Secrets and variables → Actions):
       #   WS_KEYSTORE_B64 = base64 del .jks · WS_KEYSTORE_PASSWORD · WS_KEY_ALIAS · WS_KEY_PASSWORD
@@ -80,7 +80,7 @@ jobs:
 
       - name: Publicar release (solo en tags v*)
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: apk/*.apk
 
