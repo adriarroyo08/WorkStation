@@ -42,7 +42,7 @@ export default defineConfig({
       // El registro lo hace src/pwa.ts: avisa de la nueva versión en lugar de recargar sola.
       injectRegister: false,
       registerType: 'prompt',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'articles.json'],
       manifest: {
         name: 'Workstation',
         short_name: 'Workstation',
