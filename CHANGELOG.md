@@ -5,6 +5,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+- Parser compartido RSS 2.0, RSS 1.0 y Atom con normalización, extractos limitados, enlaces seguros, deduplicación determinista y fixtures sintéticos offline (#59).
+
 - Evidencia en la ficha (patrón, roles, mapa de intensidad y fuentes), estimaciones identificadas y filtro combinable por patrón en biblioteca y selector (#52).
 
 - Escala RPE/RIR opcional en Ajustes para registrar y editar esfuerzo con medios puntos, conservando RPE como dato canónico (#85).
