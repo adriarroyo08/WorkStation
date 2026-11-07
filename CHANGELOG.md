@@ -5,24 +5,31 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+### Añadido
+
 - Recolector backend de noticias con endpoint JSON en MCP, lista blanca, límites de red y caché por fuente; persistencia propuesta pendiente (#60).
-
 - Parser compartido RSS 2.0, RSS 1.0 y Atom con normalización, extractos limitados, enlaces seguros, deduplicación determinista y fixtures sintéticos offline (#59).
-
-- Evidencia en la ficha (patrón, roles, mapa de intensidad y fuentes), estimaciones identificadas y filtro combinable por patrón en biblioteca y selector (#52).
-
 - Escala RPE/RIR opcional en Ajustes para registrar y editar esfuerzo con medios puntos, conservando RPE como dato canónico (#85).
+- Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
+- MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
+
+## [1.14.0] - 2026-11-07
 
 ### Añadido
 
-- Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
-- MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
+- Importación directa de CSV de Strong en Ajustes con vista previa, unidades explícitas, diagnóstico de fechas y filas inválidas, ejercicios personalizados y backup preventivo (#83).
 
 ## [1.13.1] - 2026-11-07
 
 ### Corregido
 
 - Búsqueda en inglés de los ejercicios de wger: `scripts/build-catalog.mjs` guarda su nombre en inglés (`en` en `catalog.json`, `nameEn` en `Exercise`) y `matchesExercise` lo usa. `englishName` (`shared/exercisedb.ts`) ya no devuelve las URLs de imagen de wger como nombre.
+
+## [1.13.0] - 2026-11-06
+
+### Añadido
+
+- Evidencia en la ficha (patrón, roles, mapa de intensidad y fuentes), estimaciones identificadas y filtro combinable por patrón en biblioteca y selector (#52).
 
 ## [1.12.0] - 2026-11-06
 
