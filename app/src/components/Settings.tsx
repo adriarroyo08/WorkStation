@@ -1,4 +1,5 @@
 import RestPicker from './RestPicker';
+import StrongImport from './StrongImport';
 import { ask } from '../dialog';
 import { useState } from 'react';
 import { AI_PROVIDERS, chat } from '../../../shared/ai';
@@ -19,6 +20,7 @@ import { DEFAULT_BAR_LB, DEFAULT_PLATES_LB } from '../../../shared/units';
 
 export default function Settings({ onBack }: { onBack: () => void }) {
   const { data, ai, settings, setAi, setSettings, replace } = useStore();
+  const [strongCsv, setStrongCsv] = useState<string | null>(null);
   const [notes, setNotes] = useState(false);
   const [cfg, setCfg] = useState(ai);
   const [test, setTest] = useState('');
@@ -301,6 +303,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         >
           Importar CSV de Hevy
         </button>
+        <button className="outline full" onClick={() => readFile('.csv,text/csv', setStrongCsv)}>
+          Importar CSV de Strong
+        </button>
         <p className="small muted">
           El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos. Tus rutinas se crean a
           partir de la última vez que hiciste cada una.
@@ -363,6 +368,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <p className="app-version">
         Workstation v{APP_VERSION} · {__APP_COMMIT__}
       </p>
+      {strongCsv !== null && <StrongImport csv={strongCsv} onClose={() => setStrongCsv(null)} />}
       {notes && <AllReleasesSheet onClose={() => setNotes(false)} />}
     </section>
   );
