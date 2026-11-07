@@ -1,4 +1,4 @@
-import type { Exercise, ExerciseKind, MuscleGroup } from './types';
+import type { Exercise, ExerciseKind, MuscleGroup, MovementPattern } from './types';
 import { EXERCISE_EVIDENCE_MATRIX } from './exercise-evidence';
 
 // Biblioteca base en español. `media` apunta al catálogo libre free-exercise-db (Unlicense / dominio público),
@@ -240,4 +240,18 @@ export const matchesExercise = (e: Pick<Exercise, 'name' | 'media' | 'nameEn'>, 
     .split(/\s+/)
     .filter(Boolean)
     .every((w) => text.includes(w));
+};
+
+export const MOVEMENT_PATTERN_LABELS: Record<MovementPattern, string> = {
+  sentadilla: 'Sentadilla',
+  bisagra: 'Bisagra de cadera',
+  'empuje-horizontal': 'Empuje horizontal',
+  'empuje-vertical': 'Empuje vertical',
+  'traccion-horizontal': 'Tracción horizontal',
+  'traccion-vertical': 'Tracción vertical',
+  zancada: 'Zancada',
+  acarreo: 'Acarreo',
+  rotacion: 'Rotación',
+  antirrotacion: 'Antirrotación',
+  aislamiento: 'Aislamiento',
 };

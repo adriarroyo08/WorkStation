@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { catalogExtras } from '../../../shared/catalog';
 import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
-import { EQUIPMENT, MUSCLE_LABELS, catalogLabel, matchesExercise } from '../../../shared/exercises';
+import { EQUIPMENT, MUSCLE_LABELS, MOVEMENT_PATTERN_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleThumb } from './BodyMap';
+import { filterExercises } from '../../../shared/exercise-filter';
+import { MOVEMENT_PATTERNS, type MovementPattern } from '../../../shared/types';
 import type { Exercise, MuscleGroup } from '../../../shared/types';
 import { cap, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
@@ -12,14 +14,12 @@ export function useExerciseFilter(exercises: Exercise[]) {
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | ''>('');
   const [equipment, setEquipment] = useState('');
-  const list = useMemo(
-    () => exercises.filter((e) => (!muscle || e.muscle === muscle || e.secondary?.includes(muscle)) && (!equipment || e.equipment === equipment) && matchesExercise(e, q)),
-    [exercises, q, muscle, equipment],
-  );
+  const [pattern, setPattern] = useState<MovementPattern | ''>('');
+  const list = useMemo(() => filterExercises(exercises, { q, muscle, equipment, pattern }), [exercises, q, muscle, equipment, pattern]);
   const filters = (
     <>
-      <input placeholder="Buscar ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />
-      <div className="row">
+      <input aria-label="Buscar ejercicio" placeholder="Buscar ejercicio…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="row exercise-filters">
         <select aria-label="Filtrar por músculo" value={muscle} onChange={(e) => setMuscle(e.target.value as MuscleGroup | '')}>
           <option value="">Todos los músculos</option>
           {Object.entries(MUSCLE_LABELS).map(([k, v]) => (
@@ -36,7 +36,28 @@ export function useExerciseFilter(exercises: Exercise[]) {
             </option>
           ))}
         </select>
+        <select aria-label="Filtrar por patrón" value={pattern} onChange={(e) => setPattern(e.target.value as MovementPattern | '')}>
+          <option value="">Todos los patrones</option>
+          {MOVEMENT_PATTERNS.map((p) => (
+            <option key={p} value={p}>
+              {MOVEMENT_PATTERN_LABELS[p]}
+            </option>
+          ))}
+        </select>
       </div>
+      {(q || muscle || equipment || pattern) && (
+        <button
+          className="ghost"
+          onClick={() => {
+            setQ('');
+            setMuscle('');
+            setEquipment('');
+            setPattern('');
+          }}
+        >
+          Limpiar filtros
+        </button>
+      )}
     </>
   );
   return { q, list, filters, muscle, setMuscle };

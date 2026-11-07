@@ -7,10 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
-    version: '1.12.1',
-    date: '2026-11-06',
+    version: '1.13.1',
+    date: '2026-11-07',
     items: ['Los ejercicios nuevos de wger también se encuentran por su nombre en inglés (por ejemplo, «cossack squat» o «suitcase carry»), y el buscador de GIF de ExerciseDB parte de ese nombre.'],
   },
+  { version: '1.13.0', date: '2026-11-06', items: ['Consulta el patrón, los roles musculares y las fuentes de cada ejercicio; filtra por patrón en la biblioteca y al elegir ejercicios.'] },
   {
     version: '1.12.0',
     date: '2026-11-06',

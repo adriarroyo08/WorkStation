@@ -5,9 +5,10 @@ import './ExercisesTab.css';
 import { englishName, searchExdb, type ExdbExercise } from '../../../shared/exercisedb';
 import { loadExdbList, useExdbConfig } from '../exdb';
 import { chat } from '../../../shared/ai';
-import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, catalogLabel } from '../../../shared/exercises';
+import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, MOVEMENT_PATTERN_LABELS, catalogLabel } from '../../../shared/exercises';
 import { MuscleFilter, MuscleMap } from './BodyMap';
 import { exerciseActivation } from '../../../shared/muscle-detail';
+import { availableExerciseScience, formatScientificAuthors } from '../../../shared/exercise-filter';
 import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
@@ -236,6 +237,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   }, [e?.media, instructions]);
 
   if (!e) return <Back onClick={onBack} />;
+  const science = availableExerciseScience(e);
   const h = exerciseHistory(data, id);
   const pr = personalRecords(data).find((p) => p.exerciseId === id);
   const metrics = METRICS_BY_KIND[e.kind];
@@ -304,6 +306,40 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {tab === 'summary' && (
         <>
           <MuscleMap exercise={e} />
+          {science && (
+            <section className="exercise-evidence" aria-label="Evidencia del ejercicio">
+              <div className="evidence-heading">
+                <ul className="exinfo-chips" aria-label="Patrón de movimiento">
+                  <li>{MOVEMENT_PATTERN_LABELS[science.patron]}</li>
+                </ul>
+                <span className={`evidence-badge ${science.evidencia === 'estimada' ? 'muted' : ''}`}>
+                  {science.evidencia === 'emg' ? 'EMG' : science.evidencia === 'hipertrofia' ? 'Hipertrofia' : 'Estimada'}
+                </span>
+              </div>
+              {science.evidencia === 'estimada' && <p className="muted small">Estimada: intensidades orientativas, sin medición directa</p>}
+              {science.fuentes.length > 0 && (
+                <>
+                  <h2 className="evidence-sources-heading">Fuentes ({science.fuentes.length})</h2>
+                  <ul className="evidence-sources">
+                    {science.fuentes.map((source, i) => (
+                      <li key={i}>
+                        {source.url || source.doi ? (
+                          <a className="evidence-source-title" href={source.url ?? `https://doi.org/${source.doi}`} target="_blank" rel="noopener noreferrer">
+                            {source.titulo}
+                          </a>
+                        ) : (
+                          <span className="evidence-source-title">{source.titulo}</span>
+                        )}
+                        <p className="muted small">
+                          {formatScientificAuthors(source.autores)} ({source.año})
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </section>
+          )}
           {exdbCfg.key && (
             <button className="ghost small icon-btn" onClick={() => setPickGif(true)}>
               <Film size={15} /> {e.exdbId ? 'Cambiar GIF' : 'Elegir GIF'}

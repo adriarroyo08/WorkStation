@@ -115,3 +115,51 @@
   color: var(--accent-ink);
   font-weight: 600;
 }
+
+.exercise-evidence {
+  margin: 16px 0;
+}
+.evidence-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.evidence-heading .exinfo-chips {
+  margin: 0;
+}
+.evidence-badge {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  white-space: nowrap;
+}
+.evidence-badge.muted {
+  color: var(--muted);
+}
+.evidence-sources {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.evidence-sources li {
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+  min-width: 0;
+}
+.evidence-source-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evidence-sources p {
+  margin: 4px 0 0;
+}
+
+.evidence-sources-heading {
+  font-size: 16px;
+  margin: 16px 0 8px;
+}

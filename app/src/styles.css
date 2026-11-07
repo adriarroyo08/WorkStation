@@ -3758,3 +3758,11 @@ h1.finish-title {
 .finish .new-badges {
   margin-top: 14px;
 }
+
+.exercise-filters {
+  flex-wrap: wrap;
+}
+.exercise-filters select {
+  flex: 1 1 140px;
+  min-width: 0;
+}
