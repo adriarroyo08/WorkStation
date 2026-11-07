@@ -6,6 +6,7 @@ import Train from './components/Train';
 // El resto de pestañas se cargan bajo demanda: el arranque solo descarga "Entrenar".
 const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
+const News = lazy(() => import('./components/News'));
 const Profile = lazy(() => import('./components/Profile'));
 import { useScrollTop } from './components/ui';
 import { openedFromAuthLink, useCloud, useCloudSync } from './cloud';
@@ -66,6 +67,7 @@ function AppBody() {
   useWatchSync();
   useCloudSync();
   const { recovery, justConfirmed, linkError } = useCloud();
+  const [news, setNews] = useState(false);
   const [tab, setTab] = useState<TabId>('train');
   // "Crear cuenta" del tour abre Perfil directamente en el registro.
   const [signUp, setSignUp] = useState(false);
@@ -98,12 +100,14 @@ function AppBody() {
     <div className="app">
       <main>
         <Suspense fallback={<Skeleton />}>
-          {overlayExercise ? (
+          {news ? (
+            <News onBack={() => setNews(false)} />
+          ) : overlayExercise ? (
             <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
           ) : (
             <>
               <div hidden={tab !== 'train'}>
-                <Train onExercise={goExercise} />
+                <Train onExercise={goExercise} onNews={() => setNews(true)} />
               </div>
               {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
               {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
@@ -123,7 +127,7 @@ function AppBody() {
       {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setNews(false), setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
             <t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 1.9} aria-hidden />
             {t.label}
           </button>

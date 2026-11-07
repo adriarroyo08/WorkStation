@@ -6,6 +6,11 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.16.0',
+    date: '2026-11-08',
+    items: ['Lee noticias de ciencia y entrenamiento desde Entrenar, filtra por fuente y tema y conserva la ?ltima actualizaci?n para consultar sin conexi?n.'],
+  },
   { version: '1.14.0', date: '2026-11-07', items: ['Importa directamente tu CSV de Strong desde Ajustes: revisa sesiones, unidades y errores antes de confirmar, con copia de seguridad automática.'] },
   {
     version: '1.13.1',
