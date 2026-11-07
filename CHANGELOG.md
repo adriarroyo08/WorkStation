@@ -3,6 +3,12 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/).
 Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`.
 
+## [1.15.0] - 2026-11-08
+
+### Añadido
+
+- Biblioteca de artículos desde Ejercicios con búsqueda, etiquetas combinables, lectura offline y enlaces relacionados en fichas; muestra fecha, evidencia y referencias (#56).
+
 ## [Sin publicar]
 
 ### Añadido

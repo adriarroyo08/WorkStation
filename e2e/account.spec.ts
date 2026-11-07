@@ -90,7 +90,7 @@ test('sin sesión, Perfil abre con la tarjeta de cuenta y el registro avisa del 
   await create.click();
   await expect(page.getByText('Te hemos enviado un email')).toBeVisible();
   const signup = mock.hit('/auth/v1/signup')[0];
-  expect(new URLSearchParams(signup.search).get('redirect_to')).toMatch(/^http:\/\/localhost:4174\/$/);
+  expect(new URLSearchParams(signup.search).get('redirect_to')).toBe(`${new URL(page.url()).origin}/`);
 });
 
 test('sin VITE_GOOGLE_WEB_CLIENT_ID no hay botón de Google', async ({ page, errors }) => {

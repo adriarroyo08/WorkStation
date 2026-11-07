@@ -1,0 +1,41 @@
+.article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.article-card {
+  text-align: left;
+  display: grid;
+  gap: 10px;
+}
+.article-summary {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+.article-body {
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.article-body h2,
+.article-body h3 {
+  margin-top: 28px;
+}
+.article-body pre {
+  overflow-x: auto;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: 12px;
+}
+.article-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  margin-left: 0;
+}
+.articles a {
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+.articles li {
+  margin-bottom: 10px;
+}
