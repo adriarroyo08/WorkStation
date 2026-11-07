@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { format } from 'prettier';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_EXERCISES, MUSCLE_LABELS } from './exercises';
 import { parseExerciseScience } from './exercise-science';
@@ -289,7 +290,7 @@ describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
     expect(customActs[1].pct).toBe(50);
   });
 
-  it('genera y mantiene el documento entregable docs/evidencia-ejercicios.md al día con la matriz', () => {
+  it('genera y mantiene el documento entregable docs/evidencia-ejercicios.md al día con la matriz', async () => {
     const stats = getLibraryEvidenceStats();
 
     let md = `# Investigación de evidencia científica y cobertura de la biblioteca de ejercicios
@@ -509,7 +510,10 @@ A continuación se detalla la matriz científica completa de los ${stats.total} 
     }
 
     const outPath = path.resolve(__dirname, '../docs/evidencia-ejercicios.md');
-    fs.writeFileSync(outPath, md, 'utf8');
+    // Con el mismo formato que `npm run format`, y solo si cambia: así `npm run check` no ensucia el árbol.
+    const formatted = await format(md, { parser: 'markdown', singleQuote: true, printWidth: 200, trailingComma: 'all' });
+    const current = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf8').split('\r\n').join('\n') : '';
+    if (current !== formatted) fs.writeFileSync(outPath, formatted, 'utf8');
     expect(fs.existsSync(outPath)).toBe(true);
     expect(fs.statSync(outPath).size).toBeGreaterThan(15000);
   });
