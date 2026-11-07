@@ -5,7 +5,9 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
-- Base de art?culos propios en Markdown, validaci?n editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versi?n.
+- Diez artículos breves con evidencia científica en castellano (#55) en la biblioteca editorial offline: recomendaciones cuantitativas, niveles de evidencia, limitaciones y DOIs comprobados sobre creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión.
+
+- Base de artículos propios en Markdown, validación editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versión.
 
 - Evidencia en la ficha (patrón, roles, mapa de intensidad y fuentes), estimaciones identificadas y filtro combinable por patrón en biblioteca y selector (#52).
 
