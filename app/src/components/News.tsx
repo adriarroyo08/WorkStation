@@ -146,12 +146,22 @@ export default function News({ onBack }: { onBack: () => void }) {
             </p>
             <h2>{a.title}</h2>
             {a.shortSummary && <p>{a.shortSummary}</p>}
-            {!!a.authors?.length && <p className="small muted">{a.authors.join(', ')}</p>}
-            <p className="small muted">{a.topics.map((t) => NEWS_TOPICS[t]).join(' · ')}</p>
-            <a className="icon-btn" href={a.url} target="_blank" rel="noopener noreferrer">
-              Leer original<span className="sr-only">: {a.title} (abre en otra pestaña)</span>
-              <ExternalLink size={16} aria-hidden />
-            </a>
+            <div className="news-footer">
+              <ul className="exinfo-chips" aria-label="Temas">
+                {a.topics.map((t) => (
+                  <li key={t}>{NEWS_TOPICS[t]}</li>
+                ))}
+              </ul>
+              {!!a.authors?.length && (
+                <span className="news-authors muted small" title={a.authors.join(', ')}>
+                  {a.authors.join(', ')}
+                </span>
+              )}
+              <a className="icon-btn small" href={a.url} target="_blank" rel="noopener noreferrer">
+                Leer original<span className="sr-only">: {a.title} (abre en otra pestaña)</span>
+                <ExternalLink size={16} aria-hidden />
+              </a>
+            </div>
           </article>
         ))}
       </div>

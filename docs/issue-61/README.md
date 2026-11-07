@@ -13,6 +13,10 @@ Versión 1.16.0. Acceso desde la cabecera de Entrenar, sin añadir pestañas. Se
 
 Los fixtures de artículos del checkout Windows tenían CRLF y sus tests hacen sustituciones literales con LF. Se normalizaron localmente para ejecutar check; no hay cambios de contenido editorial en el commit. El build generado de MCP no presenta diferencias de contenido.
 
+## Revisi?n visual del PR #111
+
+Tarjetas compactas: fuente y fecha, titular, resumen y una ?nica fila final con chips de tema del estilo `exinfo-chips`, autores en texto secundario y enlace a la derecha. Se reducen m?rgenes y padding vertical; los autores largos se abrevian visualmente con el nombre completo en el tooltip. Capturas de Noticias regeneradas en claro y oscuro.
+
 ## Capturas
 
 | Estado | Claro | Oscuro |
