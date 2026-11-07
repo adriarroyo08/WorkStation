@@ -1,6 +1,7 @@
 // Servidor MCP remoto (Streamable HTTP, sin estado) como manejador Request → Response.
 // Sirve en Supabase Edge Functions (Deno) y en Node. La API key llega en
 // `Authorization: Bearer ws_…`, en `x-api-key` o en la URL (`?key=ws_…`, para clientes que solo aceptan una URL).
+import { ARTICLE_RESOURCE, readArticleResource } from './article-resource';
 import { RateLimitError } from './cloud-source';
 import { callTool, TOOLS, toolAnnotations, toolJsonSchema, type DataSource } from './mcp-tools';
 
@@ -76,7 +77,7 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
           id: m.id,
           result: {
             protocolVersion: PROTOCOLS.includes(asked) ? asked : PROTOCOLS[0],
-            capabilities: { tools: { listChanged: false } },
+            capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
             serverInfo: SERVER,
             instructions: 'Datos de entrenamiento del usuario en Workstation. Empieza por training_summary. Trabaja siempre con pesos en kg.',
           },
@@ -84,6 +85,13 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
       }
       case 'ping':
         return { jsonrpc: '2.0', id: m.id, result: {} };
+      case 'resources/list':
+        return { jsonrpc: '2.0', id: m.id, result: { resources: [ARTICLE_RESOURCE] } };
+      case 'resources/read': {
+        const uri = String(m.params?.uri ?? '');
+        if (uri !== ARTICLE_RESOURCE.uri) return rpcError(m.id, -32002, 'Recurso desconocido');
+        return { jsonrpc: '2.0', id: m.id, result: readArticleResource(uri) };
+      }
       case 'tools/list':
         return {
           jsonrpc: '2.0',

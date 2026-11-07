@@ -11,7 +11,9 @@
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/index.js --packages=external --banner:js=\"#!/usr/bin/env node\"",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "build:edge": "esbuild src/edge.ts --bundle --platform=neutral --format=esm --target=es2022 --main-fields=module,main --minify --outfile=../supabase/functions/mcp/index.ts --banner:js=\"// @ts-nocheck \u2014 Generado con 'npm --prefix mcp run build:edge' a partir de mcp/src/edge.ts. No editar a mano.\""
+    "build:edge": "esbuild src/edge.ts --bundle --platform=neutral --format=esm --target=es2022 --main-fields=module,main --minify --outfile=../supabase/functions/mcp/index.ts --banner:js=\"// @ts-nocheck — Generado con 'npm --prefix mcp run build:edge' a partir de mcp/src/edge.ts. No editar a mano.\"",
+    "prebuild": "node --experimental-strip-types --no-warnings ../scripts/build-articles.mjs",
+    "prebuild:edge": "node --experimental-strip-types --no-warnings ../scripts/build-articles.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

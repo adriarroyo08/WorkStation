@@ -5,6 +5,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+- Base de art?culos propios en Markdown, validaci?n editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versi?n.
+
 - Evidencia en la ficha (patrón, roles, mapa de intensidad y fuentes), estimaciones identificadas y filtro combinable por patrón en biblioteca y selector (#52).
 
 - Escala RPE/RIR opcional en Ajustes para registrar y editar esfuerzo con medios puntos, conservando RPE como dato canónico (#85).
