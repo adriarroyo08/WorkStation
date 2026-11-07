@@ -308,7 +308,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         </button>
         <p className="small muted">
           El CSV usa el formato de Hevy. El backup JSON también vale para el fichero del MCP. En Hevy: Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos. Tus rutinas se crean a
-          partir de la última vez que hiciste cada una.
+          partir de la última vez que hiciste cada una. En Strong: Ajustes → Exportar datos.
         </p>
         <button
           className="danger full"

@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { plural } from '../../../shared/plural';
 import { previewStrongCsv, type StrongOptions } from '../../../shared/strong';
 import { snapshot } from '../backups';
 import { ask } from '../dialog';
@@ -50,7 +51,7 @@ export default function StrongImport({ csv, onClose }: { csv: string; onClose: (
       await snapshot(data, 'antes de importar');
       replace(preview.data);
       onClose();
-      ask.notice(`Importados ${preview.workouts.length} entrenamientos y ${preview.sets} series desde Strong.`);
+      ask.notice(`${preview.workouts.length === 1 ? 'Importado' : 'Importados'} ${plural(preview.workouts.length, 'entrenamiento')} y ${plural(preview.sets, 'serie')} desde Strong.`);
     } catch (e) {
       setError(`No se ha importado: ${(e as Error).message}`);
       setBusy(false);
@@ -98,9 +99,10 @@ export default function StrongImport({ csv, onClose }: { csv: string; onClose: (
         )}
         <div role="status">
           <p>
-            {preview.workouts.length} entrenamientos · {preview.sets} series · {preview.customExercises} ejercicios personalizados nuevos.
+            {plural(preview.workouts.length, 'entrenamiento')} · {plural(preview.sets, 'serie')} ·{' '}
+            {plural(preview.customExercises, 'ejercicio personalizado nuevo', 'ejercicios personalizados nuevos')}.
           </p>
-          <p>{preview.skippedRows} registros omitidos.</p>
+          <p>{plural(preview.skippedRows, 'registro omitido', 'registros omitidos')}.</p>
         </div>
         {preview.unsupportedColumns.length > 0 && <p>Columnas no compatibles (no se importarán): {preview.unsupportedColumns.join(', ')}.</p>}
         {preview.diagnostics.length > 0 && (
@@ -124,7 +126,8 @@ export default function StrongImport({ csv, onClose }: { csv: string; onClose: (
             <ul>
               {workout.exercises.map((exercise, index) => (
                 <li key={index}>
-                  {preview.data.exercises.find((e) => e.id === exercise.exerciseId)?.name} · {exercise.sets.length} series{exercise.notes && <p style={{ whiteSpace: 'pre-wrap' }}>{exercise.notes}</p>}
+                  {preview.data.exercises.find((e) => e.id === exercise.exerciseId)?.name} · {plural(exercise.sets.length, 'serie')}
+                  {exercise.notes && <p style={{ whiteSpace: 'pre-wrap' }}>{exercise.notes}</p>}
                 </li>
               ))}
             </ul>

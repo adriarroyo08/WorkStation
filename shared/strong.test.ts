@@ -14,7 +14,8 @@ describe('importación Strong', () => {
     expect(result.needsWeightUnit).toBe(true);
     expect(result.canConfirm).toBe(false);
     expect(result.data.workouts).toEqual([]);
-    expect(result.diagnostics.join(' ')).toContain('Falta unidad explícita');
+    expect(result.diagnostics).toEqual(['Elige la unidad de peso para continuar']);
+    expect(result.skippedRows).toBe(0);
     expect(data).toEqual(before);
   });
   it('conserva sesiones, tipos, orden, notas multilínea, decimales y duraciones', () => {
@@ -117,6 +118,29 @@ describe('importación Strong', () => {
     expect(result.data.workouts).toHaveLength(2);
     expect(result.workouts[0].exercises).toHaveLength(3);
   });
+});
+
+it('agrupa avisos de unidades en miles de filas pendientes sin contarlas como omitidas', () => {
+  const header = 'Date,Workout Name,Exercise Name,Set Order,Weight,Reps,Distance';
+  const rows = Array.from({ length: 3000 }, () => '2026-10-17,A,Nuevo,1,50,8,2');
+  const text = [header, ...rows, '2026-10-17,A,Nuevo,1,invalido,8,2'].join('\n');
+  const base = emptyData();
+  const result = previewStrongCsv(base, text);
+  expect(result.canConfirm).toBe(false);
+  expect(result.needsWeightUnit).toBe(true);
+  expect(result.needsDistanceUnit).toBe(true);
+  expect(result.skippedRows).toBe(1);
+  expect(result.diagnostics).toHaveLength(3);
+  expect(result.diagnostics.slice(1)).toEqual(['Elige la unidad de peso para continuar', 'Elige la unidad de distancia para continuar']);
+  const weightSelected = previewStrongCsv(base, text, { weightUnit: 'kg' });
+  expect(weightSelected.diagnostics.slice(1)).toEqual(['Elige la unidad de distancia para continuar']);
+  expect(weightSelected.skippedRows).toBe(1);
+  const selected = previewStrongCsv(base, text, { weightUnit: 'kg', distanceUnit: 'km' });
+  expect(selected.canConfirm).toBe(true);
+  expect(selected.sets).toBe(3000);
+  expect(selected.skippedRows).toBe(1);
+  expect(selected.diagnostics).toHaveLength(1);
+  expect(base.workouts).toHaveLength(0);
 });
 
 describe('fechas Strong sin ambigüedad', () => {

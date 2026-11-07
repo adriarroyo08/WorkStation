@@ -181,7 +181,8 @@ export function previewStrongCsv(base: WorkstationData, csv: string, options: St
       const distanceUnit = headerDistance ?? (rowDistance || options.distanceUnit);
       if (weight !== undefined && !weightUnit) result.needsWeightUnit = true;
       if (distance !== undefined && distance > 0 && !distanceUnit) result.needsDistanceUnit = true;
-      if ((weight !== undefined && !weightUnit) || (distance !== undefined && distance > 0 && !distanceUnit)) throw new Error('Falta unidad explícita; elígela en la vista previa.');
+      // La fila queda pendiente de una elección, no es una fila inválida u omitida.
+      if ((weight !== undefined && !weightUnit) || (distance !== undefined && distance > 0 && !distanceUnit)) return;
       const name = row['Workout Name'].trim();
       const key = JSON.stringify([startedAt, name, row['Workout #'] ?? '']);
       let workout = sessions.get(key);
@@ -216,6 +217,8 @@ export function previewStrongCsv(base: WorkstationData, csv: string, options: St
       result.diagnostics.push(`Registro ${index + 2}: ${(e as Error).message}`);
     }
   });
+  if (result.needsWeightUnit) result.diagnostics.push('Elige la unidad de peso para continuar');
+  if (result.needsDistanceUnit) result.diagnostics.push('Elige la unidad de distancia para continuar');
   result.workouts = [...sessions.values()];
   result.customExercises = data.exercises.length - base.exercises.length;
   result.canConfirm = result.sets > 0 && !result.needsWeightUnit && !result.needsDistanceUnit;

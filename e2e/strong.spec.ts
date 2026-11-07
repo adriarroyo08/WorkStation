@@ -41,7 +41,8 @@ for (const theme of ['light', 'dark'] as const) {
     const dialog = await choose(page);
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('button', { name: 'Confirmar importación' })).toBeDisabled();
-    await expect(dialog).toContainText('Falta unidad explícita');
+    await expect(dialog.getByText('Elige la unidad de peso para continuar', { exact: true })).toHaveCount(1);
+    await expect(dialog).toContainText('0 registros omitidos.');
     mkdirSync('docs/issue-83', { recursive: true });
     await page.screenshot({ path: `docs/issue-83/${theme}-unidad.png` });
     await dialog.getByLabel('Unidad de peso del CSV').selectOption('kg');
@@ -81,6 +82,20 @@ for (const theme of ['light', 'dark'] as const) {
     await page.screenshot({ path: `docs/issue-83/${theme}-confirmada.png` });
   });
 }
+test('Strong: resumen y confirmación en singular', async ({ page, errors }) => {
+  void errors;
+  await seed(page, SAMPLE);
+  await tab(page, 'Perfil').click();
+  await page.getByRole('button', { name: 'Ajustes', exact: true }).click();
+  const dialog = await choose(page, Buffer.from('Date,Workout Name,Exercise Name,Set Order,Weight (kg),Reps\n2026-10-17,Prueba,Nuevo Strong,1,50,8\n2026-10-17,Prueba,Nuevo Strong,2,invalido,8'));
+  await expect(dialog).toContainText('1 entrenamiento · 1 serie · 1 ejercicio personalizado nuevo.');
+  await expect(dialog).toContainText('1 registro omitido.');
+  await dialog.locator('summary').click();
+  await expect(dialog).toContainText('Nuevo Strong · 1 serie');
+  await dialog.getByRole('button', { name: 'Confirmar importación' }).click();
+  await expect(page.getByText('Importado 1 entrenamiento y 1 serie desde Strong.', { exact: true })).toBeVisible();
+});
+
 test('Strong: fecha ambigua y columnas incompatibles visibles antes de confirmar', async ({ page, errors }) => {
   void errors;
   await seed(page, SAMPLE);
@@ -89,7 +104,7 @@ test('Strong: fecha ambigua y columnas incompatibles visibles antes de confirmar
   const before = await stored(page);
   const dialog = await choose(page, Buffer.from('Date,Workout Name,Exercise Name,Set Order,Weight (kg),Reps,Extra\n04/05/2026,Torso,Press de banca (barra),1,50,8,ignorado'));
   await expect(dialog).toContainText('Fecha ambigua');
-  await expect(dialog).toContainText('1 registros omitidos.');
+  await expect(dialog).toContainText('1 registro omitido.');
   await expect(dialog).toContainText('Columnas no compatibles (no se importarán): Extra.');
   await expect(dialog.getByRole('button', { name: 'Confirmar importación' })).toBeDisabled();
   await dialog.getByRole('button', { name: 'Cancelar', exact: true }).click();

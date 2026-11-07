@@ -20,7 +20,9 @@ Se conserva el orden de las series, con W/D/F como calentamiento/drop/fallo. `Wo
 
 ## Verificación
 
-- `npm run check`: lint, tipos, 282 tests (35 de Strong), cobertura y builds correctos.
-- `npm --prefix app run build` y `npm run e2e`: build de producción correcto y 74 e2e superados (3 de Strong).
+- `npm run check`: lint, tipos, 284 tests (36 de Strong y uno del helper de plurales), cobertura y builds correctos.
+- `npm --prefix app run build` y `npm run e2e`: build de producción correcto y 75 e2e superados (4 de Strong).
+
+Revisión del PR #106: la falta de unidad genera un solo aviso por unidad, sin contar las filas pendientes como omitidas; regresión con 3.000 series y una fila inválida. El resumen, el detalle y la confirmación usan singular/plural; el e2e comprueba un entrenamiento, una serie, un ejercicio personalizado nuevo y un registro omitido.
 
 El bundle generado `supabase/functions/mcp/index.ts` se incluye conforme a AGENTS.md. Se descarta la reescritura automática ajena a esta issue de `docs/evidencia-ejercicios.md`.
