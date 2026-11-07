@@ -25,6 +25,16 @@ describe('búsqueda en español o en inglés', async () => {
     expect(matchesExercise(curl, 'curl ez')).toBe(true);
     expect(matchesExercise({ name: 'Press de banca (barra)', media: 'Barbell_Bench_Press_-_Medium_Grip' }, 'bench press')).toBe(true);
   });
+  it('encuentra los de wger por su nombre en inglés', () => {
+    expect(matchesExercise({ name: 'Paso del oso', media: 'https://wger.de/a.png', nameEn: 'Bear Crawl' }, 'bear crawl')).toBe(true);
+  });
+  it('el nombre en inglés de un ejercicio de wger no es la URL de su imagen', async () => {
+    const { englishName } = await import('./exercisedb');
+    const base = { id: 'x', muscle: 'core', equipment: 'peso corporal', kind: 'reps' } as const;
+    expect(englishName({ ...base, name: 'Paso del oso', media: 'https://wger.de/a.png', nameEn: 'Bear Crawl' })).toBe('Bear Crawl');
+    expect(englishName({ ...base, name: 'Paso del oso', media: 'https://wger.de/a.png' })).toBe('Paso del oso');
+    expect(englishName({ ...base, name: 'Curl', media: 'EZ-Bar_Curl' })).toBe('EZ-Bar Curl');
+  });
   it('no inventa coincidencias', () => {
     expect(matchesExercise(curl, 'squat')).toBe(false);
     expect(matchesExercise({ name: 'X', media: 'https://wger.de/a.png' }, 'wger')).toBe(false);

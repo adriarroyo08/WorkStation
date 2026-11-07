@@ -93,7 +93,8 @@ export function tokens(s: string): string[] {
 
 // Nombre en inglés del ejercicio: el id del catálogo libre ("Barbell_Bench_Press_-_Medium_Grip") o su nombre.
 export function englishName(e: Exercise): string {
-  return (e.media ?? e.name).replace(/_/g, ' ');
+  // `media` de wger son URLs de imagen, no un nombre.
+  return (e.nameEn ?? (e.media && !e.media.includes('://') ? e.media : e.name)).replace(/_/g, ' ');
 }
 
 export function matchScore(a: string, b: string): number {

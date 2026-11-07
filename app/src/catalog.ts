@@ -15,6 +15,8 @@ export interface CatalogItem {
   /** Solo wger: URLs de sus imágenes (las de free-exercise-db salen del id). */
   images?: string[];
   source?: 'wger';
+  /** Solo wger: nombre original en inglés (las de free-exercise-db lo llevan en el id). */
+  en?: string;
   author?: string;
 }
 
@@ -37,6 +39,7 @@ export const catalogToExercise = (c: CatalogItem): Exercise => ({
   equipment: c.equipment,
   kind: c.kind,
   media: c.source === 'wger' ? c.images?.join('|') : c.id,
+  ...(c.en ? { nameEn: c.en } : {}),
   instructions: c.instructions,
   custom: true,
 });
