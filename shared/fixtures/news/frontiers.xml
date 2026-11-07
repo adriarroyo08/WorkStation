@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Frontiers in Sports and Active Living (sintético)</title>
+    <item><title>Strength &amp; recovery &#x1F4AA;</title><link>https://www.frontiersin.org/articles/test-strength#abstract</link><description><![CDATA[<p>A short <b>synthetic</b> summary &amp; findings.</p><script>evil()</script>]]></description><pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate><dc:creator>Researcher &amp; Team</dc:creator><content:encoded>FULL_ARTICLE_MUST_NOT_APPEAR</content:encoded></item>
+    <item><title>Older duplicate</title><link>https://www.frontiersin.org/articles/test-strength</link><description>Old summary</description><pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate></item>
+    <item><title>No date</title><link>https://www.frontiersin.org/articles/undated</link><description>&lt;p&gt;Resumen con &amp;ntilde; y &#233;.&lt;/p&gt;</description></item>
+    <item><title>Bad date</title><link>https://www.frontiersin.org/articles/invalid-date</link><pubDate>not-a-date</pubDate></item>
+    <item><title>Dangerous URL</title><link>javascript:alert(1)</link></item>
+  </channel>
+</rss>
