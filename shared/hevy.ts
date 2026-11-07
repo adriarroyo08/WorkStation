@@ -156,7 +156,7 @@ export const HEVY_EXERCISES: Record<string, string> = {
 
 const hevyKey = (title: string) => title.trim().toLowerCase().replace(/\s+/g, ' ');
 
-function hevyExercise(data: WorkstationData, title: string) {
+export function hevyExercise(data: WorkstationData, title: string) {
   const id = HEVY_EXERCISES[hevyKey(title)];
   return data.exercises.find((e) => e.id === id) ?? findOrCreateExercise(data, title);
 }
@@ -174,7 +174,7 @@ function relinkHevyExercises(data: WorkstationData) {
   data.exercises = data.exercises.filter((e) => !to.has(e.id));
 }
 
-export function parseCsv(text: string): Record<string, string>[] {
+export function parseCsv(text: string, separator = ',', strict = false): Record<string, string>[] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';
@@ -188,7 +188,7 @@ export function parseCsv(text: string): Record<string, string>[] {
       } else if (c === '"') q = false;
       else cell += c;
     } else if (c === '"') q = true;
-    else if (c === ',') {
+    else if (c === separator) {
       row.push(cell);
       cell = '';
     } else if (c === '\n' || c === '\r') {
@@ -199,12 +199,15 @@ export function parseCsv(text: string): Record<string, string>[] {
       cell = '';
     } else cell += c;
   }
+  if (strict && q) throw new Error('CSV inválido: comillas sin cerrar.');
   if (cell || row.length) {
     row.push(cell);
     rows.push(row);
   }
   const [header, ...body] = rows.filter((r) => r.some((x) => x.trim()));
   if (!header) return [];
+  if (strict && (new Set(header.map((h) => h.trim())).size !== header.length || body.some((r) => r.length !== header.length)))
+    throw new Error('CSV inválido: cabeceras duplicadas o número de columnas incoherente.');
   return body.map((r) => Object.fromEntries(header.map((h, i) => [h.trim(), r[i] ?? ''])));
 }
 
@@ -334,8 +337,7 @@ export function convertHevyApiWorkouts(data: WorkstationData, list: HevyApiWorko
   return importWorkouts(data, workouts);
 }
 
-export const hevySummary = (r: HevyImport) =>
-  `Importados ${r.workouts} entrenamientos desde Hevy` + (r.routines ? ` y ${r.routines} rutinas (carpeta «Hevy»).` : '.');
+export const hevySummary = (r: HevyImport) => `Importados ${r.workouts} entrenamientos desde Hevy` + (r.routines ? ` y ${r.routines} rutinas (carpeta «Hevy»).` : '.');
 
 function importWorkouts(data: WorkstationData, ws: Workout[]): HevyImport {
   relinkHevyExercises(data);
@@ -376,12 +378,12 @@ export async function fetchHevyWorkouts(apiKey: string, maxPages = 50): Promise<
 
 // Inserta o actualiza. Un entreno ya importado se reconoce por id o por nombre + inicio (al minuto), así
 // reimportar el CSV, o importar por CSV y después por la API, no duplica entrenos.
-function upsertWorkouts(data: WorkstationData, ws: Workout[]) {
+export function upsertWorkouts(data: WorkstationData, ws: Workout[], matchSignature = true) {
   const sig = (w: Workout) => `${w.name.trim().toLowerCase()}|${w.startedAt.slice(0, 16)}`;
   const byId = new Map(data.workouts.map((w, i) => [w.id, i]));
   const bySig = new Map(data.workouts.map((w, i) => [sig(w), i]));
   for (const w of ws) {
-    const i = byId.get(w.id) ?? bySig.get(sig(w));
+    const i = byId.get(w.id) ?? (matchSignature ? bySig.get(sig(w)) : undefined);
     if (i === undefined) {
       byId.set(w.id, data.workouts.length);
       bySig.set(sig(w), data.workouts.length);

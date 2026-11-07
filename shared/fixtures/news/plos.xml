@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<a:feed xmlns:a="http://www.w3.org/2005/Atom" xml:base="https://journals.plos.org/plosone/">
+  <a:title>PLOS ONE (sintético)</a:title>
+  <a:entry><a:id>urn:synthetic:1</a:id><a:title>Resistance training</a:title><a:link rel="self" href="feed/entry/1"/><a:link rel="alternate" href="article?id=10.test/strength&amp;view=summary"/><a:summary type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>Short <b>synthetic</b> summary.</p></div></a:summary><a:published>2026-11-05T08:00:00Z</a:published><a:author><a:name>Sample Scientist</a:name></a:author><a:content>FULL_ARTICLE_MUST_NOT_APPEAR</a:content></a:entry>
+  <a:entry xml:base="https://journals.plos.org/"><a:title>Updated only</a:title><a:link href="plosone/article?id=10.test/updated"/><a:updated>2026-11-03T10:00:00Z</a:updated><a:content>NO_SUMMARY_FALLBACK</a:content></a:entry>
+</a:feed>

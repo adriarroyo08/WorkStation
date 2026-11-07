@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:d="http://purl.org/dc/elements/1.1/" xmlns:other="urn:irrelevant">
+  <channel rdf:about="https://www.tandfonline.com/feed/rss/rssn20"><title>JISSN (sintético)</title></channel>
+  <item rdf:about="https://www.tandfonline.com/doi/full/10.test/nutrition"><other:title>Wrong namespace</other:title><title>Protein &amp; strength</title><link>https://www.tandfonline.com/doi/full/10.test/nutrition</link><description>Short synthetic nutrition findings.</description><d:date>2026-11-04T15:30:00+02:00</d:date><d:creator>Sample Author</d:creator></item>
+</rdf:RDF>
