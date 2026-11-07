@@ -7,7 +7,7 @@ import { ARTICLE_RESOURCE, readArticleResource } from './article-resource';
 import { handleMcp } from './mcp-http';
 
 const ids = new Set(DEFAULT_EXERCISES.map((e) => e.id));
-const example = readFileSync(new URL('../content/articulos/volumen-semanal.md', import.meta.url), 'utf8');
+const example = readFileSync(new URL('../content/articulos/volumen-semanal.md', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
 const parse = (text: string) => parseArticle(text, ids);
 
 describe('artículos: contrato editorial', () => {

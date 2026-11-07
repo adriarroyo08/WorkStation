@@ -6,7 +6,14 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
-  { version: '1.14.0', date: '2026-11-07', items: ['Importa directamente tu CSV de Strong desde Ajustes: revisa sesiones, unidades y errores antes de confirmar, con copia de seguridad automática.'] },
+  {
+    version: '1.14.0',
+    date: '2026-11-07',
+    items: [
+      'El Coach cita artículos propios relevantes con sus fuentes; MCP permite buscarlos y consultar su contenido.',
+      'Importa directamente tu CSV de Strong desde Ajustes: revisa sesiones, unidades y errores antes de confirmar, con copia de seguridad automática.',
+    ],
+  },
   {
     version: '1.13.1',
     date: '2026-11-07',

@@ -6,7 +6,7 @@ import { RateLimitError } from './cloud-source';
 import { callTool, TOOLS, toolAnnotations, toolJsonSchema, type DataSource } from './mcp-tools';
 
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const SERVER = { name: 'workstation', version: '0.5.0' };
+const SERVER = { name: 'workstation', version: '0.6.0' };
 // Máximo de mensajes en una petición agrupada (batch): cada llamada a herramienta gasta cuota de la API key igualmente.
 export const MAX_BATCH = 20;
 
