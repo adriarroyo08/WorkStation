@@ -122,6 +122,48 @@ describe('progresión', () => {
   });
 });
 
+describe('progresión por tiempo', () => {
+  const times = (...secs: number[]) => secs.map((durationSec) => ({ type: 'normal' as const, durationSec, done: true }));
+
+  it('al alcanzar el objetivo en todas las series sugiere 5 s más', () => {
+    expect(suggestNext(times(60, 60, 60), ex('plancha'), undefined, 60)).toMatchObject({ durationSec: 65, action: 'time' });
+  });
+
+  it('si alguna serie no llegó, repite el objetivo', () => {
+    expect(suggestNext(times(60, 60, 45), ex('plancha'), undefined, 60)).toMatchObject({ durationSec: 60, action: 'repeat' });
+  });
+
+  it('sigue subiendo aunque la rutina conserve el objetivo original', () => {
+    expect(suggestNext(times(65, 65, 65), ex('plancha'), undefined, 60)).toMatchObject({ durationSec: 70, action: 'time' });
+  });
+
+  it('la subida parte de lo que aguantaron todas las series, no de la mejor', () => {
+    expect(suggestNext(times(90, 60, 60), ex('plancha'), undefined, 60)).toMatchObject({ durationSec: 65 });
+  });
+
+  it('el calentamiento y las series drop no cuentan para el objetivo', () => {
+    const prev = [{ type: 'warmup' as const, durationSec: 10, done: true }, ...times(60, 60), { type: 'drop' as const, durationSec: 20, done: true }];
+    expect(suggestNext(prev, ex('plancha'), undefined, 60)).toMatchObject({ durationSec: 65 });
+  });
+
+  it('sin objetivo mantiene la mejor marca + 5 s', () => {
+    expect(suggestNext(times(42, 75), ex('plancha'))).toMatchObject({ durationSec: 80, action: 'time' });
+  });
+
+  it('sin tiempos registrados no sugiere nada', () => {
+    expect(suggestNext([{ type: 'normal', done: true }], ex('plancha'), undefined, 60)).toBeNull();
+  });
+
+  it('el motivo usa el formato de tiempo, no repeticiones', () => {
+    expect(suggestNext(times(60, 60), ex('plancha'), undefined, 60)?.reason).toBe('Llegaste a 1:00 en todas las series: intenta 1:05.');
+    expect(suggestNext(times(30), ex('plancha'))?.reason).toBe('La última vez aguantaste 30 s: intenta 5 s más.');
+  });
+
+  it('el objetivo no afecta a los ejercicios por repeticiones', () => {
+    expect(suggestNext(sets([80, 8]), ex('press-banca'), 8, 60)).toMatchObject({ weight: 82.5 });
+  });
+});
+
 describe('logros', () => {
   it('desbloquea y detecta nuevos', () => {
     const d = emptyData();
