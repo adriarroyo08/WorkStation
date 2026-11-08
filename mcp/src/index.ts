@@ -5,7 +5,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { cloudSource } from '../../shared/cloud-source';
-import { TOOLS, callTool, toolAnnotations, type DataSource } from '../../shared/mcp-tools';
+import { MCP_INSTRUCTIONS, TOOLS, callTool, toolAnnotations, type DataSource } from '../../shared/mcp-tools';
 import { ARTICLE_RESOURCE, readArticleResource } from '../../shared/article-resource';
 import { dataPath, loadData, saveData } from './store';
 
@@ -29,7 +29,7 @@ function source(): DataSource {
 }
 
 const src = source();
-const server = new McpServer({ name: 'workstation', version: '0.7.0' });
+const server = new McpServer({ name: 'workstation', version: '0.7.0' }, { instructions: MCP_INSTRUCTIONS });
 
 server.registerResource(ARTICLE_RESOURCE.name, ARTICLE_RESOURCE.uri, ARTICLE_RESOURCE, async (uri) => readArticleResource(uri.href));
 
