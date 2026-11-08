@@ -145,9 +145,9 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
             disabled={busy || st.status === 'syncing'}
             onClick={async () => {
               setBusy(true);
-              await cloud.syncNow();
+              const ok = await cloud.syncNow();
               setBusy(false);
-              toast.show('Sincronizado');
+              if (ok) toast.show('Sincronizado');
             }}
           >
             <RefreshCw size={16} /> Sincronizar ahora

@@ -20,6 +20,10 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
 - MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
 
+### Seguridad
+
+- Límites de almacenamiento en la nube por registro y por cuenta: si se alcanzan, la app lo explica, conserva los datos en el dispositivo y sigue subiendo el resto (#142).
+
 ## [1.18.0] - 2026-11-08
 
 ### Añadido

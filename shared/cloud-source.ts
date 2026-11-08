@@ -16,6 +16,8 @@ export class RateLimitError extends Error {
   }
 }
 
+const UPSERT_CHUNK = 500;
+
 export interface CloudSourceOptions {
   url: string; // https://xxxx.supabase.co
   anonKey: string;
@@ -66,7 +68,12 @@ export function cloudSource(o: CloudSourceOptions): DataSource {
       if (!base) throw new Error('save() sin load() previo');
       const changes = diff(base, data);
       if (!changes.length) return;
-      await rpc('api_upsert', { p_key: o.apiKey, p_rows: changes.map(({ collection, id, doc, deleted, client_updated_at }) => ({ collection, id, doc, deleted, client_updated_at })) });
+      // api_upsert admite un número limitado de filas por llamada (migración 009); una importación puede superarlo.
+      // Si falla a medias, base no cambia y el siguiente guardado reenvía todo: repetir una fila no altera nada.
+      for (let i = 0; i < changes.length; i += UPSERT_CHUNK) {
+        const p_rows = changes.slice(i, i + UPSERT_CHUNK).map(({ collection, id, doc, deleted, client_updated_at }) => ({ collection, id, doc, deleted, client_updated_at }));
+        await rpc('api_upsert', { p_key: o.apiKey, p_rows });
+      }
       base = snapshot(data);
     },
   };
