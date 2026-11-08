@@ -16,7 +16,7 @@ export function historyDate(iso: string, now = new Date()): string {
 
 export const historyMonth = (iso: string) => monthYearFormat.format(new Date(iso));
 
-export function historyRowSummary(w: Workout, exercises: Exercise[], prs: number, now = new Date()) {
+export function historyRowSummary(w: Workout, exercises: Exercise[], now = new Date()) {
   const date = historyDate(w.startedAt, now);
   const volume = fmtMass(workoutVolume(w, exercises));
   const duration = workoutDurationMin(w);
@@ -24,7 +24,5 @@ export function historyRowSummary(w: Workout, exercises: Exercise[], prs: number
   const names = new Map(exercises.map((e) => [e.id, e.name]));
   const lines = w.exercises.slice(0, 4).map((e) => `${e.sets.length} × ${names.get(e.exerciseId) ?? e.exerciseId}`);
   const extra = w.exercises.length > 4 ? `+ ${w.exercises.length - 4} más` : '';
-  // Mismo contenido textual de la fila, sin recorrer sus descendientes SVG al obtener el nombre accesible.
-  const label = [date, w.name, prs || '', `${duration} min`, volume, `${sets} series`, w.heartRate ? `${w.heartRate.avg} ppm` : '', ...lines, extra].filter(Boolean).join(' ');
-  return { date, volume, duration, sets, lines, extra, label };
+  return { date, volume, duration, sets, lines, extra };
 }

@@ -227,11 +227,11 @@ const HistoryRow = memo(function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w:
     const exercise = ex.get(e.exerciseId);
     return exercise ? [{ exercise, sets: e.sets.filter((s) => s.done).length }] : [];
   });
-  const summary = historyRowSummary(w, data.exercises, prs);
+  const summary = historyRowSummary(w, data.exercises);
   const [volNum, volUnit] = summary.volume.split(' ');
 
   return (
-    <button className="hrow full left" aria-label={summary.label} onClick={() => onOpen(w.id)} {...press}>
+    <button className="hrow full left" onClick={() => onOpen(w.id)} {...press}>
       <div className="hrow-grid">
         <div className="hrow-main">
           <div className="row hrow-head">
