@@ -1,4 +1,5 @@
 import { DEFAULT_EXERCISES } from './exercises';
+import { normalizeRepRange } from './progression';
 import type { Exercise, Routine, SetType, Workout, WorkstationData } from './types';
 import { DEFAULT_SETTINGS, uid } from './types';
 
@@ -22,12 +23,18 @@ export function normalizeData(input: unknown): WorkstationData {
     }),
     ...DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id)).map((e) => structuredClone(e)),
   ];
+  const kinds = new Map(exercises.map((e) => [e.id, e.kind]));
+  const normalizeExercises = <T extends Routine['exercises'][number] | Workout['exercises'][number]>(items: T[]): T[] =>
+    items.map((e) => ({
+      ...e,
+      sets: Array.isArray(e.sets) ? e.sets.map((s) => normalizeRepRange(s, kinds.get(e.exerciseId) ?? 'weight_reps')) : e.sets,
+    }));
   return {
     version: 1,
     exercises,
-    routines: Array.isArray(d.routines) ? d.routines : [],
+    routines: Array.isArray(d.routines) ? d.routines.map((r) => ({ ...r, exercises: Array.isArray(r.exercises) ? normalizeExercises(r.exercises) : r.exercises })) : [],
     folders: Array.isArray(d.folders) ? d.folders : [],
-    workouts: Array.isArray(d.workouts) ? d.workouts : [],
+    workouts: Array.isArray(d.workouts) ? d.workouts.map((w) => ({ ...w, exercises: Array.isArray(w.exercises) ? normalizeExercises(w.exercises) : w.exercises })) : [],
     measurements: Array.isArray(d.measurements) ? d.measurements : [],
     settings: { ...DEFAULT_SETTINGS, ...(d.settings ?? {}) },
   };
