@@ -28,6 +28,26 @@ function fakeSupabase(validKey = 'ws_ok', writable = true) {
 const memSource = (d: WorkstationData): DataSource => ({ label: 'mem', load: async () => structuredClone(d), save: async (x) => void Object.assign(d, x) });
 
 describe('herramientas MCP', () => {
+  it('usa el rango de la sesión anterior y respeta el objetivo fijo explícito', async () => {
+    const data = emptyData();
+    data.workouts.push({
+      id: 'range',
+      name: 'Rango',
+      startedAt: '2026-11-08T10:00:00Z',
+      endedAt: '2026-11-08T11:00:00Z',
+      exercises: [
+        {
+          exerciseId: 'press-banca',
+          sets: [{ type: 'warmup', done: true, weight: 40, reps: 5 }, ...[12, 12, 12].map((reps) => ({ type: 'normal' as const, done: true, weight: 80, reps, repsMin: 8 }))],
+        },
+      ],
+    });
+    const src = memSource(data);
+    expect(JSON.parse((await callTool(src, 'suggest_next', { exercise: 'press-banca' })).text)).toMatchObject({ weight: 82.5, reps: 8, action: 'up' });
+    expect(JSON.parse((await callTool(src, 'suggest_next', { exercise: 'press-banca', target_reps: 12 })).text)).toMatchObject({ weight: 82.5, reps: 12, action: 'up' });
+    data.workouts[0].exercises[0].sets = [10, 12].map((reps) => ({ type: 'normal', done: true, weight: 80, reps }));
+    expect(JSON.parse((await callTool(src, 'suggest_next', { exercise: 'press-banca' })).text)).toMatchObject({ weight: 80, reps: 12, action: 'repeat' });
+  });
   it('todas tienen descripción y esquema', () => {
     expect(TOOLS.length).toBeGreaterThanOrEqual(16);
     for (const t of TOOLS) expect(t.description.length).toBeGreaterThan(10);

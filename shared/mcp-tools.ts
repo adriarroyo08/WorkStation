@@ -6,7 +6,7 @@ import { achievements } from './achievements';
 import { findOrCreateExercise, routineFromDraft } from './data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts, hevySummary } from './hevy';
 import { muscleRecovery, nextRoutine } from './planning';
-import { suggestNext } from './progression';
+import { repTarget, suggestNext } from './progression';
 import { LEVELS, latestBodyweight, strengthLevels } from './strength';
 import { period, periodReport, reportToText, weekStreak } from './reports';
 import { exerciseHistory, formatSet, lastSessionSets, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from './stats';
@@ -153,7 +153,9 @@ export const TOOLS: ToolDef[] = [
       const data = await src.load();
       const e = resolveExercise(data, exercise);
       if (!e) return `Ejercicio no encontrado: ${exercise}`;
-      const s = suggestNext(lastSessionSets(data, e.id), e, target_reps);
+      const prev = lastSessionSets(data, e.id);
+      const first = prev.find((s) => s.type !== 'warmup' && s.type !== 'drop');
+      const s = suggestNext(prev, e, target_reps ?? (first?.repsMin !== undefined ? repTarget(first) : undefined));
       return s ? json({ exercise: e.name, ...s }) : `Sin datos previos de ${e.name}.`;
     },
   }),
