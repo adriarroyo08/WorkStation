@@ -78,6 +78,18 @@ export default function WorkoutLogger({
   const [plates, setPlates] = useState<number | null>(null);
   const [stopwatch, setStopwatch] = useState<{ ei: number; si: number; start: number } | null>(null);
   const exMap = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
+  const exerciseIds = JSON.stringify([...new Set(w.exercises.map((e) => e.exerciseId))]);
+  const stagnationData = useRef(data);
+  stagnationData.current = data;
+  const stagnation = useMemo(() => {
+    const priorData = { ...stagnationData.current, workouts: data.workouts.filter((x) => x.id !== w.id && x.startedAt < w.startedAt) };
+    return new Map(
+      (JSON.parse(exerciseIds) as string[]).map((id) => {
+        const report = mode === 'live' ? evaluateStagnation(priorData, id, w.startedAt) : null;
+        return [id, { report, recommendation: report && createDeloadSuggestion(report, exMap.get(id)) }];
+      }),
+    );
+  }, [data.workouts, w.id, w.startedAt, exerciseIds, exMap, mode]);
   useWakeLock(mode === 'live' && settings.keepAwake);
 
   const restLeft = restState.end ? Math.ceil((restState.end - now) / 1000) : 0;
@@ -222,9 +234,7 @@ export default function WorkoutLogger({
         const h = history.get(we.exerciseId);
         const aligned = alignPrevious(we.sets, h?.prev ?? []);
         const targetExercise = targets.current.exercises.find((e) => e.exerciseId === we.exerciseId);
-        const priorData = { ...data, workouts: data.workouts.filter((x) => x.id !== w.id && x.startedAt < w.startedAt) };
-        const report = mode === 'live' ? evaluateStagnation(priorData, we.exerciseId, w.startedAt) : null;
-        const recommendation = report && createDeloadSuggestion(report, ex);
+        const { report, recommendation } = stagnation.get(we.exerciseId) ?? {};
         const noticeKey = `${w.id}:${we.exerciseId}`;
         const ssPrev = ei > 0 && we.supersetId && w.exercises[ei - 1].supersetId === we.supersetId;
         const ssNext = we.supersetId && w.exercises[ei + 1]?.supersetId === we.supersetId;
