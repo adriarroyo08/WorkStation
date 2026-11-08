@@ -1,3 +1,4 @@
+import Articles, { RelatedArticles } from './Articles';
 import { Check, ChevronRight, Film, Pin, Plus, Search, Trophy } from 'lucide-react';
 import { ask } from '../dialog';
 import { useEffect, useMemo, useState } from 'react';
@@ -40,6 +41,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
   const { data, update } = useStore();
   const [sel, setSel] = useState<string | null>(openId ?? null);
   const [catalog, setCatalog] = useState(false);
+  const [articles, setArticles] = useState(false);
   const [items, setItems] = useState<CatalogItem[]>([]);
   useEffect(() => {
     loadCatalog().then(setItems, () => {}); // sin red: solo la biblioteca
@@ -66,6 +68,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
     setSel(e.id);
   };
 
+  if (articles) return <Articles onBack={() => setArticles(false)} />;
   if (sel) return <ExerciseDetail id={sel} onBack={() => (onClose ? onClose() : setSel(null))} />;
   if (catalog) return <CatalogBrowser onBack={() => setCatalog(false)} onOpen={(id) => (setCatalog(false), setSel(id))} />;
 
@@ -84,6 +87,13 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
           <small className="muted">1.000+ ejercicios con imágenes e instrucciones</small>
         </span>
         <ChevronRight size={16} className="muted" />
+      </button>
+      <button className="line" onClick={() => setArticles(true)}>
+        <span className="grow">
+          <b>Biblioteca de artículos</b>
+          <small className="muted">Entrenamiento con evidencia, también sin conexión</small>
+        </span>
+        <ChevronRight size={16} />
       </button>
       <div className="mfilter">
         <MuscleFilter value={muscle} onPick={setMuscle} />
@@ -283,6 +293,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <ExerciseMedia exercise={e} />
       </div>
       <h1>{e.name}</h1>
+      <RelatedArticles exerciseId={e.id} />
       <p className="muted small">
         {cap(catalogLabel(e.equipment))} · {EXERCISE_KIND_LABELS[e.kind]}
       </p>

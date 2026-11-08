@@ -1,6 +1,7 @@
 // Herramientas MCP de Workstation, independientes del transporte (stdio local o HTTP remoto)
 // y del origen de los datos (fichero JSON o nube con API key).
 import { z } from 'zod';
+import { getArticle, searchArticles } from './article-search';
 import { achievements } from './achievements';
 import { findOrCreateExercise, routineFromDraft } from './data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts, hevySummary } from './hevy';
@@ -46,6 +47,22 @@ async function write(src: DataSource, data: WorkstationData, msg: string) {
 }
 
 export const TOOLS: ToolDef[] = [
+  tool({
+    name: 'search_articles',
+    description: 'Busca artículos propios por tema, etiqueta o ejercicio. Devuelve ids estables, resumen, evidencia y fuentes; si no hay coincidencias, no inventes referencias.',
+    shape: { query: z.string().trim().min(1).max(2000), limit: z.number().int().min(1).max(20).optional() },
+    run: async (_src, { query, limit }) => json(searchArticles(query, limit)),
+  }),
+  tool({
+    name: 'get_article',
+    description: 'Consulta un artículo propio por su id (slug), con contenido completo, resumen, nivel de evidencia, fuentes y enlace al lector. Usa ids obtenidos en search_articles.',
+    shape: { id: z.string().trim().min(1).max(200) },
+    run: async (_src, { id }) => {
+      const article = getArticle(id);
+      if (!article) throw new Error(`Artículo no encontrado: ${id}`);
+      return json(article);
+    },
+  }),
   tool({
     name: 'training_summary',
     description: 'Resumen en texto del historial de entrenamiento: últimos entrenamientos, récords y peso corporal. Úsalo primero para tener contexto.',

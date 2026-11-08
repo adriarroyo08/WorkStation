@@ -8,6 +8,8 @@ const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
 const News = lazy(() => import('./components/News'));
 const Profile = lazy(() => import('./components/Profile'));
+const Articles = lazy(() => import('./components/Articles'));
+import { articleSlugFromHash } from '../../shared/article-filter';
 import { useScrollTop } from './components/ui';
 import { openedFromAuthLink, useCloud, useCloudSync } from './cloud';
 import { useSessionController } from './controller';
@@ -51,6 +53,15 @@ export default function App() {
 }
 
 function AppBody() {
+  const [articleSlug, setArticleSlug] = useState(() => articleSlugFromHash(location.hash));
+  useEffect(() => {
+    const changed = () => setArticleSlug(articleSlugFromHash(location.hash));
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  }, []);
+  const closeArticle = () => {
+    location.hash = '';
+  };
   const { active, data } = useStore();
   const [tour, setTour] = useState(
     () =>
@@ -100,34 +111,37 @@ function AppBody() {
     <div className="app">
       <main>
         <Suspense fallback={<Skeleton />}>
-          {news ? (
-            <News onBack={() => setNews(false)} />
-          ) : overlayExercise ? (
-            <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
-          ) : (
-            <>
-              <div hidden={tab !== 'train'}>
-                <Train onExercise={goExercise} onNews={() => setNews(true)} />
-              </div>
-              {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
-              {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
-              {tab === 'profile' && <Profile onExercise={goExercise} signUp={signUp} />}
-            </>
-          )}
+          {articleSlug && <Articles key={articleSlug} initialSlug={articleSlug} onBack={closeArticle} />}
+          <div hidden={!!articleSlug}>
+            {news ? (
+              <News onBack={() => setNews(false)} />
+            ) : overlayExercise ? (
+              <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
+            ) : (
+              <>
+                <div hidden={tab !== 'train'}>
+                  <Train onExercise={goExercise} onNews={() => setNews(true)} />
+                </div>
+                {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
+                {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
+                {tab === 'profile' && <Profile onExercise={goExercise} signUp={signUp} />}
+              </>
+            )}
+          </div>
         </Suspense>
       </main>
       {/* Capa encima de la app: al cerrarlo (p. ej. "Ver tour de nuevo" en Ajustes) sigues donde estabas. */}
-      {tour && <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (setOverlayExercise(null), setSignUp(true), setTab('profile'))} />}
+      {tour && <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (articleSlug && closeArticle(), setNews(false), setOverlayExercise(null), setSignUp(true), setTab('profile'))} />}
       <ToastView />
       <UpdateBanner />
       {/* Mientras está el tour no se monta: guardaría la versión vista y el tour no volvería si se recarga a medias. */}
       {!tour && <WhatsNewOnUpdate />}
       <SharedRoutineImport />
       <NotifGate />
-      {active && tab !== 'train' && <ActiveBanner onClick={() => (setOverlayExercise(null), setTab('train'))} />}
+      {active && tab !== 'train' && <ActiveBanner onClick={() => (articleSlug && closeArticle(), setNews(false), setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (setNews(false), setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (articleSlug && closeArticle(), setNews(false), setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
             <t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 1.9} aria-hidden />
             {t.label}
           </button>

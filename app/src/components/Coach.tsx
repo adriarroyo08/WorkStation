@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ask } from '../dialog';
 import { Save } from 'lucide-react';
 import { chat, COACH_SYSTEM_PROMPT, extractJsonBlock, type ChatMessage } from '../../../shared/ai';
+import { articleCitationParts, coachArticleContext } from '../../../shared/article-search';
 import { routineFromDraft, type RoutineDraft } from '../../../shared/data';
 import { period, periodReport, reportToText } from '../../../shared/reports';
 import { trainingSummary } from '../../../shared/stats';
@@ -19,7 +20,7 @@ const QUICK = [
 
 export default function Coach({ goSettings, onBack }: { goSettings: () => void; onBack: () => void }) {
   const { data, ai, update, settings } = useStore();
-  const [msgs, setMsgs] = useState<ChatMessage[]>([]);
+  const [msgs, setMsgs] = useState<(ChatMessage & { articles?: ReturnType<typeof coachArticleContext>['articles'] })[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -29,13 +30,14 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
 
   const send = async (text: string) => {
     if (!text.trim() || busy) return;
-    const next: ChatMessage[] = [...msgs, { role: 'user', content: text }];
+    const next = [...msgs, { role: 'user' as const, content: text }];
     setMsgs(next);
     setInput('');
     setBusy(true);
     setErr('');
     abort.current = new AbortController();
     try {
+      const context = coachArticleContext(text);
       const system: ChatMessage = {
         role: 'system',
         content: `${COACH_SYSTEM_PROMPT}\n\nFecha de hoy: ${new Date().toISOString().slice(0, 10)}\n\nDATOS DEL USUARIO:\n${trainingSummary(data, 15)}\n\n${reportToText(periodReport(data, period('week', 0, settings.weekStartsMonday)))}\n\n${reportToText(periodReport(data, period('month', 0, settings.weekStartsMonday)))}\n\nEjercicios disponibles en su biblioteca: ${data.exercises
@@ -43,8 +45,9 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
           .map((e) => e.name)
           .join(', ')}`,
       };
-      const reply = await chat(ai, [system, ...next], abort.current.signal);
-      setMsgs([...next, { role: 'assistant', content: reply }]);
+      system.content += `\n\n${context.prompt}`;
+      const reply = await chat(ai, [system, ...next.map(({ role, content }) => ({ role, content }))], abort.current.signal);
+      setMsgs([...next, { role: 'assistant', content: reply, articles: context.articles }]);
     } catch (e) {
       if ((e as Error).name !== 'AbortError') setErr((e as Error).message);
     } finally {
@@ -101,9 +104,21 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
       )}
       {msgs.map((m, i) => {
         const json = m.role === 'assistant' ? (extractJsonBlock(m.content) as (RoutineDraft & { program?: string; routines?: RoutineDraft[] }) | undefined) : undefined;
+        const text = m.content.replace(/```json[\s\S]*?```/g, '').trim();
+        const parts = m.role === 'assistant' ? articleCitationParts(text, m.articles ?? []) : [{ text, href: undefined }];
         return (
           <div key={i} className={`bubble ${m.role}`}>
-            <div className="pre">{m.content.replace(/```json[\s\S]*?```/g, '').trim()}</div>
+            <div className="pre">
+              {parts.map((part, j) =>
+                part.href ? (
+                  <a key={j} href={part.href}>
+                    {part.text}
+                  </a>
+                ) : (
+                  part.text
+                ),
+              )}
+            </div>
             {json?.exercises && (
               <button className="primary icon-btn" onClick={() => saveRoutines([json])}>
                 <Save size={16} /> Guardar rutina “{json.name}”
