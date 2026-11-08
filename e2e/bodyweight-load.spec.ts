@@ -30,6 +30,7 @@ for (const theme of ['dark', 'light'] as const) {
     await expect(page.getByText('Lastre del 1RM estimado:')).toContainText('0,31');
     await page.getByRole('button', { name: 'Carga total', exact: true }).click();
     await expect(page.locator('.metric-head')).toContainText('90 kg');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `docs/issue-130/dominadas-${theme}.png`, fullPage: true });
     await page.getByRole('button', { name: '1RM estimado', exact: true }).click();
