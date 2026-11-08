@@ -88,7 +88,7 @@ export function findOrCreateExercise(data: WorkstationData, name: string): Exerc
 export interface RoutineDraft {
   name: string;
   notes?: string;
-  exercises: { name: string; sets: number; reps?: number; weight?: number; durationSec?: number; restSec?: number; notes?: string; superset?: string }[];
+  exercises: { name: string; sets: number; reps?: number; reps_min?: number; weight?: number; durationSec?: number; restSec?: number; notes?: string; superset?: string }[];
 }
 
 export function routineFromDraft(data: WorkstationData, draft: RoutineDraft, folderId?: string): Routine {
@@ -103,12 +103,18 @@ export function routineFromDraft(data: WorkstationData, draft: RoutineDraft, fol
       restSec: Number(e.restSec ?? data.settings?.defaultRestSec ?? 90),
       notes: e.notes,
       supersetId: e.superset,
-      sets: Array.from({ length: Math.max(1, Math.min(20, Number(e.sets) || 3)) }, () => ({
-        type: 'normal' as SetType,
-        reps: e.reps !== undefined ? Number(e.reps) : undefined,
-        weight: e.weight !== undefined ? Number(e.weight) : undefined,
-        durationSec: e.durationSec !== undefined ? Number(e.durationSec) : undefined,
-      })),
+      sets: Array.from({ length: Math.max(1, Math.min(20, Number(e.sets) || 3)) }, () =>
+        normalizeRepRange(
+          {
+            type: 'normal' as SetType,
+            reps: e.reps !== undefined ? Number(e.reps) : undefined,
+            ...(e.reps_min !== undefined ? { repsMin: e.reps_min } : {}),
+            weight: e.weight !== undefined ? Number(e.weight) : undefined,
+            durationSec: e.durationSec !== undefined ? Number(e.durationSec) : undefined,
+          },
+          findOrCreateExercise(data, String(e.name)).kind,
+        ),
+      ),
     })),
   };
 }

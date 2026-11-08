@@ -5,6 +5,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+- MCP 0.7.0: rangos en `create_routine` y `suggest_next`, consulta de solo lectura `check_stagnation` y enlaces compartidos v1 con rangos compatibles con enlaces antiguos (#121).
+
 ### Añadido
 
 - Rango objetivo y avisos discretos de rendimiento en el registro, con descarga opcional de series y deshacer (#120).

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cloudSource, RateLimitError } from './cloud-source';
 import { handleMcp, MAX_BATCH } from './mcp-http';
 import { callTool, TOOLS, type DataSource } from './mcp-tools';
+import { evaluateStagnation } from './deload';
 import { emptyData } from './data';
 import type { WorkstationData } from './types';
 
@@ -484,4 +485,58 @@ describe('límite por API key en el MCP', () => {
     expect(res.status).toBe(400);
     expect(sb.count()).toBe(0);
   });
+});
+
+it('crea rangos por MCP y descarta los suelos inválidos', async () => {
+  const data = emptyData();
+  const src = memSource(data);
+  for (const min of [8, 15, -1, 8.5]) {
+    expect((await callTool(src, 'create_routine', { name: 'Rango', exercises: [{ name: 'press-banca', sets: 2, reps: 12, reps_min: min }] })).isError).toBeFalsy();
+    for (const set of data.routines.at(-1)!.exercises[0].sets) {
+      expect(set.reps).toBe(12);
+      expect(set.repsMin).toBe(min === 8 ? 8 : undefined);
+    }
+  }
+  data.workouts.push({
+    id: 'w',
+    name: 'X',
+    startedAt: new Date().toISOString(),
+    exercises: [{ exerciseId: 'press-banca', sets: [12, 12].map((reps) => ({ type: 'normal', done: true, reps, weight: 80 })) }],
+  });
+  expect(JSON.parse((await callTool(src, 'suggest_next', { exercise: 'press-banca', target_reps: 12, target_reps_min: 8 })).text)).toMatchObject({ weight: 82.5, reps: 8 });
+  expect(JSON.parse((await callTool(src, 'suggest_next', { exercise: 'press-banca', target_reps: 12, target_reps_min: 15 })).text)).toMatchObject({ weight: 82.5, reps: 12 });
+});
+
+it('consulta estancamiento reciente, por id o nombre, sin escribir', async () => {
+  const data = emptyData();
+  const now = new Date().toISOString();
+  for (let i = 0; i < 3; i++)
+    data.workouts.push({
+      id: String(i),
+      name: 'X',
+      startedAt: new Date(Date.parse(now) - i * 7 * 86400000).toISOString(),
+      exercises: [{ exerciseId: 'press-banca', sets: [1, 2].map(() => ({ type: 'normal', done: true, reps: 5, weight: 80, rpe: 9.5 })) }],
+    });
+  for (const [id, days, done] of [
+    ['old', 46, true],
+    ['future', -1, true],
+    ['unfinished', 1, false],
+  ] as const)
+    data.workouts.push({ id, name: id, startedAt: new Date(Date.parse(now) - days * 86400000).toISOString(), exercises: [{ exerciseId: id, sets: [{ type: 'normal', done, reps: 5, weight: 80 }] }] });
+  const src: DataSource = {
+    label: 'solo lectura',
+    load: async () => structuredClone(data),
+    save: async () => {
+      throw new Error('No debe guardar');
+    },
+  };
+  const before = structuredClone(data);
+  const expected = [evaluateStagnation(data, 'press-banca', now)];
+  expect(JSON.parse((await callTool(src, 'check_stagnation', {})).text)).toEqual(expected);
+  for (const exercise of ['press-banca', 'Press de banca (barra)']) expect(JSON.parse((await callTool(src, 'check_stagnation', { exercise })).text)).toEqual(expected);
+  expect(expected[0].recommendation).toMatchObject({ suggestedSetsFactor: 0.5, suggestedWeightFactor: 1 });
+  expect((await callTool(src, 'check_stagnation', { exercise: 'desconocido' })).text).toMatch(/no encontrado/);
+  expect(data).toEqual(before);
+  expect(TOOLS.find((t) => t.name === 'check_stagnation')?.write).toBeFalsy();
+  expect(JSON.parse((await callTool(memSource(emptyData()), 'check_stagnation', {})).text)).toEqual([]);
 });

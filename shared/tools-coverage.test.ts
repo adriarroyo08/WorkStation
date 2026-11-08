@@ -41,6 +41,7 @@ describe('cada herramienta MCP responde', () => {
     ['personal_records', {}, /press-banca|Press de banca/],
     ['achievements', {}, /unlocked|desbloque|title/i],
     ['suggest_next', { exercise: 'press-banca', target_reps: 8 }, /82,5/],
+    ['check_stagnation', {}, /exerciseId|press-banca/],
     ['today_plan', {}, /Torso/],
     ['strength_levels', {}, /Intermedio|Novato|Avanzado|Principiante/],
     ['list_exercises', { muscle: 'pecho' }, /Press de banca/],

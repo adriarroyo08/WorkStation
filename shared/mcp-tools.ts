@@ -6,7 +6,8 @@ import { achievements } from './achievements';
 import { findOrCreateExercise, routineFromDraft } from './data';
 import { convertHevyApiWorkouts, fetchHevyWorkouts, hevySummary } from './hevy';
 import { muscleRecovery, nextRoutine } from './planning';
-import { repTarget, suggestNext } from './progression';
+import { evaluateStagnation } from './deload';
+import { normalizeRepRange, repTarget, suggestNext } from './progression';
 import { LEVELS, latestBodyweight, strengthLevels } from './strength';
 import { period, periodReport, reportToText, weekStreak } from './reports';
 import { exerciseHistory, formatSet, lastSessionSets, personalRecords, trainingSummary, workoutDurationMin, workoutVolume } from './stats';
@@ -148,15 +149,43 @@ export const TOOLS: ToolDef[] = [
   tool({
     name: 'suggest_next',
     description: 'Sugerencia de sobrecarga progresiva para la próxima sesión de un ejercicio (peso/reps) según la última vez.',
-    shape: { exercise: z.string(), target_reps: z.number().int().optional() },
-    run: async (src, { exercise, target_reps }) => {
+    shape: { exercise: z.string(), target_reps: z.number().int().optional(), target_reps_min: z.number().optional() },
+    run: async (src, { exercise, target_reps, target_reps_min }) => {
       const data = await src.load();
       const e = resolveExercise(data, exercise);
       if (!e) return `Ejercicio no encontrado: ${exercise}`;
       const prev = lastSessionSets(data, e.id);
       const first = prev.find((s) => s.type !== 'warmup' && s.type !== 'drop');
-      const s = suggestNext(prev, e, target_reps ?? (first?.repsMin !== undefined ? repTarget(first) : undefined));
+      const target =
+        target_reps !== undefined
+          ? repTarget(normalizeRepRange({ type: 'normal', done: false, reps: target_reps, repsMin: target_reps_min }, e.kind))
+          : first?.repsMin !== undefined
+            ? repTarget(first)
+            : undefined;
+      const s = suggestNext(prev, e, target);
       return s ? json({ exercise: e.name, ...s }) : `Sin datos previos de ${e.name}.`;
+    },
+  }),
+  tool({
+    name: 'check_stagnation',
+    description: 'Consulta el estancamiento y su recomendación opcional por ejercicio; sin ejercicio, evalúa los entrenados en los últimos 45 días. No modifica datos.',
+    shape: { exercise: z.string().optional().describe('Nombre o id del ejercicio') },
+    run: async (src, { exercise }) => {
+      const data = await src.load();
+      const now = new Date().toISOString();
+      const end = Date.parse(now);
+      const e = exercise !== undefined ? resolveExercise(data, exercise) : undefined;
+      if (exercise !== undefined && !e) return `Ejercicio no encontrado: ${exercise}`;
+      const ids = e
+        ? [e.id]
+        : [
+            ...new Set(
+              data.workouts
+                .filter((w) => Date.parse(w.startedAt) >= end - 45 * 86400000 && Date.parse(w.startedAt) <= end)
+                .flatMap((w) => w.exercises.filter((x) => x.sets.some((s) => s.done)).map((x) => x.exerciseId)),
+            ),
+          ];
+      return json(ids.map((id) => evaluateStagnation(data, id, now)));
     },
   }),
   tool({
@@ -250,7 +279,8 @@ export const TOOLS: ToolDef[] = [
           z.object({
             name: z.string(),
             sets: z.number().int().min(1).max(20),
-            reps: z.number().optional(),
+            reps: z.number().optional().describe('Techo del rango o repeticiones fijas'),
+            reps_min: z.number().optional().describe('Suelo opcional del rango de repeticiones'),
             weight: z.number().optional().describe('Peso en kg'),
             durationSec: z.number().optional(),
             restSec: z.number().optional(),

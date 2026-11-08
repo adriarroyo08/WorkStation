@@ -56,3 +56,43 @@ describe('compartir rutina por enlace', () => {
     expect(s.exercises[0]).toMatchObject({ restSec: 90, sets: [{ type: 'normal', reps: undefined, weight: undefined }] });
   });
 });
+
+const rawLink = (sets: unknown[], id = 'press-banca') => 'j' + btoa(JSON.stringify({ v: 1, n: 'Antigua', e: [[id, 90, null, sets]] })).replace(/=+$/, '');
+
+it('conserva un enlace antiguo fijo y el payload sin rangos', async () => {
+  const old = 'jeyJ2IjoxLCJuIjoiQW50aWd1YSIsImUiOltbInByZXNzLWJhbmNhIiw5MCxudWxsLFtbMSwxMiw4MCxudWxsXV1dXX0';
+  const decoded = await decodeRoutine(old);
+  expect(decoded.exercises[0].sets[0]).toMatchObject({ reps: 12, weight: 80 });
+  const data = emptyData();
+  const imported = importSharedRoutine(data, decoded);
+  // El decodificador acepta el fixture fijo y la codificación sin compresión conserva sus bytes.
+  const { vi } = await import('vitest');
+  vi.stubGlobal('CompressionStream', undefined);
+  try {
+    expect(await encodeRoutine(imported, data.exercises)).toBe(old);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it('comparte e importa rangos mezclados con series fijas', async () => {
+  const data = emptyData();
+  const r = routine();
+  r.exercises[0].sets[1] = { type: 'normal', reps: 12, repsMin: 8, weight: 80 };
+  const decoded = await decodeRoutine(await encodeRoutine(r, data.exercises));
+  expect(decoded.exercises[0].sets[1]).toMatchObject({ reps: 12, repsMin: 8 });
+  expect(decoded.exercises[0].sets[0]).not.toHaveProperty('repsMin');
+  expect(importSharedRoutine(data, decoded).exercises[0].sets[1].repsMin).toBe(8);
+});
+
+it.each([13, 12, '8', -1, 0, 8.5, 101, null])('descarta el suelo manipulado %s sin error', async (min) => {
+  const decoded = await decodeRoutine(rawLink([[1, 12, 80, null, min]]));
+  expect(decoded.exercises[0].sets[0]).not.toHaveProperty('repsMin');
+  expect(decoded.exercises[0].sets[0].reps).toBe(12);
+});
+
+it('descarta rangos en ejercicios de duración', async () => {
+  const data = emptyData();
+  const timed = data.exercises.find((e) => e.kind === 'duration')!;
+  expect((await decodeRoutine(rawLink([[1, 12, null, 30, 8]], timed.id))).exercises[0].sets[0]).not.toHaveProperty('repsMin');
+});
