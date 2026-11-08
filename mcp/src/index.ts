@@ -29,7 +29,7 @@ function source(): DataSource {
 }
 
 const src = source();
-const server = new McpServer({ name: 'workstation', version: '0.5.0' });
+const server = new McpServer({ name: 'workstation', version: '0.6.0' });
 
 server.registerResource(ARTICLE_RESOURCE.name, ARTICLE_RESOURCE.uri, ARTICLE_RESOURCE, async (uri) => readArticleResource(uri.href));
 

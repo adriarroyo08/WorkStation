@@ -7,7 +7,7 @@ describe('filtros de artículos', () => {
     expect(articleSlugFromHash('#articles/volumen-semanal')).toBe('volumen-semanal');
     for (const hash of ['', '#articles/', '#articles/../x', '#articles/a%20b', '#articles/A', '#rutina/123']) expect(articleSlugFromHash(hash)).toBeNull();
   });
-  const article = ARTICLE_LIBRARY.index[0];
+  const article = { ...ARTICLE_LIBRARY.index[0], slug: 'volumen', title: 'Volumen para hipertrofia', summary: 'Series semanales', tags: ['hipertrofia', 'volumen'], exercises: ['press-banca'] };
   const other = { ...article, slug: 'otro', title: 'Movilidad', summary: 'Descanso', tags: ['movilidad'], exercises: [] };
   const items = [article, other];
   it('combina palabras sin distinguir acentos ni mayúsculas y todas las etiquetas', () => {

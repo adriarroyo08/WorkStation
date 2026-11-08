@@ -50,10 +50,10 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('press banca');
     await page.locator('.exrow').first().click();
     await page.getByRole('button', { name: 'Artículos relacionados', exact: true }).click();
-    await expect(page.locator('.article-card')).toHaveCount(1);
+    await expect(page.locator('.article-card', { hasText: 'Volumen semanal e hipertrofia' })).toBeVisible();
     await page.getByRole('dialog').getByRole('button', { name: 'Cerrar', exact: true }).click();
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('sentadilla');
+    await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('contractor de pecho');
     await page.locator('.exrow').first().click();
     await expect(page.getByRole('button', { name: 'Artículos relacionados', exact: true })).toHaveCount(0);
     await page.evaluate(async () => {
@@ -66,9 +66,9 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await page.reload();
     await tab(page, 'Ejercicios').click();
     await page.getByRole('button', { name: /Biblioteca de artículos/ }).click();
-    await expect(page.locator('.article-card')).toHaveCount(1);
-    await page.locator('.article-card').click();
-    await expect(page.locator('.article-body')).toContainText('Registrar las series');
+    await expect(page.locator('.article-card')).toHaveCount(10);
+    await page.locator('.article-card', { hasText: 'Volumen semanal e hipertrofia' }).click();
+    await expect(page.locator('.article-body')).toContainText('Contar las series semanales');
     await context.setOffline(false);
   });
 }
@@ -85,8 +85,8 @@ test('precarga artículos offline antes de abrir la biblioteca', async ({ page, 
   await page.reload();
   await tab(page, 'Ejercicios').click();
   await page.getByRole('button', { name: /Biblioteca de artículos/ }).click();
-  await page.locator('.article-card').click();
-  await expect(page.locator('.article-body')).toContainText('Registrar las series');
+  await page.locator('.article-card', { hasText: 'Volumen semanal e hipertrofia' }).click();
+  await expect(page.locator('.article-body')).toContainText('Contar las series semanales');
   await context.setOffline(false);
 });
 
@@ -100,11 +100,11 @@ test('el enlace del Coach abre el lector y permite volver a la pantalla previa',
     location.hash = 'articles/volumen-semanal';
   });
   await expect(page.getByRole('heading', { level: 1, name: 'Volumen semanal e hipertrofia' })).toBeVisible();
-  await expect(page.locator('.article-body')).toContainText('Registrar las series');
+  await expect(page.locator('.article-body')).toContainText('Contar las series semanales');
   await page.getByRole('button', { name: 'Volver', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Buscar artículos' })).toHaveValue('volumen');
   await page.goto('/#articles/no-existe');
   await expect(page.getByText('No se encontró este artículo en la biblioteca incluida en la app.')).toBeVisible();
   await page.goto('/#articles/volumen-semanal');
-  await expect(page.locator('.article-body')).toContainText('Registrar las series');
+  await expect(page.locator('.article-body')).toContainText('Contar las series semanales');
 });
