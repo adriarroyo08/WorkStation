@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Añadido
 
+- Diez artículos breves con evidencia científica en castellano (#55) en la biblioteca editorial offline: recomendaciones cuantitativas, niveles de evidencia, limitaciones y DOIs comprobados sobre creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión.
 - Base de artículos propios en Markdown, validación editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versión.
 - Recolector backend de noticias con endpoint JSON en MCP, lista blanca, límites de red y caché por fuente; persistencia propuesta pendiente (#60).
 - Parser compartido RSS 2.0, RSS 1.0 y Atom con normalización, extractos limitados, enlaces seguros, deduplicación determinista y fixtures sintéticos offline (#59).
