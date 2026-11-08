@@ -5,6 +5,10 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+### Corregido
+
+- Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
+
 ### Añadido
 
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).
