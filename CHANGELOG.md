@@ -8,6 +8,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ### Corregido
 
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
+- Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
 
 ### Añadido
 

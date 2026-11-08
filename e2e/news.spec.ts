@@ -107,7 +107,7 @@ for (const colorScheme of ['light', 'dark'] as const)
     await expect(page.getByRole('heading', { name: 'Noticias', exact: true })).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('combobox', { name: 'Fuente', exact: true })).toBeFocused();
-    const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     expect(audit.violations).toEqual([]);
     await mkdir('docs/issue-61', { recursive: true });
     await page.screenshot({ path: `docs/issue-61/noticias-${colorScheme}.png`, fullPage: true });
