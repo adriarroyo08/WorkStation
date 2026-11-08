@@ -9,7 +9,17 @@ export const CHANGELOG: Release[] = [
   {
     version: '1.18.0',
     date: '2026-11-08',
-    items: ['Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas, fondos y ejercicios asistidos; añade el ratio de lastre a los niveles de fuerza.'],
+    items: ['Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas (también asistidas) y fondos; añade el ratio de lastre a los niveles de fuerza.'],
+  },
+  {
+    version: '1.17.0',
+    date: '2026-11-08',
+    items: [
+      'Pon un rango de repeticiones por serie en tus rutinas (por ejemplo, 8-12) y copia el mismo rango a todas las series.',
+      'Doble progresión: al completar todas las series en lo alto del rango, la sugerencia sube el peso; si no, te propone más repeticiones.',
+      'Durante el entrenamiento ves el rango objetivo y, si llevas varias sesiones estancado, un aviso discreto con la opción de aplicar una descarga y deshacerla.',
+      'Los enlaces para compartir rutinas conservan los rangos, y el MCP admite rangos y comprueba estancamientos.',
+    ],
   },
   {
     version: '1.16.0',

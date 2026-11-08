@@ -5,15 +5,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
-- Carga total y 1RM estimado con peso corporal histórico en la ficha y el gráfico; ratio informativo de lastre en dominadas y fondos (#130).
-
-- MCP 0.7.0: rangos en `create_routine` y `suggest_next`, consulta de solo lectura `check_stagnation` y enlaces compartidos v1 con rangos compatibles con enlaces antiguos (#121).
-
 ### Añadido
 
-- Rango objetivo y avisos discretos de rendimiento en el registro, con descarga opcional de series y deshacer (#120).
-- Editor de rutinas con rangos de repeticiones por serie, validación y copia a todas las series (#119).
-- Sugerencias de doble progresión con rangos de repeticiones, series previstas y esfuerzo; conservan el comportamiento de los objetivos fijos (#115).
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).
 - Diez artículos breves con evidencia científica en castellano (#55) en la biblioteca editorial offline: recomendaciones cuantitativas, niveles de evidencia, limitaciones y DOIs comprobados sobre creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión.
 - Base de artículos propios en Markdown, validación editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versión.
@@ -22,6 +15,21 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Escala RPE/RIR opcional en Ajustes para registrar y editar esfuerzo con medios puntos, conservando RPE como dato canónico (#85).
 - Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
 - MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
+
+## [1.18.0] - 2026-11-08
+
+### Añadido
+
+- Carga total y 1RM estimado con peso corporal histórico en la ficha y el gráfico; ratio informativo de lastre en dominadas y fondos (#130).
+
+## [1.17.0] - 2026-11-08
+
+### Añadido
+
+- MCP 0.7.0: rangos en `create_routine` y `suggest_next`, consulta de solo lectura `check_stagnation` y enlaces compartidos v1 con rangos compatibles con enlaces antiguos (#121).
+- Rango objetivo y avisos discretos de rendimiento en el registro, con descarga opcional de series y deshacer (#120).
+- Editor de rutinas con rangos de repeticiones por serie, validación y copia a todas las series (#119).
+- Sugerencias de doble progresión con rangos de repeticiones, series previstas y esfuerzo; conservan el comportamiento de los objetivos fijos (#115).
 
 ## [1.16.0] - 2026-11-08
 
