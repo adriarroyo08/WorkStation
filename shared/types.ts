@@ -86,6 +86,7 @@ export interface WorkoutSet {
   type: SetType;
   weight?: number; // kg
   reps?: number;
+  repsMin?: number; // Suelo opcional del rango; reps es el techo.
   rpe?: number;
   durationSec?: number;
   distanceM?: number;
@@ -118,7 +119,7 @@ export interface RoutineExercise {
   restSec: number;
   notes?: string;
   supersetId?: string;
-  sets: { type: SetType; weight?: number; reps?: number; durationSec?: number; distanceM?: number }[];
+  sets: { type: SetType; weight?: number; reps?: number; repsMin?: number; durationSec?: number; distanceM?: number }[];
 }
 
 export interface Routine {

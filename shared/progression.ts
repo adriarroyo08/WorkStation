@@ -1,7 +1,27 @@
 // Sugerencia de sobrecarga progresiva a partir de la última sesión del ejercicio.
 import { MUSCLE_REGION } from './exercises';
-import type { Exercise, WorkoutSet } from './types';
+import type { Exercise, ExerciseKind, WorkoutSet } from './types';
 import { fmtWeight, fromUnit, toUnit, weightUnit, type WeightUnit } from './units';
+
+// Descarta solo el suelo inválido; conserva el objetivo fijo y el resto de la serie.
+export function normalizeRepRange<T extends { reps?: number; repsMin?: number }>(set: T, kind: ExerciseKind): T {
+  if (!('repsMin' in set)) return set;
+  const { reps, repsMin } = set;
+  if (
+    (kind === 'weight_reps' || kind === 'reps' || kind === 'assisted') &&
+    typeof reps === 'number' &&
+    typeof repsMin === 'number' &&
+    Number.isInteger(reps) &&
+    Number.isInteger(repsMin) &&
+    repsMin >= 1 &&
+    reps <= 100 &&
+    repsMin < reps
+  )
+    return set;
+  const normalized = { ...set };
+  delete normalized.repsMin;
+  return normalized;
+}
 
 export interface Suggestion {
   weight?: number;
