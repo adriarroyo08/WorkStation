@@ -10,6 +10,7 @@ export const CHANGELOG: Release[] = [
     version: '1.16.0',
     date: '2026-11-08',
     items: [
+      'Edita rangos de repeticiones por serie en tus rutinas y copia el rango al resto de series.',
       'Lee noticias de ciencia y entrenamiento desde Entrenar, filtra por fuente y tema y conserva la última actualización para consultar sin conexión.',
       'Las sugerencias respetan los rangos de repeticiones: sube peso al completar el máximo en todas las series y vuelve al mínimo.',
     ],
