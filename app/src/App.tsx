@@ -6,6 +6,7 @@ import Train from './components/Train';
 // El resto de pestañas se cargan bajo demanda: el arranque solo descarga "Entrenar".
 const ExercisesTab = lazy(() => import('./components/ExercisesTab'));
 const History = lazy(() => import('./components/History'));
+const News = lazy(() => import('./components/News'));
 const Profile = lazy(() => import('./components/Profile'));
 const Articles = lazy(() => import('./components/Articles'));
 import { articleSlugFromHash } from '../../shared/article-filter';
@@ -77,6 +78,7 @@ function AppBody() {
   useWatchSync();
   useCloudSync();
   const { recovery, justConfirmed, linkError } = useCloud();
+  const [news, setNews] = useState(false);
   const [tab, setTab] = useState<TabId>('train');
   // "Crear cuenta" del tour abre Perfil directamente en el registro.
   const [signUp, setSignUp] = useState(false);
@@ -111,12 +113,14 @@ function AppBody() {
         <Suspense fallback={<Skeleton />}>
           {articleSlug && <Articles key={articleSlug} initialSlug={articleSlug} onBack={closeArticle} />}
           <div hidden={!!articleSlug}>
-            {overlayExercise ? (
+            {news ? (
+              <News onBack={() => setNews(false)} />
+            ) : overlayExercise ? (
               <ExercisesTab key={overlayExercise} openId={overlayExercise} onClose={() => setOverlayExercise(null)} />
             ) : (
               <>
                 <div hidden={tab !== 'train'}>
-                  <Train onExercise={goExercise} />
+                  <Train onExercise={goExercise} onNews={() => setNews(true)} />
                 </div>
                 {tab === 'history' && <History onExercise={goExercise} goTrain={() => setTab('train')} />}
                 {tab === 'exercises' && <ExercisesTab openId={openExercise} onOpened={clearOpen} />}
@@ -127,17 +131,17 @@ function AppBody() {
         </Suspense>
       </main>
       {/* Capa encima de la app: al cerrarlo (p. ej. "Ver tour de nuevo" en Ajustes) sigues donde estabas. */}
-      {tour && <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (articleSlug && closeArticle(), setOverlayExercise(null), setSignUp(true), setTab('profile'))} />}
+      {tour && <Onboarding onDone={() => setTour(false)} onCreateAccount={() => (articleSlug && closeArticle(), setNews(false), setOverlayExercise(null), setSignUp(true), setTab('profile'))} />}
       <ToastView />
       <UpdateBanner />
       {/* Mientras está el tour no se monta: guardaría la versión vista y el tour no volvería si se recarga a medias. */}
       {!tour && <WhatsNewOnUpdate />}
       <SharedRoutineImport />
       <NotifGate />
-      {active && tab !== 'train' && <ActiveBanner onClick={() => (articleSlug && closeArticle(), setOverlayExercise(null), setTab('train'))} />}
+      {active && tab !== 'train' && <ActiveBanner onClick={() => (articleSlug && closeArticle(), setNews(false), setOverlayExercise(null), setTab('train'))} />}
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (articleSlug && closeArticle(), setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => (articleSlug && closeArticle(), setNews(false), setOverlayExercise(null), setSignUp(false), setTab(t.id))}>
             <t.Icon size={22} strokeWidth={tab === t.id ? 2.4 : 1.9} aria-hidden />
             {t.label}
           </button>

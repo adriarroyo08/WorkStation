@@ -27,19 +27,19 @@ const WorkoutDetail = lazy(loadDetail);
 const Explore = lazy(loadExplore);
 const RoutineEditor = lazy(loadEditor);
 
-export default function Train({ onExercise }: { onExercise: (id: string) => void }) {
+export default function Train({ onExercise, onNews }: { onExercise: (id: string) => void; onNews: () => void }) {
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 1500));
     idle(() => void Promise.all([loadLogger(), loadDetail(), loadExplore(), loadEditor()]).catch(() => {}));
   }, []);
   return (
     <Suspense fallback={<div className="skeleton" />}>
-      <TrainScreen onExercise={onExercise} />
+      <TrainScreen onExercise={onExercise} onNews={onNews} />
     </Suspense>
   );
 }
 
-function TrainScreen({ onExercise }: { onExercise: (id: string) => void }) {
+function TrainScreen({ onExercise, onNews }: { onExercise: (id: string) => void; onNews: () => void }) {
   const store = useStore();
   const { active, setActive } = store;
   const finished = useSummary();
@@ -79,7 +79,7 @@ function TrainScreen({ onExercise }: { onExercise: (id: string) => void }) {
 
   if (editing) return <RoutineEditor initial={editing} onClose={() => setEditing(null)} />;
   if (view === 'explore') return <Explore onBack={() => setView('home')} />;
-  return <Home onNewRoutine={(folderId) => setEditing({ id: uid(), name: 'Nueva rutina', folderId, exercises: [] })} onEdit={setEditing} onExplore={() => setView('explore')} />;
+  return <Home onNews={onNews} onNewRoutine={(folderId) => setEditing({ id: uid(), name: 'Nueva rutina', folderId, exercises: [] })} onEdit={setEditing} onExplore={() => setView('explore')} />;
 }
 
 const ago = (iso: string) => {
@@ -198,7 +198,7 @@ function RoutineRow({ onLong, children }: { onLong: () => void; children: React.
   );
 }
 
-function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: string) => void; onEdit: (r: Routine) => void; onExplore: () => void }) {
+function Home({ onNewRoutine, onEdit, onExplore, onNews }: { onNews: () => void; onNewRoutine: (folderId?: string) => void; onEdit: (r: Routine) => void; onExplore: () => void }) {
   const store = useStore();
   const { data, settings, update } = store;
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -222,7 +222,12 @@ function Home({ onNewRoutine, onEdit, onExplore }: { onNewRoutine: (folderId?: s
 
   return (
     <section>
-      <h1>Entrenar</h1>
+      <div className="row">
+        <h1 className="grow">Entrenar</h1>
+        <button className="outline" onClick={onNews}>
+          Noticias
+        </button>
+      </div>
       <WeekStrip days={days} goal={settings.weeklyGoal} mondayFirst={!!settings.weekStartsMonday} />
       <Today />
       {!data.workouts.length && !data.routines.length && (
