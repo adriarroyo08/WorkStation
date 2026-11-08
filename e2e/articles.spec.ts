@@ -19,7 +19,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await tags.getByRole('button', { name: 'volumen', exact: true }).click();
     await expect(tags.getByRole('button', { pressed: true })).toHaveCount(2);
     await expect(page.locator('.article-card')).toHaveCount(1);
-    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `docs/issue-56/lista-${colorScheme}.png`, fullPage: true });
     await page.locator('.article-card').focus();
     await page.keyboard.press('Enter');
@@ -27,7 +27,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await expect(page.locator('time')).toHaveAttribute('datetime', '2026-11-07');
     await expect(page.getByRole('region', { name: 'Referencias' }).getByRole('link')).toHaveAttribute('href', 'https://doi.org/10.1080/02640414.2016.1210197');
     await expect(page.locator('.articles')).toContainText('Metaanálisis');
-    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
     // La captura representa lectura con puntero; el foco de teclado se conserva arriba.
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
     await page.locator('.article-card').click();

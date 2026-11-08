@@ -1731,12 +1731,17 @@ main > div > section {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.theme-anim,
+  html.theme-anim *,
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
   }
 }
 .tile-ico {
