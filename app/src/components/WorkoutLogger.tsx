@@ -31,6 +31,7 @@ import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '..
 import { uid } from '../../../shared/types';
 import { rest, useRest } from '../rest';
 import { repTarget, suggestNext } from '../../../shared/progression';
+import { createDeloadSuggestion, deloadPendingSets, evaluateStagnation } from '../../../shared/deload';
 import { useHeartRate } from '../hr';
 import { toast } from '../toast';
 import { clock, useNow, useStore, useWakeLock } from '../store';
@@ -65,6 +66,9 @@ export default function WorkoutLogger({
   onExercise?: (id: string) => void;
 }) {
   const { data, settings } = useStore();
+  const targets = useRef({ id: w.id, exercises: structuredClone(w.exercises) });
+  if (targets.current.id !== w.id) targets.current = { id: w.id, exercises: structuredClone(w.exercises) };
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const now = useNow();
   const restState = useRest();
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
@@ -217,6 +221,11 @@ export default function WorkoutLogger({
         const ex = exMap.get(we.exerciseId);
         const h = history.get(we.exerciseId);
         const aligned = alignPrevious(we.sets, h?.prev ?? []);
+        const targetExercise = targets.current.exercises.find((e) => e.exerciseId === we.exerciseId);
+        const priorData = { ...data, workouts: data.workouts.filter((x) => x.id !== w.id && x.startedAt < w.startedAt) };
+        const report = mode === 'live' ? evaluateStagnation(priorData, we.exerciseId, w.startedAt) : null;
+        const recommendation = report && createDeloadSuggestion(report, ex);
+        const noticeKey = `${w.id}:${we.exerciseId}`;
         const ssPrev = ei > 0 && we.supersetId && w.exercises[ei - 1].supersetId === we.supersetId;
         const ssNext = we.supersetId && w.exercises[ei + 1]?.supersetId === we.supersetId;
         const kind = ex?.kind ?? 'weight_reps';
@@ -240,7 +249,47 @@ export default function WorkoutLogger({
               </p>
             )}
             {mode === 'live' && (
-              <SuggestionChip we={we} ex={ex} prev={h?.prev ?? []} onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))} />
+              <SuggestionChip
+                target={targetExercise?.sets.find((s) => s.repsMin !== undefined && s.type !== 'warmup' && s.type !== 'drop')}
+                we={we}
+                ex={ex}
+                prev={h?.prev ?? []}
+                onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))}
+              />
+            )}
+            {recommendation && !dismissed.has(noticeKey) && (
+              <div className="stagnation small muted">
+                <details>
+                  <summary>Rendimiento de las últimas sesiones</summary>
+                  <p>{recommendation.userMessage}</p>
+                  {report?.type === 'estancamiento_esfuerzo' && we.sets.some((s) => !s.done && s.type !== 'warmup') && (
+                    <button
+                      className="ghost small"
+                      onClick={() => {
+                        const kept = deloadPendingSets(we.sets);
+                        const removed = we.sets.map((s, index) => ({ s: structuredClone(s), index })).filter(({ index }) => !kept.includes(we.sets[index]));
+                        setStopwatch(null);
+                        edit((n) => {
+                          n.exercises[ei].sets = deloadPendingSets(n.exercises[ei].sets);
+                        });
+                        setDismissed((old) => new Set(old).add(noticeKey));
+                        toast.undo('Descarga aplicada', () => {
+                          edit((n) => {
+                            const target = n.exercises[ei]?.exerciseId === we.exerciseId ? n.exercises[ei] : n.exercises.find((e) => e.exerciseId === we.exerciseId);
+                            removed.forEach(({ s, index }) => target?.sets.splice(Math.min(index, target.sets.length), 0, s));
+                          });
+                          setDismissed((old) => new Set([...old].filter((key) => key !== noticeKey)));
+                        });
+                      }}
+                    >
+                      Aplicar descarga
+                    </button>
+                  )}
+                  <button className="ghost small" onClick={() => setDismissed((old) => new Set(old).add(noticeKey))}>
+                    Descartar aviso para esta sesión
+                  </button>
+                </details>
+              </div>
             )}
             <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))} />
             {mode === 'live' && <RestPicker value={we.restSec ?? settings.defaultRestSec} onChange={(v) => edit((n) => void (n.exercises[ei].restSec = v))} />}
@@ -265,6 +314,7 @@ export default function WorkoutLogger({
                   isNext={cursor?.ei === ei && cursor.si === si}
                   n={we.sets.slice(0, si + 1).filter((x) => x.type !== 'warmup').length}
                   s={s}
+                  target={targetExercise?.sets[si]}
                   prev={aligned[si]}
                   ex={ex}
                   pr={isPr(we, s, ex)}
@@ -553,6 +603,7 @@ function SetRow(props: {
   isNext: boolean;
   n: number;
   s: WorkoutSet;
+  target?: WorkoutSet;
   prev?: WorkoutSet;
   ex?: Exercise;
   pr: boolean;
@@ -624,7 +675,13 @@ function SetRow(props: {
             </button>
           </div>
         ) : (
-          <NumberField decimals={false} aria-label="Repeticiones" placeholder={prev?.reps?.toString() ?? ''} value={s.reps} onChange={(reps) => onChange({ reps })} />
+          <NumberField
+            decimals={false}
+            aria-label="Repeticiones"
+            placeholder={!s.done && props.target?.repsMin !== undefined ? `${props.target.repsMin}-${props.target.reps}` : (prev?.reps?.toString() ?? '')}
+            value={s.reps}
+            onChange={(reps) => onChange({ reps })}
+          />
         )}
         {showRpe && (
           <select
@@ -729,21 +786,45 @@ function useSwipeSet(onDelete: () => void, onToggle: () => void) {
 }
 
 // "Hoy: 82,5 kg × 8" (o en lb) — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
-function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: Exercise; prev: WorkoutSet[]; onApply: (p: Partial<WorkoutSet>) => void }) {
+function SuggestionChip({ we, ex, prev, target, onApply }: { target?: WorkoutSet; we: WorkoutExercise; ex?: Exercise; prev: WorkoutSet[]; onApply: (p: Partial<WorkoutSet>) => void }) {
   const [open, setOpen] = useState(false);
   const pending = we.sets.filter((s) => !s.done && s.type !== 'warmup');
   if (!pending.length) return null;
-  const sug = suggestNext(prev, ex, repTarget(pending[0], we.sets.filter((s) => s.type !== 'warmup' && s.type !== 'drop').length));
+  const planned = we.sets.filter((s) => s.type !== 'warmup' && s.type !== 'drop').length;
+  const sug = suggestNext(prev, ex, repTarget(target ?? pending[0], planned));
   if (!sug) return null;
+  const range = target?.repsMin !== undefined && target.reps !== undefined ? target : undefined;
+  const next =
+    range &&
+    suggestNext(
+      Array.from({ length: planned }, () => ({
+        type: 'normal' as const,
+        done: true,
+        weight: Math.max(...prev.filter((s) => s.done && s.type !== 'warmup' && s.type !== 'drop').map((s) => s.weight ?? 0)),
+        reps: range.reps,
+      })),
+      ex,
+      repTarget(range, planned),
+    );
   const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${fmtWeight(sug.weight)} × ` : ''}${sug.reps ?? ''}`;
   const applied = pending.every(
     (s) => (sug.weight === undefined || s.weight === sug.weight) && (sug.reps === undefined || s.reps === sug.reps) && (sug.durationSec === undefined || s.durationSec === sug.durationSec),
   );
   return (
     <div className={`suggestion ${sug.action}`}>
-      <button className="plain grow left" onClick={() => setOpen(!open)}>
+      <button className="plain grow left" aria-expanded={open} onClick={() => setOpen(!open)}>
         {sug.action === 'up' ? <TrendingUp size={16} className="ico" /> : <Lightbulb size={16} className="ico" />} Hoy: <b>{label}</b>
-        {open && <div className="small muted">{sug.reason}</div>}
+        {open && (
+          <div className="small muted">
+            {sug.reason}
+            {range && (
+              <div>
+                Objetivo: {range.repsMin}-{range.reps} reps
+                {next?.weight && ex?.kind === 'weight_reps' ? ` · Si haces ${planned}×${range.reps}, la próxima vez subes a ${fmtWeight(next.weight)}.` : '.'}
+              </div>
+            )}
+          </div>
+        )}
       </button>
       <button
         className="ghost small"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
-import { createDeloadSuggestion, evaluateStagnation, type StagnationType } from './deload';
+import { createDeloadSuggestion, deloadPendingSets, evaluateStagnation, type StagnationType } from './deload';
 import type { WorkoutSet } from './types';
 
 const now = '2026-11-08T12:00:00Z';
@@ -123,4 +123,15 @@ describe('sugerencia de descarga', () => {
       expect(createDeloadSuggestion(report, { id: 'press-militar', name: 'Press militar', kind: 'weight_reps', equipment: 'barra', muscle: 'hombros' })!.userMessage).toContain('Press militar');
     }
   });
+});
+
+it('reduces pending sets only, rounds up and preserves weights', () => {
+  for (const count of [0, 1, 2, 3, 4, 5]) {
+    const done: WorkoutSet = { type: 'normal', done: true, weight: 80 };
+    const warmup: WorkoutSet = { type: 'warmup', done: false, weight: 40 };
+    const pending: WorkoutSet[] = Array.from({ length: count }, () => ({ type: 'normal', done: false, weight: 80 }));
+    const original = [done, warmup, ...pending];
+    expect(deloadPendingSets(original)).toEqual([done, warmup, ...pending.slice(0, Math.ceil(count / 2))]);
+    expect(original).toHaveLength(count + 2);
+  }
 });
