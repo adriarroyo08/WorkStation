@@ -23,7 +23,7 @@ function LevelScale({ l }: { l: StrengthLevel }) {
   );
 }
 
-function SetupBodyweight() {
+export function SetupBodyweight() {
   const { update, settings, setSettings } = useStore();
   const [bw, setBw] = useState('');
   return (
@@ -83,6 +83,7 @@ export function StrengthCard({ exerciseId }: { exerciseId: string }) {
                 {l.ratio ? ` · ${l.ratio}× tu peso` : ''}
               </span>
             </p>
+            {l.ballastRatio !== undefined && <p className="small muted">Lastre del 1RM estimado: {l.ballastRatio.toLocaleString('es-ES')}× tu peso corporal (informativo).</p>}
             <LevelScale l={l} />
             <p className="small muted">
               {l.next ? (

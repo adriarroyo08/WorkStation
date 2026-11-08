@@ -1,3 +1,5 @@
+import { bodyweightAt, effectiveLoadKg } from './bodyweight-load';
+import { estimate1RM, exerciseHistory } from './stats';
 // Niveles de fuerza orientativos: 1RM estimado frente al peso corporal (o reps en dominadas/fondos).
 // Umbrales aproximados a partir de tablas públicas de estándares de fuerza para adultos que entrenan.
 import { personalRecords } from './stats';
@@ -23,6 +25,7 @@ export interface StrengthLevel {
   exerciseName: string;
   value: number; // kg de 1RM o reps
   unit: 'kg' | 'reps';
+  ballastRatio?: number; // lastre estimado del 1RM / peso vigente
   ratio?: number; // 1RM / peso corporal
   level: number; // -1 = por debajo de Principiante, 0..4 = índice en LEVELS
   next?: { level: Level; target: number; missing: number };
@@ -59,5 +62,14 @@ export function strengthLevels(data: WorkstationData): StrengthLevel[] {
   const sex = data.settings.sex ?? 'm';
   return personalRecords(data)
     .map((pr) => strengthLevel(pr.exerciseId, STANDARDS[pr.exerciseId]?.by === 'reps' ? pr.maxReps : pr.best1RM, bw, sex, pr.exerciseName))
-    .filter((l): l is StrengthLevel => !!l);
+    .filter((l): l is StrengthLevel => !!l)
+    .map((l) => {
+      if (!['dominadas', 'fondos'].includes(l.exerciseId) || data.exercises.find((e) => e.id === l.exerciseId)?.kind !== 'reps') return l;
+      const ratios = exerciseHistory(data, l.exerciseId).flatMap((session) => {
+        const bw = bodyweightAt(data, session.date);
+        if (bw === undefined) return [];
+        return session.sets.filter((set) => (set.weight ?? 0) > 0).map((set) => Math.max(0, estimate1RM(effectiveLoadKg(set, 'reps', bw)!, set.reps ?? 0) - bw) / bw);
+      });
+      return ratios.length ? { ...l, ballastRatio: Math.round(Math.max(...ratios) * 100) / 100 } : l;
+    });
 }

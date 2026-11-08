@@ -10,13 +10,14 @@ import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, MOVEMENT_PATTERN_LABELS, catalogLa
 import { MuscleFilter, MuscleMap } from './BodyMap';
 import { exerciseActivation } from '../../../shared/muscle-detail';
 import { availableExerciseScience, formatScientificAuthors } from '../../../shared/exercise-filter';
-import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords, type ExerciseSession } from '../../../shared/stats';
+import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
-import { StrengthCard } from './Strength';
+import { bodyweightE1RM, bodyweightHistory, bodyweightAt } from '../../../shared/bodyweight-load';
+import { SetupBodyweight, StrengthCard } from './Strength';
 import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
 import { Back, ExerciseMedia, Sheet, Stat, useGrowingList } from './ui';
 import { catalogToExercise, loadCatalog, type CatalogItem } from '../catalog';
@@ -208,8 +209,10 @@ function CatalogBrowser({ onBack, onOpen }: { onBack: () => void; onOpen: (id: s
   );
 }
 
-type Metric = 'best1RM' | 'bestWeight' | 'bestSetVolume' | 'volume' | 'maxReps' | 'totalReps' | 'maxDuration' | 'maxDistance';
+type Metric = 'totalLoad' | 'bodyweight1RM' | 'best1RM' | 'bestWeight' | 'bestSetVolume' | 'volume' | 'maxReps' | 'totalReps' | 'maxDuration' | 'maxDistance';
 const METRICS: Record<Metric, string> = {
+  totalLoad: 'Carga total',
+  bodyweight1RM: '1RM estimado',
   best1RM: '1RM estimado',
   bestWeight: 'Peso máximo',
   bestSetVolume: 'Mejor serie',
@@ -250,10 +253,14 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const science = availableExerciseScience(e);
   const h = exerciseHistory(data, id);
   const pr = personalRecords(data).find((p) => p.exerciseId === id);
-  const metrics = METRICS_BY_KIND[e.kind];
+  const usesBodyweight = e.kind === 'reps' || e.kind === 'assisted';
+  const bwHistory = usesBodyweight ? bodyweightHistory(data, id) : [];
+  const hasBodyweight = usesBodyweight && bodyweightAt(data, new Date().toISOString()) !== undefined;
+  const metrics = hasBodyweight ? ([...METRICS_BY_KIND[e.kind], 'totalLoad', 'bodyweight1RM'] as Metric[]) : METRICS_BY_KIND[e.kind];
   const m = metric && metrics.includes(metric) ? metric : metrics[0];
   const since = range === 'all' ? 0 : Date.now() - (range === '3m' ? 90 : 365) * 864e5;
-  const pts = h.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof ExerciseSession] as number) * 10) / 10 }));
+  const chartHistory = m === 'totalLoad' || m === 'bodyweight1RM' ? bwHistory : h;
+  const pts = chartHistory.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof typeof s] as number) * 10) / 10 }));
   const fmtMetric = (k: Metric, v: number) => (k === 'maxDuration' ? formatDuration(v) : k === 'maxDistance' ? `${v} m` : k.includes('Reps') ? `${v}` : fmtWeight(v, { decimals: 1 }));
 
   const translate = async () => {
@@ -316,6 +323,28 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {tab === 'summary' && (
         <>
+          {usesBodyweight && (
+            <section className="card" aria-label="Carga con peso corporal">
+              <h2>Carga con peso corporal</h2>
+              {hasBodyweight ? (
+                <>
+                  <p className="small muted">Incluye tu peso corporal en la fecha de cada sesión y suma el lastre o resta la ayuda. Carga total: máxima carga de una serie por sesión.</p>
+                  {bwHistory.length > 0 && (
+                    <p>
+                      Carga total · última sesión: <b>{fmtWeight(bwHistory.at(-1)!.totalLoad)}</b>
+                      <br />
+                      1RM estimado · mejor marca: <b>{fmtWeight(bodyweightE1RM(data, id))}</b>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>Añade tu peso corporal para ver la carga total y el 1RM estimado.</p>
+                  <SetupBodyweight />
+                </>
+              )}
+            </section>
+          )}
           <MuscleMap exercise={e} />
           {science && (
             <section className="exercise-evidence" aria-label="Evidencia del ejercicio">
@@ -416,6 +445,13 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
               <div key={s.workoutId + s.date} className="card small exhistory-session">
                 <div className="exhistory-date">{fmtDate(s.date)}</div>
                 {wName && <div className="exhistory-wname">{wName}</div>}
+                {bwHistory
+                  .filter((b) => b.workoutId === s.workoutId && b.date === s.date)
+                  .map((b) => (
+                    <p key={b.date}>
+                      Carga total: {fmtWeight(b.totalLoad)} · 1RM estimado: {fmtWeight(b.bodyweight1RM)}
+                    </p>
+                  ))}
                 <ol className="exhistory-sets">
                   {s.sets.map((x, i) => (
                     <li key={i} className={i === bestIdx ? 'best' : undefined}>

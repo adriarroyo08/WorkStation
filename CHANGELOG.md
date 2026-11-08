@@ -5,6 +5,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+- Carga total y 1RM estimado con peso corporal histórico en la ficha y el gráfico; ratio informativo de lastre en dominadas y fondos (#130).
+
 - MCP 0.7.0: rangos en `create_routine` y `suggest_next`, consulta de solo lectura `check_stagnation` y enlaces compartidos v1 con rangos compatibles con enlaces antiguos (#121).
 
 ### Añadido
