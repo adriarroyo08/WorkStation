@@ -329,7 +329,7 @@ for (const scheme of ['light', 'dark'] as const)
     }
     expect(mock.calls.every((c) => !c.search.includes(secret))).toBe(true);
     expect(JSON.stringify(mock.calls)).not.toContain(secret);
-    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
     await expect(page.getByText('Copiado', { exact: true })).toHaveCount(0);
     await page.setViewportSize({ width: 393, height: 3000 });
     const guideScreenshot = testInfo.outputPath(`mcp-guides-${scheme}.png`);
@@ -347,7 +347,7 @@ for (const scheme of ['light', 'dark'] as const)
     await page.locator('form.ask').getByRole('button', { name: 'Revocar' }).click();
     await expect(page.getByRole('button', { name: 'Revocar Caducada' })).toHaveCount(0);
     await expect(page.getByText(/último uso/)).toBeVisible();
-    const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     expect(audit.violations).toEqual([]);
     await expiry.selectOption('date');
     await expect(page.getByText('Key revocada', { exact: true })).toHaveCount(0);

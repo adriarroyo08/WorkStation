@@ -144,8 +144,8 @@ El toast usa una sombra literal (`0 6px 24px rgba(0,0,0,.3)`). Las sombras deben
 | `shimmer` | 1.2 s infinito | `.skeleton` |
 | `pulse`, `spin`, `w-run`, `w-in`, `sa-flow`, `auth-pop` | — | Indicadores propios de reloj, sincronización y cuenta |
 
-**`prefers-reduced-motion: reduce`** (regla global en `styles.css`): todas las animaciones y transiciones quedan en `0.01ms` y una sola iteración
-(`*, *::before, *::after`, con `!important`). Reglas para código nuevo:
+**`prefers-reduced-motion: reduce`** (regla global en `styles.css`): todas las animaciones y transiciones quedan en `0ms`, sin retardos y con una sola iteración
+(`*, *::before, *::after`, con `!important`, incluida la transición de cambio de tema `html.theme-anim`). El desplazamiento CSS pasa a `auto`. Reglas para código nuevo:
 
 - No dependas de que una animación termine para mostrar un estado: el resultado debe verse igual con movimiento reducido.
 - Las animaciones decorativas nuevas van dentro de `@media (prefers-reduced-motion: no-preference)` (como `check-pop`).
@@ -248,7 +248,7 @@ Antes de abrir PR de cualquier cambio visual:
 
 - [ ] `npm run check` sin errores; `npm --prefix app run build && npm run e2e` en verde.
 - [ ] **360 px sin desbordes** (`e2e/layout.spec.ts`, viewport 360×740, claro y oscuro, pantallas principales y secundarias). Si añades una pantalla o hoja, añádela al test. Cifras largas: `min-width: 0`, `overflow: hidden`, `text-overflow: ellipsis`.
-- [ ] **Axe claro/oscuro** (`e2e/a11y.spec.ts`, etiquetas `wcag2a`, `wcag2aa`, `wcag21aa`) sin violaciones.
+- [ ] **Axe claro/oscuro** (`e2e/a11y.spec.ts`, etiquetas `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`) sin violaciones.
 - [ ] **Estilo** (`e2e/style.spec.ts`): sin `gradient` (salvo `.skeleton`), sin `backdrop-filter`, sin `url()` en fill/stroke, sin sombras con color, sin emojis en el texto de la interfaz.
 - [ ] **Zoom 200 %** (o fuente del sistema al máximo): sin texto cortado ni controles tapados por la barra de pestañas o por el toast; el contenido sigue accesible con scroll.
 - [ ] **Teclado**: todo es alcanzable con Tab en orden lógico, el foco siempre se ve, Escape cierra hojas y diálogos, y los gestos tienen alternativa.
