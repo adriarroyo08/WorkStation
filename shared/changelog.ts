@@ -7,6 +7,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.17.0',
+    date: '2026-11-08',
+    items: [
+      'Pon un rango de repeticiones por serie en tus rutinas (por ejemplo, 8-12) y copia el mismo rango a todas las series.',
+      'Doble progresión: al completar todas las series en lo alto del rango, la sugerencia sube el peso; si no, te propone más repeticiones.',
+      'Durante el entrenamiento ves el rango objetivo y, si llevas varias sesiones estancado, un aviso discreto con la opción de aplicar una descarga y deshacerla.',
+      'Los enlaces para compartir rutinas conservan los rangos, y el MCP admite rangos y comprueba estancamientos.',
+    ],
+  },
+  {
     version: '1.16.0',
     date: '2026-11-08',
     items: ['Lee noticias de ciencia y entrenamiento desde Entrenar, filtra por fuente y tema y conserva la última actualización para consultar sin conexión.'],
