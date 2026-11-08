@@ -58,12 +58,27 @@ test('carga de un ejercicio asistido', async ({ page, errors }) => {
   const assisted = data('dark');
   await seed(page, {
     ...assisted,
-    exercises: [{ id: 'assisted-test', name: 'Dominadas asistidas prueba', kind: 'assisted', muscle: 'espalda', equipment: 'maquina', custom: true }],
-    workouts: [{ ...assisted.workouts[0], exercises: [{ exerciseId: 'assisted-test', sets: [{ type: 'normal', weight: 20, reps: 8, done: true }] }] }],
+    exercises: [{ id: 'dominadas-asistidas', name: 'Dominadas asistidas prueba', kind: 'assisted', muscle: 'espalda', equipment: 'maquina', custom: true }],
+    workouts: [{ ...assisted.workouts[0], exercises: [{ exerciseId: 'dominadas-asistidas', sets: [{ type: 'normal', weight: 20, reps: 8, done: true }] }] }],
   });
   await tab(page, 'Ejercicios').click();
   await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('Dominadas asistidas prueba');
   await page.locator('.exrow').first().click();
   await expect(page.getByRole('region', { name: 'Carga con peso corporal' })).toContainText('60 kg');
   await expect(page.getByRole('region', { name: 'Carga con peso corporal' })).toContainText('76 kg');
+});
+
+test('flexiones no muestra carga corporal ni metricas adicionales', async ({ page, errors }) => {
+  void errors;
+  const pushups = data('light');
+  pushups.workouts[0].exercises[0].exerciseId = 'flexiones';
+  await seed(page, pushups);
+  await tab(page, 'Ejercicios').click();
+  await page.getByRole('textbox', { name: 'Buscar ejercicio' }).fill('Flexiones');
+  await page.locator('.exrow').first().click();
+  await expect(page.getByRole('region', { name: 'Carga con peso corporal' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Carga total', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '1RM estimado', exact: true })).toHaveCount(0);
+  await page.getByRole('main').getByRole('button', { name: 'Historial', exact: true }).click();
+  await expect(page.locator('.exhistory-session')).not.toContainText('Carga total');
 });

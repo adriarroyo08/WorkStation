@@ -1,8 +1,7 @@
-import { bodyweightAt, effectiveLoadKg } from './bodyweight-load';
-import { estimate1RM, exerciseHistory } from './stats';
 // Niveles de fuerza orientativos: 1RM estimado frente al peso corporal (o reps en dominadas/fondos).
 // Umbrales aproximados a partir de tablas públicas de estándares de fuerza para adultos que entrenan.
-import { personalRecords } from './stats';
+import { bodyweightAt, effectiveLoadKg } from './bodyweight-load';
+import { estimate1RM, exerciseHistory, personalRecords } from './stats';
 import type { WorkstationData } from './types';
 
 export const LEVELS = ['Principiante', 'Novato', 'Intermedio', 'Avanzado', 'Élite'] as const;
@@ -68,7 +67,7 @@ export function strengthLevels(data: WorkstationData): StrengthLevel[] {
       const ratios = exerciseHistory(data, l.exerciseId).flatMap((session) => {
         const bw = bodyweightAt(data, session.date);
         if (bw === undefined) return [];
-        return session.sets.filter((set) => (set.weight ?? 0) > 0).map((set) => Math.max(0, estimate1RM(effectiveLoadKg(set, 'reps', bw)!, set.reps ?? 0) - bw) / bw);
+        return session.sets.filter((set) => (set.weight ?? 0) > 0).map((set) => Math.max(0, estimate1RM(effectiveLoadKg(set, 'reps', bw, l.exerciseId)!, set.reps ?? 0) - bw) / bw);
       });
       return ratios.length ? { ...l, ballastRatio: Math.round(Math.max(...ratios) * 100) / 100 } : l;
     });

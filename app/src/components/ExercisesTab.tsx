@@ -16,7 +16,7 @@ import { cap, fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
 import { ExerciseRow, useExerciseFilter } from './ExercisePicker';
 import LineChart from './LineChart';
-import { bodyweightE1RM, bodyweightHistory, bodyweightAt } from '../../../shared/bodyweight-load';
+import { bodyweightE1RM, bodyweightHistory, bodyweightAt, usesFullBodyweight } from '../../../shared/bodyweight-load';
 import { SetupBodyweight, StrengthCard } from './Strength';
 import { fmtWeight, toUnit, weightUnit } from '../../../shared/units';
 import { Back, ExerciseMedia, Sheet, Stat, useGrowingList } from './ui';
@@ -253,7 +253,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const science = availableExerciseScience(e);
   const h = exerciseHistory(data, id);
   const pr = personalRecords(data).find((p) => p.exerciseId === id);
-  const usesBodyweight = e.kind === 'reps' || e.kind === 'assisted';
+  const usesBodyweight = usesFullBodyweight(id, e.kind);
   const bwHistory = usesBodyweight ? bodyweightHistory(data, id) : [];
   const hasBodyweight = usesBodyweight && bodyweightAt(data, new Date().toISOString()) !== undefined;
   const metrics = hasBodyweight ? ([...METRICS_BY_KIND[e.kind], 'totalLoad', 'bodyweight1RM'] as Metric[]) : METRICS_BY_KIND[e.kind];
