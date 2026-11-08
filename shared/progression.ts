@@ -3,6 +3,14 @@ import { MUSCLE_REGION } from './exercises';
 import type { Exercise, ExerciseKind, WorkoutSet } from './types';
 import { fmtWeight, fromUnit, toUnit, weightUnit, type WeightUnit } from './units';
 
+// Validación del borrador del editor; el mínimo vacío conserva el objetivo fijo.
+export function repRangeError({ reps, repsMin }: { reps?: number; repsMin?: number }): string | undefined {
+  const valid = (n: number) => Number.isInteger(n) && n >= 1 && n <= 100;
+  if ((repsMin !== undefined && (!valid(repsMin) || reps === undefined)) || (reps !== undefined && !valid(reps))) return 'Indica un número entre 1 y 100.';
+  if (repsMin !== undefined && reps !== undefined && repsMin > reps) return 'Mín. no puede ser mayor que Máx.';
+  return undefined;
+}
+
 // Descarta solo el suelo inválido; conserva el objetivo fijo y el resto de la serie.
 export function normalizeRepRange<T extends { reps?: number; repsMin?: number }>(set: T, kind: ExerciseKind): T {
   if (!('repsMin' in set)) return set;
