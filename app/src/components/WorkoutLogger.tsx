@@ -1,7 +1,7 @@
 import {
   Lightbulb,
+  Pause,
   Play,
-  Square,
   TrendingUp,
   ArrowUpDown,
   Calculator,
@@ -23,14 +23,17 @@ import {
 } from 'lucide-react';
 import { ask } from '../dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
 import { nextPendingSet, toggleSet } from '../../../shared/session';
-import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, lastSessionSets, workoutSetCount, workoutVolume } from '../../../shared/stats';
+import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, formatSeconds, lastSessionSets, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { rest, useRest } from '../rest';
 import { repTarget, suggestNext } from '../../../shared/progression';
+import { plannedDurationSec, shouldNotifyTarget, stopwatchElapsedSec, stopwatchMatches, stopwatchTarget } from '../../../shared/stopwatch';
+import { stopwatch, useStopwatch } from '../stopwatch';
 import { createDeloadSuggestion, deloadPendingSets, evaluateStagnation } from '../../../shared/deload';
 import { useHeartRate } from '../hr';
 import { toast } from '../toast';
@@ -76,7 +79,6 @@ export default function WorkoutLogger({
   const [reorder, setReorder] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const [plates, setPlates] = useState<number | null>(null);
-  const [stopwatch, setStopwatch] = useState<{ ei: number; si: number; start: number } | null>(null);
   const exMap = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
   const exerciseIds = JSON.stringify([...new Set(w.exercises.map((e) => e.exerciseId))]);
   const stagnationData = useRef(data);
@@ -91,6 +93,36 @@ export default function WorkoutLogger({
     );
   }, [data.workouts, w.id, w.startedAt, exerciseIds, exMap, mode]);
   useWakeLock(mode === 'live' && settings.keepAwake);
+
+  // El cronómetro solo existe en el entreno en curso; al editar uno pasado el tiempo se escribe a mano.
+  const storedStopwatch = useStopwatch();
+  const sw = mode === 'live' && storedStopwatch && stopwatchMatches(storedStopwatch, w) ? storedStopwatch : null;
+  const routine = data.routines.find((r) => r.id === w.routineId);
+  useEffect(() => {
+    if (mode === 'live' && storedStopwatch && !sw) stopwatch.clear();
+  }, [mode, storedStopwatch, sw]);
+  useEffect(() => {
+    if (!sw || !shouldNotifyTarget(sw, now)) return;
+    stopwatch.markNotified();
+    if (settings.vibrate) navigator.vibrate?.(60);
+  }, [sw, now, settings.vibrate]);
+  // Para el cronómetro y devuelve cómo apuntar su tiempo, antes de que un cambio mueva las series de sitio.
+  const flushStopwatch = () => {
+    if (!sw) return () => {};
+    const { ei, si } = sw;
+    const durationSec = stopwatchElapsedSec(sw, Date.now());
+    stopwatch.clear();
+    return (n: Workout) => {
+      if (durationSec > 0 && n.exercises[ei]?.sets[si]) n.exercises[ei].sets[si].durationSec = durationSec;
+    };
+  };
+  const latestFinish = useRef(onFinish);
+  latestFinish.current = onFinish;
+  // El tiempo en marcha se apunta antes de terminar, para que el aviso de series sin marcar lo tenga en cuenta.
+  const finish = () => {
+    if (sw) flushSync(() => edit(flushStopwatch()));
+    latestFinish.current();
+  };
 
   const restLeft = restState.end ? Math.ceil((restState.end - now) / 1000) : 0;
   const hr = useHeartRate();
@@ -119,9 +151,10 @@ export default function WorkoutLogger({
   const toggleDone = (ei: number, si: number) => {
     const wasDone = w.exercises[ei].sets[si].done;
     if (!wasDone && settings.vibrate) navigator.vibrate?.(25);
-    // Si el cronómetro de esta serie está en marcha, su tiempo es el de la serie.
-    const running = stopwatch?.ei === ei && stopwatch.si === si ? { durationSec: Math.round((Date.now() - stopwatch.start) / 1000) } : {};
-    if (running.durationSec !== undefined) setStopwatch(null);
+    // Si el cronómetro de esta serie está activo, su tiempo es el de la serie.
+    const timed = sw?.ei === ei && sw.si === si ? stopwatchElapsedSec(sw, Date.now()) : 0;
+    const running = timed > 0 ? { durationSec: timed } : {};
+    if (sw?.ei === ei && sw.si === si) stopwatch.clear();
     const r = toggleSet(data, w, ei, si, running);
     edit((n) => void Object.assign(n, structuredClone(r.workout)));
     const key = `${ei}:${si}`;
@@ -144,7 +177,10 @@ export default function WorkoutLogger({
     const prev = alignPrevious(we.sets, history.get(we.exerciseId)?.prev ?? [])[cursor.si];
     const wt = s.weight ?? prev?.weight;
     const reps = s.reps ?? prev?.reps;
-    return `${exMap.get(we.exerciseId)?.name ?? ''}${wt || reps ? ` · ${wt ? `${fmtWeight(wt)} × ` : ''}${reps ?? ''}` : ''}`;
+    const sec = s.durationSec ?? prev?.durationSec;
+    const exercise = exMap.get(we.exerciseId);
+    if (exercise?.kind === 'duration') return `${exercise.name}${sec ? ` · ${formatSeconds(sec)}` : ''}`;
+    return `${exercise?.name ?? ''}${wt || reps ? ` · ${wt ? `${fmtWeight(wt)} × ` : ''}${reps ?? ''}` : ''}`;
   })();
 
   const isPr = (we: WorkoutExercise, s: WorkoutSet, ex?: Exercise) => {
@@ -166,9 +202,14 @@ export default function WorkoutLogger({
     });
   };
 
-  const replaceExercise = (ei: number, e: Exercise) =>
+  const replaceExercise = (ei: number, e: Exercise) => {
     // Se conservan las series (y las ya hechas): reemplazar sirve sobre todo para corregir el ejercicio elegido.
-    edit((n) => void (n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id }));
+    const applyTime = flushStopwatch();
+    edit((n) => {
+      applyTime(n);
+      n.exercises[ei] = { ...n.exercises[ei], exerciseId: e.id };
+    });
+  };
 
   const elapsed = Math.round((now - Date.parse(w.startedAt)) / 1000);
   const totals = { sets: workoutSetCount(w), planned: w.exercises.reduce((n, e) => n + e.sets.length, 0), volume: workoutVolume(w, data.exercises) };
@@ -178,7 +219,7 @@ export default function WorkoutLogger({
       <div className="sticky">
         <div className="row">
           <input className="title grow" aria-label="Nombre del entrenamiento" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
-          <button className="primary" onClick={onFinish}>
+          <button className="primary" onClick={finish}>
             {mode === 'live' ? 'Terminar' : 'Guardar'}
           </button>
         </div>
@@ -261,6 +302,19 @@ export default function WorkoutLogger({
             {mode === 'live' && (
               <SuggestionChip
                 target={targetExercise?.sets.find((s) => s.repsMin !== undefined && s.type !== 'warmup' && s.type !== 'drop')}
+                targetSec={
+                  kind === 'duration'
+                    ? plannedDurationSec(
+                        routine,
+                        ei,
+                        we.exerciseId,
+                        Math.max(
+                          0,
+                          we.sets.findIndex((s) => !s.done && s.type !== 'warmup'),
+                        ),
+                      )
+                    : undefined
+                }
                 we={we}
                 ex={ex}
                 prev={h?.prev ?? []}
@@ -278,8 +332,9 @@ export default function WorkoutLogger({
                       onClick={() => {
                         const kept = deloadPendingSets(we.sets);
                         const removed = we.sets.map((s, index) => ({ s: structuredClone(s), index })).filter(({ index }) => !kept.includes(we.sets[index]));
-                        setStopwatch(null);
+                        const applyTime = flushStopwatch();
                         edit((n) => {
+                          applyTime(n);
                           n.exercises[ei].sets = deloadPendingSets(n.exercises[ei].sets);
                         });
                         setDismissed((old) => new Set(old).add(noticeKey));
@@ -330,21 +385,30 @@ export default function WorkoutLogger({
                   pr={isPr(we, s, ex)}
                   showRpe={settings.showRpe}
                   effortScale={settings.effortScale ?? 'rpe'}
-                  running={stopwatch?.ei === ei && stopwatch.si === si ? Math.round((now - stopwatch.start) / 1000) : undefined}
+                  canTime={mode === 'live'}
+                  timer={sw?.ei === ei && sw.si === si ? { sec: stopwatchElapsedSec(sw, now), running: sw.startedAt !== null, targetSec: sw.targetSec } : undefined}
                   onStopwatch={() => {
-                    if (stopwatch?.ei === ei && stopwatch.si === si) {
-                      setField(ei, si, { durationSec: Math.round((Date.now() - stopwatch.start) / 1000) });
-                      setStopwatch(null);
-                    } else setStopwatch({ ei, si, start: Date.now() });
+                    if (sw?.ei === ei && sw.si === si) return void stopwatch.toggle();
+                    // Solo hay un cronómetro: empezar otro guarda antes el tiempo del que estuviera activo.
+                    if (sw) edit(flushStopwatch());
+                    stopwatch.start(
+                      { workoutId: w.id, exerciseId: we.exerciseId, ei, si },
+                      kind === 'duration' ? stopwatchTarget(plannedDurationSec(routine, ei, we.exerciseId, si), s.durationSec) : undefined,
+                    );
                   }}
+                  onSaveStopwatch={() => edit(flushStopwatch())}
+                  onDiscardStopwatch={stopwatch.clear}
                   onChange={(p) => setField(ei, si, p)}
                   onToggle={() => toggleDone(ei, si)}
                   onRemove={() => {
                     // Deshacer vuelve a meter solo esa serie (no revierte lo que hayas hecho después).
                     const removed = structuredClone(we.sets[si]);
                     const exId = we.exerciseId;
-                    setStopwatch(null);
-                    edit((n) => void n.exercises[ei].sets.splice(si, 1));
+                    const applyTime = flushStopwatch();
+                    edit((n) => {
+                      applyTime(n);
+                      n.exercises[ei].sets.splice(si, 1);
+                    });
                     toast.undo('Serie borrada', () =>
                       edit((n) => {
                         const target = n.exercises[ei]?.exerciseId === exId ? n.exercises[ei] : n.exercises.find((x) => x.exerciseId === exId);
@@ -425,7 +489,13 @@ export default function WorkoutLogger({
         <ExerciseMenu
           w={w}
           ei={menu}
-          edit={(fn) => (setStopwatch(null), edit(fn))}
+          edit={(fn) => {
+            const applyTime = flushStopwatch();
+            edit((n) => {
+              applyTime(n);
+              fn(n);
+            });
+          }}
           onClose={() => setMenu(null)}
           onReplace={() => (setPicker({ replace: menu }), setMenu(null))}
           onReorder={() => (setMenu(null), setReorder(true))}
@@ -450,7 +520,13 @@ export default function WorkoutLogger({
               </span>
             );
           }}
-          onMove={(from, to) => (setStopwatch(null), edit((n) => void (n.exercises = moveItem(n.exercises, from, to))))}
+          onMove={(from, to) => {
+            const applyTime = flushStopwatch();
+            edit((n) => {
+              applyTime(n);
+              n.exercises = moveItem(n.exercises, from, to);
+            });
+          }}
           onClose={() => setReorder(false)}
         />
       )}
@@ -619,20 +695,30 @@ function SetRow(props: {
   pr: boolean;
   showRpe: boolean;
   effortScale: EffortScale;
-  running?: number;
+  canTime: boolean;
+  timer?: { sec: number; running: boolean; targetSec?: number };
   onStopwatch: () => void;
+  onSaveStopwatch: () => void;
+  onDiscardStopwatch: () => void;
   onChange: (p: Partial<WorkoutSet>) => void;
   onToggle: () => void;
   onRemove: () => void;
   onPlates: () => void;
 }) {
-  const { id, isNext, n, s, prev, ex, pr, showRpe, effortScale, running, onStopwatch, onChange, onToggle, onRemove, onPlates } = props;
+  const { id, isNext, n, s, prev, ex, pr, showRpe, effortScale, canTime, timer, onStopwatch, onSaveStopwatch, onDiscardStopwatch, onChange, onToggle, onRemove, onPlates } = props;
   const [typeMenu, setTypeMenu] = useState(false);
   const swipe = useSwipeSet(onRemove, onToggle);
+  const swButton = useRef<HTMLButtonElement>(null);
+  // Al cerrarse el panel, el foco vuelve al botón del cronómetro en vez de perderse.
+  const closePanel = (action: () => void) => () => {
+    action();
+    swButton.current?.focus({ preventScroll: true });
+  };
+  const reached = !!timer?.targetSec && timer.sec >= timer.targetSec;
   const kind = ex?.kind ?? 'weight_reps';
   const prevTxt = prev
     ? kind === 'duration'
-      ? formatDuration(prev.durationSec ?? 0)
+      ? formatSeconds(prev.durationSec ?? 0)
       : kind === 'distance'
         ? `${prev.distanceM ?? '-'}m`
         : `${prev.weight ? `${String(toUnit(prev.weight)).replace('.', ',')} × ` : ''}${prev.reps ?? 0}`
@@ -647,91 +733,126 @@ function SetRow(props: {
     />
   );
   return (
-    <div className={`swipe ${swipe.armed ? `armed ${swipe.armed}` : ''} ${swipe.dir ?? ''}`}>
-      <div className="swipe-bg" aria-hidden="true">
-        <Trash2 size={18} /> Borrar
-      </div>
-      <div className="swipe-bg to-done" aria-hidden="true">
-        <Check size={18} strokeWidth={3} /> {s.done ? 'Desmarcar' : 'Hecha'}
-      </div>
-      <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`} {...swipe.handlers} style={swipe.style}>
-        <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
-          {SET_LABEL[s.type] || n}
-          {pr && (
-            <span className="pr-badge" role="img" aria-label="Récord" title="Récord">
-              <Trophy size={12} aria-hidden />
-            </span>
+    <>
+      <div className={`swipe ${swipe.armed ? `armed ${swipe.armed}` : ''} ${swipe.dir ?? ''}`}>
+        <div className="swipe-bg" aria-hidden="true">
+          <Trash2 size={18} /> Borrar
+        </div>
+        <div className="swipe-bg to-done" aria-hidden="true">
+          <Check size={18} strokeWidth={3} /> {s.done ? 'Desmarcar' : 'Hecha'}
+        </div>
+        <div id={id} className={`set ${s.done ? 'done' : ''} ${isNext ? 'next' : ''} ${showRpe ? 'rpe' : ''}`} {...swipe.handlers} style={swipe.style}>
+          <button className={`settype ${s.type}`} onClick={() => setTypeMenu(true)} title="Tipo de serie">
+            {SET_LABEL[s.type] || n}
+            {pr && (
+              <span className="pr-badge" role="img" aria-label="Récord" title="Récord">
+                <Trophy size={12} aria-hidden />
+              </span>
+            )}
+          </button>
+          <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
+            {prevTxt}
+          </span>
+          {kind === 'distance' ? (
+            <NumberField aria-label="Distancia (m)" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM} onChange={(distanceM) => onChange({ distanceM })} />
+          ) : (
+            weightInput
           )}
-        </button>
-        <span className="muted small prev" onClick={() => prev && onChange({ weight: prev.weight, reps: prev.reps, durationSec: prev.durationSec, distanceM: prev.distanceM })}>
-          {prevTxt}
-        </span>
-        {kind === 'distance' ? (
-          <NumberField aria-label="Distancia (m)" placeholder={prev?.distanceM?.toString() ?? ''} value={s.distanceM} onChange={(distanceM) => onChange({ distanceM })} />
-        ) : (
-          weightInput
-        )}
-        {kind === 'duration' || kind === 'distance' ? (
-          <div className="dur">
-            <NumberField
-              decimals={false}
-              aria-label="Tiempo (s)"
-              placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'}
-              value={running ?? s.durationSec}
-              onChange={(durationSec) => onChange({ durationSec })}
-            />
-            <button className={`plain sw ${running !== undefined ? 'on' : ''}`} onClick={onStopwatch} aria-label="Cronómetro">
-              {running !== undefined ? <Square size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
-            </button>
-          </div>
-        ) : (
-          <NumberField
-            decimals={false}
-            aria-label="Repeticiones"
-            placeholder={!s.done && props.target?.repsMin !== undefined ? `${props.target.repsMin}-${props.target.reps}` : (prev?.reps?.toString() ?? '')}
-            value={s.reps}
-            onChange={(reps) => onChange({ reps })}
-          />
-        )}
-        {showRpe && (
-          <select
-            aria-label={effortScale.toUpperCase()}
-            className="rpe-select"
-            value={effortFromRpe(s.rpe, effortScale) ?? ''}
-            onChange={(e) => onChange({ rpe: effortToRpe(e.target.value === '' ? undefined : Number(e.target.value), effortScale) })}
-          >
-            <option value="">–</option>
-            {EFFORT_OPTIONS[effortScale].map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        )}
-        <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle} aria-label="Completar serie" aria-pressed={!!s.done}>
-          <Check size={20} strokeWidth={3} />
-        </button>
-        {typeMenu && (
-          <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
-            <div className="list">
-              {SET_TYPES.map((t) => (
-                <button key={t} className={`item settype-item ${t}`} onClick={() => (onChange({ type: t }), setTypeMenu(false))}>
-                  <b>{SET_LABEL[t] || '1'}</b> {SET_NAMES[t]}
-                </button>
-              ))}
-              {kind === 'weight_reps' && (
-                <button className="item icon-btn" onClick={() => (setTypeMenu(false), onPlates())}>
-                  <Calculator size={16} /> Calculadora de discos
+          {kind === 'duration' || kind === 'distance' ? (
+            <div className="dur">
+              <NumberField
+                decimals={false}
+                aria-label="Tiempo (s)"
+                placeholder={prev?.durationSec ? `${prev.durationSec}s` : 's'}
+                value={timer ? timer.sec : s.durationSec}
+                readOnly={!!timer}
+                onChange={(durationSec) => onChange({ durationSec })}
+              />
+              {canTime && !s.done && (
+                <button
+                  ref={swButton}
+                  type="button"
+                  className={`plain sw ${timer?.running ? 'on' : ''}`}
+                  onClick={onStopwatch}
+                  aria-label={`${!timer ? 'Iniciar' : timer.running ? 'Pausar' : 'Reanudar'} cronómetro, serie ${n}`}
+                >
+                  {timer?.running ? <Pause size={16} fill="currentColor" aria-hidden="true" /> : <Play size={16} fill="currentColor" aria-hidden="true" />}
                 </button>
               )}
-              <button className="item danger icon-btn" onClick={() => (onRemove(), setTypeMenu(false))}>
-                <Trash2 size={16} /> Borrar serie
-              </button>
             </div>
-          </Sheet>
-        )}
+          ) : (
+            <NumberField
+              decimals={false}
+              aria-label="Repeticiones"
+              placeholder={!s.done && props.target?.repsMin !== undefined ? `${props.target.repsMin}-${props.target.reps}` : (prev?.reps?.toString() ?? '')}
+              value={s.reps}
+              onChange={(reps) => onChange({ reps })}
+            />
+          )}
+          {showRpe && (
+            <select
+              aria-label={effortScale.toUpperCase()}
+              className="rpe-select"
+              value={effortFromRpe(s.rpe, effortScale) ?? ''}
+              onChange={(e) => onChange({ rpe: effortToRpe(e.target.value === '' ? undefined : Number(e.target.value), effortScale) })}
+            >
+              <option value="">–</option>
+              {EFFORT_OPTIONS[effortScale].map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          )}
+          <button className={`check ${s.done ? 'on' : ''}`} onClick={onToggle} aria-label="Completar serie" aria-pressed={!!s.done}>
+            <Check size={20} strokeWidth={3} />
+          </button>
+          {typeMenu && (
+            <Sheet title="Tipo de serie" onClose={() => setTypeMenu(false)}>
+              <div className="list">
+                {SET_TYPES.map((t) => (
+                  <button key={t} className={`item settype-item ${t}`} onClick={() => (onChange({ type: t }), setTypeMenu(false))}>
+                    <b>{SET_LABEL[t] || '1'}</b> {SET_NAMES[t]}
+                  </button>
+                ))}
+                {kind === 'weight_reps' && (
+                  <button className="item icon-btn" onClick={() => (setTypeMenu(false), onPlates())}>
+                    <Calculator size={16} /> Calculadora de discos
+                  </button>
+                )}
+                <button className="item danger icon-btn" onClick={() => (onRemove(), setTypeMenu(false))}>
+                  <Trash2 size={16} /> Borrar serie
+                </button>
+              </div>
+            </Sheet>
+          )}
+        </div>
       </div>
-    </div>
+      {timer && (
+        <div className={`sw-panel ${reached ? 'reached' : ''}`} role="group" aria-label={`Cronómetro de la serie ${n}`}>
+          <b className="sw-time" role="timer" aria-label="Tiempo de la serie">
+            {clock(timer.sec)}
+          </b>
+          <span className="sw-info small">
+            <span className="muted">
+              {timer.running ? 'En marcha' : 'En pausa'}
+              {timer.targetSec ? ` · objetivo ${formatSeconds(timer.targetSec)}` : ''}
+            </span>
+            <span className="sw-goal" role="status">
+              {reached ? 'Objetivo alcanzado' : ''}
+            </span>
+          </span>
+          <span className="sw-actions">
+            <button type="button" className="ghost small gray" onClick={closePanel(onDiscardStopwatch)}>
+              Descartar
+            </button>
+            <button type="button" className="ghost small" onClick={closePanel(onSaveStopwatch)}>
+              Guardar tiempo
+            </button>
+          </span>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -796,12 +917,26 @@ function useSwipeSet(onDelete: () => void, onToggle: () => void) {
 }
 
 // "Hoy: 82,5 kg × 8" (o en lb) — sobrecarga progresiva según la última sesión. Un toque lo aplica a las series pendientes.
-function SuggestionChip({ we, ex, prev, target, onApply }: { target?: WorkoutSet; we: WorkoutExercise; ex?: Exercise; prev: WorkoutSet[]; onApply: (p: Partial<WorkoutSet>) => void }) {
+function SuggestionChip({
+  we,
+  ex,
+  prev,
+  target,
+  targetSec,
+  onApply,
+}: {
+  target?: WorkoutSet;
+  targetSec?: number;
+  we: WorkoutExercise;
+  ex?: Exercise;
+  prev: WorkoutSet[];
+  onApply: (p: Partial<WorkoutSet>) => void;
+}) {
   const [open, setOpen] = useState(false);
   const pending = we.sets.filter((s) => !s.done && s.type !== 'warmup');
   if (!pending.length) return null;
   const planned = we.sets.filter((s) => s.type !== 'warmup' && s.type !== 'drop').length;
-  const sug = suggestNext(prev, ex, repTarget(target ?? pending[0], planned));
+  const sug = suggestNext(prev, ex, repTarget(target ?? pending[0], planned), targetSec);
   if (!sug) return null;
   const range = target?.repsMin !== undefined && target.reps !== undefined ? target : undefined;
   const next =
@@ -816,7 +951,7 @@ function SuggestionChip({ we, ex, prev, target, onApply }: { target?: WorkoutSet
       ex,
       repTarget(range, planned),
     );
-  const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${fmtWeight(sug.weight)} × ` : ''}${sug.reps ?? ''}`;
+  const label = sug.durationSec ? formatSeconds(sug.durationSec) : `${sug.weight ? `${fmtWeight(sug.weight)} × ` : ''}${sug.reps ?? ''}`;
   const applied = pending.every(
     (s) => (sug.weight === undefined || s.weight === sug.weight) && (sug.reps === undefined || s.reps === sug.reps) && (sug.durationSec === undefined || s.durationSec === sug.durationSec),
   );

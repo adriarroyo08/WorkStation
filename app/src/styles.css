@@ -709,16 +709,59 @@ button.card {
 .dur {
   position: relative;
 }
+.dur input {
+  padding-right: 30px;
+}
 .dur .sw {
   position: absolute;
-  right: 4px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   font-size: 12px;
   color: var(--accent-ink);
 }
 .dur .sw.on {
   color: var(--danger);
+}
+.sw-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 2px 0 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.sw-panel.reached {
+  border-color: var(--ok-ink);
+}
+.sw-time {
+  font-family: var(--display);
+  font-size: 28px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sw-info {
+  display: flex;
+  flex: 1 1 120px;
+  flex-direction: column;
+  min-width: 0;
+}
+.sw-goal {
+  color: var(--ok-ink);
+  font-weight: 600;
+}
+.sw-actions {
+  display: flex;
+  flex: 1 0 100%;
+  justify-content: flex-end;
+  gap: 6px;
 }
 .rest {
   position: fixed;

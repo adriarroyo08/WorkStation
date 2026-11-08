@@ -1,5 +1,6 @@
 // Sugerencia de sobrecarga progresiva a partir de la última sesión del ejercicio.
 import { MUSCLE_REGION } from './exercises';
+import { formatSeconds } from './stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from './types';
 import { fmtWeight, fromUnit, toUnit, weightUnit, type WeightUnit } from './units';
 
@@ -65,8 +66,9 @@ export function weightStep(ex?: Exercise, u: WeightUnit = 'kg'): number {
  * prev: series de la última sesión. targetReps: reps objetivo (de la rutina) si las hay.
  * Regla: si en el peso más alto hiciste todas las reps objetivo y el esfuerzo no fue máximo (RPE ≤ 8,5),
  * sube peso; si te quedaste corto, repite el peso buscando las reps.
+ * targetSec: duración objetivo de la rutina. Solo se suben 5 s cuando todas las series llegaron a ella.
  */
-export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: number | RepTarget): Suggestion | null {
+export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: number | RepTarget, targetSec?: number): Suggestion | null {
   const range = typeof targetReps === 'object' && targetReps.min < targetReps.max ? targetReps : undefined;
   const fixed = typeof targetReps === 'object' ? targetReps.max : targetReps;
   const work = prev.filter((s) => s.done && s.type !== 'warmup' && (!range || s.type !== 'drop'));
@@ -75,7 +77,15 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
 
   if (kind === 'duration') {
     const best = Math.max(...work.map((s) => s.durationSec ?? 0));
-    return best ? { durationSec: best + 5, action: 'time', reason: `La última vez aguantaste ${best}s: intenta 5s más.` } : null;
+    if (!best) return null;
+    if (targetSec) {
+      const times = work.filter((s) => s.type !== 'drop').map((s) => s.durationSec ?? 0);
+      // Sube desde lo que aguantaron todas las series: la rutina no cambia sola y el objetivo se quedaría atrás.
+      const lowest = times.length ? Math.min(...times) : 0;
+      if (lowest >= targetSec) return { durationSec: lowest + 5, action: 'time', reason: `Llegaste a ${formatSeconds(targetSec)} en todas las series: intenta ${formatSeconds(lowest + 5)}.` };
+      return { durationSec: targetSec, action: 'repeat', reason: `Aún no llegas a ${formatSeconds(targetSec)} en todas las series: repite el objetivo.` };
+    }
+    return { durationSec: best + 5, action: 'time', reason: `La última vez aguantaste ${formatSeconds(best)}: intenta 5 s más.` };
   }
   if (kind === 'reps' || kind === 'assisted') {
     const best = Math.max(...work.map((s) => s.reps ?? 0));

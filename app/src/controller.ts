@@ -6,6 +6,7 @@ import { buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type Wat
 import type { Workout } from '../../shared/types';
 import { uid } from '../../shared/types';
 import { clearSamples, pushHeartRate, takeSamples } from './hr';
+import { stopwatch } from './stopwatch';
 import { native, onWatchCommand } from './native';
 import { rest, useRest } from './rest';
 import { beep, useNow, useStore } from './store';
@@ -28,6 +29,7 @@ export const useSummary = () =>
 export function startWorkout(store: Store, w: Workout) {
   clearSamples();
   rest.stop();
+  stopwatch.clear();
   store.setActive(w);
 }
 
@@ -67,8 +69,7 @@ export function launchWorkout(store: Store, w: Workout) {
   pendingStart = () => startWorkout(store, w);
   gateSubs.forEach((f) => f());
 }
-export const launchEmpty = (store: Store) =>
-  launchWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
+export const launchEmpty = (store: Store) => launchWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
 
 export function startEmpty(store: Store) {
   startWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
@@ -77,6 +78,7 @@ export function startEmpty(store: Store) {
 export function discardActive(store: Store) {
   clearSamples();
   rest.stop();
+  stopwatch.clear();
   native.workoutEnded();
   store.setActive(null);
 }
@@ -91,6 +93,7 @@ export function finishActive(store: Store): boolean {
   if (hr) done.heartRate = hr;
   store.update((d) => void d.workouts.push(done));
   rest.stop();
+  stopwatch.clear();
   native.workoutEnded();
   store.setActive(null);
   summary.show(done.id);
