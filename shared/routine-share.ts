@@ -7,6 +7,9 @@ import { normalizeRepRange } from './progression';
 
 const BUILTIN = new Set(DEFAULT_EXERCISES.map((e) => e.id));
 const SET_TYPES: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
+// Topes del enlace: holgados para 60 ejercicios de 30 series, y cortan una "bomba" de compresión antes de agotar la memoria.
+export const MAX_SHARED_CODE_CHARS = 200_000;
+export const MAX_SHARED_JSON_BYTES = 1_000_000;
 
 interface Payload {
   v: 1;
@@ -30,6 +33,24 @@ const b64url = {
 async function pipe(bytes: Uint8Array, stream: CompressionStream | DecompressionStream): Promise<Uint8Array> {
   const out = new Response(new Blob([bytes as BlobPart]).stream().pipeThrough(stream));
   return new Uint8Array(await out.arrayBuffer());
+}
+
+async function inflate(bytes: Uint8Array): Promise<Uint8Array> {
+  const reader = new Blob([bytes as BlobPart]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+  const chunks: BlobPart[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_SHARED_JSON_BYTES) throw new Error('Enlace demasiado grande');
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+  return new Uint8Array(await new Blob(chunks).arrayBuffer());
 }
 
 /** Codifica una rutina para un enlace. Con compresión ("z…") si el navegador la soporta; si no, JSON ("j…"). */
@@ -75,25 +96,29 @@ export interface SharedRoutine {
 export async function decodeRoutine(code: string, exercises: Exercise[] = DEFAULT_EXERCISES): Promise<SharedRoutine> {
   let p: Payload;
   try {
+    if (code.length > MAX_SHARED_CODE_CHARS) throw new Error('Enlace demasiado grande');
     const raw = b64url.dec(code.slice(1));
-    const bytes = code[0] === 'z' ? await pipe(raw, new DecompressionStream('deflate-raw')) : raw;
+    const bytes = code[0] === 'z' ? await inflate(raw) : raw;
     p = JSON.parse(new TextDecoder().decode(bytes));
   } catch {
     throw new Error('El enlace de la rutina está incompleto o dañado.');
   }
   const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : undefined);
   const num = (v: unknown, max: number) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max ? v : undefined);
-  if (p?.v !== 1 || !str(p.n, 120) || !Array.isArray(p.e) || !p.e.length || p.e.length > 60) throw new Error('El enlace no contiene una rutina válida.');
+  // Object.hasOwn y no `in`: "__proto__" o "constructor" no son valores conocidos, aunque existan en el prototipo.
+  const known = (table: object, v: unknown) => typeof v === 'string' && Object.hasOwn(table, v);
+  if (p?.v !== 1 || !str(p.n, 120) || !Array.isArray(p.e) || !p.e.length || p.e.length > 60 || !p.e.every(Array.isArray)) throw new Error('El enlace no contiene una rutina válida.');
   const byId = new Map(exercises.map((e) => [e.id, e]));
   const custom: Exercise[] = Object.entries(p.c ?? {})
+    .filter(([, def]) => Array.isArray(def))
     .slice(0, 60)
     .map(([id, [name, muscle, equipment, kind]]) => ({
       id: str(id, 80)!,
       name: str(name, 80) ?? id,
       // Solo valores conocidos: un enlace manipulado no puede colar músculos o tipos inexistentes.
-      muscle: muscle in MUSCLE_LABELS ? muscle : 'otro',
+      muscle: known(MUSCLE_LABELS, muscle) ? muscle : 'otro',
       equipment: str(equipment, 40) ?? 'otro',
-      kind: kind in EXERCISE_KIND_LABELS ? kind : 'weight_reps',
+      kind: known(EXERCISE_KIND_LABELS, kind) ? kind : 'weight_reps',
       custom: true,
     }));
   const customById = new Map(custom.map((e) => [e.id, e]));
@@ -108,10 +133,10 @@ export async function decodeRoutine(code: string, exercises: Exercise[] = DEFAUL
         name: byId.get(exerciseId)?.name ?? customById.get(exerciseId)?.name ?? exerciseId,
         restSec: num(rest, 3600) ?? 90,
         superset: str(sup, 4) ?? undefined,
-        sets: (Array.isArray(sets) ? sets : []).slice(0, 30).map(([t, reps, weight, dur, repsMin]) =>
+        sets: (Array.isArray(sets) ? sets.filter(Array.isArray) : []).slice(0, 30).map(([t, reps, weight, dur, repsMin]) =>
           normalizeRepRange(
             {
-              type: SET_TYPES[num(t, 3) ?? 0],
+              type: SET_TYPES[Number.isInteger(t) ? (num(t, 3) ?? 0) : 0],
               reps: num(reps, 1000) ?? undefined,
               ...(repsMin != null ? { repsMin: num(repsMin, 100) } : {}),
               weight: num(weight, 2000) ?? undefined,

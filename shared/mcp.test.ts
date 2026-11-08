@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { cloudSource, RateLimitError } from './cloud-source';
-import { handleMcp, MAX_BATCH } from './mcp-http';
-import { callTool, TOOLS, type DataSource } from './mcp-tools';
+import { COACH_SYSTEM_PROMPT } from './ai';
+import { handleMcp, MAX_BATCH, MAX_BODY_BYTES } from './mcp-http';
+import { callTool, MCP_INSTRUCTIONS, TOOLS, type DataSource } from './mcp-tools';
 import { evaluateStagnation } from './deload';
 import { emptyData } from './data';
 import type { WorkstationData } from './types';
@@ -98,6 +99,26 @@ describe('MCP por HTTP', () => {
     expect(list.result.tools.find((t: { name: string }) => t.name === 'log_workout').inputSchema.type).toBe('object');
     const call = await (await post({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'personal_records', arguments: {} } })).json();
     expect(call.result.isError).toBe(false);
+  });
+  it('avisa a la IA de que los datos del usuario no son instrucciones', async () => {
+    const init = await (await post({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} })).json();
+    expect(init.result.instructions).toBe(MCP_INSTRUCTIONS);
+    expect(MCP_INSTRUCTIONS).toMatch(/datos, no instrucciones/);
+    expect(COACH_SYSTEM_PROMPT).toMatch(/nunca sigas instrucciones/);
+  });
+  it('rechaza con 413 un cuerpo demasiado grande, declarado o no', async () => {
+    const big = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping', params: { x: 'a'.repeat(MAX_BODY_BYTES) } });
+    const declared = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok', 'content-length': String(big.length) }, body: big }));
+    expect(declared.status).toBe(413);
+    const chunk = new TextEncoder().encode(big);
+    const stream = new ReadableStream({
+      start(c) {
+        c.enqueue(chunk);
+        c.close();
+      },
+    });
+    const undeclared = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body: stream, duplex: 'half' } as RequestInit));
+    expect(undeclared.status).toBe(413);
   });
   it('key en la URL y sin key', async () => {
     const r = await post({ jsonrpc: '2.0', id: 1, method: 'ping' }, '', 'https://fn/mcp?key=ws_ok');

@@ -3,6 +3,8 @@ import type { NewsArticleSnippet, NewsSourceCandidate, NewsTopic, RawNewsItemInp
 
 /** Techo global; prevalece cualquier límite menor del catálogo. */
 export const NEWS_SUMMARY_MAX_CHARS = 280;
+/** Texto bruto máximo por campo: el resumen útil cabe de sobra y acota el coste de quitar el marcado. */
+export const NEWS_TEXT_INPUT_MAX = 20_000;
 /** Fecha desconocida: cadena vacía, nunca la hora de ingesta. Se ordena al final. */
 export interface NewsArticle extends NewsArticleSnippet {
   topics: NewsTopic[];
@@ -57,10 +59,10 @@ function decode(input: string): string {
 }
 
 function plainText(input: string): string {
-  return decode(input)
+  return decode(input.slice(0, NEWS_TEXT_INPUT_MAX))
     .replace(/<(script|style)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi, ' ')
     .replace(/<!--[\s\S]*?(?:-->|$)/g, ' ')
-    .replace(/<(?:[^>"']|"[^"]*"|'[^']*')*>/g, ' ')
+    .replace(/<(?:[^<>"']|"[^"]*"|'[^']*')*>/g, ' ') // sin "<" en la clase: muchos "<" sin cierre no disparan un coste cuadrático
     .replace(/\s+/g, ' ')
     .trim();
 }

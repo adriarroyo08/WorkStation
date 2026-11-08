@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Añadido
 
+- Auditoría de seguridad previa a la beta (#138) en `docs/seguridad.md`, con refuerzos en enlaces compartidos, sincronización, noticias, MCP y Coach.
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).
 - Diez artículos breves con evidencia científica en castellano (#55) en la biblioteca editorial offline: recomendaciones cuantitativas, niveles de evidencia, limitaciones y DOIs comprobados sobre creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión.
 - Base de artículos propios en Markdown, validación editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versión.

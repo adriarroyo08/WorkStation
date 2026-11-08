@@ -1,9 +1,47 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
-import { applyRemote, diff, initialUpload, recordKey, snapshot } from './sync';
+import { trainingSummary } from './stats';
+import { applyRemote, diff, initialUpload, recordKey, snapshot, validRemoteDoc, type Collection } from './sync';
 import type { Workout } from './types';
 
 const w = (id: string, name = id): Workout => ({ id, name, startedAt: '2026-10-01T10:00:00Z', exercises: [] });
+
+describe('documentos remotos mal formados (auditoría de seguridad)', () => {
+  const row = (collection: Collection, id: string, doc: unknown) => ({ collection, id, doc, deleted: false, client_updated_at: '2026-10-01T00:00:00Z' });
+
+  it.each([
+    ['workouts', { id: 'x', startedAt: '2026-01-01' }],
+    ['workouts', { id: 'x', name: 'A', startedAt: '2026-01-01', exercises: [{ exerciseId: 'a' }] }],
+    ['workouts', { id: 'otro', name: 'A', startedAt: '2026-01-01', exercises: [] }],
+    ['routines', { id: 'x', name: 'A', exercises: 5 }],
+    ['exercises', { id: 'x' }],
+    ['folders', { id: 'x', name: 3 }],
+    ['measurements', { id: 'x' }],
+    ['workouts', 7],
+    ['workouts', [1]],
+  ] as [Collection, unknown][])('ignora en %s el documento %j y conserva lo demás', (collection, doc) => {
+    const r = applyRemote(emptyData(), [row(collection, 'x', doc), row('workouts', 'ok', w('ok'))]);
+    expect(r.changed).toBe(1);
+    expect(r.data.workouts.map((x) => x.id)).toEqual(['ok']);
+    expect(() => trainingSummary(r.data, 5)).not.toThrow();
+  });
+
+  it('acepta los documentos que escribe la app', () => {
+    expect(validRemoteDoc('workouts', 'a', w('a'))).toBe(true);
+    expect(validRemoteDoc('routines', 'a', { id: 'a', name: 'R', exercises: [{ exerciseId: 'e', restSec: 60, sets: [] }] })).toBe(true);
+    expect(validRemoteDoc('measurements', 'a', { id: 'a', date: '2026-01-01' })).toBe(true);
+    expect(validRemoteDoc('folders', 'a', { id: 'a', name: 'C' })).toBe(true);
+    expect(validRemoteDoc('exercises', 'a', { id: 'a', name: 'E' })).toBe(true);
+    expect(validRemoteDoc('settings', 'settings', { weeklyGoal: 4 })).toBe(true);
+    expect(validRemoteDoc('settings', 'settings', 'x')).toBe(false);
+  });
+
+  it('descarta solo los ajustes con un tipo inesperado', () => {
+    const { data } = applyRemote(emptyData(), [row('settings', 'settings', { platesKg: 5, barKg: 'x', platesLb: 'y', weeklyGoal: 6, futuro: 'z' })]);
+    expect(data.settings).toMatchObject({ weeklyGoal: 6, barKg: emptyData().settings.barKg, platesKg: emptyData().settings.platesKg, futuro: 'z' });
+    expect(data.settings.platesLb).toBeUndefined();
+  });
+});
 
 describe('sync', () => {
   it('detecta altas, cambios y bajas', () => {

@@ -3,12 +3,14 @@
 // `Authorization: Bearer ws_…`, en `x-api-key` o en la URL (`?key=ws_…`, para clientes que solo aceptan una URL).
 import { ARTICLE_RESOURCE, readArticleResource } from './article-resource';
 import { RateLimitError } from './cloud-source';
-import { callTool, TOOLS, toolAnnotations, toolJsonSchema, type DataSource } from './mcp-tools';
+import { callTool, MCP_INSTRUCTIONS, TOOLS, toolAnnotations, toolJsonSchema, type DataSource } from './mcp-tools';
 
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER = { name: 'workstation', version: '0.7.0' };
 // Máximo de mensajes en una petición agrupada (batch): cada llamada a herramienta gasta cuota de la API key igualmente.
 export const MAX_BATCH = 20;
+// Tope del cuerpo de una petición: se comprueba antes de parsear, porque cualquier valor de clave llega hasta aquí.
+export const MAX_BODY_BYTES = 1_000_000;
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -36,6 +38,26 @@ export function apiKeyFrom(req: Request): string | null {
   return new URL(req.url).searchParams.get('key');
 }
 
+async function readLimited(req: Request, max: number): Promise<string | undefined> {
+  if (Number(req.headers.get('content-length')) > max) return undefined;
+  const reader = req.body?.getReader();
+  if (!reader) return '';
+  const decoder = new TextDecoder();
+  let text = '';
+  let bytes = 0;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) return text + decoder.decode();
+      bytes += value.byteLength;
+      if (bytes > max) return undefined;
+      text += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+}
+
 export async function handleMcp(req: Request, sourceFor: (apiKey: string) => DataSource): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   if (req.method === 'GET') return reply({ name: SERVER.name, version: SERVER.version, transport: 'streamable-http', tools: TOOLS.map((t) => t.name) });
@@ -44,9 +66,11 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
   const key = apiKeyFrom(req);
   if (!key) return reply(rpcError(null, -32001, 'Falta la API key de Workstation (Authorization: Bearer ws_…)'), 401);
 
+  const raw = await readLimited(req, MAX_BODY_BYTES);
+  if (raw === undefined) return reply(rpcError(null, -32600, `Petición demasiado grande (máximo ${MAX_BODY_BYTES} bytes)`), 413);
   let body: RpcRequest | RpcRequest[];
   try {
-    body = await req.json();
+    body = JSON.parse(raw);
   } catch {
     return reply(rpcError(null, -32700, 'JSON no válido'), 400);
   }
@@ -79,7 +103,7 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
             protocolVersion: PROTOCOLS.includes(asked) ? asked : PROTOCOLS[0],
             capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
             serverInfo: SERVER,
-            instructions: 'Datos de entrenamiento del usuario en Workstation. Empieza por training_summary. Trabaja siempre con pesos en kg.',
+            instructions: MCP_INSTRUCTIONS,
           },
         };
       }

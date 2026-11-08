@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
-import { decodeRoutine, encodeRoutine, importSharedRoutine } from './routine-share';
+import { decodeRoutine, encodeRoutine, importSharedRoutine, MAX_SHARED_CODE_CHARS, MAX_SHARED_JSON_BYTES } from './routine-share';
 import type { Routine } from './types';
 
 const routine = (): Routine => ({
@@ -89,6 +89,38 @@ it.each([13, 12, '8', -1, 0, 8.5, 101, null])('descarta el suelo manipulado %s s
   const decoded = await decodeRoutine(rawLink([[1, 12, 80, null, min]]));
   expect(decoded.exercises[0].sets[0]).not.toHaveProperty('repsMin');
   expect(decoded.exercises[0].sets[0].reps).toBe(12);
+});
+
+const link = (payload: unknown) => 'j' + btoa(JSON.stringify(payload)).replace(/=+$/, '');
+
+describe('enlaces manipulados (auditoría de seguridad)', () => {
+  it.each(['__proto__', 'constructor', 'toString', ['otro']])('no acepta %s como músculo ni como tipo', async (bad) => {
+    const s = await decodeRoutine(link({ v: 1, n: 'x', e: [['custom-z', 60, null, []]], c: { 'custom-z': ['Z', bad, 'x', bad] } }));
+    expect(s.custom[0]).toMatchObject({ muscle: 'otro', kind: 'weight_reps' });
+  });
+  it('un tipo de serie no entero cae a normal', async () => {
+    const s = await decodeRoutine(rawLink([[0.5, 10, null, null]]));
+    expect(s.exercises[0].sets[0].type).toBe('normal');
+  });
+  it('rechaza con mensaje legible las estructuras que no son listas', async () => {
+    await expect(decodeRoutine(link({ v: 1, n: 'x', e: [5] }))).rejects.toThrow(/válida/);
+    const s = await decodeRoutine(link({ v: 1, n: 'x', e: [['press-banca', 60, null, [7, [1, 8, 50, null]]]], c: { a: 5 } }));
+    expect(s.exercises[0].sets).toHaveLength(1);
+    expect(s.custom).toEqual([]);
+  });
+  it('corta los enlaces enormes y las bombas de compresión', async () => {
+    await expect(decodeRoutine('j' + 'a'.repeat(MAX_SHARED_CODE_CHARS))).rejects.toThrow(/dañado/);
+    const zeros = new Blob([new Uint8Array(MAX_SHARED_JSON_BYTES * 3)]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    const bytes = new Uint8Array(await new Response(zeros).arrayBuffer());
+    const code =
+      'z' +
+      btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    expect(code.length).toBeLessThan(MAX_SHARED_CODE_CHARS);
+    await expect(decodeRoutine(code)).rejects.toThrow(/dañado/);
+  });
 });
 
 it('descarta rangos en ejercicios de duración', async () => {
