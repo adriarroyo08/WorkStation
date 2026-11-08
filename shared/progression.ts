@@ -31,6 +31,17 @@ export interface Suggestion {
   reason: string;
 }
 
+export interface RepTarget {
+  min: number;
+  max: number;
+  plannedSets?: number;
+}
+
+// El objetivo fijo sigue siendo escalar; solo los rangos reales activan la doble progresión.
+export function repTarget(set: WorkoutSet, plannedSets?: number): number | RepTarget | undefined {
+  return set.repsMin !== undefined && set.reps !== undefined ? { min: set.repsMin, max: set.reps, plannedSets } : set.reps;
+}
+
 // Incremento habitual según material y zona, en la unidad indicada.
 // kg: barra de pierna 5, mancuernas 2, resto 2,5 · lb: barra de pierna 10, resto 5.
 export function weightStep(ex?: Exercise, u: WeightUnit = 'kg'): number {
@@ -47,8 +58,10 @@ export function weightStep(ex?: Exercise, u: WeightUnit = 'kg'): number {
  * Regla: si en el peso más alto hiciste todas las reps objetivo y el esfuerzo no fue máximo (RPE ≤ 8,5),
  * sube peso; si te quedaste corto, repite el peso buscando las reps.
  */
-export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: number): Suggestion | null {
-  const work = prev.filter((s) => s.done && s.type !== 'warmup');
+export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: number | RepTarget): Suggestion | null {
+  const range = typeof targetReps === 'object' && targetReps.min < targetReps.max ? targetReps : undefined;
+  const fixed = typeof targetReps === 'object' ? targetReps.max : targetReps;
+  const work = prev.filter((s) => s.done && s.type !== 'warmup' && (!range || s.type !== 'drop'));
   if (!work.length) return null;
   const kind = ex?.kind ?? 'weight_reps';
 
@@ -59,6 +72,18 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
   if (kind === 'reps' || kind === 'assisted') {
     const best = Math.max(...work.map((s) => s.reps ?? 0));
     if (!best) return null;
+    if (range) {
+      const reps = Math.min(range.max, best + 1);
+      const atCeiling = best >= range.max;
+      return {
+        reps,
+        weight: work.find((s) => (s.reps ?? 0) === best)?.weight,
+        action: atCeiling ? 'repeat' : 'reps',
+        reason: atCeiling
+          ? `Techo alcanzado: mantén ${range.max} reps y considera ${kind === 'assisted' ? 'menos asistencia' : 'añadir lastre'}.`
+          : `Busca ${reps} reps sin pasar del techo de ${range.max}.`,
+      };
+    }
     const allMax = work.every((s) => (s.reps ?? 0) >= best);
     return {
       reps: best + 1,
@@ -72,7 +97,7 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
   const top = Math.max(...work.map((s) => s.weight ?? 0));
   if (!top) return null;
   const atTop = work.filter((s) => (s.weight ?? 0) === top);
-  const goal = targetReps ?? Math.max(...atTop.map((s) => s.reps ?? 0));
+  const goal = fixed ?? Math.max(...atTop.map((s) => s.reps ?? 0));
   const hitAll = atTop.every((s) => (s.reps ?? 0) >= goal);
   const rpes = atTop.map((s) => s.rpe).filter((r): r is number => r !== undefined);
   const hard = rpes.length > 0 && rpes.reduce((a, b) => a + b, 0) / rpes.length > 8.5;
@@ -82,6 +107,20 @@ export function suggestNext(prev: WorkoutSet[], ex?: Exercise, targetReps?: numb
   // Siguiente peso cargable: múltiplo del incremento por encima del actual (47 → 50, 80 → 82,5).
   const nextU = Math.ceil((toUnit(top, u) + step / 2) / step) * step;
   const next = u === 'kg' ? Math.round(nextU * 100) / 100 : fromUnit(nextU, u);
+  if (range) {
+    const planned = range.plannedSets ?? atTop.length;
+    const complete = atTop.length >= planned;
+    const lowest = Math.min(...atTop.map((s) => s.reps ?? 0));
+    const hitCeiling = lowest >= range.max;
+    if (complete && hitCeiling && !hard)
+      return { weight: next, reps: range.min, action: 'up', reason: `Llegaste a ${atTop.length}×${range.max} con ${fmtWeight(top)}: sube a ${fmtWeight(next)} y vuelve a ${range.min}.` };
+    if (complete && hitCeiling && hard)
+      return { weight: top, reps: range.max, action: 'repeat', reason: `Techo alcanzado pero muy exigente (RPE alto): mantén ${fmtWeight(top)} y repite ${range.max}.` };
+    if (lowest < range.min) return { weight: top, reps: range.min, action: 'repeat', reason: `Quedaste por debajo de ${range.min} con ${fmtWeight(top)}: repite el peso hasta llegar a ${range.min}.` };
+    const reps = Math.min(range.max, lowest + 1);
+    if (!complete) return { weight: top, reps, action: 'repeat', reason: `Te faltaron series: completa ${planned}×${range.max} con ${fmtWeight(top)} antes de subir.` };
+    return { weight: top, reps, action: 'reps', reason: `En rango, aún no en el techo: mantén ${fmtWeight(top)} y busca ${reps}.` };
+  }
   if (hitAll && !hard) return { weight: next, reps: goal, action: 'up', reason: `Completaste ${atTop.length}×${goal} con ${fmtWeight(top)}: sube a ${fmtWeight(next)}.` };
   if (hitAll && hard) return { weight: top, reps: goal + 1, action: 'reps', reason: `Muy exigente (RPE alto): mantén ${fmtWeight(top)} y busca una rep más.` };
   return { weight: top, reps: goal, action: 'repeat', reason: `Te faltaron reps con ${fmtWeight(top)}: repite el peso hasta completar ${goal}.` };

@@ -9,7 +9,10 @@ export const CHANGELOG: Release[] = [
   {
     version: '1.16.0',
     date: '2026-11-08',
-    items: ['Lee noticias de ciencia y entrenamiento desde Entrenar, filtra por fuente y tema y conserva la última actualización para consultar sin conexión.'],
+    items: [
+      'Lee noticias de ciencia y entrenamiento desde Entrenar, filtra por fuente y tema y conserva la última actualización para consultar sin conexión.',
+      'Las sugerencias respetan los rangos de repeticiones: sube peso al completar el máximo en todas las series y vuelve al mínimo.',
+    ],
   },
   {
     version: '1.15.0',

@@ -30,7 +30,7 @@ import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { rest, useRest } from '../rest';
-import { suggestNext } from '../../../shared/progression';
+import { repTarget, suggestNext } from '../../../shared/progression';
 import { useHeartRate } from '../hr';
 import { toast } from '../toast';
 import { clock, useNow, useStore, useWakeLock } from '../store';
@@ -733,7 +733,7 @@ function SuggestionChip({ we, ex, prev, onApply }: { we: WorkoutExercise; ex?: E
   const [open, setOpen] = useState(false);
   const pending = we.sets.filter((s) => !s.done && s.type !== 'warmup');
   if (!pending.length) return null;
-  const sug = suggestNext(prev, ex, pending[0].reps);
+  const sug = suggestNext(prev, ex, repTarget(pending[0], we.sets.filter((s) => s.type !== 'warmup' && s.type !== 'drop').length));
   if (!sug) return null;
   const label = sug.durationSec ? `${sug.durationSec}s` : `${sug.weight ? `${fmtWeight(sug.weight)} × ` : ''}${sug.reps ?? ''}`;
   const applied = pending.every(

@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Añadido
 
+- Sugerencias de doble progresión con rangos de repeticiones, series previstas y esfuerzo; conservan el comportamiento de los objetivos fijos (#115).
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).
 - Diez artículos breves con evidencia científica en castellano (#55) en la biblioteca editorial offline: recomendaciones cuantitativas, niveles de evidencia, limitaciones y DOIs comprobados sobre creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión.
 - Base de artículos propios en Markdown, validación editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versión.
