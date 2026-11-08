@@ -135,7 +135,7 @@ La matriz de pruebas en smartphone debe cubrir:
 
 | Nivel de versión de Android | Versión de API | Justificación y áreas críticas de prueba | Dispositivos representativos |
 | :--- | :--- | :--- | :--- |
-| **Android 15 (Target SDK)** | API 35 | Versión objetivo obligatoria de Google Play ([fuente oficial](https://support.google.com/googleplay/android-developer/answer/11926878?hl=es)). Verificación de diseño de borde a borde (*edge-to-edge*), gestión de privacidad y permisos de salud en segundo plano. | Google Pixel 8 / 9, Samsung Galaxy S24 |
+| **Android 15 (Target SDK actual)** | API 35 | Hoy no basta para subir la app: Google Play exige API 36 a las apps móviles nuevas y actualizaciones desde el 31 de agosto de 2026 ([fuente oficial](https://support.google.com/googleplay/android-developer/answer/11926878?hl=es), consultada el 8 de noviembre de 2026); se corrige en #141. Verificación de diseño de borde a borde (*edge-to-edge*), gestión de privacidad y permisos de salud en segundo plano. | Google Pixel 8 / 9, Samsung Galaxy S24 |
 | **Android 14** | API 34 | Comprobación del ciclo de vida de `WorkoutService` como servicio en primer plano (*Foreground Service*) con tipo `health` / `specialUse`, permisos de alarmas exactas para el temporizador de descanso (`SCHEDULE_EXACT_ALARM`). | Pixel 7, Galaxy S23, Xiaomi 13 (HyperOS) |
 | **Android 12 – 13** | API 31 – 33 | Comprobación de permisos de notificación en tiempo de ejecución (`POST_NOTIFICATIONS`), integración de la API de Splash Screen nativa y temas oscuros/claros dinámicos. | Galaxy S21 / A53, OnePlus 10, Motorola Edge 30 |
 | **Android 10 – 11** | API 29 – 30 | Verificación del almacenamiento con ámbito (*Scoped Storage*) al importar o exportar ficheros de copia de seguridad JSON y CSV de Strong. | Pixel 3a / 4, Galaxy S10, Xiaomi Redmi Note 9 |
@@ -302,6 +302,7 @@ stateDiagram-v2
 La beta cerrada solo podrá abrirse cuando se cumplan **todos** los requisitos siguientes:
 
 - [ ] **Verificación técnica integral**: `npm run check` pasa al 100 % en la rama principal (`articles` + `lint` + `typecheck` + `test:coverage` con cobertura superior al 90 % + `app:build` + `mcp:build:edge`).
+- [ ] **Nivel de API exigido por Google Play**: `android/phone` con `targetSdk` 36 (#141) y `android/wear` con 35 o superior.
 - [ ] **Empaquetado y firma de binarios**: Compilación sin errores de los paquetes de distribución Android App Bundle (`:phone:bundleRelease` y `:wear:bundleRelease`) firmados con la clave de lanzamiento compartida.
 - [ ] **Verificación *offline-first* en laboratorio**: Superada la prueba automatizada y manual de desconexión forzada de red durante un entrenamiento de 45 minutos sin pérdida de datos.
 - [ ] **Contenido editorial cargado**: Los 10 artículos científicos en Markdown validados en [content/articulos/](../content/articulos/) y el catálogo de ejercicios base accesible localmente.
