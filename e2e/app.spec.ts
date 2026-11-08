@@ -430,7 +430,7 @@ test('compartir una rutina por enlace y guardarla en otro dispositivo', async ({
   const ctx = await browser.newContext({ ...test.info().project.use, baseURL: undefined });
   await skipTour(ctx);
   const other = await ctx.newPage();
-  await other.goto(url.replace(/^https?:\/\/[^/]+\/?/, 'http://localhost:4174/'));
+  await other.goto(url.replace(/^https?:\/\/[^/]+\/?/, `${new URL(page.url()).origin}/`));
   const sheet = other.getByRole('dialog', { name: 'Rutina compartida' });
   await expect(sheet).toContainText('Torso A');
   await expect(sheet).toContainText('Press de banca (barra)');
