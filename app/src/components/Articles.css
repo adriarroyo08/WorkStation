@@ -1,3 +1,10 @@
+.articles > h1 {
+  display: block;
+  margin: 8px 0 16px;
+}
+.articles > h1:focus:not(:focus-visible) {
+  outline: none;
+}
 .article-tags {
   display: flex;
   flex-wrap: wrap;

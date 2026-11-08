@@ -28,6 +28,14 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await expect(page.getByRole('region', { name: 'Referencias' }).getByRole('link')).toHaveAttribute('href', 'https://doi.org/10.1080/02640414.2016.1210197');
     await expect(page.locator('.articles')).toContainText('Metaanálisis');
     expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+    // La captura representa lectura con puntero; el foco de teclado se conserva arriba.
+    await page.getByRole('button', { name: 'Volver', exact: true }).click();
+    await page.locator('.article-card').click();
+    const title = page.getByRole('heading', { level: 1 });
+    await expect(title).toBeFocused();
+    await expect(title).toHaveAttribute('tabindex', '-1');
+    await expect(title).toHaveCSS('outline-style', 'none');
+    expect((await title.boundingBox())!.x).toBe((await page.locator('.article-summary').boundingBox())!.x);
     await page.screenshot({ path: `docs/issue-56/lectura-${colorScheme}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
     await expect(search).toHaveValue('HIPERTROFÍA volumen');
