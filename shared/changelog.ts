@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.18.0',
+    date: '2026-11-08',
+    items: ['Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas (también asistidas) y fondos; añade el ratio de lastre a los niveles de fuerza.'],
+  },
+  {
     version: '1.17.0',
     date: '2026-11-08',
     items: [
