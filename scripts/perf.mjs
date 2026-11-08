@@ -1,4 +1,4 @@
-﻿/* global indexedDB, requestAnimationFrame, document, window, innerHeight */
+/* global indexedDB, requestAnimationFrame, document, window, innerHeight */
 import { chromium, devices } from '@playwright/test';
 import { preview } from '../app/node_modules/vite/dist/node/index.js';
 import { performanceData } from '../shared/perf-data.ts';

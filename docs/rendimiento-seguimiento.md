@@ -1,4 +1,4 @@
-﻿# Seguimiento de la referencia inicial
+# Seguimiento de la referencia inicial
 
 Referencia: [rendimiento.md](rendimiento.md), generada con `npm run perf` en #127.
 
