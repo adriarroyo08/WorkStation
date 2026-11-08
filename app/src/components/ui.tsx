@@ -17,7 +17,8 @@ export function Sheet({ title, onClose, children, full, header, footer }: { titl
   // Escape (y el Atrás de Android) cierra solo la hoja de encima, no todas las abiertas.
   const close = useRef(onClose);
   close.current = onClose;
-  useEffect(() => {
+  // Registra Escape antes de pintar la hoja: un efecto pasivo deja una ventana sin listener.
+  useLayoutEffect(() => {
     const me = {};
     openSheets.push(me);
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && openSheets.at(-1) === me && close.current();

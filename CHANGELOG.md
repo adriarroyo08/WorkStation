@@ -5,6 +5,12 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+### Corregido
+
+- Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
+- Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
+- Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
+
 ### Añadido
 
 - Cronómetro de serie con pausa que no se pierde al recargar, aviso al alcanzar el objetivo, progresión de +5 s según el objetivo de la rutina y tiempos en `mm:ss` o `X s` (#139).

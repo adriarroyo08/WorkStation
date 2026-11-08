@@ -1,6 +1,6 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Heart, ListChecks, Repeat, Search, Timer, Trash2, Trophy, Weight, X } from 'lucide-react';
 import { ask } from '../dialog';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { repeatWorkout } from '../../../shared/data';
 import { prEvents, workoutDurationMin, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import type { Exercise, Workout } from '../../../shared/types';
@@ -11,17 +11,8 @@ import { SessionMap } from './BodyMap';
 import { MonthCalendar, Sheet, useLongPress } from './ui';
 import WorkoutDetail from './WorkoutDetail';
 import { fmtMass } from '../../../shared/units';
+import { historyMonth, historyRowSummary } from '../../../shared/history';
 import './History.css';
-
-// Formato de fecha para el antetítulo de la fila: "VIE 30 OCT" (mayúsculas)
-function fmtHrowDate(iso: string): string {
-  const d = new Date(iso);
-  const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' }).replace(/[.,]/g, '').trim().toUpperCase();
-  const day = d.getDate();
-  const month = d.toLocaleDateString('es-ES', { month: 'short' }).replace(/[.,]/g, '').trim().toUpperCase();
-  const year = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
-  return `${weekday} ${day} ${month}${year}`;
-}
 
 export default function History({ onExercise, goTrain }: { onExercise: (id: string) => void; goTrain: () => void }) {
   const store = useStore();
@@ -33,7 +24,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
   const [day, setDay] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [limit, setLimit] = useState(30);
-  const ex = new Map(data.exercises.map((e) => [e.id, e]));
+  const ex = useMemo(() => new Map(data.exercises.map((e) => [e.id, e])), [data.exercises]);
   const prCount = useMemo(() => {
     const m = new Map<string, number>();
     for (const e of prEvents(data)) m.set(e.workoutId, (m.get(e.workoutId) ?? 0) + 1);
@@ -58,7 +49,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
   const total = list.length;
   const groups: { label: string; items: typeof list }[] = [];
   for (const w of list.slice(0, limit)) {
-    const label = cap(new Date(w.startedAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }));
+    const label = cap(historyMonth(w.startedAt));
     if (groups.at(-1)?.label !== label) groups.push({ label, items: [] });
     groups.at(-1)!.items.push(w);
   }
@@ -129,7 +120,7 @@ export default function History({ onExercise, goTrain }: { onExercise: (id: stri
             <span className="history-sep-count">{g.items.length}</span>
           </h2>
           {g.items.map((w) => (
-            <HistoryRow key={w.id} w={w} ex={ex} prs={prCount.get(w.id) ?? 0} onOpen={() => setOpen(w.id)} onMenu={() => setMenu(w)} />
+            <HistoryRow key={w.id} w={w} ex={ex} prs={prCount.get(w.id) ?? 0} onOpen={setOpen} onMenu={setMenu} />
           ))}
         </div>
       ))}
@@ -229,25 +220,23 @@ function MonthHero({ workouts, exercises }: { workouts: Workout[]; exercises: Ex
 }
 
 // Un entreno de la lista con su mapa muscular. Mantener pulsado abre Repetir / Borrar.
-function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w: Workout; ex: Map<string, Exercise>; prs: number; onOpen: () => void; onMenu: () => void }) {
+const HistoryRow = memo(function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w: Workout; ex: Map<string, Exercise>; prs: number; onOpen: (id: string) => void; onMenu: (w: Workout) => void }) {
   const { data } = useStore();
-  const press = useLongPress(onMenu);
+  const press = useLongPress(() => onMenu(w));
   const items = w.exercises.flatMap((e) => {
     const exercise = ex.get(e.exerciseId);
     return exercise ? [{ exercise, sets: e.sets.filter((s) => s.done).length }] : [];
   });
-  const volMass = fmtMass(workoutVolume(w, data.exercises));
-  const [volNum, volUnit] = volMass.split(' ');
-  const durMin = workoutDurationMin(w);
-  const setCount = workoutSetCount(w);
+  const summary = historyRowSummary(w, data.exercises);
+  const [volNum, volUnit] = summary.volume.split(' ');
 
   return (
-    <button className="hrow full left" onClick={onOpen} {...press}>
+    <button className="hrow full left" onClick={() => onOpen(w.id)} {...press}>
       <div className="hrow-grid">
         <div className="hrow-main">
           <div className="row hrow-head">
             <div className="grow">
-              <div className="muted small hrow-kicker">{fmtHrowDate(w.startedAt)}</div>
+              <div className="muted small hrow-kicker">{summary.date}</div>
               <b className="hrow-title">{w.name}</b>
             </div>
             {prs ? (
@@ -258,13 +247,13 @@ function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w: Workout; ex: Map<string
           </div>
           <div className="row small muted wstats hrow-stats">
             <span className="icon-btn">
-              <Timer size={14} /> <strong className="hrow-num">{durMin}</strong> <span className="hrow-unit">min</span>
+              <Timer size={14} /> <strong className="hrow-num">{summary.duration}</strong> <span className="hrow-unit">min</span>
             </span>
             <span className="icon-btn">
               <Weight size={14} /> <strong className="hrow-num">{volNum}</strong> <span className="hrow-unit">{volUnit}</span>
             </span>
             <span className="icon-btn">
-              <ListChecks size={14} /> <strong className="hrow-num">{setCount}</strong> <span className="hrow-unit">series</span>
+              <ListChecks size={14} /> <strong className="hrow-num">{summary.sets}</strong> <span className="hrow-unit">series</span>
             </span>
             {w.heartRate && (
               <span className="icon-btn">
@@ -273,16 +262,14 @@ function HistoryRow({ w, ex, prs, onOpen, onMenu }: { w: Workout; ex: Map<string
             )}
           </div>
           <div className="small exsum">
-            {w.exercises.slice(0, 4).map((e, i) => (
-              <div key={i}>
-                {e.sets.length} × {ex.get(e.exerciseId)?.name ?? e.exerciseId}
-              </div>
+            {summary.lines.map((line, i) => (
+              <div key={i}>{line}</div>
             ))}
-            {w.exercises.length > 4 && <div className="muted">+ {w.exercises.length - 4} más</div>}
+            {summary.extra && <div className="muted">{summary.extra}</div>}
           </div>
         </div>
         <SessionMap items={items} />
       </div>
     </button>
   );
-}
+});

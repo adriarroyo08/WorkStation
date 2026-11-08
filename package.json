@@ -12,7 +12,8 @@
     "check": "npm run articles && npm run lint && npm run typecheck && npm run test:coverage && npm --prefix app run build && npm --prefix mcp run build:edge",
     "e2e": "playwright test",
     "test:coverage": "vitest run --coverage",
-    "articles": "node --experimental-strip-types --no-warnings scripts/build-articles.mjs"
+    "articles": "node --experimental-strip-types --no-warnings scripts/build-articles.mjs",
+    "perf": "node --experimental-strip-types --no-warnings scripts/perf.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
