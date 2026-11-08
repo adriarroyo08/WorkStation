@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Añadido
 
+- Rango objetivo y avisos discretos de rendimiento en el registro, con descarga opcional de series y deshacer (#120).
 - Editor de rutinas con rangos de repeticiones por serie, validación y copia a todas las series (#119).
 - Sugerencias de doble progresión con rangos de repeticiones, series previstas y esfuerzo; conservan el comportamiento de los objetivos fijos (#115).
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).

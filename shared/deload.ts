@@ -1,5 +1,5 @@
 import { countsAsWorkSet, exerciseHistory } from './stats';
-import type { Exercise, WorkstationData } from './types';
+import type { Exercise, WorkoutSet, WorkstationData } from './types';
 
 export type StagnationConfidence = 'alta' | 'moderada' | 'baja';
 export type StagnationType = 'ninguno' | 'estancamiento_esfuerzo' | 'meseta_rendimiento' | 'historico_insuficiente';
@@ -98,4 +98,11 @@ export function createDeloadSuggestion(report: StagnationReport, exercise?: Exer
     userMessage: `Meseta de repeticiones registradas${context} durante las últimas 3 sesiones. Si sientes fatiga, considera una descarga de series; si te sentiste cómodo, intenta sumar una repetición o progresar en carga dentro de tu rango.`,
     rationale: 'Sin esfuerzo alto repetido no se propone reducir el volumen. El registro no permite determinar la causa de la meseta; el orden de los ejercicios puede influir.',
   };
+}
+
+/** Conserva calentamientos y series hechas; retira solo series efectivas pendientes. */
+export function deloadPendingSets(sets: WorkoutSet[]): WorkoutSet[] {
+  const pending = sets.filter((s) => !s.done && s.type !== 'warmup');
+  const keep = new Set(pending.slice(0, Math.max(1, Math.ceil(pending.length / 2))));
+  return sets.filter((s) => s.done || s.type === 'warmup' || keep.has(s));
 }

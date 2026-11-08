@@ -62,3 +62,15 @@
   align-items: center;
   justify-content: center;
 }
+.stagnation summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+}
+.stagnation summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.stagnation button {
+  min-height: 44px;
+}
