@@ -3,6 +3,7 @@
 import { DEFAULT_EXERCISES, EXERCISE_KIND_LABELS, MUSCLE_LABELS } from './exercises';
 import type { Exercise, ExerciseKind, MuscleGroup, Routine, SetType, WorkstationData } from './types';
 import { uid } from './types';
+import { normalizeRepRange } from './progression';
 
 const BUILTIN = new Set(DEFAULT_EXERCISES.map((e) => e.id));
 const SET_TYPES: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
@@ -11,8 +12,8 @@ interface Payload {
   v: 1;
   n: string; // nombre
   o?: string; // notas
-  // [id, descanso, superserie?, series: [tipo, reps?, kg?, seg?][]]
-  e: [string, number, string | null, [number, number | null, number | null, number | null][]][];
+  // [id, descanso, superserie?, series: [tipo, reps?, kg?, seg?, repsMin?][]]
+  e: [string, number, string | null, [number, number | null, number | null, number | null, (number | null)?][]][];
   // ejercicios personalizados: id → [nombre, músculo, material, tipo]
   c?: Record<string, [string, MuscleGroup, string, ExerciseKind]>;
 }
@@ -36,6 +37,7 @@ export async function encodeRoutine(r: Routine, exercises: Exercise[]): Promise<
   const byId = new Map(exercises.map((e) => [e.id, e]));
   const ss = new Map<string, string>();
   const c: NonNullable<Payload['c']> = {};
+  const hasRange = r.exercises.some((re) => re.sets.some((s) => s.repsMin !== undefined));
   const p: Payload = {
     v: 1,
     n: r.name,
@@ -44,7 +46,16 @@ export async function encodeRoutine(r: Routine, exercises: Exercise[]): Promise<
       const ex = byId.get(re.exerciseId);
       if (!BUILTIN.has(re.exerciseId) && ex) c[re.exerciseId] = [ex.name, ex.muscle, ex.equipment, ex.kind];
       const sup = re.supersetId ? (ss.get(re.supersetId) ?? (ss.set(re.supersetId, String.fromCharCode(97 + ss.size)), ss.get(re.supersetId)!)) : null;
-      return [re.exerciseId, re.restSec, sup, re.sets.map((s) => [SET_TYPES.indexOf(s.type), s.reps ?? null, s.weight ?? null, s.durationSec ?? null])];
+      return [
+        re.exerciseId,
+        re.restSec,
+        sup,
+        re.sets.map((s) => {
+          const tuple: Payload['e'][number][3][number] = [SET_TYPES.indexOf(s.type), s.reps ?? null, s.weight ?? null, s.durationSec ?? null];
+          if (hasRange) tuple.push(s.repsMin ?? null);
+          return tuple;
+        }),
+      ];
     }),
     ...(Object.keys(c).length ? { c } : {}),
   };
@@ -56,7 +67,7 @@ export async function encodeRoutine(r: Routine, exercises: Exercise[]): Promise<
 export interface SharedRoutine {
   name: string;
   notes?: string;
-  exercises: { exerciseId: string; name: string; restSec: number; superset?: string; sets: { type: SetType; reps?: number; weight?: number; durationSec?: number }[] }[];
+  exercises: { exerciseId: string; name: string; restSec: number; superset?: string; sets: { type: SetType; reps?: number; repsMin?: number; weight?: number; durationSec?: number }[] }[];
   custom: Exercise[];
 }
 
@@ -97,12 +108,18 @@ export async function decodeRoutine(code: string, exercises: Exercise[] = DEFAUL
         name: byId.get(exerciseId)?.name ?? customById.get(exerciseId)?.name ?? exerciseId,
         restSec: num(rest, 3600) ?? 90,
         superset: str(sup, 4) ?? undefined,
-        sets: (Array.isArray(sets) ? sets : []).slice(0, 30).map(([t, reps, weight, dur]) => ({
-          type: SET_TYPES[num(t, 3) ?? 0],
-          reps: num(reps, 1000) ?? undefined,
-          weight: num(weight, 2000) ?? undefined,
-          durationSec: num(dur, 36000) ?? undefined,
-        })),
+        sets: (Array.isArray(sets) ? sets : []).slice(0, 30).map(([t, reps, weight, dur, repsMin]) =>
+          normalizeRepRange(
+            {
+              type: SET_TYPES[num(t, 3) ?? 0],
+              reps: num(reps, 1000) ?? undefined,
+              ...(repsMin != null ? { repsMin: num(repsMin, 100) } : {}),
+              weight: num(weight, 2000) ?? undefined,
+              durationSec: num(dur, 36000) ?? undefined,
+            },
+            byId.get(exerciseId)?.kind ?? customById.get(exerciseId)?.kind ?? 'weight_reps',
+          ),
+        ),
       };
     }),
   };
@@ -133,6 +150,7 @@ export function importSharedRoutine(data: WorkstationData, s: SharedRoutine, fol
       sets: e.sets.map((x) => ({
         type: x.type,
         ...(x.reps !== undefined ? { reps: x.reps } : {}),
+        ...(x.repsMin !== undefined ? { repsMin: x.repsMin } : {}),
         ...(x.weight !== undefined ? { weight: x.weight } : {}),
         ...(x.durationSec !== undefined ? { durationSec: x.durationSec } : {}),
       })),
