@@ -6,6 +6,14 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.15.0',
+    date: '2026-11-08',
+    items: [
+      'Lee artículos de entrenamiento sin conexión desde Ejercicios: busca, combina etiquetas y consulta referencias y artículos relacionados.',
+      'El Coach cita artículos propios relevantes y enlaza al lector; el MCP permite buscarlos y consultarlos.',
+    ],
+  },
   { version: '1.14.0', date: '2026-11-07', items: ['Importa directamente tu CSV de Strong desde Ajustes: revisa sesiones, unidades y errores antes de confirmar, con copia de seguridad automática.'] },
   {
     version: '1.13.1',
