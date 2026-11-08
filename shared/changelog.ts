@@ -9,7 +9,10 @@ export const CHANGELOG: Release[] = [
   {
     version: '1.18.0',
     date: '2026-11-08',
-    items: ['Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas (también asistidas) y fondos; añade el ratio de lastre a los niveles de fuerza.'],
+    items: [
+      'Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas (también asistidas) y fondos; añade el ratio de lastre a los niveles de fuerza.',
+      'Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong.',
+    ],
   },
   {
     version: '1.17.0',

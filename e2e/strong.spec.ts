@@ -1,4 +1,4 @@
-﻿import { readFileSync, mkdirSync } from 'node:fs';
+﻿import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { SAMPLE, expect, seed, tab, test } from './fixtures';
@@ -28,10 +28,13 @@ async function choose(page: Page, buffer = input) {
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Importar CSV de Strong', exact: true }).click();
   await (await chooser).setFiles({ name: 'strong.csv', mimeType: 'text/csv', buffer });
-  return page.getByRole('dialog', { name: 'Vista previa de Strong' });
+  const dialog = page.getByRole('dialog', { name: 'Vista previa de Strong' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator(':focus')).toHaveCount(1);
+  return dialog;
 }
 for (const theme of ['light', 'dark'] as const) {
-  test(`Strong: revisar, cancelar y confirmar con backup (${theme})`, async ({ page, errors }) => {
+  test(`Strong: revisar, cancelar y confirmar con backup (${theme})`, async ({ page, errors }, testInfo) => {
     void errors;
     await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
     await seed(page, { ...SAMPLE, settings: { theme } });
@@ -43,8 +46,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(dialog.getByRole('button', { name: 'Confirmar importación' })).toBeDisabled();
     await expect(dialog.getByText('Elige la unidad de peso para continuar', { exact: true })).toHaveCount(1);
     await expect(dialog).toContainText('0 registros omitidos.');
-    mkdirSync('docs/issue-83', { recursive: true });
-    await page.screenshot({ path: `docs/issue-83/${theme}-unidad.png` });
+    await page.screenshot({ path: testInfo.outputPath(`${theme}-unidad.png`) });
     await dialog.getByLabel('Unidad de peso del CSV').selectOption('kg');
     await expect(dialog).toContainText('2 entrenamientos · 5 series · 2 ejercicios personalizados nuevos.');
     await expect(dialog).toContainText('0 registros omitidos.');
@@ -70,7 +72,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(dialog).toContainText('Dos líneas:');
     const audit = await new AxeBuilder({ page }).include('[role="dialog"]').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(audit.violations).toEqual([]);
-    await page.screenshot({ path: `docs/issue-83/${theme}-previa.png` });
+    await page.screenshot({ path: testInfo.outputPath(`${theme}-previa.png`) });
     await dialog.getByRole('button', { name: 'Confirmar importación' }).click();
     await expect(dialog).toHaveCount(0);
     await expect(page.getByText('Importados 2 entrenamientos y 5 series desde Strong.', { exact: true })).toBeVisible();
@@ -79,7 +81,7 @@ for (const theme of ['light', 'dark'] as const) {
     const backup = after.backups.find((b) => b.reason === 'antes de importar');
     expect(backup).toBeTruthy();
     expect(after.entries[`backup:${backup!.id}`]).toEqual(before.data);
-    await page.screenshot({ path: `docs/issue-83/${theme}-confirmada.png` });
+    await page.screenshot({ path: testInfo.outputPath(`${theme}-confirmada.png`) });
   });
 }
 test('Strong: resumen y confirmación en singular', async ({ page, errors }) => {
