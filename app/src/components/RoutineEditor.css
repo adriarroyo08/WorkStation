@@ -39,9 +39,10 @@
   gap: 6px;
   min-width: 0;
 }
-.rx-range label {
-  min-width: 0;
-}
 .rx-range .error {
   grid-column: 1 / -1;
+}
+
+.rx-range .error:empty {
+  display: none;
 }

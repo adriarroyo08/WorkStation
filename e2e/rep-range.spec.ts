@@ -28,6 +28,21 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(page.getByLabel('Repeticiones mínimas, serie 3', { exact: true })).toHaveValue('8');
     await expect(page.getByLabel('Repeticiones máximas, serie 3', { exact: true })).toHaveValue('12');
     await expect(min).toHaveAttribute('aria-invalid', 'false');
+    const help = page.getByText('Con un rango, la app te sugiere subir peso cuando llegues al máximo en todas las series.', { exact: true });
+    await expect(help).toHaveCount(1);
+    expect(await help.evaluate((el) => el.previousElementSibling?.classList.contains('rx-list'))).toBe(true);
+    expect(await help.evaluate((el) => el.nextElementSibling?.textContent?.includes('Añadir ejercicio'))).toBe(true);
+    const row = page.locator('.rset:not(.head)').first();
+    await expect(row.locator('label')).toHaveCount(0);
+    expect(await row.locator('.error').evaluate((el) => el.getBoundingClientRect().height)).toBe(0);
+    const headers = page.locator('.rset.head .rx-range > span');
+    await expect(headers).toHaveText(['Mín.', 'Máx.']);
+    for (const [index, field] of [min, max].entries()) {
+      const headerBox = await headers.nth(index).boundingBox();
+      const fieldBox = await field.boundingBox();
+      expect(Math.abs(headerBox!.x - fieldBox!.x)).toBeLessThan(1);
+      expect(Math.abs(headerBox!.width - fieldBox!.width)).toBeLessThan(1);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `docs/issue-119/editor-${scheme}.png`, fullPage: true });
