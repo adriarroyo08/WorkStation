@@ -77,3 +77,24 @@ El muestreo encontró dos costes distintos. React renderizaba de nuevo todas las
 Estos son acumulados instrumentados, con resolución estadística, no medianas de la referencia ni categorías que deban sumarse entre sí. La captura anterior cubre 21774,3 ms y la posterior 3769,6 ms, incluyendo consultas e instrumentación entre acciones. Para la última ampliación, CDP registró antes 2570,4 ms de espera: 1591,4 ms de script, 787,9 ms de comandos DevTools, 16,1 ms de layout y 14,4 ms de estilos; después, 222,0 ms de espera, con 44,4 ms de script, 77,2 ms de comandos, 14,5 ms de layout y 13,8 ms de estilos. Los comandos incluyen parte de la automatización; el resto de la espera contiene planificación, autoscroll y comunicación. No se equipara `ScriptDuration` exclusivamente a React.
 
 La corrección conserva las filas y SVG en el DOM: `memo` con mapa y callbacks estables evita renderizar las filas antiguas, los tres `Intl.DateTimeFormat` se reutilizan, y el nombre accesible explícito conserva todo el texto de la fila sin obligar a recorrer sus SVG decorativos. Los resúmenes siguen actualizándose al cambiar los datos o las unidades mediante el contexto del store. Hay pruebas compartidas del formato y las estadísticas (incluidos calentamientos, series pendientes, libras, pulso y ejercicios desconocidos), y un e2e que amplía por teclado hasta las 416 sesiones, comprueba sus nombres accesibles y abre la más antigua.
+
+### Referencia del build final
+
+Segunda serie posterior, otras cinco repeticiones sin instrumentación, terminada el 2026-11-08 a las 21:07:11 UTC. Build de producción de `c0dd8ac`, misma máquina, navegador, viewport y datos. Esta es la referencia vigente; la primera serie posterior se mantiene arriba para conservar la dispersión observada.
+
+| Operación                                     | Mediana (ms) | Cinco muestras (ms)                    |
+| --------------------------------------------- | -----------: | -------------------------------------- |
+| Arranque frío hasta control interactuable     |        286.4 | 1652.3, 264.8, 287.2, 286.4, 282.4     |
+| Pestaña Historial (primera visita)            |        362.8 | 362.8, 347.1, 363.6, 362.8, 347        |
+| Pestaña Ejercicios (primera visita)           |        150.3 | 214.3, 114.6, 99.3, 366.2, 150.3       |
+| Pestaña Perfil (primera visita)               |        166.9 | 170.8, 146.5, 166.9, 166.7, 289.4      |
+| Pestaña Entrenar (primera visita)             |         46.7 | 46.4, 46.6, 48.2, 47.8, 46.7           |
+| Reapertura del historial                      |         51.3 | 51.3, 51.4, 47.2, 50, 65.1             |
+| Cargar historial completo (13 ampliaciones)   |       2460.7 | 3134.5, 2303.7, 2368, 2460.7, 3043.4   |
+| Historial (ampliación más lenta)              |        455.7 | 455.7, 456.1, 458.8, 441.2, 454.5      |
+| Scroll completo (duración del recorrido)      |       2003.3 | 2005.7, 2007.6, 1996.4, 2002.2, 2003.3 |
+| Scroll completo (peor intervalo de fotograma) |         33.3 | 33.4, 33.3, 16.8, 33.3, 33.3           |
+
+Frente a la nueva serie anterior al arreglo (1945,2 ms), la mediana de la ampliación más lenta es 455,7 ms (76,6 % menos); las cinco muestras quedan entre 441,2 y 458,8 ms. Cargar las 416 sesiones baja de 15162,5 a 2460,7 ms (83,8 % menos). Ninguna espera individual medida supera 1 s de mediana. El peor intervalo de scroll es ahora 33,3 ms de mediana: los saltos de la primera serie posterior no se repiten en esta serie; no se atribuyen a una causa concreta ni se promete rendimiento idéntico bajo otra carga del sistema.
+
+Validación: `npm run check` pasa (574 tests, tipos, lint, build y bundle MCP generado sin diferencias). La suite completa de Playwright pasa con cuatro workers: 96 tests, incluidas las auditorías WCAG en claro/oscuro y las 416 sesiones por teclado. Con el paralelismo automático de 16 workers hubo fallos intermitentes en pruebas previas de RIR y selección de ejercicio; la ejecución completa se confirmó con `node node_modules/@playwright/test/cli.js test --workers=4`. No se cambian esas pruebas ni sus plazos.
