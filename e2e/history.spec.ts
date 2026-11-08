@@ -21,6 +21,6 @@ test('historial largo: conserva las 416 sesiones, su nombre accesible y la apert
   await expect(rows.last()).toHaveAccessibleName(/LUN 4 NOV 2024 Fuerza 1/);
   await rows.last().focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('h1')).toHaveText('Fuerza 1');
+  await expect(page.getByRole('heading', { level: 1, name: 'Fuerza 1', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Volver', exact: true })).toBeVisible();
 });
