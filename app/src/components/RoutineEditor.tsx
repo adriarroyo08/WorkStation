@@ -1,6 +1,6 @@
 // Editor de rutinas serie a serie (se carga bajo demanda).
 import { ask } from '../dialog';
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { ReorderSheet, moveItem } from './Reorder';
 import type { Routine, RoutineExercise, SetType } from '../../../shared/types';
 import { uid } from '../../../shared/types';
@@ -13,12 +13,14 @@ import { Back, ExerciseMedia, NumberField, Sheet, WeightField } from './ui';
 import { weightUnit } from '../../../shared/units';
 import { SET_LABEL, SET_NAMES, SET_TYPES } from '../../../shared/set-types';
 import { dragShift, dropIndex } from '../../../shared/reorder';
+import { normalizeRepRange, repRangeError } from '../../../shared/progression';
 import './RoutineEditor.css';
 
 const HOLD_MS = 450;
 
 export default function RoutineEditor({ initial, onClose }: { initial: Routine; onClose: () => void }) {
   const { data, update, settings } = useStore();
+  const errorId = useId();
   const [r, setR] = useState<Routine>(structuredClone(initial));
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
   const [reorder, setReorder] = useState(false);
@@ -106,10 +108,14 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
 
   const save = () => {
     if (!r.name.trim()) return ask.notice('Ponle un nombre a la rutina');
+    const normalized = structuredClone(r);
+    normalized.exercises.forEach((e) => {
+      e.sets = e.sets.map((s) => normalizeRepRange(s, ex.get(e.exerciseId)?.kind ?? 'weight_reps'));
+    });
     update((d) => {
       const i = d.routines.findIndex((x) => x.id === r.id);
-      if (i >= 0) d.routines[i] = r;
-      else d.routines.push(r);
+      if (i >= 0) d.routines[i] = normalized;
+      else d.routines.push(normalized);
     });
     onClose();
   };
@@ -177,6 +183,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
         {r.exercises.map((e, i) => {
           const kind = ex.get(e.exerciseId)?.kind ?? 'weight_reps';
           const dur = kind === 'duration';
+          const hasReps = ['weight_reps', 'reps', 'assisted'].includes(kind);
           const ssPrev = i > 0 && e.supersetId && r.exercises[i - 1].supersetId === e.supersetId;
           return (
             <div
@@ -238,7 +245,14 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                   <div className="rset head small muted">
                     <span>Serie</span>
                     <span>{dur ? '' : weightUnit()}</span>
-                    <span>{dur ? 'Seg' : 'Reps'}</span>
+                    {hasReps ? (
+                      <span className="rx-range">
+                        <span>Mín.</span>
+                        <span>Máx.</span>
+                      </span>
+                    ) : (
+                      <span>{dur ? 'Seg' : 'Reps'}</span>
+                    )}
                     <span />
                   </div>
                   {e.sets.map((s, si) => (
@@ -249,6 +263,30 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                       {dur ? <span /> : <WeightField aria-label={`Peso (${weightUnit()})`} kg={s.weight} placeholder="-" onChange={(v) => edit((n) => void (n.exercises[i].sets[si].weight = v))} />}
                       {dur ? (
                         <NumberField decimals={false} aria-label="Segundos" value={s.durationSec} onChange={(v) => edit((n) => void (n.exercises[i].sets[si].durationSec = v))} />
+                      ) : hasReps ? (
+                        <div className="rx-range">
+                          <NumberField
+                            decimals={false}
+                            aria-label={`Repeticiones mínimas, serie ${si + 1}`}
+                            aria-invalid={!!repRangeError(s)}
+                            aria-describedby={`${errorId}-${i}-${si}`}
+                            value={s.repsMin}
+                            placeholder="-"
+                            onChange={(v) => edit((n) => void (n.exercises[i].sets[si].repsMin = v))}
+                          />
+                          <NumberField
+                            decimals={false}
+                            aria-label={`Repeticiones máximas, serie ${si + 1}`}
+                            aria-invalid={!!repRangeError(s)}
+                            aria-describedby={`${errorId}-${i}-${si}`}
+                            value={s.reps}
+                            placeholder="-"
+                            onChange={(v) => edit((n) => void (n.exercises[i].sets[si].reps = v))}
+                          />
+                          <span id={`${errorId}-${i}-${si}`} className="small error" aria-live="polite">
+                            {repRangeError(s)}
+                          </span>
+                        </div>
                       ) : (
                         <NumberField decimals={false} aria-label="Repeticiones" value={s.reps} placeholder="-" onChange={(v) => edit((n) => void (n.exercises[i].sets[si].reps = v))} />
                       )}
@@ -257,6 +295,22 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                       </button>
                     </div>
                   ))}
+                  {hasReps && (
+                    <button
+                      className="ghost small"
+                      onClick={() =>
+                        edit((n) => {
+                          const sets = n.exercises[i].sets;
+                          sets.forEach((s) => {
+                            s.reps = sets[0].reps;
+                            s.repsMin = sets[0].repsMin;
+                          });
+                        })
+                      }
+                    >
+                      Mismo rango en todas las series
+                    </button>
+                  )}
                   <button className="ghost full icon-btn" onClick={() => edit((n) => void n.exercises[i].sets.push({ ...(n.exercises[i].sets.at(-1) ?? { type: 'normal' }) }))}>
                     <Plus size={16} /> Añadir serie
                   </button>
@@ -266,6 +320,9 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
           );
         })}
       </div>
+      {r.exercises.some((e) => ['weight_reps', 'reps', 'assisted'].includes(ex.get(e.exerciseId)?.kind ?? 'weight_reps')) && (
+        <p className="small muted">Con un rango, la app te sugiere subir peso cuando llegues al máximo en todas las series.</p>
+      )}
       <button className="primary full icon-btn" onClick={() => setPicker({})}>
         <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>

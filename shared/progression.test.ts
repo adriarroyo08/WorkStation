@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { achievements, newlyUnlocked } from './achievements';
 import { emptyData } from './data';
 import { DEFAULT_EXERCISES } from './exercises';
-import { normalizeRepRange, repTarget, suggestNext, weightStep } from './progression';
+import { normalizeRepRange, repRangeError, repTarget, suggestNext, weightStep } from './progression';
 import type { WorkoutSet } from './types';
 import { fmtWeight, fromUnit, setWeightUnit } from './units';
 
@@ -10,6 +10,16 @@ const ex = (id: string) => DEFAULT_EXERCISES.find((e) => e.id === id)!;
 const sets = (...s: [number, number, number?][]): WorkoutSet[] => s.map(([weight, reps, rpe]) => ({ type: 'normal', weight, reps, rpe, done: true }));
 
 afterEach(() => setWeightUnit('kg'));
+
+describe('validación del borrador de rango', () => {
+  it('permite objetivos fijos, rangos y mínimos iguales al techo', () => {
+    for (const set of [{}, { reps: 12 }, { reps: 12, repsMin: 8 }, { reps: 12, repsMin: 12 }]) expect(repRangeError(set)).toBeUndefined();
+  });
+  it('explica límites inválidos y mínimos sin techo', () => {
+    for (const set of [{ repsMin: 8 }, { reps: 0 }, { reps: 101 }, { reps: 12, repsMin: 0 }, { reps: 12, repsMin: 8.5 }]) expect(repRangeError(set)).toBe('Indica un número entre 1 y 100.');
+    expect(repRangeError({ reps: 8, repsMin: 12 })).toBe('Mín. no puede ser mayor que Máx.');
+  });
+});
 
 describe.each(['kg', 'lb'] as const)('doble progresión en %s', (unit) => {
   const cases: [string, number[], number | undefined, number, string, string][] = [
