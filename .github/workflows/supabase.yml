@@ -29,12 +29,12 @@ jobs:
           node-version: 22
       - name: Empaquetar función
         if: steps.check.outputs.skip != 'true'
-        run: npm --prefix mcp ci && npm --prefix mcp run build:edge
+        run: npm ci --ignore-scripts && npm --prefix mcp ci --ignore-scripts && npm --prefix mcp run build:edge
       - uses: supabase/setup-cli@v3
         if: steps.check.outputs.skip != 'true'
       - name: Desplegar
         if: steps.check.outputs.skip != 'true'
         run: |
-          supabase functions deploy mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
-          supabase functions deploy welcome --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
-          supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          supabase functions deploy mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt --yes
+          supabase functions deploy welcome --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt --yes
+          supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt --yes

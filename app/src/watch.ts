@@ -1,6 +1,7 @@
 // Reloj autónomo: el móvil le deja al reloj rutinas, biblioteca e historial, recoge los entrenos que se hacen
 // en él y le da al móvil una API key propia para subirlos a la nube aunque la app esté cerrada.
 import { useEffect } from 'react';
+import { needsWatchKey } from '../../shared/api-keys';
 import { buildWatchLibrary, parseWatchWorkout } from '../../shared/watch-library';
 import { watchKeyDue, watchKeyExpiry } from '../../shared/watch-key';
 import { cloud, useCloud, WATCH_KEY_NAME } from './cloud';
@@ -48,12 +49,15 @@ export function useWatchSync() {
   useEffect(() => {
     if (!uid || !watch.nodes.length || issuing) return;
     const have = native.watchUploadUser();
-    if (have === undefined || !watchKeyDue(have, native.watchUploadExpiry(), uid)) return;
+    if (have === undefined) return;
+    const due = watchKeyDue(have, native.watchUploadExpiry(), uid);
     issuing = true;
-    const expiresAt = watchKeyExpiry();
-    cloud
-      .createApiKey(WATCH_KEY_NAME, 'write', expiresAt)
-      .then(async (apiKey) => {
+    // Aunque no toque renovarla, la guardada puede haberse revocado desde otro dispositivo: el móvil no se entera si no lo pregunta.
+    (due ? Promise.resolve(null) : cloud.watchKeyExists())
+      .then(async (exists) => {
+        if (cloud.userId() !== uid || !(due || needsWatchKey(have, uid, exists))) return;
+        const expiresAt = watchKeyExpiry();
+        const apiKey = await cloud.createApiKey(WATCH_KEY_NAME, 'write', expiresAt);
         // Si el móvil no ha podido guardarla, no debe quedar una key huérfana en el servidor.
         if (native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid, expiresAt })) === false) await cloud.deleteApiKey(apiKey);
       })

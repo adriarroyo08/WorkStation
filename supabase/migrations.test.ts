@@ -35,8 +35,8 @@ beforeAll(async () => {
     create schema auth; create schema extensions;
     create table auth.users (id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-    create role anon; create role authenticated;
-    grant usage on schema public, auth, extensions to anon, authenticated;
+    create role anon; create role authenticated; create role service_role;
+    grant usage on schema public, auth, extensions to anon, authenticated, service_role;
     create publication supabase_realtime;
     insert into auth.users values ('${A}'), ('${B}');
   `);
@@ -59,7 +59,8 @@ beforeAll(async () => {
   `);
   await db.exec(sql('005_welcome.sql').replace(/create extension[^;]+;/, ''));
   await db.exec(sql('010_records_limits.sql'));
-  await db.exec(sql('012_api_key_revoke.sql'));
+  await db.exec(sql('012_api_key_check_news_cache.sql'));
+  await db.exec(sql('014_api_key_revoke.sql'));
 }, 60_000);
 
 const upsert = (uid: string, id: string, doc: object, ts: string) =>
@@ -146,6 +147,31 @@ describe('migraciones de Supabase', () => {
     await as(A, 'delete from public.api_keys where key_prefix = $1 and scope = $2', ['ws_tmp', scope]);
     await expect(anon('select * from public.api_records($1)', [key])).rejects.toThrow(/no válida/);
     await expect(write()).rejects.toThrow(/no válida/);
+  });
+
+  it('revocar todas las keys de una cuenta las invalida al instante y no toca las de otra', async () => {
+    const C = '00000000-0000-0000-0000-0000000000c7';
+    const D = '00000000-0000-0000-0000-0000000000d7';
+    await db.query('insert into auth.users values ($1), ($2)', [C, D]);
+    const insert = (uid: string, key: string, name: string) =>
+      db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, name, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_all', $3, 'write')`, [uid, key, name]);
+    await insert(C, 'ws_mcp_c', 'Claude');
+    await insert(C, 'ws_reloj_c', 'Reloj (subida automática)');
+    await insert(D, 'ws_mcp_d', 'Claude');
+    await anon('select * from public.api_records($1)', ['ws_reloj_c']);
+
+    // Como cloud.revokeAllApiKeys: un borrado filtrado por la propia cuenta, con RLS.
+    await as(C, 'delete from public.api_keys where user_id = $1', [C]);
+
+    for (const key of ['ws_mcp_c', 'ws_reloj_c']) {
+      await expect(anon('select * from public.api_records($1)', [key])).rejects.toThrow(/no válida/);
+      await expect(anon(`select public.api_upsert($1, '[]')`, [key])).rejects.toThrow(/no válida/);
+    }
+    await anon('select * from public.api_records($1)', ['ws_mcp_d']);
+    expect(await as(C, 'select * from public.api_keys')).toHaveLength(0);
+    // Sin sesión de esa cuenta no se puede borrar nada de otra.
+    await as(C, 'delete from public.api_keys where user_id = $1', [D]);
+    expect(await as(D, 'select * from public.api_keys')).toHaveLength(1);
   });
 
   it('rechaza el límite exacto de caducidad en ambos RPC', async () => {
@@ -384,7 +410,7 @@ describe('migraciones de Supabase', () => {
     });
   });
 
-  describe('revocar una key con la propia key (012)', () => {
+  describe('revocar una key con la propia key (014)', () => {
     const add = (key: string, prefix: string, expires: string | null = null) =>
       db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, scope, expires_at) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), $3, 'write', $4)`, [A, key, prefix, expires]);
     const revoke = (key: string) => anon<{ api_revoke_key: boolean }>(`select public.api_revoke_key($1)`, [key]).then((r) => r[0].api_revoke_key);
@@ -418,6 +444,83 @@ describe('migraciones de Supabase', () => {
       const [{ key_hash }] = (await db.query<{ key_hash: string }>(`select key_hash from public.api_keys where key_prefix = 'ws_r12b'`)).rows;
       expect(await revoke(key_hash)).toBe(false);
       expect(await count('ws_r12b')).toBe(1);
+    });
+  });
+
+  describe('comprobación de clave y caché de noticias (012)', () => {
+    const service = <T>(q: string, params: unknown[] = []): Promise<T[]> =>
+      db.transaction(async (tx) => {
+        await tx.exec('set local role service_role;');
+        return (await tx.query<T>(q, params)).rows;
+      });
+    const check = async (key: string) => (await anon<{ ok: boolean }>(`select public.api_key_check($1) as ok`, [key]))[0].ok;
+    const claim = async (source: string, ttl = 3600) => (await service<{ ok: boolean }>(`select public.news_cache_claim($1, $2) as ok`, [source, ttl]))[0].ok;
+    const store = (source: string, items: unknown[], updatedAt: string | null, error: string | null = null) =>
+      service(`select public.news_cache_store($1, $2::jsonb, $3::timestamptz, $4)`, [source, JSON.stringify(items), updatedAt, error]);
+    const row = async (source: string) => (await db.query<{ items: unknown[]; updated_at: Date | null; error: string | null; lease_until: Date | null }>(`select * from public.news_cache where source_id = $1`, [source])).rows[0];
+
+    it('api_key_check acepta claves vigentes y rechaza falsas, nulas y caducadas', async () => {
+      expect(await check(KEY_R)).toBe(true);
+      expect(await check('ws_inventada')).toBe(false);
+      expect((await anon<{ ok: boolean }>(`select public.api_key_check(null) as ok`))[0].ok).toBe(false);
+      await db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest('ws_caducada', 'sha256'), 'hex'), 'ws_c', 'read')`, [A]);
+      expect(await check('ws_caducada')).toBe(true);
+      await db.exec(`update public.api_keys set expires_at = now() - interval '1 second' where key_prefix = 'ws_c'`);
+      expect(await check('ws_caducada')).toBe(false);
+    });
+
+    it('api_key_check no gasta cuota ni marca la clave como usada', async () => {
+      const state = async () => (await db.query<{ calls: string; used: Date | null }>(`select (select coalesce(sum(calls), 0) from public.api_key_usage) as calls, (select last_used_at from public.api_keys where key_prefix = 'ws_l') as used`)).rows[0];
+      const before = await state();
+      await check(KEY_R);
+      expect(await state()).toEqual(before);
+    });
+
+    it('news_cache está cerrada para anon y authenticated, en lectura y en escritura', async () => {
+      await expect(anon(`select * from public.news_cache`)).rejects.toThrow(/permission denied/);
+      await expect(as(A, `select * from public.news_cache`)).rejects.toThrow(/permission denied/);
+      await expect(anon(`select public.news_cache_claim('x', 3600)`)).rejects.toThrow(/permission denied/);
+      await expect(as(A, `select public.news_cache_store('x', '[]'::jsonb, null)`)).rejects.toThrow(/permission denied/);
+      expect(await service(`select * from public.news_cache`)).toEqual([]);
+    });
+
+    it('solo una instancia obtiene la reserva, también a la vez', async () => {
+      const results = await Promise.all([claim('a'), claim('a'), claim('a')]);
+      expect(results.filter(Boolean)).toHaveLength(1);
+    });
+
+    it('la reserva caduca sola si la instancia desaparece', async () => {
+      expect(await claim('b')).toBe(true);
+      expect(await claim('b')).toBe(false);
+      await db.exec(`update public.news_cache set lease_until = clock_timestamp() - interval '1 second' where source_id = 'b'`);
+      expect(await claim('b')).toBe(true);
+    });
+
+    it('guardar libera la reserva y un resultado reciente no se vuelve a descargar hasta el TTL', async () => {
+      expect(await claim('c')).toBe(true);
+      await store('c', [{ id: '1' }], '2026-11-09T10:00:00Z');
+      expect(await row('c')).toMatchObject({ items: [{ id: '1' }], error: null, lease_until: null });
+      expect(await claim('c')).toBe(false);
+      await db.exec(`update public.news_cache set attempted_at = clock_timestamp() - interval '3601 seconds' where source_id = 'c'`);
+      expect(await claim('c')).toBe(true);
+    });
+
+    it('un fallo consume TTL y conserva las noticias y la fecha anteriores', async () => {
+      await store('d', [{ id: 'bueno' }], '2026-11-09T10:00:00Z');
+      await db.exec(`update public.news_cache set attempted_at = clock_timestamp() - interval '3601 seconds' where source_id = 'd'`);
+      expect(await claim('d')).toBe(true);
+      await store('d', [], null, 'Fuente no disponible');
+      const saved = await row('d');
+      expect(saved.items).toEqual([{ id: 'bueno' }]);
+      expect(saved.updated_at).toEqual(new Date('2026-11-09T10:00:00Z'));
+      expect(saved.error).toBe('Fuente no disponible');
+      expect(await claim('d')).toBe(false);
+    });
+
+    it('un primer fallo sin fila previa no guarda noticias', async () => {
+      expect(await claim('e')).toBe(true);
+      await store('e', [{ id: 'ignorado' }], null, 'Fuente no disponible');
+      expect((await row('e')).items).toEqual([]);
     });
   });
 
