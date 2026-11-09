@@ -1,6 +1,7 @@
 ﻿import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { DEFAULT_EXERCISES } from './exercises';
+import { DEFAULT_EXERCISES, EQUIPMENT } from './exercises';
+import { exerciseActivation } from './muscle-detail';
 import { emptyData, normalizeData, workoutFromRoutine } from './data';
 import { catalogExtras } from './catalog';
 import type { Routine } from './types';
@@ -9,6 +10,15 @@ const added = DEFAULT_EXERCISES.slice(-30);
 const catalog = JSON.parse(readFileSync('app/public/catalog.json', 'utf8')) as { id: string; category: string }[];
 
 describe('ampliación de la biblioteca base (#180)', () => {
+  it('usa equipos disponibles en el selector y el editor', () => {
+    for (const exercise of DEFAULT_EXERCISES) expect(EQUIPMENT, exercise.id).toContain(exercise.equipment);
+  });
+  it.each(['encogimientos-polea', 'encogimientos-maquina', 'encogimientos-barra-detras'])('no suma series de antebrazo para %s', (id) => {
+    const exercise = DEFAULT_EXERCISES.find((e) => e.id === id)!;
+    expect(exercise.secondary ?? []).not.toContain('antebrazo');
+    expect(exercise.science?.musculos.some((m) => m.id === 'antebrazo')).toBe(false);
+    expect(exerciseActivation(exercise).some((m) => m.group === 'antebrazo')).toBe(false);
+  });
   it('añade 30 ejercicios únicos y alcanza los mínimos por músculo principal', () => {
     expect(DEFAULT_EXERCISES).toHaveLength(164);
     expect(new Set(DEFAULT_EXERCISES.map((e) => e.id)).size).toBe(DEFAULT_EXERCISES.length);

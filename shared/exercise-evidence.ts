@@ -66,28 +66,19 @@ export const EXERCISE_EVIDENCE_MATRIX: Record<string, ExerciseEvidenceItem> = {
   'extension-lumbar-maquina': { patron: 'aislamiento', musculos: [{ id: 'lumbar', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
   'encogimientos-polea': {
     patron: 'aislamiento',
-    musculos: [
-      { id: 'trapecio', rol: 'principal', intensidad: 100 },
-      { id: 'antebrazo', rol: 'secundario', intensidad: 50 },
-    ],
+    musculos: [{ id: 'trapecio', rol: 'principal', intensidad: 100 }],
     evidencia: 'estimada',
     fuentes: [],
   },
   'encogimientos-maquina': {
     patron: 'aislamiento',
-    musculos: [
-      { id: 'trapecio', rol: 'principal', intensidad: 100 },
-      { id: 'antebrazo', rol: 'secundario', intensidad: 50 },
-    ],
+    musculos: [{ id: 'trapecio', rol: 'principal', intensidad: 100 }],
     evidencia: 'estimada',
     fuentes: [],
   },
   'encogimientos-barra-detras': {
     patron: 'aislamiento',
-    musculos: [
-      { id: 'trapecio', rol: 'principal', intensidad: 100 },
-      { id: 'antebrazo', rol: 'secundario', intensidad: 50 },
-    ],
+    musculos: [{ id: 'trapecio', rol: 'principal', intensidad: 100 }],
     evidencia: 'estimada',
     fuentes: [],
   },
