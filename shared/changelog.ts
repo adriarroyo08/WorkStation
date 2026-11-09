@@ -7,6 +7,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.19.0',
+    date: '2026-11-09',
+    items: [
+      'Borra tu cuenta y sus datos en la nube desde Perfil, con confirmación previa.',
+      'El cronómetro de las series por tiempo se puede pausar, no se pierde al recargar, avisa al alcanzar el objetivo y sugiere +5 s de progresión.',
+      'Al recuperar la contraseña ves tus API keys activas y puedes revocarlas todas.',
+      'Si llegas al límite de almacenamiento en la nube, la app te lo explica y conserva tus datos en el dispositivo.',
+      'Mejoras de accesibilidad, movimiento reducido y fluidez en historiales largos.',
+    ],
+  },
+  {
     version: '1.18.0',
     date: '2026-11-08',
     items: ['Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas (también asistidas) y fondos; añade el ratio de lastre a los niveles de fuerza.'],
