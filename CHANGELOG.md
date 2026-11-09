@@ -8,6 +8,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ### Corregido
 
 - El MCP remoto comprueba la API key al empezar cada petición y las noticias comparten caché entre instancias (#149); requiere la migración 012 antes de desplegar.
+- La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
 - Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
