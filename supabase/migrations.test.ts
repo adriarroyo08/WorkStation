@@ -45,6 +45,9 @@ beforeAll(async () => {
   );
   await db.exec(sql('006_api_key_expiry.sql'));
   await db.exec(sql('008_api_key_rate_limit.sql'));
+  // Fila anterior a la 009 con una fecha fuera de rango: la migración debe dejarla editable.
+  await db.query(`insert into public.records (user_id, collection, id, doc, client_updated_at) values ($1, 'workouts', 'legado', '{"v":"antes"}', '9999-01-01T00:00:00Z')`, [A]);
+  await db.exec(sql('009_client_updated_at_limit.sql'));
 }, 60_000);
 
 const upsert = (uid: string, id: string, doc: object, ts: string) =>
@@ -224,6 +227,100 @@ describe('migraciones de Supabase', () => {
       await db.query(`delete from public.api_keys where key_prefix = 'ws_rl8'`);
       expect((await usage()).rows).toEqual([]);
       await expect(call(KEY_L)).rejects.toThrow(/no válida/);
+    });
+  });
+
+  describe('client_updated_at acotado (009)', () => {
+    const KEY = 'ws_acotar_143';
+    const FAR = '9999-01-01T00:00:00Z';
+    const T0 = Date.parse('2026-03-01T10:00:00Z'); // en el pasado: updated_at sigue siendo real y creciente
+    const iso = (ms: number) => new Date(ms).toISOString();
+    const MIN = 60_000;
+    // Reloj controlado solo dentro de records_touch: el resto de funciones sigue usando pg_catalog.
+    const at = (ms: number) => db.exec(`select set_config('test.clock', '${iso(ms)}', false)`);
+    const row = async (id: string) => {
+      const [r] = await as<{ doc: { v: string }; client_updated_at: Date; updated_at: Date }>(A, `select doc, client_updated_at, updated_at from public.records where id = $1`, [id]);
+      return { v: r.doc.v, ts: r.client_updated_at.toISOString(), updated: r.updated_at.toISOString() };
+    };
+    const apiUpsert = (key: string, id: string, v: string, ts: string) =>
+      anon(`select public.api_upsert($1, $2::jsonb)`, [key, JSON.stringify([{ collection: 'workouts', id, doc: { v }, client_updated_at: ts }])]);
+
+    beforeAll(async () => {
+      await db.exec(`
+        create function public.clock_timestamp() returns timestamptz language sql as $$ select current_setting('test.clock')::timestamptz $$;
+        alter function public.records_touch() set search_path = public, pg_catalog;
+      `);
+      await db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_143', 'write')`, [A, KEY]);
+    });
+    afterAll(() => db.exec(`drop function public.clock_timestamp(); alter function public.records_touch() set search_path = ''`));
+
+    it('recorta al margen una fecha muy futura, por la app y por api_upsert', async () => {
+      await at(T0);
+      await upsert(A, 'tope-app', { v: 'app' }, FAR);
+      await apiUpsert(KEY, 'tope-api', 'api', FAR);
+      expect(await row('tope-app')).toMatchObject({ v: 'app', ts: iso(T0 + 5 * MIN) });
+      expect(await row('tope-api')).toMatchObject({ v: 'api', ts: iso(T0 + 5 * MIN) });
+    });
+
+    it('recorta también al actualizar una fila existente', async () => {
+      await at(T0);
+      await upsert(A, 'tope-update', { v: '1' }, iso(T0));
+      await apiUpsert(KEY, 'tope-update', '2', FAR);
+      expect(await row('tope-update')).toMatchObject({ v: '2', ts: iso(T0 + 5 * MIN) });
+    });
+
+    it('no toca las fechas dentro del desfase normal del reloj', async () => {
+      await at(T0);
+      await upsert(A, 'desfase-adelantado', { v: 'a' }, iso(T0 + 4 * MIN));
+      await upsert(A, 'desfase-atrasado', { v: 'b' }, iso(T0 - 60 * MIN));
+      await apiUpsert(KEY, 'desfase-limite', 'c', iso(T0 + 5 * MIN - 1000)); // aún dentro del margen
+      expect((await row('desfase-adelantado')).ts).toBe(iso(T0 + 4 * MIN));
+      expect((await row('desfase-atrasado')).ts).toBe(iso(T0 - 60 * MIN));
+      expect((await row('desfase-limite')).ts).toBe(iso(T0 + 5 * MIN - 1000));
+    });
+
+    it('un reloj muy adelantado sigue guardando sus cambios y en orden, sin error', async () => {
+      const ahead = 3 * 60 * MIN;
+      await at(T0);
+      await expect(upsert(A, 'adelantado', { v: 'primero' }, iso(T0 + ahead))).resolves.toBeDefined();
+      await at(T0 + MIN);
+      await expect(upsert(A, 'adelantado', { v: 'segundo' }, iso(T0 + MIN + ahead))).resolves.toBeDefined();
+      expect(await row('adelantado')).toMatchObject({ v: 'segundo', ts: iso(T0 + MIN + 5 * MIN) });
+    });
+
+    it('sigue ignorando una versión antigua que llega tarde', async () => {
+      await at(T0);
+      await upsert(A, 'tarde', { v: 'nuevo' }, iso(T0));
+      await upsert(A, 'tarde', { v: 'viejo' }, iso(T0 - 60 * MIN));
+      expect(await row('tarde')).toMatchObject({ v: 'nuevo', ts: iso(T0) });
+    });
+
+    it('tras revocar una key, las ediciones del usuario vuelven a ganar pasado el margen', async () => {
+      const revocada = 'ws_revocada_143';
+      await db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_rev', 'write')`, [A, revocada]);
+      await at(T0);
+      await upsert(A, 'revocada', { v: 'del usuario' }, iso(T0));
+      await at(T0 + 10_000);
+      await apiUpsert(revocada, 'revocada', 'de la key', FAR);
+      expect(await row('revocada')).toMatchObject({ v: 'de la key', ts: iso(T0 + 10_000 + 5 * MIN) });
+
+      await as(A, `delete from public.api_keys where key_prefix = 'ws_rev'`);
+      await expect(apiUpsert(revocada, 'revocada', 'otra vez', FAR)).rejects.toThrow(/no válida/);
+
+      const after = T0 + 10_000 + 5 * MIN + 1000;
+      await at(after);
+      await upsert(A, 'revocada', { v: 'editada' }, iso(after));
+      expect(await row('revocada')).toMatchObject({ v: 'editada', ts: iso(after) });
+    });
+
+    it('la migración deja editables las filas que ya estaban fuera de rango, sin tocar su contenido', async () => {
+      const legacy = await row('legado');
+      expect(legacy.v).toBe('antes');
+      expect(legacy.ts).toBe(legacy.updated); // fecha reparada: la hora en que llegó al servidor
+      const now = Date.now();
+      await at(now);
+      await upsert(A, 'legado', { v: 'editada' }, iso(now));
+      expect((await row('legado')).v).toBe('editada');
     });
   });
 });
