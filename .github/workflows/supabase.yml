@@ -37,3 +37,4 @@ jobs:
         run: |
           supabase functions deploy mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
           supabase functions deploy welcome --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt

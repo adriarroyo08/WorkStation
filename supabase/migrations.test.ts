@@ -51,6 +51,13 @@ beforeAll(async () => {
   // Fila anterior a la 009 con una fecha fuera de rango: la migración debe dejarla editable.
   await db.query(`insert into public.records (user_id, collection, id, doc, client_updated_at) values ($1, 'workouts', 'legado', '{"v":"antes"}', '9999-01-01T00:00:00Z')`, [A]);
   await db.exec(sql('009_client_updated_at_limit.sql'));
+  // 005 con lo mínimo de Supabase: pg_net no existe en PGlite y, sin project_url en Vault, el disparador no llama a nada.
+  await db.exec(`
+    alter table auth.users add column email_confirmed_at timestamptz;
+    create schema vault;
+    create view vault.decrypted_secrets as select null::text as name, null::text as decrypted_secret where false;
+  `);
+  await db.exec(sql('005_welcome.sql').replace(/create extension[^;]+;/, ''));
   await db.exec(sql('010_records_limits.sql'));
 }, 60_000);
 
@@ -468,5 +475,41 @@ describe('migraciones de Supabase', () => {
       await upsert(A, 'legado', { v: 'editada' }, iso(now));
       expect((await row('legado')).v).toBe('editada');
     });
+  });
+
+  it('al borrar un usuario desaparecen en cascada todas sus filas, y solo las suyas', async () => {
+    const C = '00000000-0000-0000-0000-0000000000c5';
+    const KEY_C = 'ws_cuenta_borrada';
+    await db.query('insert into auth.users (id) values ($1)', [C]);
+    await as(C, `insert into public.records (collection, id, doc) values ('workouts', 'de-c', '{}')`);
+    await db.query(`insert into public.welcome_sent (user_id) values ($1), ($2) on conflict do nothing`, [C, A]);
+    await db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_c', 'read')`, [C, KEY_C]);
+    await anon('select * from public.api_records($1)', [KEY_C]);
+    const [{ id: keyId }] = (await db.query<{ id: string }>('select id from public.api_keys where user_id = $1', [C])).rows;
+
+    const counts = async () => {
+      const n = async (q: string, v: string) => (await db.query<{ n: number }>(`select count(*)::int as n from ${q}`, [v])).rows[0].n;
+      return {
+        records: await n('public.records where user_id = $1', C),
+        api_keys: await n('public.api_keys where user_id = $1', C),
+        api_key_usage: await n('public.api_key_usage where key_id = $1', keyId),
+        welcome_sent: await n('public.welcome_sent where user_id = $1', C),
+      };
+    };
+    expect(Object.values(await counts()).every((n) => n > 0)).toBe(true);
+    const others = async () =>
+      (
+        await db.query<{ records: number; welcome: number }>(
+          `select (select count(*)::int from public.records where user_id <> $1) as records, (select count(*)::int from public.welcome_sent where user_id <> $1) as welcome`,
+          [C],
+        )
+      ).rows[0];
+    const before = await others();
+
+    await db.query('delete from auth.users where id = $1', [C]);
+
+    expect(await counts()).toEqual({ records: 0, api_keys: 0, api_key_usage: 0, welcome_sent: 0 });
+    expect(await others()).toEqual(before);
+    await expect(anon('select * from public.api_records($1)', [KEY_C])).rejects.toThrow(/no válida/);
   });
 });

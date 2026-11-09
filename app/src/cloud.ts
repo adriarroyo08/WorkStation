@@ -3,7 +3,7 @@ import { apiKeyExpiry } from '../../shared/api-keys';
 // - Cola de cambios pendientes (sobrevive a recargas y a estar sin conexión).
 // - Descarga incremental por `updated_at` y aviso en tiempo real desde otros dispositivos.
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
-import { get, set } from 'idb-keyval';
+import { del, get, set } from 'idb-keyval';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { applyRemote, diff, estimateClockOffset, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
 import type { WorkstationData } from '../../shared/types';
@@ -12,6 +12,7 @@ import { emptyData } from '../../shared/data';
 import { snapshot as snapshotBackup } from './backups';
 import { isNative, native } from './native';
 import { makeNonce } from '../../shared/nonce';
+import { deletionErrorMessage } from '../../shared/account-deletion';
 import { syncLimitMessage, uploadRecords, type SyncLimitCode } from '../../shared/sync-limits';
 
 export interface CloudConfig {
@@ -358,6 +359,26 @@ export const cloud = {
       await client?.from('api_keys').delete().eq('name', WATCH_KEY_NAME);
     }
     await client?.auth.signOut();
+  },
+  /** Borra la cuenta en el servidor y cierra la sesión. Los datos locales se conservan; `cloud-last-user` también, para que otra cuenta pregunte antes de mezclarlos. */
+  async deleteAccount() {
+    await ready;
+    if (!client || !userId) throw new Error('Inicia sesión para borrar la cuenta.');
+    const uid = userId;
+    switching = true; // nada se sube mientras se borra
+    try {
+      const { error } = await client.functions.invoke('delete-account', { method: 'POST' });
+      if (error) throw new Error(deletionErrorMessage(error.context?.status));
+      pending.clear();
+      blocked.clear();
+      await savePending();
+      emit({ pending: 0 });
+      await Promise.all([del(`cloud-cursor:${uid}`), del(`cloud-init:${uid}`)]);
+      if (native.watchUploadUser()) native.setWatchUpload('');
+      await client.auth.signOut({ scope: 'local' });
+    } finally {
+      switching = false;
+    }
   },
   /** A petición del usuario se reintenta también lo rechazado (puede haber liberado espacio). Devuelve si ha ido bien. */
   async syncNow() {
