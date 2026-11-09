@@ -1,16 +1,19 @@
 // Cuenta: tarjeta de Perfil, pantalla de email (entrar / crear cuenta / recuperar) y diálogo al cambiar de cuenta.
 import { Circle, CircleAlert, CircleCheck, CloudOff, CloudUpload, Eye, EyeOff, Lock, LogOut, Mail, MailCheck, MonitorSmartphone, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { cloud, setAccountSwitchPrompt, useCloud } from '../cloud';
 import { useNow } from '../store';
 import { toast } from '../toast';
 import { DELETE_ACCOUNT_WORD, deletionConfirmed } from '../../../shared/account-deletion';
+import { HEALTH_CONSENT_TEXT, PRIVACY_URL, newHealthConsent } from '../../../shared/health-consent';
 import { PASSWORD_RULES, passwordOk, passwordStrength } from '../../../shared/password';
 import { Back, Sheet } from './ui';
 
 const STATUS: Record<string, string> = {
   off: 'Sin configurar',
   'signed-out': 'Sin sesión',
+  consent: 'Pendiente de tu consentimiento',
   syncing: 'Sincronizando…',
   idle: 'Sincronizado',
   offline: 'Sin conexión (se subirá al volver)',
@@ -59,7 +62,22 @@ export const SyncArt = ({ small }: { small?: boolean }) => (
   </svg>
 );
 
-function GoogleButton({ label = 'Continuar con Google' }: { label?: string }) {
+/** Casilla sin premarcar del consentimiento de medidas corporales y pulso. */
+function HealthConsentCheck({ checked, onChange, inputRef }: { checked: boolean; onChange: (v: boolean) => void; inputRef?: RefObject<HTMLInputElement | null> }) {
+  return (
+    <div className="consent-check">
+      <label>
+        <input ref={inputRef} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <span>{HEALTH_CONSENT_TEXT}</span>
+      </label>
+      <a className="small" href={PRIVACY_URL} target="_blank" rel="noreferrer">
+        Política de privacidad
+      </a>
+    </div>
+  );
+}
+
+function GoogleButton({ label = 'Continuar con Google', consented }: { label?: string; consented: boolean }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   return (
@@ -67,12 +85,12 @@ function GoogleButton({ label = 'Continuar con Google' }: { label?: string }) {
       <button
         type="button"
         className="google-btn full"
-        disabled={busy}
+        disabled={busy || !consented}
         onClick={async () => {
           setBusy(true);
           setErr('');
           try {
-            await cloud.signInWithGoogle();
+            await cloud.signInWithGoogle(newHealthConsent());
           } catch (e) {
             setErr((e as Error).message);
           } finally {
@@ -119,7 +137,7 @@ function SharedProjectNote() {
   return (
     <p className="small muted">
       Tu copia en la nube se guarda en un proyecto de Supabase común que administra Workstation. Otros usuarios no pueden verla, pero la administración del proyecto tiene acceso técnico a ella.{' '}
-      <a href="https://github.com/adriarroyo08/WorkStation/blob/main/PRIVACY.md" target="_blank" rel="noreferrer">
+      <a href={PRIVACY_URL} target="_blank" rel="noreferrer">
         Política de privacidad
       </a>
     </p>
@@ -185,6 +203,7 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
   const now = useNow(30_000);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   if (st.email) {
     const Icon = SYNC_ICON[st.status as keyof typeof SYNC_ICON] ?? CircleCheck;
@@ -259,7 +278,12 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
         </li>
       </ul>
       <SharedProjectNote />
-      {cloud.googleAvailable() && <GoogleButton />}
+      {cloud.googleAvailable() && (
+        <>
+          <HealthConsentCheck checked={consent} onChange={setConsent} />
+          <GoogleButton consented={consent} />
+        </>
+      )}
       <button className={`${cloud.googleAvailable() ? 'outline' : 'primary'} full icon-btn`} onClick={onEmail}>
         <Mail size={16} /> Continuar con email
       </button>
@@ -331,6 +355,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [sent, setSent] = useState<'signup' | 'reset' | null>(null);
+  const [consent, setConsent] = useState(false);
   const emailOk = /^\S+@\S+\.\S+$/.test(email.trim());
 
   // Con la sesión iniciada, esta pantalla ya no hace falta.
@@ -390,7 +415,9 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
     );
 
   const google = cloud.googleAvailable();
-  const ready = emailOk && (mode === 'in' ? pw.length >= 6 : newPasswordReady(pw, pw2));
+  const askConsent = cloud.builtIn();
+  const ready = emailOk && (mode === 'in' ? pw.length >= 6 : newPasswordReady(pw, pw2) && (consent || !askConsent));
+  const consentCheck = <HealthConsentCheck checked={consent} onChange={setConsent} />;
   return (
     <section className="auth">
       <Back onClick={onBack} />
@@ -409,7 +436,8 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
       </div>
       {google && (
         <>
-          <GoogleButton label={mode === 'up' ? 'Registrarse con Google' : 'Continuar con Google'} />
+          {consentCheck}
+          <GoogleButton label={mode === 'up' ? 'Registrarse con Google' : 'Continuar con Google'} consented={consent} />
           <div className="or">o con tu email</div>
         </>
       )}
@@ -418,7 +446,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
           e.preventDefault();
           run(async () => {
             if (mode === 'in') return cloud.signIn(email.trim(), pw);
-            if ((await cloud.signUp(email.trim(), pw)) === 'confirm') setSent('signup');
+            if ((await cloud.signUp(email.trim(), pw, askConsent && consent ? newHealthConsent() : null)) === 'confirm') setSent('signup');
           });
         }}
       >
@@ -430,6 +458,7 @@ export function EmailAuth({ onBack, signUp = false }: { onBack: () => void; sign
           </span>
         </label>
         {mode === 'in' ? <PasswordInput label="Contraseña" value={pw} onChange={setPw} autoComplete="current-password" /> : <NewPasswordFields pw={pw} setPw={setPw} pw2={pw2} setPw2={setPw2} />}
+        {askConsent && !google && mode === 'up' && consentCheck}
         {err && (
           <p className="error small" role="alert">
             {err}
@@ -493,5 +522,74 @@ export function AccountSwitchDialog() {
         <p className="small muted">Los datos de este dispositivo se añaden a esa cuenta.</p>
       </div>
     </div>
+  );
+}
+
+/** Cuenta sin aceptación registrada: tapa la app hasta que acepte, cierre sesión o borre la cuenta. */
+export function HealthConsentGate() {
+  const { consent, recovery } = useCloud();
+  const [deleting, setDeleting] = useState(false);
+  // Quien llega a recuperar su contraseña la elige primero; la petición sale al continuar.
+  if (consent !== 'required' || recovery) return null;
+  return deleting ? <DeleteAccountSheet onClose={() => setDeleting(false)} /> : <HealthConsentDialog onDelete={() => setDeleting(true)} />;
+}
+
+function HealthConsentDialog({ onDelete }: { onDelete: () => void }) {
+  const [checked, setChecked] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const box = useRef<HTMLInputElement>(null);
+  useEffect(() => box.current?.focus(), []);
+  // No se cierra con Escape ni tocando fuera, y Tab no sale del diálogo: la app sigue tapada hasta decidir.
+  const keepFocus = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return;
+    const items = [...e.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled)')];
+    const edge = e.shiftKey ? items[0] : items.at(-1);
+    if (document.activeElement !== edge) return;
+    e.preventDefault();
+    (e.shiftKey ? items.at(-1) : items[0])?.focus();
+  };
+  return createPortal(
+    <div className="modal consent-gate">
+      <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="consent-title" aria-describedby="consent-text" onKeyDown={keepFocus}>
+        <h2 id="consent-title">Tu consentimiento para sincronizar</h2>
+        <p id="consent-text" className="muted">
+          Tus medidas corporales y tu pulso son datos de salud y necesitamos tu consentimiento explícito para guardarlos en la nube. Hasta que aceptes no se sincroniza nada ni se crea la clave de subida
+          del reloj. Lo que hay en este dispositivo no se toca.
+        </p>
+        <form
+          className="ask"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (busy || !checked) return;
+            setBusy(true);
+            setErr('');
+            try {
+              await cloud.acceptHealthConsent();
+            } catch (x) {
+              setErr((x as Error).message);
+              setBusy(false);
+            }
+          }}
+        >
+          <HealthConsentCheck checked={checked} onChange={setChecked} inputRef={box} />
+          {err && (
+            <p className="error small" role="alert">
+              {err}
+            </p>
+          )}
+          <button type="submit" className="primary full" disabled={busy || !checked}>
+            {busy ? 'Guardando…' : 'Aceptar y sincronizar'}
+          </button>
+          <button type="button" className="ghost icon-btn gray full" onClick={() => cloud.signOut()}>
+            <LogOut size={16} aria-hidden /> Cerrar sesión
+          </button>
+          <button type="button" className="danger icon-btn full" onClick={onDelete}>
+            <Trash2 size={16} aria-hidden /> Borrar cuenta
+          </button>
+        </form>
+      </div>
+    </div>,
+    document.body,
   );
 }

@@ -2,7 +2,7 @@ import { apiKeyExpiry, type RecoveryApiKey } from '../../shared/api-keys';
 // Cuenta y sincronización con Supabase (opcional). Sin configurar, la app funciona igual que siempre: todo local.
 // - Cola de cambios pendientes (sobrevive a recargas y a estar sin conexión).
 // - Descarga incremental por `updated_at` y aviso en tiempo real desde otros dispositivos.
-import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import type { RealtimeChannel, SupabaseClient, User } from '@supabase/supabase-js';
 import { del, get, set } from 'idb-keyval';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { applyRemote, diff, estimateClockOffset, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
@@ -14,6 +14,7 @@ import { isNative, native } from './native';
 import { makeNonce } from '../../shared/nonce';
 import { deletionErrorMessage } from '../../shared/account-deletion';
 import { syncLimitMessage, uploadRecords, type SyncLimitCode } from '../../shared/sync-limits';
+import { healthConsentMetadata, healthConsentStep, newHealthConsent, pendingHealthConsent, type HealthConsent } from '../../shared/health-consent';
 
 export interface CloudConfig {
   url: string;
@@ -26,7 +27,7 @@ export interface CloudState {
   /** Nombre y foto del perfil de Google (con email/contraseña no hay). */
   name: string | null;
   avatar: string | null;
-  status: 'off' | 'signed-out' | 'syncing' | 'idle' | 'offline' | 'error';
+  status: 'off' | 'signed-out' | 'consent' | 'syncing' | 'idle' | 'offline' | 'error';
   pending: number;
   lastSync: string | null;
   error: string | null;
@@ -36,6 +37,8 @@ export interface CloudState {
   justConfirmed: boolean;
   /** El enlace del email llegó con error (caducado, ya usado). */
   linkError: string | null;
+  /** Consentimiento de medidas y pulso. Salvo con 'ok', nada se sincroniza ni se emite la key del reloj. */
+  consent: 'ok' | 'checking' | 'required';
 }
 
 const ENV: CloudConfig = { url: import.meta.env.VITE_SUPABASE_URL ?? '', anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '' };
@@ -59,6 +62,7 @@ let state: CloudState = {
   // Solo los enlaces de email llevan `type`; al volver de Google (OAuth) la sesión entra directa, sin pantalla de "cuenta confirmada".
   justConfirmed: /[#&]access_token=/.test(authHash) && !!hashType && hashType !== 'recovery',
   linkError: /[#&]error=/.test(authHash) ? 'El enlace ha caducado o ya se usó. Vuelve a pedirlo desde la app.' : null,
+  consent: 'ok',
 };
 const subs = new Set<() => void>();
 const emit = (p: Partial<CloudState>) => {
@@ -116,11 +120,12 @@ async function setup() {
     if (uid) {
       const m = session!.user.user_metadata ?? {};
       emit({ name: m.full_name ?? m.name ?? null, avatar: m.avatar_url ?? m.picture ?? null });
-      onSignedIn(uid, session!.user.email ?? null);
+      onSignedIn(session!.user);
     } else {
       channel?.unsubscribe();
       channel = null;
-      emit({ email: null, name: null, avatar: null, status: 'signed-out' });
+      resumeConsent = null;
+      emit({ email: null, name: null, avatar: null, status: 'signed-out', consent: 'ok' });
     }
   });
   const { data } = await client.auth.getSession();
@@ -157,8 +162,53 @@ const friendly = (m: string) => {
   return new Error(es ?? 'No se ha podido completar. Inténtalo de nuevo en un momento.');
 };
 
-async function onSignedIn(uid: string, email: string | null) {
-  emit({ email, status: 'syncing', error: null });
+// Lo marcado antes de salir a Google: la redirección recarga la app y signInWithIdToken no admite metadatos.
+const CONSENT_PENDING = 'cloud-consent-pending';
+/** Comprobación de consentimiento que no se pudo hacer (sin conexión): se repite al volver la red o al sincronizar a mano. */
+let resumeConsent: (() => Promise<void>) | null = null;
+const retryConsent = () => {
+  const resume = resumeConsent;
+  resumeConsent = null;
+  return resume?.();
+};
+
+async function settleConsent(user: User): Promise<'allow' | 'ask' | 'unknown'> {
+  const pending = pendingHealthConsent(await get(CONSENT_PENDING));
+  await del(CONSENT_PENDING);
+  const stepFor = (metadata: unknown) => healthConsentStep({ sharedProject: cloud.builtIn(), metadata, pending });
+  let step = stepFor(user.user_metadata);
+  if (step === 'ask') {
+    // La sesión guardada puede ser anterior a aceptar en otro dispositivo: manda lo que diga el servidor.
+    const { data, error } = await client!.auth.getUser();
+    if (error) return 'unknown';
+    step = stepFor(data.user.user_metadata);
+  }
+  if (step !== 'save') return step;
+  const { error } = await client!.auth.updateUser({ data: healthConsentMetadata(pending!) });
+  return error ? 'ask' : 'allow';
+}
+
+async function onSignedIn(user: User): Promise<void> {
+  const uid = user.id;
+  const email = user.email ?? null;
+  // Antes del primer await: un cambio local no debe colarse mientras se comprueba.
+  emit({ email, status: 'syncing', error: null, consent: cloud.builtIn() ? 'checking' : 'ok' });
+  const result = cloud.builtIn() ? await settleConsent(user).catch(() => 'unknown' as const) : 'allow';
+  if (userId !== uid) return;
+  if (result === 'unknown') {
+    resumeConsent = () => onSignedIn(user);
+    return emit(navigator.onLine ? { status: 'error', error: 'No se ha podido comprobar tu consentimiento. Inténtalo de nuevo en un momento.' } : { status: 'offline' });
+  }
+  if (result === 'ask') {
+    // La key que ya tuviera el móvil también sube datos del reloj: se revoca y se emite otra al aceptar.
+    if (native.watchUploadUser()) native.setWatchUpload('');
+    return emit({ status: 'consent', consent: 'required' });
+  }
+  emit({ consent: 'ok' });
+  await startSync(uid, email);
+}
+
+async function startSync(uid: string, email: string | null) {
   // Otra cuenta en este dispositivo: no mezclar sus datos con los de la anterior sin preguntar.
   switching = true;
   try {
@@ -239,7 +289,7 @@ async function pull(): Promise<Set<string>> {
 }
 
 async function flush() {
-  if (switching || !client || !userId) return;
+  if (switching || state.consent !== 'ok' || !client || !userId) return;
   if (!navigator.onLine) return emit({ status: 'offline', pending: pending.size });
   emit({ status: 'syncing' });
   try {
@@ -297,12 +347,15 @@ export const cloud = {
     await set('cloud-config', cfg);
     channel?.unsubscribe();
     userId = null;
+    resumeConsent = null;
+    emit({ consent: 'ok' });
     await setup();
   },
-  async signUp(email: string, password: string) {
+  async signUp(email: string, password: string, consent: HealthConsent | null = null) {
     await ready;
     if (!client) throw new Error('Configura primero la URL y la anon key');
-    const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl() } });
+    if (cloud.builtIn() && !consent) throw new Error('Marca la casilla de consentimiento para crear la cuenta.');
+    const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl(), data: consent ? healthConsentMetadata(consent) : undefined } });
     if (error) throw friendly(error.message);
     // Con la confirmación activada, un email ya registrado no da error: devuelve un usuario sin identidades.
     if (data.user && !data.user.identities?.length) throw friendly('User already registered');
@@ -311,6 +364,7 @@ export const cloud = {
   async signIn(email: string, password: string) {
     await ready;
     if (!client) throw new Error('Configura primero la URL y la anon key');
+    await del(CONSENT_PENDING); // lo marcado para Google no vale para otra cuenta
     const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw friendly(error.message);
   },
@@ -328,25 +382,42 @@ export const cloud = {
   },
   /** Hay cliente OAuth Web configurado y la app va conectada al Supabase del build (el proveedor Google se configura allí). */
   googleAvailable: () => !!import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID && cloud.builtIn(),
-  /** Android: Credential Manager → id_token → Supabase (entra por onSignedIn, como el email). Web: redirección OAuth. Cancelar no es error. */
-  async signInWithGoogle() {
+  /** Android: Credential Manager → id_token → Supabase (entra por onSignedIn, como el email). Web: redirección OAuth. Cancelar no es error. Puede crear la cuenta, así que siempre lleva el consentimiento. */
+  async signInWithGoogle(consent: HealthConsent) {
     await ready;
     if (!client) throw new Error('Configura primero la URL y la anon key');
-    if (isNative()) {
-      const { raw, hashed } = await makeNonce();
-      let token: string | null;
-      try {
-        token = await native.googleSignIn(import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID!, hashed);
-      } catch (e) {
-        throw friendly((e as Error).message);
+    await set(CONSENT_PENDING, consent);
+    try {
+      if (isNative()) {
+        const { raw, hashed } = await makeNonce();
+        let token: string | null;
+        try {
+          token = await native.googleSignIn(import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID!, hashed);
+        } catch (e) {
+          throw friendly((e as Error).message);
+        }
+        if (!token) return void (await del(CONSENT_PENDING));
+        const { error } = await client.auth.signInWithIdToken({ provider: 'google', token, nonce: raw });
+        if (error) throw friendly(error.message);
+      } else {
+        const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectUrl() } });
+        if (error) throw friendly(error.message);
       }
-      if (!token) return;
-      const { error } = await client.auth.signInWithIdToken({ provider: 'google', token, nonce: raw });
-      if (error) throw friendly(error.message);
-    } else {
-      const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectUrl() } });
-      if (error) throw friendly(error.message);
+    } catch (e) {
+      await del(CONSENT_PENDING);
+      throw e;
     }
+  },
+  /** Guarda en la cuenta la aceptación pedida al abrir la app y arranca la sincronización. */
+  async acceptHealthConsent() {
+    await ready;
+    const uid = userId;
+    if (!client || !uid) throw friendly('Auth session missing');
+    const { error } = await client.auth.updateUser({ data: healthConsentMetadata(newHealthConsent()) });
+    if (error) throw friendly(error.message);
+    if (userId !== uid) return;
+    emit({ status: 'syncing', error: null, consent: 'ok' });
+    void startSync(uid, state.email);
   },
   /** Cierra las pantallas de "cuenta confirmada" / "nueva contraseña". */
   dismissLanding: () => emit({ recovery: false, justConfirmed: false, linkError: null }),
@@ -381,6 +452,7 @@ export const cloud = {
   /** A petición del usuario se reintenta también lo rechazado (puede haber liberado espacio). Devuelve si ha ido bien. */
   async syncNow() {
     blocked.clear();
+    await retryConsent();
     await flush();
     return state.status !== 'error';
   },
@@ -458,7 +530,10 @@ export function useCloudSync() {
       storeRef.current.replace(d);
     };
     ready = setup().catch((e) => emit({ status: 'error', error: String(e) }));
-    const online = () => schedule(flush, 200);
+    const online = () => {
+      void retryConsent();
+      schedule(flush, 200);
+    };
     window.addEventListener('online', online);
     return () => window.removeEventListener('online', online);
   }, []);

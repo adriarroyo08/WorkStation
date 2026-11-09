@@ -21,7 +21,7 @@ import { SharedRoutineImport } from './components/SharedRoutine';
 import { clock, useNow, useStore } from './store';
 import Onboarding from './components/Onboarding';
 import AuthLanding from './components/AuthLanding';
-import { AccountSwitchDialog } from './components/Account';
+import { AccountSwitchDialog, HealthConsentGate } from './components/Account';
 import { DialogHost } from './dialog';
 import { ONBOARDED_KEY, shouldShowOnboarding } from '../../shared/onboarding';
 
@@ -46,6 +46,7 @@ export default function App() {
   return (
     <>
       <AccountSwitchDialog />
+      <HealthConsentGate />
       <AppBody />
       <DialogHost />
     </>

@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.20.0',
+    date: '2026-11-09',
+    items: ['Antes de sincronizar tus medidas corporales y tu pulso te pedimos tu consentimiento explícito, al crear la cuenta o una sola vez si ya la tenías.'],
+  },
+  {
     version: '1.19.0',
     date: '2026-11-09',
     items: [

@@ -3820,3 +3820,33 @@ h1.finish-title {
   flex: 1 1 140px;
   min-width: 0;
 }
+
+/* Consentimiento de medidas corporales y pulso */
+.modal.consent-gate {
+  z-index: 200;
+}
+.consent-check {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0;
+}
+.consent-check label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.consent-check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent-ink);
+}
+.consent-check a {
+  justify-self: start;
+  margin-left: 30px;
+}
