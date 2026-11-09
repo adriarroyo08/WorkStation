@@ -149,6 +149,37 @@ const raw: Row[] = [
   ['step-down', 'Step down', 'cuadriceps', 'peso corporal', undefined, 'reps', ['gluteos']],
   ['seal-row', 'Seal row (remo tumbado en banco alto)', 'espalda', 'barra', undefined, undefined, ['dorsales', 'trapecio', 'biceps']],
   ['equilibrio-monopodal', 'Equilibrio monopodal', 'gemelos', 'peso corporal', undefined, 'duration', ['abductores', 'core']],
+  // Ampliación de grupos con menos opciones (#180).
+  ['cuello-isometrico-frontal-posterior', 'Isométrico de cuello frontal y posterior', 'cuello', 'peso corporal', 'Isometric_Neck_Exercise_-_Front_And_Back', 'duration', []],
+  ['cuello-isometrico-lateral', 'Isométrico de cuello lateral', 'cuello', 'peso corporal', 'Isometric_Neck_Exercise_-_Sides', 'duration', []],
+  ['extension-cuello-disco', 'Extensión de cuello tumbado con disco', 'cuello', 'disco', 'Lying_Face_Down_Plate_Neck_Resistance', 'weight_reps', []],
+  ['flexion-cuello-disco', 'Flexión de cuello tumbado con disco', 'cuello', 'disco', 'Lying_Face_Up_Plate_Neck_Resistance', 'weight_reps', []],
+  ['pasos-monstruo', 'Pasos de monstruo con banda', 'abductores', 'bandas', 'Monster_Walk', 'weight_reps', ['gluteos']],
+  ['abduccion-lateral', 'Abducción de cadera tumbado de lado', 'abductores', 'peso corporal', undefined, 'reps', ['gluteos']],
+  ['abduccion-polea', 'Abducción de cadera en polea', 'abductores', 'polea', undefined, 'weight_reps', ['gluteos']],
+  ['aduccion-banda', 'Aducción de cadera con banda', 'aductores', 'bandas', 'Band_Hip_Adductions', 'weight_reps', []],
+  ['aduccion-lateral', 'Aducción de cadera tumbado de lado', 'aductores', 'peso corporal', undefined, 'reps', []],
+  ['extension-lumbar-suelo', 'Extensiones lumbares en el suelo', 'lumbar', 'peso corporal', 'Hyperextensions_With_No_Hyperextension_Bench', 'reps', ['gluteos', 'isquios']],
+  ['bird-dog', 'Extensión alterna de brazo y pierna (bird dog)', 'lumbar', 'peso corporal', undefined, 'reps', ['core', 'gluteos']],
+  ['extension-lumbar-maquina', 'Extensión lumbar en máquina', 'lumbar', 'máquina', undefined, 'weight_reps', []],
+  ['encogimientos-polea', 'Encogimientos en polea', 'trapecio', 'polea', 'Cable_Shrugs', 'weight_reps', ['antebrazo']],
+  ['encogimientos-maquina', 'Encogimientos en máquina de palanca', 'trapecio', 'máquina', 'Leverage_Shrug', 'weight_reps', ['antebrazo']],
+  ['encogimientos-barra-detras', 'Encogimientos con barra por detrás', 'trapecio', 'barra', 'Barbell_Shrug_Behind_The_Back', 'weight_reps', ['antebrazo']],
+  ['extension-muneca-barra', 'Extensión de muñeca con barra en banco', 'antebrazo', 'barra', 'Palms-Down_Wrist_Curl_Over_A_Bench', 'weight_reps', []],
+  ['curl-muneca-mancuernas', 'Curl de muñeca con mancuernas en banco', 'antebrazo', 'mancuernas', 'Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench', 'weight_reps', []],
+  ['curl-muneca-polea', 'Curl de muñeca en polea', 'antebrazo', 'polea', 'Cable_Wrist_Curl', 'weight_reps', []],
+  ['curl-dedos', 'Curl de dedos con barra', 'antebrazo', 'barra', 'Finger_Curls', 'weight_reps', []],
+  ['gemelos-sentado-barra', 'Elevación de gemelos sentado con barra', 'gemelos', 'barra', 'Barbell_Seated_Calf_Raise', 'weight_reps', []],
+  ['gemelos-sentado-unilateral', 'Elevación de gemelos sentado a una pierna', 'gemelos', 'mancuernas', 'Dumbbell_Seated_One-Leg_Calf_Raise', 'weight_reps', []],
+  ['gemelos-banda', 'Elevación de gemelos con banda', 'gemelos', 'bandas', 'Calf_Raises_-_With_Bands', 'weight_reps', []],
+  ['puente-gluteo-suelo', 'Puente de glúteo sin peso', 'gluteos', 'peso corporal', 'Butt_Lift_Bridge', 'reps', ['isquios']],
+  ['puente-gluteo-unilateral', 'Puente de glúteo a una pierna', 'gluteos', 'peso corporal', 'Single_Leg_Glute_Bridge', 'reps', ['isquios']],
+  ['extension-cadera-banda', 'Extensión de cadera con banda', 'gluteos', 'bandas', 'Hip_Extension_with_Bands', 'weight_reps', ['isquios']],
+  ['pull-through', 'Extensión de cadera en polea (pull-through)', 'gluteos', 'polea', 'Pull_Through', 'weight_reps', ['isquios', 'lumbar']],
+  ['curl-femoral-fitball', 'Curl femoral con fitball', 'isquios', 'fitball', 'Ball_Leg_Curl', 'reps', ['gluteos', 'gemelos']],
+  ['curl-nordico', 'Curl nórdico', 'isquios', 'peso corporal', 'Natural_Glute_Ham_Raise', 'reps', ['gemelos', 'gluteos']],
+  ['curl-femoral-pie', 'Curl femoral de pie en máquina', 'isquios', 'máquina', 'Standing_Leg_Curl', 'weight_reps', []],
+  ['peso-muerto-unilateral-kettlebell', 'Peso muerto a una pierna con kettlebell', 'isquios', 'kettlebell', 'Kettlebell_One-Legged_Deadlift', 'weight_reps', ['gluteos', 'lumbar']],
 ];
 
 export const DEFAULT_EXERCISES: Exercise[] = raw.map(([id, name, muscle, equipment, media, kind, secondary]) => ({
@@ -230,8 +261,7 @@ export const mediaUrls = (media?: string): string[] => (!media ? [] : media.incl
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[_-]+/g, ' ');
 
 /** Texto en el que se busca un ejercicio: su nombre y, si viene del catálogo, el nombre original en inglés (sale de su id o, en wger, de `nameEn`). */
-export const exerciseSearchText = (e: Pick<Exercise, 'name' | 'media' | 'nameEn'>): string =>
-  fold(`${e.name} ${e.nameEn ?? ''} ${e.media && !e.media.includes('://') ? e.media : ''}`);
+export const exerciseSearchText = (e: Pick<Exercise, 'name' | 'media' | 'nameEn'>): string => fold(`${e.name} ${e.nameEn ?? ''} ${e.media && !e.media.includes('://') ? e.media : ''}`);
 
 /** ¿Coincide la búsqueda? Todas las palabras deben aparecer, en cualquier orden y en español o en inglés. */
 export const matchesExercise = (e: Pick<Exercise, 'name' | 'media' | 'nameEn'>, q: string): boolean => {

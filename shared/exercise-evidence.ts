@@ -10,6 +10,162 @@ export interface ExerciseEvidenceItem extends ExerciseScience {
 }
 
 export const EXERCISE_EVIDENCE_MATRIX: Record<string, ExerciseEvidenceItem> = {
+  'cuello-isometrico-frontal-posterior': { patron: 'aislamiento', musculos: [{ id: 'cuello', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'cuello-isometrico-lateral': { patron: 'aislamiento', musculos: [{ id: 'cuello', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'extension-cuello-disco': { patron: 'aislamiento', musculos: [{ id: 'cuello', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'flexion-cuello-disco': { patron: 'aislamiento', musculos: [{ id: 'cuello', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'pasos-monstruo': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'abductores', rol: 'principal', intensidad: 100 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'abduccion-lateral': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'abductores', rol: 'principal', intensidad: 100 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'abduccion-polea': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'abductores', rol: 'principal', intensidad: 100 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'aduccion-banda': { patron: 'aislamiento', musculos: [{ id: 'aductores', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'aduccion-lateral': { patron: 'aislamiento', musculos: [{ id: 'aductores', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'extension-lumbar-suelo': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'lumbar', rol: 'principal', intensidad: 100 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+      { id: 'isquios', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'bird-dog': {
+    patron: 'antirrotacion',
+    musculos: [
+      { id: 'lumbar', rol: 'principal', intensidad: 100 },
+      { id: 'core', rol: 'secundario', intensidad: 50 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'extension-lumbar-maquina': { patron: 'aislamiento', musculos: [{ id: 'lumbar', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'encogimientos-polea': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'trapecio', rol: 'principal', intensidad: 100 },
+      { id: 'antebrazo', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'encogimientos-maquina': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'trapecio', rol: 'principal', intensidad: 100 },
+      { id: 'antebrazo', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'encogimientos-barra-detras': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'trapecio', rol: 'principal', intensidad: 100 },
+      { id: 'antebrazo', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'extension-muneca-barra': { patron: 'aislamiento', musculos: [{ id: 'antebrazo', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'curl-muneca-mancuernas': { patron: 'aislamiento', musculos: [{ id: 'antebrazo', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'curl-muneca-polea': { patron: 'aislamiento', musculos: [{ id: 'antebrazo', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'curl-dedos': { patron: 'aislamiento', musculos: [{ id: 'antebrazo', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'gemelos-sentado-barra': { patron: 'aislamiento', musculos: [{ id: 'gemelos', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'gemelos-sentado-unilateral': { patron: 'aislamiento', musculos: [{ id: 'gemelos', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'gemelos-banda': { patron: 'aislamiento', musculos: [{ id: 'gemelos', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'puente-gluteo-suelo': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'gluteos', rol: 'principal', intensidad: 100 },
+      { id: 'isquios', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'puente-gluteo-unilateral': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'gluteos', rol: 'principal', intensidad: 100 },
+      { id: 'isquios', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'extension-cadera-banda': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'gluteos', rol: 'principal', intensidad: 100 },
+      { id: 'isquios', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'pull-through': {
+    patron: 'bisagra',
+    musculos: [
+      { id: 'gluteos', rol: 'principal', intensidad: 100 },
+      { id: 'isquios', rol: 'secundario', intensidad: 50 },
+      { id: 'lumbar', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'curl-femoral-fitball': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'isquios', rol: 'principal', intensidad: 100 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+      { id: 'gemelos', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'curl-nordico': {
+    patron: 'aislamiento',
+    musculos: [
+      { id: 'isquios', rol: 'principal', intensidad: 100 },
+      { id: 'gemelos', rol: 'secundario', intensidad: 50 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
+  'curl-femoral-pie': { patron: 'aislamiento', musculos: [{ id: 'isquios', rol: 'principal', intensidad: 100 }], evidencia: 'estimada', fuentes: [] },
+  'peso-muerto-unilateral-kettlebell': {
+    patron: 'bisagra',
+    musculos: [
+      { id: 'isquios', rol: 'principal', intensidad: 100 },
+      { id: 'gluteos', rol: 'secundario', intensidad: 50 },
+      { id: 'lumbar', rol: 'secundario', intensidad: 50 },
+    ],
+    evidencia: 'estimada',
+    fuentes: [],
+  },
   'plancha-copenhague': {
     patron: 'antirrotacion',
     musculos: [

@@ -5,6 +5,10 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+### Añadido
+
+- 30 ejercicios en la biblioteca base para cuello, abductores, aductores, lumbar, trapecio, antebrazo, gemelos, glúteos e isquios, sin duplicar ejercicios ya importados del catálogo (#180).
+
 ### Seguridad
 
 - La función del email de bienvenida exige un secreto compartido y responde con mensajes genéricos; requiere configurar `WELCOME_SECRET` y aplicar a mano la migración 012 antes de desplegarla (#150).
