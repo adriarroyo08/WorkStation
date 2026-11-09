@@ -1,9 +1,9 @@
-import { apiKeyExpiry } from '../../shared/api-keys';
+import { apiKeyExpiry, type RecoveryApiKey } from '../../shared/api-keys';
 // Cuenta y sincronización con Supabase (opcional). Sin configurar, la app funciona igual que siempre: todo local.
 // - Cola de cambios pendientes (sobrevive a recargas y a estar sin conexión).
 // - Descarga incremental por `updated_at` y aviso en tiempo real desde otros dispositivos.
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
-import { get, set } from 'idb-keyval';
+import { del, get, set } from 'idb-keyval';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { applyRemote, diff, estimateClockOffset, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
 import type { WorkstationData } from '../../shared/types';
@@ -12,6 +12,7 @@ import { emptyData } from '../../shared/data';
 import { snapshot as snapshotBackup } from './backups';
 import { isNative, native } from './native';
 import { makeNonce } from '../../shared/nonce';
+import { deletionErrorMessage } from '../../shared/account-deletion';
 import { syncLimitMessage, uploadRecords, type SyncLimitCode } from '../../shared/sync-limits';
 
 export interface CloudConfig {
@@ -352,12 +353,30 @@ export const cloud = {
   /** ¿La configuración activa es la del build (no una propia del usuario)? */
   builtIn: () => !!ENV.url && cfg.url === ENV.url && cfg.anonKey === ENV.anonKey,
   async signOut() {
-    // La key con la que el móvil sube los entrenos del reloj es de esta cuenta: se borra con la sesión.
-    if (native.watchUploadUser()) {
-      native.setWatchUpload('');
-      await client?.from('api_keys').delete().eq('name', WATCH_KEY_NAME);
-    }
+    // La key con la que el móvil sube los entrenos del reloj es de esta cuenta: el móvil la revoca con ella misma,
+    // así que funciona aunque ahora no haya conexión y la sesión ya no exista cuando vuelva.
+    if (native.watchUploadUser()) native.setWatchUpload('');
     await client?.auth.signOut();
+  },
+  /** Borra la cuenta en el servidor y cierra la sesión. Los datos locales se conservan; `cloud-last-user` también, para que otra cuenta pregunte antes de mezclarlos. */
+  async deleteAccount() {
+    await ready;
+    if (!client || !userId) throw new Error('Inicia sesión para borrar la cuenta.');
+    const uid = userId;
+    switching = true; // nada se sube mientras se borra
+    try {
+      const { error } = await client.functions.invoke('delete-account', { method: 'POST' });
+      if (error) throw new Error(deletionErrorMessage(error.context?.status));
+      pending.clear();
+      blocked.clear();
+      await savePending();
+      emit({ pending: 0 });
+      await Promise.all([del(`cloud-cursor:${uid}`), del(`cloud-init:${uid}`)]);
+      if (native.watchUploadUser()) native.setWatchUpload('');
+      await client.auth.signOut({ scope: 'local' });
+    } finally {
+      switching = false;
+    }
   },
   /** A petición del usuario se reintenta también lo rechazado (puede haber liberado espacio). Devuelve si ha ido bien. */
   async syncNow() {
@@ -377,6 +396,34 @@ export const cloud = {
     const { error } = await client.from('api_keys').insert({ name, key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope, expires_at });
     if (error) throw new Error(error.message);
     return key;
+  },
+  /** Borra una API key de esta cuenta a partir de su valor en claro. */
+  async deleteApiKey(key: string) {
+    const { error } = (await client?.from('api_keys').delete().eq('key_hash', await sha256Hex(key))) ?? {};
+    if (error) throw new Error(error.message);
+  },
+  /** Keys de la cuenta. Un proyecto propio sin la migración de API keys no tiene ninguna. */
+  async listApiKeys(): Promise<RecoveryApiKey[]> {
+    await ready;
+    if (!client) throw new Error('Configura primero la URL y la anon key');
+    const { data, error } = await client.from('api_keys').select('id,name,key_prefix,expires_at').order('created_at', { ascending: false });
+    if (error?.code === '42P01' || error?.code === 'PGRST205') return [];
+    if (error) throw friendly(error.message);
+    return (data ?? []) as RecoveryApiKey[];
+  },
+  /** Borra todas las keys de la cuenta: dejan de valer en la siguiente llamada, porque cada una se busca en la tabla. */
+  async revokeAllApiKeys() {
+    await ready;
+    if (!client || !userId) throw friendly('Auth session missing');
+    const { error } = await client.from('api_keys').delete().eq('user_id', userId);
+    if (error) throw friendly(error.message);
+    if (native.watchUploadUser()) native.setWatchUpload('');
+  },
+  /** ¿Sigue en el servidor la key del reloj? null si no se ha podido saber. */
+  async watchKeyExists(): Promise<boolean | null> {
+    if (!client) return null;
+    const { data, error } = await client.from('api_keys').select('id').eq('name', WATCH_KEY_NAME).limit(1);
+    return error ? null : (data?.length ?? 0) > 0;
   },
 };
 

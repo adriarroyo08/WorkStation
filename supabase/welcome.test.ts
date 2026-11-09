@@ -105,12 +105,12 @@ describe('disparador de bienvenida (012)', () => {
   }, 60_000);
 
   it('no se aplica si falta el secreto en Vault', async () => {
-    await expect(db.exec(sql('012_welcome_secret.sql'))).rejects.toThrow(/welcome_secret/);
+    await expect(db.exec(sql('013_welcome_secret.sql'))).rejects.toThrow(/welcome_secret/);
   });
 
   it('envía el secreto al confirmarse la cuenta, una sola vez', async () => {
     await db.query(`insert into vault.decrypted_secrets values ('welcome_secret', $1)`, [SECRET]);
-    await db.exec(sql('012_welcome_secret.sql'));
+    await db.exec(sql('013_welcome_secret.sql'));
     await db.query('insert into auth.users (id) values ($1)', [ID]);
     expect(await calls()).toHaveLength(0);
     await db.query('update auth.users set email_confirmed_at = now() where id = $1', [ID]);

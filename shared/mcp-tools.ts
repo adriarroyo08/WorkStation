@@ -423,11 +423,12 @@ export const TOOLS: ToolDef[] = [
   }),
   tool({
     name: 'import_from_hevy',
-    description: 'Importa tus entrenamientos desde la API oficial de Hevy (requiere Hevy Pro y la variable de entorno HEVY_API_KEY en el servidor MCP).',
+    description: 'Importa tus entrenamientos desde la API oficial de Hevy. Solo en el MCP local: requiere Hevy Pro y la variable de entorno HEVY_API_KEY en tu ordenador.',
     write: true,
     shape: {},
     run: async (src) => {
-      const key = src.env?.('HEVY_API_KEY');
+      if (!src.env) return 'La importación desde la API de Hevy no está disponible en el MCP remoto. Usa el MCP local con tu HEVY_API_KEY o importa el CSV de Hevy desde los Ajustes de la app.';
+      const key = src.env('HEVY_API_KEY');
       if (!key) return 'Falta HEVY_API_KEY en la configuración del servidor MCP.';
       const data = await src.load();
       return write(src, data, hevySummary(convertHevyApiWorkouts(data, await fetchHevyWorkouts(key))));

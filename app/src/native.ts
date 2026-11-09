@@ -22,8 +22,9 @@ interface NativeApi {
   sendLibraryToWatch?(json: string): void;
   requestWatchWorkouts?(): void;
   ackWatchWorkout?(id: string): void;
-  setWatchUpload?(json: string): void;
+  setWatchUpload?(json: string): boolean;
   watchUploadUser?(): string;
+  watchUploadExpiry?(): string;
 }
 
 const api = (): NativeApi | undefined => (window as unknown as { WorkstationNative?: NativeApi }).WorkstationNative;
@@ -123,10 +124,12 @@ export const native = {
   sendLibraryToWatch: (json: string) => api()?.sendLibraryToWatch?.(json),
   requestWatchWorkouts: () => api()?.requestWatchWorkouts?.(),
   ackWatchWorkout: (id: string) => api()?.ackWatchWorkout?.(id),
-  /** Credenciales para que el móvil suba solo los entrenos del reloj ('' las borra). */
+  /** Credenciales para que el móvil suba solo los entrenos del reloj. Al sustituirlas o borrarlas (''), el móvil revoca la key anterior, ahora o cuando haya red. false si no se han podido guardar. */
   setWatchUpload: (json: string) => api()?.setWatchUpload?.(json),
   /** Usuario de las credenciales guardadas: '' si no hay, undefined si esta versión no lo admite. */
   watchUploadUser: (): string | undefined => api()?.watchUploadUser?.(),
+  /** Caducidad de la key guardada (ISO): '' si no tiene. La key en sí nunca vuelve a la web. */
+  watchUploadExpiry: (): string | undefined => api()?.watchUploadExpiry?.(),
   async saveFile(name: string, blob: Blob): Promise<boolean> {
     const a = api();
     if (!a) return false;

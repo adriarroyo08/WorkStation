@@ -4,7 +4,7 @@
 //   SUPABASE_ACCESS_TOKEN=sbp_…  SMTP_USER=…@smtp-brevo.com  SMTP_PASS=xsmtpsib-…  MAIL_FROM=tu@email.com  WELCOME_SECRET=…  node supabase/templates/apply.mjs
 //
 // SUPABASE_ACCESS_TOKEN: supabase.com → Account → Access Tokens.
-// WELCOME_SECRET: el mismo valor que `welcome_secret` en Vault (ver 012_welcome_secret.sql).
+// WELCOME_SECRET: el mismo valor que `welcome_secret` en Vault (ver 013_welcome_secret.sql).
 // Brevo (por defecto): SMTP & API → SMTP → login y clave SMTP; MAIL_FROM, un remitente verificado en Brevo (Senders).
 // Gmail: SMTP_HOST=smtp.gmail.com, SMTP_USER y MAIL_FROM = tu Gmail, SMTP_PASS = contraseña de aplicación.
 // PROJECT_REF por defecto: el de Workstation.

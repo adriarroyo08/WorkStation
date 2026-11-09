@@ -1,4 +1,4 @@
-// Email de bienvenida. La llama el trigger de 012_welcome_secret.sql con { user_id } al confirmarse una cuenta.
+// Email de bienvenida. La llama el trigger de 013_welcome_secret.sql con { user_id } al confirmarse una cuenta.
 // Envía por SMTP (secrets SMTP_HOST, SMTP_USER, SMTP_PASS y MAIL_FROM; por defecto el relay de Brevo). Se despliega con --no-verify-jwt:
 // se autentica con el secret WELCOME_SECRET, que debe valer lo mismo que `welcome_secret` en Vault. La lógica está en handler.ts.
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
