@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cloudSource, RateLimitError } from './cloud-source';
 import { COACH_SYSTEM_PROMPT } from './ai';
 import { handleMcp, MAX_BATCH, MAX_BODY_BYTES } from './mcp-http';
@@ -15,6 +15,7 @@ function fakeSupabase(validKey = 'ws_ok', writable = true) {
     const fn = url.split('/rpc/')[1];
     calls.push(fn);
     const body = JSON.parse(String(init.body));
+    if (fn === 'api_key_check') return new Response(JSON.stringify(body.p_key === validKey));
     if (body.p_key !== validKey) return new Response(JSON.stringify({ message: 'API key no válida' }), { status: 400 });
     if (fn === 'api_records') return new Response(JSON.stringify([...rows.values()]));
     if (fn === 'api_upsert') {
@@ -85,6 +86,42 @@ describe('origen nube con API key', () => {
   });
 });
 
+describe('import_from_hevy', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('la Edge Function responde sin leer ninguna clave de Hevy del entorno', async () => {
+    const secrets: Record<string, string> = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'anon', HEVY_API_KEY: 'hevy_servidor' };
+    const get = vi.fn((name: string): string | undefined => secrets[name]);
+    const hevy = vi.fn(async () => new Response('{}', { status: 500 }));
+    let serve: (req: Request) => Response | Promise<Response> = () => new Response(null, { status: 500 });
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL) => (String(input).endsWith('/api_key_check') ? new Response('true') : hevy()));
+    vi.stubGlobal('Deno', { env: { get }, resolveDns: async () => [], serve: (handler: typeof serve) => void (serve = handler) });
+    await import('../mcp/src/edge');
+
+    const res = await serve(
+      new Request('https://fn/mcp', {
+        method: 'POST',
+        headers: { authorization: 'Bearer ws_ok', 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'import_from_hevy', arguments: {} } }),
+      }),
+    );
+
+    expect((await res.json()).result.content[0].text).toMatch(/no está disponible en el MCP remoto/);
+    expect(get).not.toHaveBeenCalledWith('HEVY_API_KEY');
+    expect(hevy).not.toHaveBeenCalled();
+  });
+
+  it('el MCP local usa su HEVY_API_KEY', async () => {
+    const hevy = vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify({ page_count: 1, workouts: [] })));
+    vi.stubGlobal('fetch', hevy);
+    const src = cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: 'ws_ok', fetch: fakeSupabase().f, env: (name) => (name === 'HEVY_API_KEY' ? 'hevy_local' : undefined) });
+
+    expect((await callTool(src, 'import_from_hevy', {})).isError).toBeFalsy();
+    expect(hevy.mock.calls[0][0]).toContain('api.hevyapp.com');
+    expect(hevy.mock.calls[0][1].headers).toMatchObject({ 'api-key': 'hevy_local' });
+  });
+});
+
 describe('MCP por HTTP', () => {
   const sb = fakeSupabase();
   const handler = (req: Request) => handleMcp(req, (key) => cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: key, fetch: sb.f }));
@@ -120,10 +157,96 @@ describe('MCP por HTTP', () => {
     const undeclared = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body: stream, duplex: 'half' } as RequestInit));
     expect(undeclared.status).toBe(413);
   });
-  it('key en la URL y sin key', async () => {
+  it('rechaza la key en la URL y la petición sin key', async () => {
     const r = await post({ jsonrpc: '2.0', id: 1, method: 'ping' }, '', 'https://fn/mcp?key=ws_ok');
-    expect((await r.json()).result).toEqual({});
+    expect(r.status).toBe(401);
+    expect((await r.json()).error.code).toBe(-32001);
     expect((await handler(new Request('https://fn/mcp', { method: 'POST', body: '{}' }))).status).toBe(401);
+  });
+  it('acepta la key en x-api-key', async () => {
+    const r = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { 'x-api-key': 'ws_ok' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) }));
+    expect((await r.json()).result).toEqual({});
+  });
+});
+
+describe('validación de la API key antes de atender', () => {
+  const sb = fakeSupabase();
+  const handler = (req: Request) => handleMcp(req, (key) => cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: key, fetch: sb.f }));
+  const post = (body: unknown, key = 'ws_mal') =>
+    handler(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+  const articleTool = { name: 'search_articles', arguments: { query: 'creatina' } };
+
+  it.each([
+    ['initialize', { method: 'initialize', params: {} }],
+    ['ping', { method: 'ping' }],
+    ['tools/list', { method: 'tools/list' }],
+    ['resources/list', { method: 'resources/list' }],
+    ['resources/read', { method: 'resources/read', params: { uri: 'x' } }],
+    ['tools/call sin datos', { method: 'tools/call', params: articleTool }],
+    ['tools/call con datos', { method: 'tools/call', params: { name: 'training_summary', arguments: {} } }],
+  ])('responde 401 a %s con una clave inválida', async (_name, message) => {
+    const res = await post({ jsonrpc: '2.0', id: 1, ...message });
+    expect(res.status).toBe(401);
+    expect((await res.json()).error.code).toBe(-32001);
+  });
+
+  it('responde 401 también a notificaciones y lotes, sin llegar a leer datos', async () => {
+    sb.calls.length = 0;
+    expect((await post({ jsonrpc: '2.0', method: 'notifications/initialized' })).status).toBe(401);
+    expect((await post([{ jsonrpc: '2.0', id: 1, method: 'ping' }])).status).toBe(401);
+    expect(sb.calls).toEqual(['api_key_check', 'api_key_check']);
+  });
+
+  it('atiende con una clave válida y la comprueba una sola vez por petición, sea cual sea el lote', async () => {
+    sb.calls.length = 0;
+    const res = await post(
+      Array.from({ length: 3 }, (_, i) => ({ jsonrpc: '2.0', id: i, method: 'tools/call', params: articleTool })),
+      'ws_ok',
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toHaveLength(3);
+    expect(sb.calls.filter((c) => c === 'api_key_check')).toHaveLength(1);
+  });
+
+  it.each(['abc', 'sk_12345', 'ws_', `ws_${'a'.repeat(129)}`, 'ws_con espacio'])('rechaza la forma incorrecta %s sin consultar la base de datos', async (key) => {
+    sb.calls.length = 0;
+    const res = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { 'x-api-key': key }, body: '{}' }));
+    expect(res.status).toBe(401);
+    expect(sb.calls).toEqual([]);
+  });
+
+  it('no lee el cuerpo de una petición con clave inválida', async () => {
+    const res = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_mal' }, body: 'esto no es JSON' }));
+    expect(res.status).toBe(401);
+  });
+
+  it('responde 503 con Retry-After, no 401, si no se puede comprobar la clave', async () => {
+    const f = (async () => new Response('caído', { status: 500 })) as unknown as typeof fetch;
+    const res = await handleMcp(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body: '{}' }), (key) =>
+      cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: key, fetch: f }),
+    );
+    expect(res.status).toBe(503);
+    expect(res.headers.get('retry-after')).toBe('5');
+  });
+
+  it('solo OPTIONS y GET quedan abiertos, sin consultar la clave', async () => {
+    sb.calls.length = 0;
+    expect((await handler(new Request('https://fn/mcp', { method: 'OPTIONS' }))).status).toBe(204);
+    const info = await handler(new Request('https://fn/mcp'));
+    expect(info.status).toBe(200);
+    expect((await info.json()).name).toBe('workstation');
+    expect(sb.calls).toEqual([]);
+  });
+
+  it('verifyKey no acepta nada distinto de true', async () => {
+    const answer = (text: string) => (async () => new Response(text)) as unknown as typeof fetch;
+    for (const [text, expected] of [
+      ['true', true],
+      ['false', false],
+      ['[]', false],
+      ['"true"', false],
+    ] as const)
+      expect(await cloudSource({ url: 'u', anonKey: 'a', apiKey: 'ws_ok', fetch: answer(text) }).verifyKey()).toBe(expected);
   });
 });
 
@@ -148,7 +271,7 @@ describe('auditoría del servidor MCP remoto', () => {
     expect(data.workouts).toHaveLength(1500);
     expect(calls).toEqual([null, rows[999].updated_at]);
 
-    const src = { label: 'x', load: async () => emptyData(), save: async () => {} };
+    const src = { label: 'x', load: async () => emptyData(), save: async () => {}, verifyKey: async () => true };
     const post = (body: string) => handleMcp(new Request('http://x/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body }), () => src);
     expect((await post('null')).status).toBe(400);
     const batch = await (await post('[null, {"jsonrpc":"2.0","id":1,"method":"ping"}]')).json();
@@ -449,7 +572,8 @@ describe('límite por API key en el MCP', () => {
   // Supabase simulado con cuota: tras `quota` llamadas responde 429 como PostgREST con SQLSTATE PGRST.
   function limited(quota: number) {
     let n = 0;
-    const f = (async () => {
+    const f = (async (url: string) => {
+      if (url.endsWith('/api_key_check')) return new Response('true'); // no gasta cuota
       if (++n > quota)
         return new Response(JSON.stringify({ code: 'WS429', message: 'Demasiadas peticiones con esta API key (máximo 60 por minuto). Reintenta en 42 s.' }), {
           status: 429,

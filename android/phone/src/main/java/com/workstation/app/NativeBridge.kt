@@ -40,10 +40,13 @@ class NativeBridge(private val activity: MainActivity) {
     fun ackWatchWorkout(id: String) = WatchWorkouts.ack(ctx, id)
 
     @JavascriptInterface
-    fun setWatchUpload(json: String) = WatchWorkouts.setUpload(ctx, json)
+    fun setWatchUpload(json: String): Boolean = WatchWorkouts.setUpload(ctx, json)
 
     @JavascriptInterface
     fun watchUploadUser(): String = WatchWorkouts.uploadUser(ctx)
+
+    @JavascriptInterface
+    fun watchUploadExpiry(): String = WatchWorkouts.uploadExpiry(ctx)
 
     @JavascriptInterface
     fun requestWatchStatus() {

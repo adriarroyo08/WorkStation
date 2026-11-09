@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId = "com.workstation.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = (System.getenv("VERSION_CODE") ?: "3").toInt()
         // La misma versión que ve el usuario en la app (Novedades), sacada de app/package.json.
         versionName = Regex("\"version\":\\s*\"([^\"]+)\"").find(rootDir.resolve("../app/package.json").readText())!!.groupValues[1]
@@ -71,6 +71,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.appcompat:appcompat:1.8.0")
     implementation("androidx.webkit:webkit:1.18.0")
+    implementation("androidx.work:work-runtime:2.10.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("androidx.wear:wear-remote-interactions:1.1.0")
     implementation("androidx.credentials:credentials:1.5.0")
