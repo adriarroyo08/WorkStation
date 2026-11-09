@@ -1,4 +1,4 @@
--- Workstation: límites de almacenamiento por documento y por usuario (issue #142). Ejecútalo después de 008.
+-- Workstation: límites de almacenamiento por documento y por usuario (issue #142). Ejecútalo después de 009.
 --
 -- Van en disparadores para cubrir por igual la sesión normal y api_upsert. Referencia de tamaños (jsonb::text):
 -- entreno normal con pulso ~9 KB, entreno extremo (40 ejercicios x 20 series, notas largas) ~160 KB; 5.000 entrenos

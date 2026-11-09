@@ -10,7 +10,7 @@ import { EXERCISE_KIND_LABELS, MUSCLE_LABELS, MOVEMENT_PATTERN_LABELS, catalogLa
 import { MuscleFilter, MuscleMap } from './BodyMap';
 import { exerciseActivation } from '../../../shared/muscle-detail';
 import { availableExerciseScience, formatScientificAuthors } from '../../../shared/exercise-filter';
-import { estimate1RM, exerciseHistory, formatDuration, formatSet, personalRecords, repRecords } from '../../../shared/stats';
+import { estimate1RM, exerciseHistory, formatSeconds, formatSet, personalRecords, repRecords } from '../../../shared/stats';
 import type { Exercise, ExerciseKind, WorkoutSet } from '../../../shared/types';
 import { cap, fmtDate, useStore } from '../store';
 import ExerciseEditor from './ExerciseEditor';
@@ -118,7 +118,7 @@ export default function ExercisesTab({ openId, onOpened, onClose }: { openId?: s
                   <small className="muted right exrow-pr">
                     <span className="exrow-trophy">
                       <Trophy size={16} className="ico" />{' '}
-                      {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatDuration(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
+                      {pr.best1RM ? fmtWeight(pr.best1RM) : pr.maxDuration ? formatSeconds(pr.maxDuration) : pr.maxDistance ? `${pr.maxDistance} m` : `${pr.maxReps} reps`}
                     </span>
                     <br />
                     <span>{pr.sessions} ses.</span>
@@ -261,7 +261,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const since = range === 'all' ? 0 : Date.now() - (range === '3m' ? 90 : 365) * 864e5;
   const chartHistory = m === 'totalLoad' || m === 'bodyweight1RM' ? bwHistory : h;
   const pts = chartHistory.filter((s) => Date.parse(s.date) >= since).map((s) => ({ x: Date.parse(s.date), y: Math.round((s[m as keyof typeof s] as number) * 10) / 10 }));
-  const fmtMetric = (k: Metric, v: number) => (k === 'maxDuration' ? formatDuration(v) : k === 'maxDistance' ? `${v} m` : k.includes('Reps') ? `${v}` : fmtWeight(v, { decimals: 1 }));
+  const fmtMetric = (k: Metric, v: number) => (k === 'maxDuration' ? formatSeconds(v) : k === 'maxDistance' ? `${v} m` : k.includes('Reps') ? `${v}` : fmtWeight(v, { decimals: 1 }));
 
   const translate = async () => {
     if (!instructions?.length) return;
@@ -395,7 +395,7 @@ function ExerciseDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 </>
               ) : e.kind === 'duration' ? (
                 <>
-                  <Stat value={formatDuration(pr.maxDuration)} label="mejor tiempo" />
+                  <Stat value={formatSeconds(pr.maxDuration)} label="mejor tiempo" />
                   <Stat value={pr.sessions} label="sesiones" />
                 </>
               ) : e.kind === 'distance' ? (
@@ -587,7 +587,7 @@ function Records({ id, e }: { id: string; e: Exercise }) {
             {pr.maxDuration > 0 && (
               <tr>
                 <td>Más tiempo</td>
-                <td className="rec-val">{formatDuration(pr.maxDuration)}</td>
+                <td className="rec-val">{formatSeconds(pr.maxDuration)}</td>
               </tr>
             )}
             {pr.maxDistance > 0 && (

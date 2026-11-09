@@ -1,7 +1,7 @@
 // Sincronización por registros: cada objeto de la app es una fila (colección + id).
 // Se envían solo los registros que cambian y, en conflicto, gana el cambio más reciente.
 import { emptyData, normalizeData } from './data';
-import type { WorkstationData } from './types';
+import { DEFAULT_SETTINGS, type WorkstationData } from './types';
 
 export const COLLECTIONS = ['workouts', 'routines', 'folders', 'exercises', 'measurements', 'settings'] as const;
 export type Collection = (typeof COLLECTIONS)[number];
@@ -45,6 +45,34 @@ export function diff(prev: Map<string, string>, next: WorkstationData, now = new
   return out;
 }
 
+const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+const validExercises = (v: unknown) => Array.isArray(v) && v.every((e) => isObject(e) && typeof e.exerciseId === 'string' && Array.isArray(e.sets));
+
+/**
+ * ¿Se puede aplicar este documento remoto? La base de datos guarda JSON libre: una API key de escritura filtrada podría
+ * dejar filas que rompen la app en todos los dispositivos y pueden impedir llegar a la pantalla donde se revoca.
+ */
+export function validRemoteDoc(collection: Collection, id: string, doc: unknown): boolean {
+  if (!isObject(doc)) return false;
+  if (collection === 'settings') return true;
+  if (doc.id !== id) return false;
+  if (collection === 'workouts') return typeof doc.name === 'string' && typeof doc.startedAt === 'string' && validExercises(doc.exercises);
+  if (collection === 'routines') return typeof doc.name === 'string' && validExercises(doc.exercises);
+  if (collection === 'measurements') return typeof doc.date === 'string';
+  return typeof doc.name === 'string'; // folders y exercises
+}
+
+const SETTINGS_SHAPE: Record<string, unknown> = { ...DEFAULT_SETTINGS, barLb: 0, platesLb: [] };
+/** Descarta los ajustes remotos con un tipo distinto del esperado; los campos desconocidos se conservan (versiones futuras). */
+function validSettings(doc: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(doc).filter(([k, v]) => {
+      const shape = SETTINGS_SHAPE[k];
+      return shape === undefined || (Array.isArray(shape) ? Array.isArray(v) : typeof v === typeof shape);
+    }),
+  );
+}
+
 // Aplica registros remotos sobre los datos locales. `pendingTs` = cambios locales aún no subidos
 // (clave → fecha): si el local es más nuevo, se conserva el local.
 export function applyRemote(data: WorkstationData, rows: SyncRecord[], pendingTs: Map<string, string> = new Map()): { data: WorkstationData; changed: number } {
@@ -52,12 +80,13 @@ export function applyRemote(data: WorkstationData, rows: SyncRecord[], pendingTs
   let changed = 0;
   for (const r of rows) {
     if (!COLLECTIONS.includes(r.collection)) continue;
+    if (!r.deleted && r.doc && !validRemoteDoc(r.collection, r.id, r.doc)) continue;
     const local = pendingTs.get(recordKey(r.collection, r.id));
     // Fechas comparadas como fechas: el servidor las devuelve como "…+00:00" con microsegundos y el cliente como "…Z".
     if (local && Date.parse(local) > Date.parse(r.client_updated_at)) continue;
     if (r.collection === 'settings') {
       if (!r.deleted && r.doc) {
-        d.settings = { ...d.settings, ...(r.doc as object) };
+        d.settings = { ...d.settings, ...validSettings(r.doc as Record<string, unknown>) };
         changed++;
       }
       continue;

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { deduplicateNews, NEWS_SUMMARY_MAX_CHARS, normalizeNewsItem, parseNewsFeed } from './news';
+import { deduplicateNews, NEWS_SUMMARY_MAX_CHARS, NEWS_TEXT_INPUT_MAX, normalizeNewsItem, parseNewsFeed } from './news';
 import { NEWS_SOURCE_CANDIDATES } from './news-sources';
 
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/news/${name}.xml`, import.meta.url), 'utf8');
@@ -64,6 +64,21 @@ describe('fixtures sintéticos de fuentes aprobadas', () => {
     expect(articles[0]!.shortSummary.length).toBeGreaterThan(0);
     expect(JSON.stringify(articles)).not.toMatch(/FULL_ARTICLE|NO_SUMMARY_FALLBACK/);
     expect(articles[0]!.publishedAt).toMatch(/T.*Z$/);
+  });
+});
+
+describe('entradas patológicas (auditoría de seguridad)', () => {
+  const sourceId = NEWS_SOURCE_CANDIDATES.find((s) => s.status === 'aprobada')!.id;
+
+  it('muchos "<" sin cierre no bloquean la limpieza del texto', () => {
+    const start = performance.now();
+    const item = normalizeNewsItem({ sourceId, title: '<'.repeat(2_000_000), url: 'https://a.example/x' });
+    expect(performance.now() - start).toBeLessThan(2000);
+    expect(item?.title.length).toBeLessThanOrEqual(NEWS_TEXT_INPUT_MAX);
+  });
+
+  it('sigue quitando etiquetas con comillas y deja un "<" suelto', () => {
+    expect(normalizeNewsItem({ sourceId, title: 'a < b <img alt="x>y" src=z> c', url: 'https://a.example/x' })?.title).toBe('a < b c');
   });
 });
 

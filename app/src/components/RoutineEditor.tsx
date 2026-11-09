@@ -251,7 +251,7 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                         <span>Máx.</span>
                       </span>
                     ) : (
-                      <span>{dur ? 'Seg' : 'Reps'}</span>
+                      <span>{dur ? 'Objetivo (s)' : 'Reps'}</span>
                     )}
                     <span />
                   </div>
@@ -262,7 +262,12 @@ export default function RoutineEditor({ initial, onClose }: { initial: Routine; 
                       </button>
                       {dur ? <span /> : <WeightField aria-label={`Peso (${weightUnit()})`} kg={s.weight} placeholder="-" onChange={(v) => edit((n) => void (n.exercises[i].sets[si].weight = v))} />}
                       {dur ? (
-                        <NumberField decimals={false} aria-label="Segundos" value={s.durationSec} onChange={(v) => edit((n) => void (n.exercises[i].sets[si].durationSec = v))} />
+                        <NumberField
+                          decimals={false}
+                          aria-label={`Objetivo en segundos, serie ${si + 1}`}
+                          value={s.durationSec}
+                          onChange={(v) => edit((n) => void (n.exercises[i].sets[si].durationSec = v))}
+                        />
                       ) : hasReps ? (
                         <div className="rx-range">
                           <NumberField
