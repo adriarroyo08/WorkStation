@@ -8,7 +8,8 @@ const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const jwt = (sub: string) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.firma`;
 
 class Mock {
-  calls: { path: string; method: string; search: string; body?: unknown }[] = [];
+  calls: { path: string; method: string; search: string; body?: unknown; authorization?: string }[] = [];
+  deleteStatus = 200;
   async attach(page: Page) {
     await page.context().route(`${URL_}/**`, (r) => this.handle(r));
   }
@@ -16,7 +17,8 @@ class Mock {
     const req = route.request();
     const u = new URL(req.url());
     const json = (body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-    this.calls.push({ path: u.pathname, method: req.method(), search: u.search, body: req.postData() ? req.postDataJSON() : undefined });
+    this.calls.push({ path: u.pathname, method: req.method(), search: u.search, body: req.postData() ? req.postDataJSON() : undefined, authorization: req.headers().authorization });
+    if (u.pathname === '/functions/v1/delete-account') return json({ deleted: this.deleteStatus === 200 }, this.deleteStatus);
     if (u.pathname === '/auth/v1/token') {
       const { email } = req.postDataJSON() as { email: string };
       const id = email.startsWith('ana') ? 'user-ana' : 'user-bea';
@@ -110,6 +112,48 @@ test('con sesión, la tarjeta muestra el email y Cerrar sesión', async ({ page,
   await expect(page.locator('.account')).toContainText('ana@example.com');
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await expect(page.getByText('Inicia sesión para sincronizar')).toBeVisible();
+});
+
+const openDeleteAccount = async (page: Page) => {
+  await page.getByRole('button', { name: 'Borrar cuenta' }).click();
+  return page.getByRole('dialog', { name: '¿Borrar tu cuenta?' });
+};
+
+test('borrar la cuenta pide confirmación, usa la sesión y deja la app sin sesión', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  await mock.attach(page);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  const dialog = await openDeleteAccount(page);
+  const confirm = dialog.getByRole('button', { name: 'Borrar definitivamente' });
+  await expect(dialog.getByLabel('Escribe BORRAR para confirmar')).toBeFocused();
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel('Escribe BORRAR para confirmar').fill('borra');
+  await expect(confirm).toBeDisabled();
+  expect((await new AxeBuilder({ page }).include('.sheet').analyze()).violations).toEqual([]);
+  await dialog.getByLabel('Escribe BORRAR para confirmar').fill('BORRAR');
+  await confirm.click();
+  await expect(page.getByText('Inicia sesión para sincronizar')).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+  const [call] = mock.hit('/functions/v1/delete-account').filter((c) => c.method === 'POST');
+  const payload = call.authorization!.replace('Bearer ', '').split('.')[1];
+  expect(JSON.parse(Buffer.from(payload, 'base64url').toString()).sub).toBe('user-ana');
+});
+
+test('si falla el borrado de la cuenta, avisa y mantiene la sesión', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  mock.deleteStatus = 502;
+  await mock.attach(page);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  const dialog = await openDeleteAccount(page);
+  await dialog.getByLabel('Escribe BORRAR para confirmar').fill('BORRAR');
+  await dialog.getByRole('button', { name: 'Borrar definitivamente' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('No se ha podido borrar la cuenta');
+  await dialog.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.locator('.account')).toContainText('ana@example.com');
 });
 
 test('¿Olvidaste tu contraseña? pide el email de recuperación', async ({ page, errors }) => {
