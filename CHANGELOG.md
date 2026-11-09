@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Corregido
 
+- La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
 - Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
