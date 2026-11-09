@@ -136,6 +136,31 @@ describe('migraciones de Supabase', () => {
     await expect(write()).rejects.toThrow(/no válida/);
   });
 
+  it('revocar todas las keys de una cuenta las invalida al instante y no toca las de otra', async () => {
+    const C = '00000000-0000-0000-0000-00000000000c';
+    const D = '00000000-0000-0000-0000-00000000000d';
+    await db.query('insert into auth.users values ($1), ($2)', [C, D]);
+    const insert = (uid: string, key: string, name: string) =>
+      db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, name, scope) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), 'ws_all', $3, 'write')`, [uid, key, name]);
+    await insert(C, 'ws_mcp_c', 'Claude');
+    await insert(C, 'ws_reloj_c', 'Reloj (subida automática)');
+    await insert(D, 'ws_mcp_d', 'Claude');
+    await anon('select * from public.api_records($1)', ['ws_reloj_c']);
+
+    // Como cloud.revokeAllApiKeys: un borrado filtrado por la propia cuenta, con RLS.
+    await as(C, 'delete from public.api_keys where user_id = $1', [C]);
+
+    for (const key of ['ws_mcp_c', 'ws_reloj_c']) {
+      await expect(anon('select * from public.api_records($1)', [key])).rejects.toThrow(/no válida/);
+      await expect(anon(`select public.api_upsert($1, '[]')`, [key])).rejects.toThrow(/no válida/);
+    }
+    await anon('select * from public.api_records($1)', ['ws_mcp_d']);
+    expect(await as(C, 'select * from public.api_keys')).toHaveLength(0);
+    // Sin sesión de esa cuenta no se puede borrar nada de otra.
+    await as(C, 'delete from public.api_keys where user_id = $1', [D]);
+    expect(await as(D, 'select * from public.api_keys')).toHaveLength(1);
+  });
+
   it('rechaza el límite exacto de caducidad en ambos RPC', async () => {
     // Reloj SQL fijo para comprobar la igualdad, sin esperas ni carreras de milisegundos.
     await db.transaction(async (tx) => {
