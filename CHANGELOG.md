@@ -8,12 +8,14 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 ### Corregido
 
 - Al recuperar la contraseña, la pantalla muestra las API keys activas y ofrece revocarlas todas, incluida la del reloj, que el móvil renueva sola (#144).
+- La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
 - Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
 
 ### Añadido
 
+- Borrado de cuenta desde Perfil, con confirmación, y política de privacidad que describe el proyecto común de Supabase (#146).
 - Cronómetro de serie con pausa que no se pierde al recargar, aviso al alcanzar el objetivo, progresión de +5 s según el objetivo de la rutina y tiempos en `mm:ss` o `X s` (#139).
 - Auditoría de seguridad previa a la beta (#138) en `docs/seguridad.md`, con refuerzos en enlaces compartidos, sincronización, noticias, MCP y Coach.
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).
@@ -27,6 +29,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Seguridad
 
+- `import_from_hevy` queda solo para el MCP local con tu propia `HEVY_API_KEY`; el MCP remoto lo indica con un mensaje claro (#145).
+- Límites de almacenamiento en la nube por registro y por cuenta: si se alcanzan, la app lo explica, conserva los datos en el dispositivo y sigue subiendo el resto (#142).
 - El servidor limita `client_updated_at` a su hora más 5 minutos, así una fecha futura no bloquea las ediciones posteriores de un registro; requiere aplicar a mano la migración 009 (#143).
 
 ## [1.18.0] - 2026-11-08

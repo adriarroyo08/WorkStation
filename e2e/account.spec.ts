@@ -8,9 +8,13 @@ const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const jwt = (sub: string) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.firma`;
 
 class Mock {
-  calls: { path: string; method: string; search: string; body?: unknown }[] = [];
   keys: Record<string, unknown>[] = [];
   keysDeleteFails = 0;
+  calls: { path: string; method: string; search: string; body?: unknown; authorization?: string }[] = [];
+  deleteStatus = 200;
+  /** Id del registro que el servidor rechaza por tamaño; como en la base de datos, se rechaza todo su lote. */
+  rejectId: string | null = null;
+  saved = new Set<string>();
   async attach(page: Page) {
     await page.context().route(`${URL_}/**`, (r) => this.handle(r));
   }
@@ -18,7 +22,8 @@ class Mock {
     const req = route.request();
     const u = new URL(req.url());
     const json = (body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-    this.calls.push({ path: u.pathname, method: req.method(), search: u.search, body: req.postData() ? req.postDataJSON() : undefined });
+    this.calls.push({ path: u.pathname, method: req.method(), search: u.search, body: req.postData() ? req.postDataJSON() : undefined, authorization: req.headers().authorization });
+    if (u.pathname === '/functions/v1/delete-account') return json({ deleted: this.deleteStatus === 200 }, this.deleteStatus);
     if (u.pathname === '/auth/v1/token') {
       const { email } = req.postDataJSON() as { email: string };
       const id = email.startsWith('ana') ? 'user-ana' : 'user-bea';
@@ -28,7 +33,13 @@ class Mock {
     if (u.pathname === '/auth/v1/recover') return json({});
     if (u.pathname === '/auth/v1/user') return json({ id: 'user-ana', aud: 'authenticated', email: 'ana@example.com' });
     if (u.pathname === '/auth/v1/logout') return route.fulfill({ status: 204 });
-    if (u.pathname === '/rest/v1/records') return req.method() === 'GET' ? json([]) : route.fulfill({ status: 201, body: '' });
+    if (u.pathname === '/rest/v1/records') {
+      if (req.method() === 'GET') return json([]);
+      const rows = req.postDataJSON() as { id: string }[];
+      if (rows.some((r) => r.id === this.rejectId)) return json({ code: 'WS413', message: 'Este registro es demasiado grande para la nube (máximo 1 MB).' }, 413);
+      rows.forEach((r) => this.saved.add(r.id));
+      return route.fulfill({ status: 201, body: '' });
+    }
     if (u.pathname === '/rest/v1/api_keys') {
       if (req.method() !== 'DELETE') return json(this.keys);
       if (this.keysDeleteFails-- > 0) return json({ message: 'fallo' }, 500);
@@ -120,6 +131,48 @@ test('con sesión, la tarjeta muestra el email y Cerrar sesión', async ({ page,
   await expect(page.getByText('Inicia sesión para sincronizar')).toBeVisible();
 });
 
+const openDeleteAccount = async (page: Page) => {
+  await page.getByRole('button', { name: 'Borrar cuenta' }).click();
+  return page.getByRole('dialog', { name: '¿Borrar tu cuenta?' });
+};
+
+test('borrar la cuenta pide confirmación, usa la sesión y deja la app sin sesión', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  await mock.attach(page);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  const dialog = await openDeleteAccount(page);
+  const confirm = dialog.getByRole('button', { name: 'Borrar definitivamente' });
+  await expect(dialog.getByLabel('Escribe BORRAR para confirmar')).toBeFocused();
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel('Escribe BORRAR para confirmar').fill('borra');
+  await expect(confirm).toBeDisabled();
+  expect((await new AxeBuilder({ page }).include('.sheet').analyze()).violations).toEqual([]);
+  await dialog.getByLabel('Escribe BORRAR para confirmar').fill('BORRAR');
+  await confirm.click();
+  await expect(page.getByText('Inicia sesión para sincronizar')).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+  const [call] = mock.hit('/functions/v1/delete-account').filter((c) => c.method === 'POST');
+  const payload = call.authorization!.replace('Bearer ', '').split('.')[1];
+  expect(JSON.parse(Buffer.from(payload, 'base64url').toString()).sub).toBe('user-ana');
+});
+
+test('si falla el borrado de la cuenta, avisa y mantiene la sesión', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  mock.deleteStatus = 502;
+  await mock.attach(page);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  const dialog = await openDeleteAccount(page);
+  await dialog.getByLabel('Escribe BORRAR para confirmar').fill('BORRAR');
+  await dialog.getByRole('button', { name: 'Borrar definitivamente' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('No se ha podido borrar la cuenta');
+  await dialog.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.locator('.account')).toContainText('ana@example.com');
+});
+
 test('¿Olvidaste tu contraseña? pide el email de recuperación', async ({ page, errors }) => {
   void errors;
   const mock = new Mock();
@@ -188,6 +241,52 @@ test('con el diálogo de cambio de cuenta abierto no se sube nada a la cuenta nu
   expect(posts()).toBe(before);
   await dlg.getByRole('button', { name: 'Subir también estos datos' }).click();
   await expect.poll(posts).toBeGreaterThan(before);
+});
+
+test('un registro rechazado por límite no bloquea el resto, se explica, no se reintenta solo y sigue en el dispositivo', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  mock.rejectId = 'w1';
+  await mock.attach(page);
+  await seed(page, SAMPLE);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  const aviso = page.getByText('Algunos registros son demasiado grandes para la nube y no se han subido. Siguen guardados en este dispositivo.');
+  await expect(aviso).toBeVisible();
+  await expect(page.getByText('1 pendientes')).toBeVisible();
+  expect([...mock.saved].sort()).toEqual(expect.arrayContaining(['w0', 'w2', 'm1', 'ta', 'pa', 'f']));
+  expect(mock.saved.has('w1')).toBe(false);
+
+  // Sin bucle: en reposo no vuelve a enviar nada, tampoco al recuperar la conexión.
+  const posts = () => mock.hit('/rest/v1/records').filter((c) => c.method === 'POST').length;
+  const quietas = posts();
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForTimeout(2500);
+  expect(posts()).toBe(quietas);
+
+  // A petición del usuario sí se reintenta, sin decir "Sincronizado" si sigue fallando.
+  await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await expect.poll(posts).toBeGreaterThan(quietas);
+  await expect(aviso).toBeVisible();
+  await expect(page.getByText('Sincronizado', { exact: true })).toHaveCount(0);
+
+  // El dato rechazado sigue en local y se sube cuando el servidor lo admite.
+  expect(
+    await page.evaluate(
+      () =>
+        new Promise<string[]>((resolve) => {
+          const open = indexedDB.open('keyval-store');
+          open.onsuccess = () => {
+            const get = open.result.transaction('keyval').objectStore('keyval').get('data');
+            get.onsuccess = () => resolve((get.result as { workouts: { id: string }[] }).workouts.map((w) => w.id));
+          };
+        }),
+    ),
+  ).toContain('w1');
+  mock.rejectId = null;
+  await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await expect(aviso).toHaveCount(0);
+  expect(mock.saved.has('w1')).toBe(true);
 });
 
 test.describe('enlaces del email', () => {
