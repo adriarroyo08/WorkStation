@@ -17,4 +17,4 @@ const collectNews = createNewsCollector(fetch, async (host) => {
   return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
 });
 
-Deno.serve((req) => (new URL(req.url).pathname.endsWith('/mcp/news') ? handleNews(req, collectNews) : handleMcp(req, (apiKey) => cloudSource({ url, anonKey, apiKey, env: (n) => Deno.env.get(n) }))));
+Deno.serve((req) => (new URL(req.url).pathname.endsWith('/mcp/news') ? handleNews(req, collectNews) : handleMcp(req, (apiKey) => cloudSource({ url, anonKey, apiKey }))));

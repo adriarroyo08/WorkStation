@@ -10,6 +10,9 @@ const jwt = (sub: string) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, 
 class Mock {
   calls: { path: string; method: string; search: string; body?: unknown; authorization?: string }[] = [];
   deleteStatus = 200;
+  /** Id del registro que el servidor rechaza por tamaño; como en la base de datos, se rechaza todo su lote. */
+  rejectId: string | null = null;
+  saved = new Set<string>();
   async attach(page: Page) {
     await page.context().route(`${URL_}/**`, (r) => this.handle(r));
   }
@@ -28,7 +31,13 @@ class Mock {
     if (u.pathname === '/auth/v1/recover') return json({});
     if (u.pathname === '/auth/v1/user') return json({ id: 'user-ana', aud: 'authenticated', email: 'ana@example.com' });
     if (u.pathname === '/auth/v1/logout') return route.fulfill({ status: 204 });
-    if (u.pathname === '/rest/v1/records') return req.method() === 'GET' ? json([]) : route.fulfill({ status: 201, body: '' });
+    if (u.pathname === '/rest/v1/records') {
+      if (req.method() === 'GET') return json([]);
+      const rows = req.postDataJSON() as { id: string }[];
+      if (rows.some((r) => r.id === this.rejectId)) return json({ code: 'WS413', message: 'Este registro es demasiado grande para la nube (máximo 1 MB).' }, 413);
+      rows.forEach((r) => this.saved.add(r.id));
+      return route.fulfill({ status: 201, body: '' });
+    }
     return json({}, 404);
   }
   hit = (path: string) => this.calls.filter((c) => c.path === path);
@@ -224,6 +233,52 @@ test('con el diálogo de cambio de cuenta abierto no se sube nada a la cuenta nu
   expect(posts()).toBe(before);
   await dlg.getByRole('button', { name: 'Subir también estos datos' }).click();
   await expect.poll(posts).toBeGreaterThan(before);
+});
+
+test('un registro rechazado por límite no bloquea el resto, se explica, no se reintenta solo y sigue en el dispositivo', async ({ page, errors }) => {
+  void errors;
+  const mock = new Mock();
+  mock.rejectId = 'w1';
+  await mock.attach(page);
+  await seed(page, SAMPLE);
+  await configure(page);
+  await login(page, 'ana@example.com');
+  const aviso = page.getByText('Algunos registros son demasiado grandes para la nube y no se han subido. Siguen guardados en este dispositivo.');
+  await expect(aviso).toBeVisible();
+  await expect(page.getByText('1 pendientes')).toBeVisible();
+  expect([...mock.saved].sort()).toEqual(expect.arrayContaining(['w0', 'w2', 'm1', 'ta', 'pa', 'f']));
+  expect(mock.saved.has('w1')).toBe(false);
+
+  // Sin bucle: en reposo no vuelve a enviar nada, tampoco al recuperar la conexión.
+  const posts = () => mock.hit('/rest/v1/records').filter((c) => c.method === 'POST').length;
+  const quietas = posts();
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForTimeout(2500);
+  expect(posts()).toBe(quietas);
+
+  // A petición del usuario sí se reintenta, sin decir "Sincronizado" si sigue fallando.
+  await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await expect.poll(posts).toBeGreaterThan(quietas);
+  await expect(aviso).toBeVisible();
+  await expect(page.getByText('Sincronizado', { exact: true })).toHaveCount(0);
+
+  // El dato rechazado sigue en local y se sube cuando el servidor lo admite.
+  expect(
+    await page.evaluate(
+      () =>
+        new Promise<string[]>((resolve) => {
+          const open = indexedDB.open('keyval-store');
+          open.onsuccess = () => {
+            const get = open.result.transaction('keyval').objectStore('keyval').get('data');
+            get.onsuccess = () => resolve((get.result as { workouts: { id: string }[] }).workouts.map((w) => w.id));
+          };
+        }),
+    ),
+  ).toContain('w1');
+  mock.rejectId = null;
+  await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
+  await expect(aviso).toHaveCount(0);
+  expect(mock.saved.has('w1')).toBe(true);
 });
 
 test.describe('enlaces del email', () => {

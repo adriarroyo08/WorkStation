@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Corregido
 
+- La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
 - Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
@@ -27,6 +28,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Seguridad
 
+- `import_from_hevy` queda solo para el MCP local con tu propia `HEVY_API_KEY`; el MCP remoto lo indica con un mensaje claro (#145).
+- Límites de almacenamiento en la nube por registro y por cuenta: si se alcanzan, la app lo explica, conserva los datos en el dispositivo y sigue subiendo el resto (#142).
 - El servidor limita `client_updated_at` a su hora más 5 minutos, así una fecha futura no bloquea las ediciones posteriores de un registro; requiere aplicar a mano la migración 009 (#143).
 
 ## [1.18.0] - 2026-11-08
