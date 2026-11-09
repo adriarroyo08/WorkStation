@@ -157,7 +157,7 @@ describe('biblioteca MCP embebida', () => {
     // El transporte crea el origen autenticado, pero los recursos no usan load/save.
     const load = vi.fn(),
       save = vi.fn();
-    const source = () => ({ label: 'test', load, save });
+    const source = () => ({ label: 'test', load, save, verifyKey: async () => true });
     const rpc = async (method: string, params = {}) =>
       (
         await handleMcp(

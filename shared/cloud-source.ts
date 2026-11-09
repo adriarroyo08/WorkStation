@@ -26,7 +26,12 @@ export interface CloudSourceOptions {
   env?: (name: string) => string | undefined;
 }
 
-export function cloudSource(o: CloudSourceOptions): DataSource {
+export interface CloudSource extends DataSource {
+  /** Indica si la clave existe y no ha caducado, sin leer datos ni gastar cuota. Lanza si no se ha podido comprobar. */
+  verifyKey(): Promise<boolean>;
+}
+
+export function cloudSource(o: CloudSourceOptions): CloudSource {
   const f = o.fetch ?? fetch;
   let base: Map<string, string> | null = null;
   const rpc = async (fn: string, body: unknown) => {
@@ -51,6 +56,7 @@ export function cloudSource(o: CloudSourceOptions): DataSource {
   return {
     label: 'tu cuenta de Workstation (Supabase)',
     env: o.env,
+    verifyKey: async () => (await rpc('api_key_check', { p_key: o.apiKey })) === true,
     async load(): Promise<WorkstationData> {
       // La API devuelve como mucho 1000 filas por llamada: se pide por páginas desde el último updated_at.
       const rows: SyncRecord[] = [];

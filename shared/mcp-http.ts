@@ -2,7 +2,7 @@
 // Sirve en Supabase Edge Functions (Deno) y en Node. La API key llega en
 // `Authorization: Bearer ws_…`, en `x-api-key` o en la URL (`?key=ws_…`, para clientes que solo aceptan una URL).
 import { ARTICLE_RESOURCE, readArticleResource } from './article-resource';
-import { RateLimitError } from './cloud-source';
+import { RateLimitError, type CloudSource } from './cloud-source';
 import { callTool, MCP_INSTRUCTIONS, TOOLS, toolAnnotations, toolJsonSchema, type DataSource } from './mcp-tools';
 
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
@@ -11,6 +11,9 @@ const SERVER = { name: 'workstation', version: '0.7.0' };
 export const MAX_BATCH = 20;
 // Tope del cuerpo de una petición: se comprueba antes de parsear, porque cualquier valor de clave llega hasta aquí.
 export const MAX_BODY_BYTES = 1_000_000;
+// Forma de una clave real (ws_ + base64url): lo que no la cumple se rechaza sin llegar a la base de datos.
+const API_KEY_SHAPE = /^ws_[A-Za-z0-9_-]{1,128}$/;
+const INVALID_KEY = 'API key de Workstation no válida o caducada';
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -58,13 +61,26 @@ async function readLimited(req: Request, max: number): Promise<string | undefine
   }
 }
 
-export async function handleMcp(req: Request, sourceFor: (apiKey: string) => DataSource): Promise<Response> {
+export async function handleMcp(req: Request, sourceFor: (apiKey: string) => CloudSource): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   if (req.method === 'GET') return reply({ name: SERVER.name, version: SERVER.version, transport: 'streamable-http', tools: TOOLS.map((t) => t.name) });
   if (req.method !== 'POST') return reply(rpcError(null, -32600, 'Método HTTP no soportado'), 405);
 
   const key = apiKeyFrom(req);
   if (!key) return reply(rpcError(null, -32001, 'Falta la API key de Workstation (Authorization: Bearer ws_…)'), 401);
+  if (!API_KEY_SHAPE.test(key)) return reply(rpcError(null, -32001, INVALID_KEY), 401);
+
+  // Todo POST exige una clave válida, también initialize y tools/list: los clientes ya envían la clave desde el primer mensaje.
+  // Una sola comprobación por petición HTTP, sea cual sea el tamaño del lote, y antes de leer el cuerpo.
+  const base = sourceFor(key);
+  let valid: boolean;
+  try {
+    valid = await base.verifyKey();
+  } catch {
+    // No saber si la clave vale no es lo mismo que saber que no vale: un 401 haría creer al cliente que debe cambiarla.
+    return reply(rpcError(null, -32603, 'No se ha podido comprobar la API key; reinténtalo en unos segundos'), 503, { 'retry-after': '5' });
+  }
+  if (!valid) return reply(rpcError(null, -32001, INVALID_KEY), 401);
 
   const raw = await readLimited(req, MAX_BODY_BYTES);
   if (raw === undefined) return reply(rpcError(null, -32600, `Petición demasiado grande (máximo ${MAX_BODY_BYTES} bytes)`), 413);
@@ -82,8 +98,7 @@ export async function handleMcp(req: Request, sourceFor: (apiKey: string) => Dat
       if (e instanceof RateLimitError) state.limited = e;
       throw e;
     });
-  const base = sourceFor(key);
-  const src: DataSource = { ...base, load: () => watch(base.load()), save: (d) => watch(base.save(d)) };
+  const src: DataSource ={ ...base, load: () => watch(base.load()), save: (d) => watch(base.save(d)) };
   const done = (out: unknown) =>
     state.limited
       ? reply(out ?? rpcError(null, -32029, state.limited.message), 429, { 'retry-after': String(state.limited.retryAfter) })
