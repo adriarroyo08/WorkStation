@@ -5,6 +5,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+## [1.19.0] - 2026-11-09
+
 ### Corregido
 
 - El MCP remoto comprueba la API key al empezar cada petición y las noticias comparten caché entre instancias (#149); requiere la migración 012 antes de desplegar.
