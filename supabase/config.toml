@@ -3,6 +3,6 @@
 [functions.mcp]
 verify_jwt = false
 
-# "welcome" la llama un trigger de la base de datos (005_welcome.sql), sin JWT.
+# "welcome" la llama un trigger de la base de datos (012_welcome_secret.sql) con un secreto compartido, sin JWT.
 [functions.welcome]
 verify_jwt = false

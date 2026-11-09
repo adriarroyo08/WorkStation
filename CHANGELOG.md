@@ -26,6 +26,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Seguridad
 
+- La función del email de bienvenida exige un secreto compartido y responde con mensajes genéricos; requiere configurar `WELCOME_SECRET` y aplicar a mano la migración 012 antes de desplegarla (#150).
 - Límites de almacenamiento en la nube por registro y por cuenta: si se alcanzan, la app lo explica, conserva los datos en el dispositivo y sigue subiendo el resto (#142).
 - El servidor limita `client_updated_at` a su hora más 5 minutos, así una fecha futura no bloquea las ediciones posteriores de un registro; requiere aplicar a mano la migración 009 (#143).
 
