@@ -121,7 +121,7 @@ describe('pistas MCP', () => {
     const src = mem(sample());
     const res = await handleMcp(
       new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) }),
-      () => src,
+      () => ({ ...src, verifyKey: async () => true }),
     );
     const tools: { name: string; annotations: Record<string, boolean> }[] = (await res.json()).result.tools;
     const ann = (n: string) => tools.find((t) => t.name === n)?.annotations;
