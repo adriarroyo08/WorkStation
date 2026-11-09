@@ -1,4 +1,4 @@
-import { apiKeyExpiry } from '../../shared/api-keys';
+import { apiKeyExpiry, type RecoveryApiKey } from '../../shared/api-keys';
 // Cuenta y sincronización con Supabase (opcional). Sin configurar, la app funciona igual que siempre: todo local.
 // - Cola de cambios pendientes (sobrevive a recargas y a estar sin conexión).
 // - Descarga incremental por `updated_at` y aviso en tiempo real desde otros dispositivos.
@@ -398,6 +398,29 @@ export const cloud = {
     const { error } = await client.from('api_keys').insert({ name, key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope, expires_at });
     if (error) throw new Error(error.message);
     return key;
+  },
+  /** Keys de la cuenta. Un proyecto propio sin la migración de API keys no tiene ninguna. */
+  async listApiKeys(): Promise<RecoveryApiKey[]> {
+    await ready;
+    if (!client) throw new Error('Configura primero la URL y la anon key');
+    const { data, error } = await client.from('api_keys').select('id,name,key_prefix,expires_at').order('created_at', { ascending: false });
+    if (error?.code === '42P01' || error?.code === 'PGRST205') return [];
+    if (error) throw friendly(error.message);
+    return (data ?? []) as RecoveryApiKey[];
+  },
+  /** Borra todas las keys de la cuenta: dejan de valer en la siguiente llamada, porque cada una se busca en la tabla. */
+  async revokeAllApiKeys() {
+    await ready;
+    if (!client || !userId) throw friendly('Auth session missing');
+    const { error } = await client.from('api_keys').delete().eq('user_id', userId);
+    if (error) throw friendly(error.message);
+    if (native.watchUploadUser()) native.setWatchUpload('');
+  },
+  /** ¿Sigue en el servidor la key del reloj? null si no se ha podido saber. */
+  async watchKeyExists(): Promise<boolean | null> {
+    if (!client) return null;
+    const { data, error } = await client.from('api_keys').select('id').eq('name', WATCH_KEY_NAME).limit(1);
+    return error ? null : (data?.length ?? 0) > 0;
   },
 };
 

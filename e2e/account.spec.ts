@@ -8,6 +8,8 @@ const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const jwt = (sub: string) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.firma`;
 
 class Mock {
+  keys: Record<string, unknown>[] = [];
+  keysDeleteFails = 0;
   calls: { path: string; method: string; search: string; body?: unknown; authorization?: string }[] = [];
   deleteStatus = 200;
   /** Id del registro que el servidor rechaza por tamaño; como en la base de datos, se rechaza todo su lote. */
@@ -37,6 +39,12 @@ class Mock {
       if (rows.some((r) => r.id === this.rejectId)) return json({ code: 'WS413', message: 'Este registro es demasiado grande para la nube (máximo 1 MB).' }, 413);
       rows.forEach((r) => this.saved.add(r.id));
       return route.fulfill({ status: 201, body: '' });
+    }
+    if (u.pathname === '/rest/v1/api_keys') {
+      if (req.method() !== 'DELETE') return json(this.keys);
+      if (this.keysDeleteFails-- > 0) return json({ message: 'fallo' }, 500);
+      this.keys = [];
+      return route.fulfill({ status: 204 });
     }
     return json({}, 404);
   }
@@ -296,9 +304,74 @@ test.describe('enlaces del email', () => {
     await expect(page.getByRole('dialog', { name: 'Bienvenida' })).toHaveCount(0);
     await page.getByLabel('Nueva contraseña').fill('OtraClave-1');
     await page.getByLabel('Repetir contraseña').fill('OtraClave-1');
+    await expect(page.getByRole('checkbox')).toHaveCount(0); // sin keys no hay nada que ofrecer
     await page.getByRole('button', { name: 'Guardar contraseña' }).click();
     await expect(page.getByText('Contraseña actualizada')).toBeVisible();
     expect(mock.calls.some((c) => c.path === '/auth/v1/user' && c.method === 'PUT')).toBe(true);
+    expect(keyDeletes(mock)).toHaveLength(0);
+  });
+
+  const keyDeletes = (mock: Mock) => mock.calls.filter((c) => c.path === '/rest/v1/api_keys' && c.method === 'DELETE');
+  const SOME_KEYS = [
+    { id: 'k1', name: 'Claude', key_prefix: 'ws_claude', expires_at: null },
+    { id: 'k2', name: 'Reloj (subida automática)', key_prefix: 'ws_reloj', expires_at: null },
+    { id: 'k3', name: 'Caducada', key_prefix: 'ws_vieja', expires_at: '2026-01-02T12:00:00Z' },
+  ];
+  async function openRecovery(page: Page, mock: Mock) {
+    mock.keys = SOME_KEYS;
+    await mock.attach(page);
+    await configure(page);
+    await page.goto(`/${tokens('recovery')}`);
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Elige tu nueva contraseña' })).toBeVisible();
+    await page.getByLabel('Nueva contraseña').fill('OtraClave-1');
+    await page.getByLabel('Repetir contraseña').fill('OtraClave-1');
+  }
+  const revokeBox = (page: Page) => page.getByRole('checkbox', { name: 'Revocar todas las API keys (2)' });
+
+  test('recuperación: muestra las keys activas y las revoca por defecto tras guardar', async ({ page, errors }, testInfo) => {
+    void errors;
+    const mock = new Mock();
+    await openRecovery(page, mock);
+    await expect(revokeBox(page)).toBeChecked();
+    const list = page.getByRole('region', { name: 'API keys de tu cuenta' });
+    await expect(list).toContainText('Reloj (subida automática)');
+    await expect(list).not.toContainText('Caducada');
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
+    const screenshot = testInfo.outputPath('recuperacion-api-keys.png');
+    await page.screenshot({ path: screenshot, fullPage: true });
+    await testInfo.attach('Nueva contraseña con API keys activas', { path: screenshot, contentType: 'image/png' });
+    await page.getByRole('button', { name: 'Guardar contraseña' }).click();
+    await expect(page.getByText('Las API keys se han revocado y ya no funcionan.', { exact: false })).toBeVisible();
+    const [del] = keyDeletes(mock);
+    expect(new URLSearchParams(del.search).get('user_id')).toBe('eq.user-ana');
+    const put = mock.calls.findIndex((c) => c.path === '/auth/v1/user' && c.method === 'PUT');
+    expect(put).toBeGreaterThanOrEqual(0);
+    expect(put).toBeLessThan(mock.calls.indexOf(del));
+  });
+
+  test('recuperación: se pueden conservar las keys', async ({ page, errors }) => {
+    void errors;
+    const mock = new Mock();
+    await openRecovery(page, mock);
+    await revokeBox(page).uncheck();
+    await page.getByRole('button', { name: 'Guardar contraseña' }).click();
+    await expect(page.getByText('Tus 2 API keys siguen activas.', { exact: false })).toBeVisible();
+    expect(keyDeletes(mock)).toHaveLength(0);
+  });
+
+  test('recuperación: si revocar falla lo dice y se reintenta sin cambiar otra vez la contraseña', async ({ page, errors }) => {
+    void errors;
+    const mock = new Mock();
+    mock.keysDeleteFails = 1;
+    await openRecovery(page, mock);
+    await expect(revokeBox(page)).toBeChecked();
+    await page.getByRole('button', { name: 'Guardar contraseña' }).click();
+    await expect(page.getByRole('alert')).toContainText('No se han podido revocar las API keys y siguen activas.');
+    await page.getByRole('button', { name: 'Reintentar la revocación' }).click();
+    await expect(page.getByText('Las API keys se han revocado y ya no funcionan.', { exact: false })).toBeVisible();
+    expect(keyDeletes(mock)).toHaveLength(2);
+    expect(mock.calls.filter((c) => c.path === '/auth/v1/user' && c.method === 'PUT')).toHaveLength(1);
   });
 
   test('confirmación: Cuenta confirmada', async ({ page, errors }) => {

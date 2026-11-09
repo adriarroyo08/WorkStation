@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Corregido
 
+- Al recuperar la contraseña, la pantalla muestra las API keys activas y ofrece revocarlas todas, incluida la del reloj, que el móvil renueva sola (#144).
 - La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
