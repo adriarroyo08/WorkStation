@@ -1,6 +1,7 @@
 // Reloj autónomo: el móvil le deja al reloj rutinas, biblioteca e historial, recoge los entrenos que se hacen
 // en él y le da al móvil una API key propia para subirlos a la nube aunque la app esté cerrada.
 import { useEffect } from 'react';
+import { needsWatchKey } from '../../shared/api-keys';
 import { buildWatchLibrary, parseWatchWorkout } from '../../shared/watch-library';
 import { cloud, useCloud, WATCH_KEY_NAME } from './cloud';
 import { native, onWatchWorkout, useWatchStatus } from './native';
@@ -43,10 +44,18 @@ export function useWatchSync() {
   useEffect(() => {
     if (!uid || !watch.nodes.length) return;
     const have = native.watchUploadUser();
-    if (have === undefined || have === uid) return;
-    cloud
-      .createApiKey(WATCH_KEY_NAME, 'write')
-      .then((apiKey) => native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid })))
+    if (have === undefined) return;
+    let stale = false;
+    // La guardada puede haberse revocado desde otro dispositivo: el móvil no se entera si no lo pregunta.
+    (have === uid ? cloud.watchKeyExists() : Promise.resolve(null))
+      .then(async (exists) => {
+        if (stale || !needsWatchKey(have, uid, exists)) return;
+        const apiKey = await cloud.createApiKey(WATCH_KEY_NAME, 'write');
+        native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid }));
+      })
       .catch(() => {}); // sin la key, los entrenos del reloj entran al abrir la app
+    return () => {
+      stale = true;
+    };
   }, [uid, watch.nodes.length, st.email]);
 }

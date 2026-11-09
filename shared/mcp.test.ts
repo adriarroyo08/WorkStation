@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cloudSource, RateLimitError } from './cloud-source';
 import { COACH_SYSTEM_PROMPT } from './ai';
 import { handleMcp, MAX_BATCH, MAX_BODY_BYTES } from './mcp-http';
@@ -82,6 +82,42 @@ describe('origen nube con API key', () => {
     expect(bad).toMatchObject({ isError: true, text: expect.stringContaining('no válida') });
     const ro = await callTool(cloudSource({ url: 'u', anonKey: 'a', apiKey: 'ws_ok', fetch: sb.f }), 'log_measurement', { bodyweight: 70 });
     expect(ro).toMatchObject({ isError: true, text: expect.stringContaining('solo lectura') });
+  });
+});
+
+describe('import_from_hevy', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('la Edge Function responde sin leer ninguna clave de Hevy del entorno', async () => {
+    const secrets: Record<string, string> = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'anon', HEVY_API_KEY: 'hevy_servidor' };
+    const get = vi.fn((name: string): string | undefined => secrets[name]);
+    const hevy = vi.fn(async () => new Response('{}', { status: 500 }));
+    let serve: (req: Request) => Response | Promise<Response> = () => new Response(null, { status: 500 });
+    vi.stubGlobal('fetch', hevy);
+    vi.stubGlobal('Deno', { env: { get }, resolveDns: async () => [], serve: (handler: typeof serve) => void (serve = handler) });
+    await import('../mcp/src/edge');
+
+    const res = await serve(
+      new Request('https://fn/mcp', {
+        method: 'POST',
+        headers: { authorization: 'Bearer ws_ok', 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'import_from_hevy', arguments: {} } }),
+      }),
+    );
+
+    expect((await res.json()).result.content[0].text).toMatch(/no está disponible en el MCP remoto/);
+    expect(get).not.toHaveBeenCalledWith('HEVY_API_KEY');
+    expect(hevy).not.toHaveBeenCalled();
+  });
+
+  it('el MCP local usa su HEVY_API_KEY', async () => {
+    const hevy = vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify({ page_count: 1, workouts: [] })));
+    vi.stubGlobal('fetch', hevy);
+    const src = cloudSource({ url: 'https://x.supabase.co', anonKey: 'anon', apiKey: 'ws_ok', fetch: fakeSupabase().f, env: (name) => (name === 'HEVY_API_KEY' ? 'hevy_local' : undefined) });
+
+    expect((await callTool(src, 'import_from_hevy', {})).isError).toBeFalsy();
+    expect(hevy.mock.calls[0][0]).toContain('api.hevyapp.com');
+    expect(hevy.mock.calls[0][1].headers).toMatchObject({ 'api-key': 'hevy_local' });
   });
 });
 

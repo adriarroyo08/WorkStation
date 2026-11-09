@@ -2970,6 +2970,12 @@ a.line {
 .landing-bad {
   color: var(--danger);
 }
+.landing-keys {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
 
 /* Repaso: pendientes */
 /* Récord junto al número de serie, no encima. */
