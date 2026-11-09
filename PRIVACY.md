@@ -6,7 +6,7 @@ Workstation **no usa analítica, ni publicidad, ni cookies de seguimiento.** Sin
 
 ## Quién trata tus datos
 
-- **Responsable:** [Adrian: nombre o razón social]. **Contacto de privacidad:** [Adrian: email].
+- **Responsable:** Adrián Arroyo. **Contacto de privacidad:** adriarroyo2002@gmail.com.
 - **Finalidad y base legal:** sincronizar tus datos entre dispositivos y gestionar tu cuenta. [Adrian: base legal, incluido el tratamiento de medidas corporales y pulso].
 - **Proyecto común de Supabase:** la web y el APK oficiales están conectados a un único proyecto de Supabase que administra el responsable. Supabase actúa como proveedor de alojamiento y base de datos. Región: [Adrian: región del proyecto].
 - **Quién puede verlos:** la seguridad por usuario (RLS) impide que otros usuarios lean tus filas. La administración del proyecto y Supabase, como proveedor, tienen acceso técnico a la base de datos.
