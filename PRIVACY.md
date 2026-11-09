@@ -1,6 +1,19 @@
 # Privacidad
 
-Workstation es una app personal: **no tiene servidores propios, ni analítica, ni publicidad, ni cookies de seguimiento.**
+Workstation **no usa analítica, ni publicidad, ni cookies de seguimiento.** Sin cuenta, todo se queda en tu dispositivo. Con cuenta en la web o el APK oficiales, tu copia se guarda en un proyecto de Supabase común, como se explica aquí.
+
+> Borrador pendiente de revisión legal. Las marcas **[Adrian]** son datos que debe completar el responsable antes de abrir la beta.
+
+## Quién trata tus datos
+
+- **Responsable:** [Adrian: nombre o razón social]. **Contacto de privacidad:** [Adrian: email].
+- **Finalidad y base legal:** sincronizar tus datos entre dispositivos y gestionar tu cuenta. [Adrian: base legal, incluido el tratamiento de medidas corporales y pulso].
+- **Proyecto común de Supabase:** la web y el APK oficiales están conectados a un único proyecto de Supabase que administra el responsable. Supabase actúa como proveedor de alojamiento y base de datos. Región: [Adrian: región del proyecto].
+- **Quién puede verlos:** la seguridad por usuario (RLS) impide que otros usuarios lean tus filas. La administración del proyecto y Supabase, como proveedor, tienen acceso técnico a la base de datos.
+- **Qué se guarda en ese proyecto:** tu email y, si entras con Google, tu nombre y foto de perfil; los entrenamientos, rutinas, ejercicios, medidas y ajustes que sincronizas; el hash de tus API keys y sus contadores de uso; y si ya se te envió el email de bienvenida.
+- **Emails de la cuenta:** los de bienvenida se envían por SMTP a través de Brevo. [Adrian: confirmar el proveedor y si también envía los de confirmación y recuperación].
+- **Conservación:** mientras mantengas la cuenta. [Adrian: plazo de las copias de seguridad de Supabase y de los registros de los proveedores].
+- **Proyecto propio:** si configuras tu propio proyecto de Supabase en Ajustes, tus datos van a ese proyecto y el responsable de Workstation no tiene acceso a él.
 
 ## Qué se guarda y dónde
 
@@ -12,9 +25,9 @@ Workstation es una app personal: **no tiene servidores propios, ni analítica, n
 | API keys (IA, ExerciseDB) | En el dispositivo | Solo al servicio al que pertenecen |
 | Pulso del reloj o pulsómetro | Dentro del entrenamiento en el que lo registras | Igual que el resto del entrenamiento |
 
-## Servicios externos (todos opcionales y configurados por ti)
+## Servicios externos (todos opcionales)
 
-- **Supabase (cuenta y sincronización):** tus datos se copian en *tu propio* proyecto de Supabase, protegidos con seguridad por usuario (RLS). Workstation no tiene acceso a ese proyecto.
+- **Supabase (cuenta y sincronización):** solo si creas una cuenta. Ver [Quién trata tus datos](#quién-trata-tus-datos).
 - **Coach IA:** cuando usas el coach o el análisis de informes, se envía al proveedor que elijas (Gemini, Groq, OpenRouter, un modelo local…) un resumen de tu entrenamiento y tu pregunta. Se aplica la política de privacidad de ese proveedor.
 - **API keys y servidor MCP:** una IA solo puede leer tus datos con una API key que generes tú. En la base de datos se guarda solo su hash (SHA-256) y puedes revocarla en cualquier momento.
 - **ExerciseDB (RapidAPI):** se piden los GIFs de los ejercicios con tu clave. No se envían datos de tus entrenamientos.
@@ -25,4 +38,8 @@ Workstation es una app personal: **no tiene servidores propios, ni analítica, n
 
 ## Tus derechos
 
-Todo es tuyo y está a tu alcance: puedes **exportar** (JSON o CSV compatible con Hevy) y **borrar** tus datos desde *Perfil → Ajustes → Datos*. Si usas Supabase, puedes borrar también tu cuenta y tus filas desde tu proyecto.
+Puedes **exportar** (JSON o CSV compatible con Hevy) y **borrar** los datos del dispositivo desde *Perfil → Ajustes → Datos*.
+
+Puedes **borrar tu cuenta** desde *Perfil → Borrar cuenta*. Al confirmar desaparecen del proyecto tu usuario, tus datos sincronizados, tus API keys con sus contadores de uso y el registro del email de bienvenida. Los datos guardados en tus dispositivos no se borran: puedes eliminarlos en *Ajustes → Datos*. Con tu propio proyecto de Supabase, el botón necesita la función `delete-account` desplegada en él.
+
+[Adrian: cómo ejercer el resto de derechos del RGPD y autoridad de control].
