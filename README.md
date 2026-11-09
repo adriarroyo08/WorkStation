@@ -242,4 +242,4 @@ Herramientas: `training_summary`, `list_workouts`, `get_workout`, `exercise_hist
 ## Importar desde Hevy
 
 - **CSV (gratis):** en Hevy, Perfil → Ajustes → Exportar e importar datos → Exportar entrenamientos. Luego en Workstation: Ajustes → *Importar CSV exportado de Hevy*.
-- **API oficial (Hevy Pro):** saca tu key en https://hevy.com/settings?developer, ponla en `HEVY_API_KEY` del MCP y pide a la IA "importa mis entrenamientos de Hevy".
+- **API oficial (Hevy Pro):** saca tu key en https://hevy.com/settings?developer, ponla en `HEVY_API_KEY` del MCP local y pide a la IA "importa mis entrenamientos de Hevy". El MCP remoto no admite esta importación.

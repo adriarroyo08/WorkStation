@@ -1,6 +1,20 @@
 ﻿import { describe, expect, it, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { allowedNewsEndpoint, createNewsCollector, fetchNewsSource, handleNews, isPublicNewsAddress, NEWS_MAX_BYTES, NEWS_TIMEOUT_MS, NEWS_TTL_MS, newsCacheFresh } from './news-collector';
+import {
+  allowedNewsEndpoint,
+  createNewsCollector,
+  fetchNewsSource,
+  handleNews,
+  isPublicNewsAddress,
+  NEWS_CLAIM_RETRY_MS,
+  NEWS_MAX_BYTES,
+  NEWS_TIMEOUT_MS,
+  NEWS_TTL_MS,
+  newsCacheFresh,
+  supabaseNewsStore,
+  type CachedSource,
+  type NewsCacheStore,
+} from './news-collector';
 import { NEWS_SOURCE_CANDIDATES } from './news-sources';
 const source = NEWS_SOURCE_CANDIDATES.find((s) => s.id === 'stronger-by-science')!;
 const xml = readFileSync(new URL('./fixtures/news/stronger.xml', import.meta.url), 'utf8');
@@ -159,5 +173,171 @@ describe('cache y JSON', () => {
     const response = await handleNews(new Request('https://test/mcp/news'), collect);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ updatedAt: null, items: [], sources: [] });
+  });
+});
+
+describe('caché compartida entre instancias', () => {
+  const approved = NEWS_SOURCE_CANDIDATES.filter((s) => s.status === 'aprobada');
+  const article = { id: 'a', sourceId: source.id, title: 'Título', shortSummary: '', url: 'https://x.test/a', publishedAt: '2026-01-01', language: 'en', topics: [] };
+
+  // Hace de la tabla news_cache con sus reglas: reserva única mientras la fuente esté caducada.
+  function memoryStore(clock: () => number) {
+    const rows = new Map<string, CachedSource>();
+    const leased = new Set<string>();
+    const store: NewsCacheStore = {
+      read: vi.fn(async () => new Map(rows)),
+      claim: vi.fn(async (id: string) => {
+        const row = rows.get(id);
+        if (leased.has(id) || (row && newsCacheFresh(row.attemptedAt, clock()))) return false;
+        leased.add(id);
+        return true;
+      }),
+      write: vi.fn(async (id: string, entry: CachedSource) => {
+        rows.set(id, entry);
+        leased.delete(id);
+      }),
+    };
+    return { store, rows, leased };
+  }
+  const counting = () => {
+    const fetcher = vi.fn(async () => new Response(xml));
+    return fetcher as unknown as typeof fetch & typeof fetcher;
+  };
+
+  it('dos instancias descargan cada fuente una sola vez y comparten el resultado', async () => {
+    let now = 1_000_000;
+    const clock = () => now;
+    const { store } = memoryStore(clock);
+    const first = counting();
+    const second = counting();
+    const a = await createNewsCollector(first, resolve, clock, store)();
+    expect(first).toHaveBeenCalledTimes(approved.length);
+    now += 1000;
+    const b = await createNewsCollector(second, resolve, clock, store)();
+    expect(second).not.toHaveBeenCalled();
+    expect(b.items).toEqual(a.items);
+    expect(b.updatedAt).toBe(a.updatedAt);
+  });
+
+  it('con la memoria al día no consulta la caché compartida', async () => {
+    const now = 1_000_000;
+    const { store } = memoryStore(() => now);
+    const collect = createNewsCollector(counting(), resolve, () => now, store);
+    await collect();
+    await collect();
+    expect(store.read).toHaveBeenCalledTimes(1);
+  });
+
+  it('caducado el TTL vuelve a descargar una sola instancia', async () => {
+    let now = 1_000_000;
+    const clock = () => now;
+    const { store } = memoryStore(clock);
+    const first = counting();
+    const second = counting();
+    const a = createNewsCollector(first, resolve, clock, store);
+    const b = createNewsCollector(second, resolve, clock, store);
+    await a();
+    now += NEWS_TTL_MS;
+    await a();
+    await b();
+    expect(first).toHaveBeenCalledTimes(approved.length * 2);
+    expect(second).not.toHaveBeenCalled();
+  });
+
+  it('si otra instancia tiene la reserva no descarga, y vuelve a mirar pasado el margen', async () => {
+    let now = 1_000_000;
+    const clock = () => now;
+    const { store, rows, leased } = memoryStore(clock);
+    for (const s of approved) leased.add(s.id);
+    const fetcher = counting();
+    const collect = createNewsCollector(fetcher, resolve, clock, store);
+    const during = await collect();
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(during.items).toEqual([]);
+    expect(during.sources.every((s) => s.stale)).toBe(true);
+    await collect();
+    expect(store.read).toHaveBeenCalledTimes(1); // dentro del margen no insiste
+    for (const s of approved) rows.set(s.id, { attemptedAt: now, updatedAt: '2026-01-02T00:00:00.000Z', items: s.id === source.id ? [article as never] : [] });
+    leased.clear();
+    now += NEWS_CLAIM_RETRY_MS;
+    const after = await collect();
+    expect(store.read).toHaveBeenCalledTimes(2);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(after.items.map((i) => i.id)).toEqual(['a']);
+    expect(after.sources.every((s) => !s.stale)).toBe(true);
+  });
+
+  it('un fallo se guarda y conserva las noticias anteriores', async () => {
+    let now = 1_000_000;
+    const clock = () => now;
+    const { store } = memoryStore(clock);
+    const good = await createNewsCollector(counting(), resolve, clock, store)();
+    now += NEWS_TTL_MS;
+    const bad = await createNewsCollector(async () => new Response('', { status: 503 }), resolve, clock, store)();
+    expect(bad.items).toEqual(good.items);
+    expect(bad.updatedAt).toBe(good.updatedAt);
+    expect(bad.sources.every((s) => s.stale)).toBe(true);
+    expect(vi.mocked(store.write).mock.calls.at(-1)![1]).toMatchObject({ error: 'Fuente no disponible' });
+  });
+
+  it('si la caché compartida falla, sirve con la memoria de la instancia', async () => {
+    const now = 1_000_000;
+    const down = new Error('sin base de datos');
+    const store: NewsCacheStore = { read: async () => Promise.reject(down), claim: async () => Promise.reject(down), write: async () => Promise.reject(down) };
+    const fetcher = counting();
+    const collect = createNewsCollector(fetcher, resolve, () => now, store);
+    const first = await collect();
+    expect(first.items.length).toBeGreaterThan(0);
+    await collect();
+    expect(fetcher).toHaveBeenCalledTimes(approved.length); // la memoria sigue limitando las descargas
+  });
+
+  describe('adaptador de Supabase', () => {
+    const row = { source_id: source.id, items: [article], updated_at: '2026-01-02T00:00:00.000Z', attempted_at: '2026-01-02T00:00:00.000Z', error: null };
+    const adapter = (respond: (url: string, init: RequestInit) => Response) => {
+      const f = vi.fn(async (url: string, init: RequestInit) => respond(url, init));
+      return { f, store: supabaseNewsStore({ url: 'https://x.supabase.co/', serviceKey: 'service', fetch: f as unknown as typeof fetch }) };
+    };
+
+    it('lee con service role y descarta filas de fuentes desconocidas o mal formadas', async () => {
+      const others = approved.filter((s) => s.id !== source.id);
+      const { f, store } = adapter(
+        () =>
+          new Response(
+            JSON.stringify([
+              row,
+              { ...row, source_id: 'inventada' },
+              { ...row, source_id: others[0].id, items: 'no' },
+              { ...row, source_id: others[1].id, items: [{ title: 'sin campos' }] },
+              { ...row, source_id: others[2].id, attempted_at: null },
+            ]),
+          ),
+      );
+      const read = await store.read();
+      expect([...read.keys()]).toEqual([source.id]);
+      expect(read.get(source.id)).toEqual({ attemptedAt: Date.parse(row.attempted_at), updatedAt: row.updated_at, items: [article] });
+      const [url, init] = f.mock.calls[0];
+      expect(url).toBe('https://x.supabase.co/rest/v1/news_cache?select=source_id,items,updated_at,attempted_at,error');
+      expect(init.headers).toMatchObject({ apikey: 'service', authorization: 'Bearer service' });
+    });
+
+    it('reserva y guarda por RPC', async () => {
+      const bodies: Record<string, unknown> = {};
+      const { store } = adapter((url, init) => {
+        bodies[url.split('/rpc/')[1]] = JSON.parse(String(init.body));
+        return url.endsWith('news_cache_claim') ? new Response('true') : new Response(null, { status: 204 });
+      });
+      expect(await store.claim(source.id)).toBe(true);
+      await store.write(source.id, { attemptedAt: 1, updatedAt: null, items: [], error: 'Fuente no disponible' });
+      expect(bodies).toEqual({
+        news_cache_claim: { p_source: source.id, p_ttl_seconds: NEWS_TTL_MS / 1000 },
+        news_cache_store: { p_source: source.id, p_items: [], p_updated_at: null, p_error: 'Fuente no disponible' },
+      });
+    });
+
+    it('un claim que no devuelve true no reserva, y un error HTTP se propaga', async () => {
+      expect(await adapter(() => new Response('false')).store.claim(source.id)).toBe(false);
+      await expect(adapter(() => new Response('{}', { status: 500 })).store.read()).rejects.toThrow('HTTP 500');
+    });
   });
 });

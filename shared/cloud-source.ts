@@ -16,6 +16,8 @@ export class RateLimitError extends Error {
   }
 }
 
+const UPSERT_CHUNK = 500;
+
 export interface CloudSourceOptions {
   url: string; // https://xxxx.supabase.co
   anonKey: string;
@@ -24,7 +26,12 @@ export interface CloudSourceOptions {
   env?: (name: string) => string | undefined;
 }
 
-export function cloudSource(o: CloudSourceOptions): DataSource {
+export interface CloudSource extends DataSource {
+  /** Indica si la clave existe y no ha caducado, sin leer datos ni gastar cuota. Lanza si no se ha podido comprobar. */
+  verifyKey(): Promise<boolean>;
+}
+
+export function cloudSource(o: CloudSourceOptions): CloudSource {
   const f = o.fetch ?? fetch;
   let base: Map<string, string> | null = null;
   const rpc = async (fn: string, body: unknown) => {
@@ -49,6 +56,7 @@ export function cloudSource(o: CloudSourceOptions): DataSource {
   return {
     label: 'tu cuenta de Workstation (Supabase)',
     env: o.env,
+    verifyKey: async () => (await rpc('api_key_check', { p_key: o.apiKey })) === true,
     async load(): Promise<WorkstationData> {
       // La API devuelve como mucho 1000 filas por llamada: se pide por páginas desde el último updated_at.
       const rows: SyncRecord[] = [];
@@ -66,7 +74,12 @@ export function cloudSource(o: CloudSourceOptions): DataSource {
       if (!base) throw new Error('save() sin load() previo');
       const changes = diff(base, data);
       if (!changes.length) return;
-      await rpc('api_upsert', { p_key: o.apiKey, p_rows: changes.map(({ collection, id, doc, deleted, client_updated_at }) => ({ collection, id, doc, deleted, client_updated_at })) });
+      // api_upsert admite un número limitado de filas por llamada (migración 009); una importación puede superarlo.
+      // Si falla a medias, base no cambia y el siguiente guardado reenvía todo: repetir una fila no altera nada.
+      for (let i = 0; i < changes.length; i += UPSERT_CHUNK) {
+        const p_rows = changes.slice(i, i + UPSERT_CHUNK).map(({ collection, id, doc, deleted, client_updated_at }) => ({ collection, id, doc, deleted, client_updated_at }));
+        await rpc('api_upsert', { p_key: o.apiKey, p_rows });
+      }
       base = snapshot(data);
     },
   };
