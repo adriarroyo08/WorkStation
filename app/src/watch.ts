@@ -3,10 +3,14 @@
 import { useEffect } from 'react';
 import { needsWatchKey } from '../../shared/api-keys';
 import { buildWatchLibrary, parseWatchWorkout } from '../../shared/watch-library';
+import { watchKeyDue, watchKeyExpiry } from '../../shared/watch-key';
 import { cloud, useCloud, WATCH_KEY_NAME } from './cloud';
 import { native, onWatchWorkout, useWatchStatus } from './native';
 import { useStore } from './store';
 import { toast } from './toast';
+
+// El efecto puede dispararse varias veces seguidas (sesión y reloj llegan por separado): una sola emisión a la vez.
+let issuing = false;
 
 export function useWatchSync() {
   const store = useStore();
@@ -40,22 +44,26 @@ export function useWatchSync() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Con sesión y un reloj emparejado, el móvil recibe una key de escritura solo para subir esos entrenos.
+  // Caduca sola: al abrir la app se emite la siguiente antes de que venza y el móvil revoca la anterior.
   const uid = cloud.userId();
   useEffect(() => {
-    if (!uid || !watch.nodes.length) return;
+    if (!uid || !watch.nodes.length || issuing) return;
     const have = native.watchUploadUser();
     if (have === undefined) return;
-    let stale = false;
-    // La guardada puede haberse revocado desde otro dispositivo: el móvil no se entera si no lo pregunta.
-    (have === uid ? cloud.watchKeyExists() : Promise.resolve(null))
+    const due = watchKeyDue(have, native.watchUploadExpiry(), uid);
+    issuing = true;
+    // Aunque no toque renovarla, la guardada puede haberse revocado desde otro dispositivo: el móvil no se entera si no lo pregunta.
+    (due ? Promise.resolve(null) : cloud.watchKeyExists())
       .then(async (exists) => {
-        if (stale || !needsWatchKey(have, uid, exists)) return;
-        const apiKey = await cloud.createApiKey(WATCH_KEY_NAME, 'write');
-        native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid }));
+        if (cloud.userId() !== uid || !(due || needsWatchKey(have, uid, exists))) return;
+        const expiresAt = watchKeyExpiry();
+        const apiKey = await cloud.createApiKey(WATCH_KEY_NAME, 'write', expiresAt);
+        // Si el móvil no ha podido guardarla, no debe quedar una key huérfana en el servidor.
+        if (native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid, expiresAt })) === false) await cloud.deleteApiKey(apiKey);
       })
-      .catch(() => {}); // sin la key, los entrenos del reloj entran al abrir la app
-    return () => {
-      stale = true;
-    };
+      .catch(() => {}) // sin la key, los entrenos del reloj entran al abrir la app
+      .finally(() => {
+        issuing = false;
+      });
   }, [uid, watch.nodes.length, st.email]);
 }
