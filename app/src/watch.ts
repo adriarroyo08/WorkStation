@@ -2,10 +2,14 @@
 // en él y le da al móvil una API key propia para subirlos a la nube aunque la app esté cerrada.
 import { useEffect } from 'react';
 import { buildWatchLibrary, parseWatchWorkout } from '../../shared/watch-library';
+import { watchKeyDue, watchKeyExpiry } from '../../shared/watch-key';
 import { cloud, useCloud, WATCH_KEY_NAME } from './cloud';
 import { native, onWatchWorkout, useWatchStatus } from './native';
 import { useStore } from './store';
 import { toast } from './toast';
+
+// El efecto puede dispararse varias veces seguidas (sesión y reloj llegan por separado): una sola emisión a la vez.
+let issuing = false;
 
 export function useWatchSync() {
   const store = useStore();
@@ -39,14 +43,23 @@ export function useWatchSync() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Con sesión y un reloj emparejado, el móvil recibe una key de escritura solo para subir esos entrenos.
+  // Caduca sola: al abrir la app se emite la siguiente antes de que venza y el móvil revoca la anterior.
   const uid = cloud.userId();
   useEffect(() => {
-    if (!uid || !watch.nodes.length) return;
+    if (!uid || !watch.nodes.length || issuing) return;
     const have = native.watchUploadUser();
-    if (have === undefined || have === uid) return;
+    if (have === undefined || !watchKeyDue(have, native.watchUploadExpiry(), uid)) return;
+    issuing = true;
+    const expiresAt = watchKeyExpiry();
     cloud
-      .createApiKey(WATCH_KEY_NAME, 'write')
-      .then((apiKey) => native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid })))
-      .catch(() => {}); // sin la key, los entrenos del reloj entran al abrir la app
+      .createApiKey(WATCH_KEY_NAME, 'write', expiresAt)
+      .then(async (apiKey) => {
+        // Si el móvil no ha podido guardarla, no debe quedar una key huérfana en el servidor.
+        if (native.setWatchUpload(JSON.stringify({ ...cloud.config(), apiKey, userId: uid, expiresAt })) === false) await cloud.deleteApiKey(apiKey);
+      })
+      .catch(() => {}) // sin la key, los entrenos del reloj entran al abrir la app
+      .finally(() => {
+        issuing = false;
+      });
   }, [uid, watch.nodes.length, st.email]);
 }

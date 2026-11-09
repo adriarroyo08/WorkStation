@@ -352,11 +352,9 @@ export const cloud = {
   /** ¿La configuración activa es la del build (no una propia del usuario)? */
   builtIn: () => !!ENV.url && cfg.url === ENV.url && cfg.anonKey === ENV.anonKey,
   async signOut() {
-    // La key con la que el móvil sube los entrenos del reloj es de esta cuenta: se borra con la sesión.
-    if (native.watchUploadUser()) {
-      native.setWatchUpload('');
-      await client?.from('api_keys').delete().eq('name', WATCH_KEY_NAME);
-    }
+    // La key con la que el móvil sube los entrenos del reloj es de esta cuenta: el móvil la revoca con ella misma,
+    // así que funciona aunque ahora no haya conexión y la sesión ya no exista cuando vuelva.
+    if (native.watchUploadUser()) native.setWatchUpload('');
     await client?.auth.signOut();
   },
   /** A petición del usuario se reintenta también lo rechazado (puede haber liberado espacio). Devuelve si ha ido bien. */
@@ -377,6 +375,11 @@ export const cloud = {
     const { error } = await client.from('api_keys').insert({ name, key_hash: await sha256Hex(key), key_prefix: key.slice(0, 10), scope, expires_at });
     if (error) throw new Error(error.message);
     return key;
+  },
+  /** Borra una API key de esta cuenta a partir de su valor en claro. */
+  async deleteApiKey(key: string) {
+    const { error } = (await client?.from('api_keys').delete().eq('key_hash', await sha256Hex(key))) ?? {};
+    if (error) throw new Error(error.message);
   },
 };
 

@@ -52,6 +52,7 @@ beforeAll(async () => {
   await db.query(`insert into public.records (user_id, collection, id, doc, client_updated_at) values ($1, 'workouts', 'legado', '{"v":"antes"}', '9999-01-01T00:00:00Z')`, [A]);
   await db.exec(sql('009_client_updated_at_limit.sql'));
   await db.exec(sql('010_records_limits.sql'));
+  await db.exec(sql('012_api_key_revoke.sql'));
 }, 60_000);
 
 const upsert = (uid: string, id: string, doc: object, ts: string) =>
@@ -373,6 +374,43 @@ describe('migraciones de Supabase', () => {
       await db.query(`delete from auth.users where id = $1`, [D]);
       expect(await usage(D)).toBeUndefined();
       expect((await real(D)).rows_used).toBe(0);
+    });
+  });
+
+  describe('revocar una key con la propia key (012)', () => {
+    const add = (key: string, prefix: string, expires: string | null = null) =>
+      db.query(`insert into public.api_keys (user_id, key_hash, key_prefix, scope, expires_at) values ($1, encode(extensions.digest($2, 'sha256'), 'hex'), $3, 'write', $4)`, [A, key, prefix, expires]);
+    const revoke = (key: string) => anon<{ api_revoke_key: boolean }>(`select public.api_revoke_key($1)`, [key]).then((r) => r[0].api_revoke_key);
+    const count = async (prefix: string) => (await db.query(`select 1 from public.api_keys where key_prefix = $1`, [prefix])).rows.length;
+
+    it('sin sesión borra solo esa key, y la key deja de valer', async () => {
+      await add('ws_rev_uno', 'ws_r12a');
+      await add('ws_rev_otra', 'ws_r12b');
+      expect(await revoke('ws_rev_uno')).toBe(true);
+      expect(await count('ws_r12a')).toBe(0);
+      expect(await count('ws_r12b')).toBe(1);
+      await expect(anon(`select * from public.api_records($1)`, ['ws_rev_uno'])).rejects.toThrow(/no válida/);
+      await expect(anon(`select * from public.api_records($1)`, ['ws_rev_otra'])).resolves.toBeDefined();
+    });
+
+    it('repetir la revocación o usar una key desconocida no da error ni borra nada', async () => {
+      const before = (await db.query(`select 1 from public.api_keys`)).rows.length;
+      expect(await revoke('ws_rev_uno')).toBe(false);
+      expect(await revoke('ws_no_existe')).toBe(false);
+      expect((await db.query(`select 1 from public.api_keys`)).rows.length).toBe(before);
+    });
+
+    it('también revoca una key caducada', async () => {
+      await add('ws_rev_futura', 'ws_r12c', '2099-01-01T00:00:00Z');
+      await db.exec(`update public.api_keys set expires_at = clock_timestamp() - interval '1 day' where key_prefix = 'ws_r12c'`);
+      expect(await revoke('ws_rev_futura')).toBe(true);
+      expect(await count('ws_r12c')).toBe(0);
+    });
+
+    it('no permite borrar la key de otro conociendo solo su hash', async () => {
+      const [{ key_hash }] = (await db.query<{ key_hash: string }>(`select key_hash from public.api_keys where key_prefix = 'ws_r12b'`)).rows;
+      expect(await revoke(key_hash)).toBe(false);
+      expect(await count('ws_r12b')).toBe(1);
     });
   });
 
