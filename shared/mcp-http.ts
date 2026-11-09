@@ -1,6 +1,6 @@
 // Servidor MCP remoto (Streamable HTTP, sin estado) como manejador Request → Response.
 // Sirve en Supabase Edge Functions (Deno) y en Node. La API key llega en
-// `Authorization: Bearer ws_…`, en `x-api-key` o en la URL (`?key=ws_…`, para clientes que solo aceptan una URL).
+// `Authorization: Bearer ws_…` o en `x-api-key`; nunca en la URL, que puede quedar en historiales y registros.
 import { ARTICLE_RESOURCE, readArticleResource } from './article-resource';
 import { RateLimitError } from './cloud-source';
 import { callTool, MCP_INSTRUCTIONS, TOOLS, toolAnnotations, toolJsonSchema, type DataSource } from './mcp-tools';
@@ -33,9 +33,7 @@ const rpcError = (id: RpcRequest['id'], code: number, message: string) => ({ jso
 export function apiKeyFrom(req: Request): string | null {
   const auth = req.headers.get('authorization');
   if (auth?.toLowerCase().startsWith('bearer ') && auth.slice(7).startsWith('ws_')) return auth.slice(7).trim();
-  const header = req.headers.get('x-api-key');
-  if (header) return header.trim();
-  return new URL(req.url).searchParams.get('key');
+  return req.headers.get('x-api-key')?.trim() || null;
 }
 
 async function readLimited(req: Request, max: number): Promise<string | undefined> {
