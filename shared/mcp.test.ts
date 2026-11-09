@@ -156,10 +156,15 @@ describe('MCP por HTTP', () => {
     const undeclared = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { authorization: 'Bearer ws_ok' }, body: stream, duplex: 'half' } as RequestInit));
     expect(undeclared.status).toBe(413);
   });
-  it('key en la URL y sin key', async () => {
+  it('rechaza la key en la URL y la petición sin key', async () => {
     const r = await post({ jsonrpc: '2.0', id: 1, method: 'ping' }, '', 'https://fn/mcp?key=ws_ok');
-    expect((await r.json()).result).toEqual({});
+    expect(r.status).toBe(401);
+    expect((await r.json()).error.code).toBe(-32001);
     expect((await handler(new Request('https://fn/mcp', { method: 'POST', body: '{}' }))).status).toBe(401);
+  });
+  it('acepta la key en x-api-key', async () => {
+    const r = await handler(new Request('https://fn/mcp', { method: 'POST', headers: { 'x-api-key': 'ws_ok' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) }));
+    expect((await r.json()).result).toEqual({});
   });
 });
 

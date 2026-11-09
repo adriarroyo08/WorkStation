@@ -7,6 +7,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Corregido
 
+- El MCP remoto deja de aceptar la API key en la URL: solo en `Authorization: Bearer` o `x-api-key` (#148).
 - Al recuperar la contraseña, la pantalla muestra las API keys activas y ofrece revocarlas todas, incluida la del reloj, que el móvil renueva sola (#144).
 - La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
