@@ -2,17 +2,17 @@
 
 Workstation **no usa analítica, ni publicidad, ni cookies de seguimiento.** Sin cuenta, todo se queda en tu dispositivo. Con cuenta en la web o el APK oficiales, tu copia se guarda en un proyecto de Supabase común, como se explica aquí.
 
-> Borrador pendiente de revisión legal. Las marcas **[Adrian]** son datos que debe completar el responsable antes de abrir la beta.
+> Borrador pendiente de revisión legal.
 
 ## Quién trata tus datos
 
 - **Responsable:** Adrián Arroyo. **Contacto de privacidad:** adriarroyo2002@gmail.com.
-- **Finalidad y base legal:** sincronizar tus datos entre dispositivos y gestionar tu cuenta. [Adrian: base legal, incluido el tratamiento de medidas corporales y pulso].
-- **Proyecto común de Supabase:** la web y el APK oficiales están conectados a un único proyecto de Supabase que administra el responsable. Supabase actúa como proveedor de alojamiento y base de datos. Región: [Adrian: región del proyecto].
+- **Finalidad y base legal:** sincronizar tus datos entre dispositivos y gestionar tu cuenta. La base legal es la ejecución del servicio que solicitas al crear la cuenta (art. 6.1.b del RGPD). Las medidas corporales y el pulso se tratan con tu consentimiento explícito (art. 9.2.a del RGPD), que puedes retirar en cualquier momento borrando esos datos o tu cuenta.
+- **Proyecto común de Supabase:** la web y el APK oficiales están conectados a un único proyecto de Supabase que administra el responsable. Supabase actúa como proveedor de alojamiento y base de datos. Región: Unión Europea (Irlanda, `eu-west-1`).
 - **Quién puede verlos:** la seguridad por usuario (RLS) impide que otros usuarios lean tus filas. La administración del proyecto y Supabase, como proveedor, tienen acceso técnico a la base de datos.
 - **Qué se guarda en ese proyecto:** tu email y, si entras con Google, tu nombre y foto de perfil; los entrenamientos, rutinas, ejercicios, medidas y ajustes que sincronizas; el hash de tus API keys y sus contadores de uso; y si ya se te envió el email de bienvenida.
-- **Emails de la cuenta:** los de bienvenida se envían por SMTP a través de Brevo. [Adrian: confirmar el proveedor y si también envía los de confirmación y recuperación].
-- **Conservación:** mientras mantengas la cuenta. [Adrian: plazo de las copias de seguridad de Supabase y de los registros de los proveedores].
+- **Emails de la cuenta:** los de bienvenida, confirmación y recuperación de contraseña se envían por SMTP a través de Brevo.
+- **Conservación:** mientras mantengas la cuenta. Después de borrarla, tus datos pueden permanecer hasta 30 días en las copias de seguridad. Los registros técnicos de los proveedores se rigen por sus propias políticas.
 - **Proyecto propio:** si configuras tu propio proyecto de Supabase en Ajustes, tus datos van a ese proyecto y el responsable de Workstation no tiene acceso a él.
 
 ## Qué se guarda y dónde
@@ -42,4 +42,4 @@ Puedes **exportar** (JSON o CSV compatible con Hevy) y **borrar** los datos del 
 
 Puedes **borrar tu cuenta** desde *Perfil → Borrar cuenta*. Al confirmar desaparecen del proyecto tu usuario, tus datos sincronizados, tus API keys con sus contadores de uso y el registro del email de bienvenida. Los datos guardados en tus dispositivos no se borran: puedes eliminarlos en *Ajustes → Datos*. Con tu propio proyecto de Supabase, el botón necesita la función `delete-account` desplegada en él.
 
-[Adrian: cómo ejercer el resto de derechos del RGPD y autoridad de control].
+Para ejercer tus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad, o para retirar tu consentimiento, escribe a adriarroyo2002@gmail.com. Si consideras que no se han respetado, puedes reclamar ante la Agencia Española de Protección de Datos ([aepd.es](https://www.aepd.es)).
