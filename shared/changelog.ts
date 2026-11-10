@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.20.0',
+    date: '2026-11-10',
+    items: ['En Android puedes exportar a Health Connect los entrenamientos que termines, con su pulso si das el permiso. Se activa en Ajustes.'],
+  },
+  {
     version: '1.19.0',
     date: '2026-11-09',
     items: [

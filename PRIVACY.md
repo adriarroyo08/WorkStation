@@ -24,6 +24,7 @@ Workstation **no usa analítica, ni publicidad, ni cookies de seguimiento.** Sin
 | Fotos de progreso | En el dispositivo (IndexedDB) | No: nunca se sincronizan ni se envían |
 | API keys (IA, ExerciseDB) | En el dispositivo | Solo al servicio al que pertenecen |
 | Pulso del reloj o pulsómetro | Dentro del entrenamiento en el que lo registras | Igual que el resto del entrenamiento |
+| Exportación a Health Connect (optativa, Android) | En Health Connect, en tu móvil | Workstation no la envía a ningún servidor |
 
 ## Servicios externos (todos opcionales)
 
@@ -34,6 +35,7 @@ Workstation **no usa analítica, ni publicidad, ni cookies de seguimiento.** Sin
 - **Imágenes de free-exercise-db:** se descargan de `raw.githubusercontent.com` (GitHub ve la petición, como en cualquier web).
 - **Importar desde Hevy:** el CSV exportado de Hevy se procesa en tu dispositivo. Desde el servidor MCP también puedes importar con tu API key de Hevy (variable de entorno en tu ordenador). No se envía nada a Hevy.
 - **Wear OS:** el móvil y el reloj se comunican directamente por la capa de datos de Wear OS (Bluetooth/Wi-Fi), sin pasar por internet. El reloj guarda una copia de tus rutinas, tu biblioteca y tu historial reciente para entrenar sin el móvil. Si usas la sincronización, el móvil guarda una API key de escritura ("Reloj (subida automática)", visible en tus API keys) para subir los entrenos del reloj con la app cerrada; se guarda cifrada, caduca y se renueva sola, y se revoca al cerrar sesión (si no hay conexión, en cuanto vuelva). Los datos locales de la app Android no entran en las copias de seguridad del sistema: para conservarlos al cambiar de móvil usa la sincronización o el backup de Ajustes.
+- **Health Connect (Android):** solo si lo activas en Ajustes y concedes el permiso, base legal de tu consentimiento explícito (art. 9.2.a del RGPD). Por cada entrenamiento que termines en ese móvil se escribe en Health Connect su nombre, inicio y fin y, si das ese permiso y lo registraste, tu pulso. Workstation nunca lee datos de Health Connect ni escribe calorías u otros datos estimados. Mientras se escribe, la sesión se guarda brevemente en el almacenamiento privado de la app. Otras apps a las que hayas dado permiso en Health Connect podrán leer estos datos. Puedes retirar el consentimiento desactivando la opción o el permiso; lo ya exportado se borra desde Health Connect, también si borras tu cuenta de Workstation.
 - **Alojamiento:** la web se sirve desde GitHub Pages, que registra los accesos como cualquier servidor web.
 
 ## Tus derechos

@@ -7,6 +7,7 @@ import { emptyData, mergeData, normalizeData } from '../../../shared/data';
 import { hevySummary, importHevyCsv } from '../../../shared/hevy';
 import { downloadFile, useStore } from '../store';
 import { DevicesPanel } from './DevicesSheet';
+import HealthConnectSettings from './HealthConnectSettings';
 import ApiKeys from './ApiKeys';
 import AutoBackups from './AutoBackups';
 import { cloud } from '../cloud';
@@ -197,6 +198,8 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <Watch size={16} className="ico" /> Reloj y sensores
       </h2>
       <DevicesPanel />
+
+      <HealthConnectSettings />
 
       <h2>
         <Bot size={16} className="ico" /> Inteligencia artificial

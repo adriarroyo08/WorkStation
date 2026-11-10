@@ -5,6 +5,10 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+### Añadido
+
+- Exportación optativa a Health Connect en Android: sesiones terminadas en el móvil, con pulso solo si hay muestras reales y permiso, sin duplicados (#163); requiere declarar los tipos de datos en Play Console antes de publicar.
+
 ### Seguridad
 
 - La función del email de bienvenida exige un secreto compartido y responde con mensajes genéricos; requiere configurar `WELCOME_SECRET` y aplicar a mano la migración 012 antes de desplegarla (#150).
