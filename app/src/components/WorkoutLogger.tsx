@@ -6,6 +6,7 @@ import {
   ArrowUpDown,
   Calculator,
   Check,
+  ChevronUp,
   Flame,
   Heart,
   Link2,
@@ -15,6 +16,7 @@ import {
   Plus,
   RefreshCw,
   Scissors,
+  StickyNote,
   Timer,
   Trash2,
   Trophy,
@@ -25,7 +27,7 @@ import { ask } from '../dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { MUSCLE_LABELS } from '../../../shared/exercises';
-import { nextPendingSet, toggleSet } from '../../../shared/session';
+import { isExerciseFinished, nextPendingSet, toggleSet } from '../../../shared/session';
 import { alignPrevious, estimate1RM, exerciseHistory, formatDuration, formatSeconds, lastSessionSets, workoutSetCount, workoutVolume } from '../../../shared/stats';
 import { platesFor, warmupSets } from '../../../shared/tools';
 import type { Exercise, SetType, Workout, WorkoutExercise, WorkoutSet } from '../../../shared/types';
@@ -72,6 +74,15 @@ export default function WorkoutLogger({
   const targets = useRef({ id: w.id, exercises: structuredClone(w.exercises) });
   if (targets.current.id !== w.id) targets.current = { id: w.id, exercises: structuredClone(w.exercises) };
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  // Ejercicios terminados que se han vuelto a desplegar y ejercicios con el campo de nota abierto.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [noteOpen, setNoteOpen] = useState<Set<string>>(new Set());
+  const toggleIn = (set: Set<string>, key: string, on: boolean) => {
+    const out = new Set(set);
+    if (on) out.add(key);
+    else out.delete(key);
+    return out;
+  };
   const now = useNow();
   const restState = useRest();
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
@@ -170,18 +181,33 @@ export default function WorkoutLogger({
     if (mode === 'live' && nx && !w.exercises[ei].sets[si].done) setTimeout(() => document.getElementById(`set-${nx.ei}-${nx.si}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
   };
   const cursor = mode === 'live' ? nextPendingSet(w) : null;
-  const nextLabel = (() => {
-    if (!cursor) return '';
+  const next = (() => {
+    if (!cursor) return null;
     const we = w.exercises[cursor.ei];
     const s = we.sets[cursor.si];
     const prev = alignPrevious(we.sets, history.get(we.exerciseId)?.prev ?? [])[cursor.si];
     const wt = s.weight ?? prev?.weight;
     const reps = s.reps ?? prev?.reps;
     const sec = s.durationSec ?? prev?.durationSec;
+    const dist = s.distanceM ?? prev?.distanceM;
     const exercise = exMap.get(we.exerciseId);
-    if (exercise?.kind === 'duration') return `${exercise.name}${sec ? ` · ${formatSeconds(sec)}` : ''}`;
-    return `${exercise?.name ?? ''}${wt || reps ? ` · ${wt ? `${fmtWeight(wt)} × ` : ''}${reps ?? ''}` : ''}`;
+    const kind = exercise?.kind ?? 'weight_reps';
+    const timed = kind === 'duration' || kind === 'distance';
+    const value = timed ? (sec ? formatSeconds(sec) : '') : wt || reps ? `${wt ? `${fmtWeight(wt)} × ` : ''}${reps ?? ''}` : '';
+    // Con un toque solo se completa si ya se sabe qué apuntar; si no, la barra lleva a la serie para escribirlo.
+    const running = sw?.ei === cursor.ei && sw.si === cursor.si;
+    const ready = running || (kind === 'duration' ? !!sec : kind === 'distance' ? !!sec || !!dist : kind === 'weight_reps' ? wt !== undefined && reps !== undefined : reps !== undefined);
+    const work = we.sets.filter((x) => x.type !== 'warmup');
+    const step = s.type === 'warmup' ? 'Calentamiento' : `Serie ${work.indexOf(s) + 1} de ${work.length}`;
+    return { name: exercise?.name ?? '', value, ready, step };
   })();
+  const nextLabel = next ? `${next.name}${next.value ? ` · ${next.value}` : ''}` : '';
+  const goToNext = (write: boolean) => {
+    if (!cursor) return;
+    const row = document.getElementById(`set-${cursor.ei}-${cursor.si}`);
+    row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (write) row?.querySelector('input')?.focus({ preventScroll: true });
+  };
 
   const isPr = (we: WorkoutExercise, s: WorkoutSet, ex?: Exercise) => {
     const h = history.get(we.exerciseId);
@@ -214,8 +240,9 @@ export default function WorkoutLogger({
   const elapsed = Math.round((now - Date.parse(w.startedAt)) / 1000);
   const totals = { sets: workoutSetCount(w), planned: w.exercises.reduce((n, e) => n + e.sets.length, 0), volume: workoutVolume(w, data.exercises) };
 
+  const resting = mode === 'live' && !!restState.end && restLeft > 0;
   return (
-    <section className={`active ${mode === 'live' && restState.end && restLeft > 0 ? 'resting' : ''}`}>
+    <section className={`active ${resting || next ? 'docked' : ''}`}>
       <div className="sticky">
         <div className="row">
           <input className="title grow" aria-label="Nombre del entrenamiento" value={w.name} onChange={(e) => edit((n) => void (n.name = e.target.value))} />
@@ -266,7 +293,6 @@ export default function WorkoutLogger({
       </div>
 
       {mode === 'edit' && <EditTimes w={w} edit={edit} />}
-      <textarea className="notes" rows={1} placeholder="Notas del entrenamiento…" value={w.notes ?? ''} onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))} />
 
       {!w.exercises.length && <p className="muted center-text">Añade tu primer ejercicio para empezar.</p>}
 
@@ -281,6 +307,21 @@ export default function WorkoutLogger({
         const ssNext = we.supersetId && w.exercises[ei + 1]?.supersetId === we.supersetId;
         const kind = ex?.kind ?? 'weight_reps';
         const u = weightUnit();
+        const cardKey = `${we.exerciseId}#${w.exercises.slice(0, ei).filter((x) => x.exerciseId === we.exerciseId).length}`;
+        const finished = mode === 'live' && isExerciseFinished(w, ei);
+        if (finished && !expanded.has(cardKey))
+          return (
+            <div key={ei} className={`card excard excollapsed ${we.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''} ${ssNext ? 'ss-next' : ''}`}>
+              <button className="plain row grow left" aria-expanded={false} onClick={() => setExpanded((old) => toggleIn(old, cardKey, true))}>
+                <ExerciseMedia exercise={ex} size="thumb" />
+                <span className="grow excollapsed-text">
+                  <b>{ex?.name ?? we.exerciseId}</b>
+                  <small className="muted">{finishedSummary(we, kind)}</small>
+                </span>
+                <Check size={20} strokeWidth={3} className="excollapsed-ok" aria-hidden="true" />
+              </button>
+            </div>
+          );
         const [c1, c2] = kind === 'duration' ? [u, 'Tiempo'] : kind === 'distance' ? ['Metros', 'Tiempo'] : kind === 'reps' ? [`+${u}`, 'Reps'] : kind === 'assisted' ? [`-${u}`, 'Reps'] : [u, 'Reps'];
         return (
           <div key={ei} className={`card excard ${we.supersetId ? 'superset' : ''} ${ssPrev ? 'ss-mid' : ''} ${ssNext ? 'ss-next' : ''}`}>
@@ -290,6 +331,11 @@ export default function WorkoutLogger({
                 <ExerciseMedia exercise={ex} size="thumb" />
                 <b className="grow">{ex?.name ?? we.exerciseId}</b>
               </button>
+              {finished && (
+                <button className="ghost" onClick={() => setExpanded((old) => toggleIn(old, cardKey, false))} aria-label={`Plegar ${ex?.name ?? 'ejercicio'}`}>
+                  <ChevronUp size={20} />
+                </button>
+              )}
               <button className="ghost" onClick={() => setMenu(ei)} aria-label="Opciones">
                 <MoreHorizontal size={20} />
               </button>
@@ -356,8 +402,25 @@ export default function WorkoutLogger({
                 </details>
               </div>
             )}
-            <input className="notes" placeholder="Notas…" value={we.notes ?? ''} onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))} />
-            {mode === 'live' && <RestPicker value={we.restSec ?? settings.defaultRestSec} onChange={(v) => edit((n) => void (n.exercises[ei].restSec = v))} />}
+            <div className="exmeta">
+              {mode === 'live' && <RestPicker value={we.restSec ?? settings.defaultRestSec} onChange={(v) => edit((n) => void (n.exercises[ei].restSec = v))} />}
+              {!we.notes && !noteOpen.has(cardKey) && (
+                <button className="ghost small icon-btn exmeta-note" onClick={() => setNoteOpen((old) => toggleIn(old, cardKey, true))}>
+                  <StickyNote size={16} aria-hidden="true" /> Nota
+                </button>
+              )}
+            </div>
+            {(we.notes || noteOpen.has(cardKey)) && (
+              <input
+                className="notes"
+                aria-label={`Notas de ${ex?.name ?? 'este ejercicio'}`}
+                placeholder="Notas…"
+                autoFocus={!we.notes}
+                value={we.notes ?? ''}
+                onFocus={() => setNoteOpen((old) => (old.has(cardKey) ? old : toggleIn(old, cardKey, true)))}
+                onChange={(e) => edit((n) => void (n.exercises[ei].notes = e.target.value || undefined))}
+              />
+            )}
             <div className="exprog" role="progressbar" aria-label="Series completadas" aria-valuemin={0} aria-valuemax={we.sets.length} aria-valuenow={we.sets.filter((x) => x.done).length}>
               <div style={{ width: `${we.sets.length ? (100 * we.sets.filter((x) => x.done).length) / we.sets.length : 0}%` }} />
             </div>
@@ -442,6 +505,14 @@ export default function WorkoutLogger({
         );
       })}
 
+      <textarea
+        className="notes"
+        rows={1}
+        aria-label="Notas del entrenamiento"
+        placeholder="Notas del entrenamiento…"
+        value={w.notes ?? ''}
+        onChange={(e) => edit((n) => void (n.notes = e.target.value || undefined))}
+      />
       <button className="primary full icon-btn" onClick={() => setPicker({})}>
         <Plus size={18} strokeWidth={2.6} /> Añadir ejercicio
       </button>
@@ -452,7 +523,26 @@ export default function WorkoutLogger({
         {mode === 'live' ? 'Descartar entrenamiento' : 'Descartar cambios'}
       </button>
 
-      {mode === 'live' && restState.end && restLeft > 0 && (
+      {!resting && next && (
+        <div className="nextdock" role="group" aria-label="Siguiente serie">
+          <button className="plain nextdock-info" onClick={() => goToNext(false)}>
+            <small>{next.step}</small>
+            <b>{next.name}</b>
+          </button>
+          {next.value && <span className="nextdock-value">{next.value}</span>}
+          {next.ready ? (
+            <button className="nextdock-go on" onClick={() => cursor && toggleDone(cursor.ei, cursor.si)} aria-label="Completar siguiente serie">
+              <Check size={26} strokeWidth={3} aria-hidden="true" />
+            </button>
+          ) : (
+            <button className="nextdock-go" onClick={() => goToNext(true)}>
+              Anotar
+            </button>
+          )}
+        </div>
+      )}
+
+      {resting && (
         <div className="rest" role="timer" aria-label="Descanso">
           <div className="rest-progress" style={{ width: `${(restLeft / Math.max(1, restState.total)) * 100}%` }} />
           <div className="rest-main">
@@ -534,6 +624,16 @@ export default function WorkoutLogger({
       {devices && <DevicesSheet onClose={() => setDevices(false)} />}
     </section>
   );
+}
+
+// Resumen de un ejercicio terminado y plegado: número de series y la mejor.
+function finishedSummary(we: WorkoutExercise, kind: Exercise['kind']): string {
+  const work = we.sets.filter((s) => s.done && s.type !== 'warmup');
+  const count = `${work.length} ${work.length === 1 ? 'serie' : 'series'}`;
+  if (!work.length) return count;
+  if (kind === 'duration' || kind === 'distance') return `${count} · mejor ${formatSeconds(Math.max(...work.map((s) => s.durationSec ?? 0)))}`;
+  const best = work.reduce((a, b) => ((b.weight ?? 0) > (a.weight ?? 0) || ((b.weight ?? 0) === (a.weight ?? 0) && (b.reps ?? 0) > (a.reps ?? 0)) ? b : a));
+  return `${count} · mejor ${best.weight ? `${fmtWeight(best.weight)} × ` : ''}${best.reps ?? 0}`;
 }
 
 function EditTimes({ w, edit }: { w: Workout; edit: Edit }) {

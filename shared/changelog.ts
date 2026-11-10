@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.21.0',
+    date: '2026-11-10',
+    items: ['Entreno más claro: completa la siguiente serie desde una barra al alcance del pulgar y los ejercicios terminados se pliegan. En el reloj, la serie cabe en una pantalla y el peso y las repeticiones se ajustan con la corona.'],
+  },
+  {
     version: '1.20.0',
     date: '2026-11-10',
     items: ['En Android puedes exportar a Health Connect los entrenamientos que termines, con su pulso si das el permiso. Se activa en Ajustes.'],

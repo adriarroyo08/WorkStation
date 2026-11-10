@@ -63,6 +63,17 @@ export function nextPendingSet(w: Workout): { ei: number; si: number } | null {
   return null;
 }
 
+// El ejercicio (con toda su superserie) está hecho y ya se ha entrenado algo después: la pantalla puede plegarlo.
+// Justo al acabar sigue abierto, para corregir o deshacer la última serie durante el descanso.
+export function isExerciseFinished(w: Workout, ei: number): boolean {
+  const we = w.exercises[ei];
+  if (!we?.sets.length) return false;
+  let last = ei;
+  while (we.supersetId && w.exercises[last + 1]?.supersetId === we.supersetId) last++;
+  const block = we.supersetId ? w.exercises.filter((e) => e.supersetId === we.supersetId) : [we];
+  return block.every((e) => e.sets.every((s) => s.done)) && w.exercises.slice(last + 1).some((e) => e.sets.some((s) => s.done));
+}
+
 // Cierra el entrenamiento: descarta series sin completar y ejercicios vacíos. null si no queda nada.
 export function finishWorkout(w: Workout, endedAt = new Date()): Workout | null {
   const done: Workout = {
