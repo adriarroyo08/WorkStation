@@ -1,6 +1,10 @@
 package com.workstation.app
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,32 +15,52 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Card
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.CompactButton
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.SwipeToDismissBox
@@ -48,12 +72,30 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.min
 
 private val Accent = Color(0xFFF2600C)
 private val Surface = Color(0xFF1F1F1F)
 private val TextMain = Color(0xFFF2F2F2)
 private val TextDim = Color(0xFF8E8E93)
 private val Danger = Color(0xFFFF4545)
+private val Track = Color(0xFF3A3A3A)
+
+// Píxeles de corona por paso: a menos, un giro leve cambiaría el valor varias veces.
+private const val ROTARY_STEP = 40f
+
+private fun icon(name: String, path: String): ImageVector =
+    ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).addPath(addPathNodes(path), fill = SolidColor(Color.White)).build()
+
+private val IconCheck = icon("check", "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z")
+private val IconUndo = icon("undo", "M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z")
+private val IconPrev = icon("prev", "M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z")
+private val IconNext = icon("next", "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z")
+private val IconSkip = icon("skip", "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z")
+private val IconMenu = icon("menu", "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z")
+private val IconPlus = icon("plus", "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z")
+private val IconMinus = icon("minus", "M19 13H5v-2h14v2z")
 
 /** Acciones de las pantallas de serie y descanso: comandos al móvil (remoto) o cambios en el entreno local. */
 class SetActions(
@@ -65,12 +107,16 @@ class SetActions(
     val menu: (() -> Unit)? = null,
 )
 
-private fun remoteActions(a: Active, send: (JSONObject) -> Unit) = SetActions(
-    complete = { ei, si, w, r, s -> send(Cmd.completeSet(a.id, a.exercises[ei].name, ei, si, w, r, s)) },
+private fun remoteActions(a: Active, send: (JSONObject) -> Unit, onComplete: () -> Unit, onMenu: () -> Unit) = SetActions(
+    complete = { ei, si, w, r, s ->
+        onComplete()
+        send(Cmd.completeSet(a.id, a.exercises[ei].name, ei, si, w, r, s))
+    },
     uncomplete = { ei, si -> send(Cmd.uncompleteSet(a.id, a.exercises[ei].name, ei, si)) },
     restAdd = { send(Cmd.restAdd(it)) },
     restSkip = { send(Cmd.restSkip()) },
     finish = { send(Cmd.finish()) },
+    menu = onMenu,
 )
 
 @Composable
@@ -93,9 +139,12 @@ fun WatchApp(
     )) {
         val now = rememberNow()
         val active = state?.active
-        LaunchedEffect(active?.id, local?.id) { onActiveChanged() }
-        // Subpantalla abierta: "routine", "history", "menu" (ejercicios del entreno local) o "pick" (añadir ejercicio).
+        // Subpantalla abierta: "routine", "history", "menu" (ejercicios del entreno en curso) o "pick" (añadir ejercicio).
         var page by remember { mutableStateOf("") }
+        LaunchedEffect(active?.id, local?.id) {
+            onActiveChanged()
+            page = ""
+        }
         var routine by remember { mutableStateOf<LibRoutine?>(null) }
         var focus by remember { mutableStateOf<Cursor?>(null) }
         var summary by remember { mutableStateOf<Recent?>(null) }
@@ -104,7 +153,11 @@ fun WatchApp(
         val shown = active ?: la
         val resting = shown?.restEnd != null && shown.restEnd > now
         val screen = when {
-            active != null -> if (resting) "rest" else "set"
+            active != null -> when {
+                page == "menu" -> page
+                resting -> "rest"
+                else -> "set"
+            }
             la != null -> when {
                 page == "menu" || page == "pick" -> page
                 la.exercises.isEmpty() -> "empty"
@@ -117,7 +170,7 @@ fun WatchApp(
             else -> "home"
         }
         val actions = when {
-            active != null -> remoteActions(active, send)
+            active != null -> remoteActions(active, send, onComplete = { focus = null }, onMenu = { page = "menu" })
             la != null -> SetActions(
                 complete = { ei, si, w, r, s ->
                     focus = null
@@ -140,8 +193,9 @@ fun WatchApp(
             page = ""
         }
         // Una lista por pantalla, y la hora se oculta al hacer scroll para no tapar los botones de arriba.
+        // En la serie y el descanso manda el tiempo del entreno: no hay hora que tape nada.
         val list = remember(screen) { ScalingLazyListState() }
-        Scaffold(timeText = { if (list.centerItemIndex <= 1) TimeText() }) {
+        Scaffold(timeText = { if (screen != "set" && screen != "rest" && list.centerItemIndex <= 1) TimeText() }) {
             when (screen) {
                 "home" -> HomeScreen(
                     state, library, connected, list,
@@ -157,18 +211,20 @@ fun WatchApp(
                 "summary" -> SummaryScreen(summary!!, list) { summary = null }
                 "menu", "empty" -> {
                     val content = @Composable {
+                        val a = shown!!
                         ExercisesScreen(
-                            la!!, now, list,
+                            a, now, list,
                             onJump = { ei ->
-                                focus = Cursor(ei, la.exercises[ei].sets.indexOfFirst { !it.done }.coerceAtLeast(0))
+                                focus = Cursor(ei, a.exercises[ei].sets.indexOfFirst { !it.done }.coerceAtLeast(0))
                                 page = ""
                             },
-                            onAdd = { page = "pick" },
+                            // Un entreno que sigue el móvil solo se añade o descarta desde el móvil.
+                            onAdd = if (active == null) ({ page = "pick" }) else null,
                             onFinish = actions?.finish,
-                            onDiscard = {
+                            onDiscard = if (active == null) ({
                                 LocalStore.discard()
                                 page = ""
-                            },
+                            }) else null,
                         )
                     }
                     if (screen == "menu") Sub({ page = "" }, content) else content()
@@ -181,8 +237,8 @@ fun WatchApp(
                     }
                 }
                 // Con el servicio en marcha es él quien vibra al acabar el descanso local (aunque la pantalla esté apagada).
-                "rest" -> RestScreen(shown!!, now, bpm, actions!!, if (active == null) ({ if (!HeartRateService.running) vibrate() }) else vibrate, keepScreenOn)
-                else -> SetScreen(shown!!, now, bpm, actions!!, if (active == null) focus else null, list)
+                "rest" -> FitToScreen { RestScreen(shown!!, now, bpm, actions!!, if (active == null) ({ if (!HeartRateService.running) vibrate() }) else vibrate, keepScreenOn) }
+                else -> FitToScreen { SetScreen(shown!!, now, bpm, actions!!, focus) }
             }
         }
     }
@@ -193,6 +249,14 @@ fun WatchApp(
 private fun Sub(onBack: () -> Unit, content: @Composable () -> Unit) {
     BackHandler(onBack = onBack)
     SwipeToDismissBox(onDismissed = onBack) { isBackground -> if (!isBackground) content() }
+}
+
+/** Escala las pantallas de tamaño fijo al reloj: 227 dp es la referencia (TicWatch), y cabe igual en uno de 192. */
+@Composable
+private fun FitToScreen(content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+    val factor = (LocalConfiguration.current.screenWidthDp / 227f).coerceIn(0.8f, 1.2f)
+    CompositionLocalProvider(LocalDensity provides Density(density.density * factor, min(density.fontScale, 1.1f)), content = content)
 }
 
 @Composable
@@ -324,9 +388,13 @@ private fun SummaryScreen(r: Recent, list: ScalingLazyListState, onDone: () -> U
     ScalingLazyColumn(modifier = Modifier.fillMaxSize(), state = list, horizontalAlignment = Alignment.CenterHorizontally) {
         item { Label("Entreno terminado") }
         item { Title(r.name) }
-        item { Text("Duración  " + clock(((r.end ?: r.start) - r.start) / 1000), fontSize = 14.sp) }
-        item { Text("Series  ${r.sets}", fontSize = 14.sp) }
-        item { Text("Volumen  ${formatWeight(r.volume)} $weightUnit", fontSize = 14.sp) }
+        item { Text(clock(((r.end ?: r.start) - r.start) / 1000), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = Accent) }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Stat("${r.sets}", "series")
+                Stat(formatWeight(r.volume), weightUnit)
+            }
+        }
         item {
             Chip(
                 modifier = Modifier.fillMaxWidth(),
@@ -339,14 +407,22 @@ private fun SummaryScreen(r: Recent, list: ScalingLazyListState, onDone: () -> U
 }
 
 @Composable
+private fun Stat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Label(label)
+    }
+}
+
+@Composable
 private fun ExercisesScreen(
     a: Active,
     now: Long,
     list: ScalingLazyListState,
     onJump: (Int) -> Unit,
-    onAdd: () -> Unit,
+    onAdd: (() -> Unit)?,
     onFinish: (() -> Unit)?,
-    onDiscard: () -> Unit,
+    onDiscard: (() -> Unit)?,
 ) {
     var confirmFinish by remember { mutableStateOf(false) }
     var confirmDiscard by remember { mutableStateOf(false) }
@@ -360,20 +436,21 @@ private fun ExercisesScreen(
                     onClick = { onJump(ei) },
                     label = { Text(e.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     secondaryLabel = { Text((if (e.superset) "Superserie · " else "") + "${e.sets.count { it.done }}/${e.sets.size} series") },
+                    icon = if (e.sets.isNotEmpty() && e.sets.all { it.done }) ({ Icon(IconCheck, "Terminado", tint = Accent) }) else null,
                     colors = ChipDefaults.secondaryChipColors(),
                 )
             }
         }
-        item {
+        if (onAdd != null) item {
             Chip(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onAdd,
                 label = { Text("Añadir ejercicio") },
-                colors = ChipDefaults.primaryChipColors(),
+                colors = ChipDefaults.secondaryChipColors(),
             )
         }
         if (onFinish != null) item { ConfirmChip(confirmFinish, "Terminar entreno", "Toca otra vez para guardar") { if (confirmFinish) onFinish() else confirmFinish = true } }
-        item { ConfirmChip(confirmDiscard, "Descartar", "Toca otra vez para descartar") { if (confirmDiscard) onDiscard() else confirmDiscard = true } }
+        if (onDiscard != null) item { ConfirmChip(confirmDiscard, "Descartar", "Toca otra vez para descartar") { if (confirmDiscard) onDiscard() else confirmDiscard = true } }
     }
 }
 
@@ -406,16 +483,107 @@ private fun PickerScreen(library: Library?, list: ScalingLazyListState, onPick: 
     }
 }
 
+/** Anillo con una porción por serie del ejercicio: hechas en naranja, la actual en blanco y las pendientes apagadas. */
 @Composable
-private fun SetScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, focus: Cursor?, list: ScalingLazyListState) {
+private fun SetRing(sets: List<WSet>, current: Int, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val stroke = 5.dp.toPx()
+        val inset = stroke / 2 + 3.dp.toPx()
+        val arc = Size(size.width - inset * 2, size.height - inset * 2)
+        val count = sets.size.coerceAtLeast(1)
+        val gap = if (count == 1) 0f else 4f
+        val sweep = 360f / count
+        sets.forEachIndexed { i, set ->
+            drawArc(
+                color = if (i == current) TextMain else if (set.done) Accent else Track,
+                startAngle = -90f + sweep * i + gap / 2,
+                sweepAngle = sweep - gap,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arc,
+                style = Stroke(stroke, cap = StrokeCap.Butt),
+            )
+        }
+    }
+}
+
+/** Botón redondo con icono y nombre accesible. */
+@Composable
+private fun RoundButton(
+    icon: ImageVector,
+    description: String,
+    size: Int,
+    background: Color,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val haptics = LocalHapticFeedback.current
+    Box(
+        Modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(if (enabled) background else background.copy(alpha = 0.35f))
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = description) {
+                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, description, tint = if (enabled) Color.White else TextDim, modifier = Modifier.size((size * 0.55f).dp))
+    }
+}
+
+/** Cifra grande que se elige tocándola; la corona y los botones −/+ cambian la que esté elegida. */
+@Composable
+private fun ValueField(text: String, unit: String, description: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected && enabled) Surface else Color.Transparent)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Ajustar $description", onClick = onClick)
+            .semantics { contentDescription = "$description: $text $unit" }
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text,
+            fontSize = if (text.length > 4) 25.sp else 31.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false,
+            color = if (selected && enabled) Accent else TextMain,
+        )
+        Text(unit, fontSize = 11.sp, color = TextDim, maxLines = 1)
+    }
+}
+
+/** Todo hecho: terminar pasa a ser lo primero, sin bajar a buscarlo. */
+@Composable
+private fun AllDoneScreen(a: Active, now: Long, onFinish: () -> Unit, onReview: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Label("Todo hecho")
+        Text(clock((now - a.startedAt) / 1000), fontSize = 38.sp, fontWeight = FontWeight.Bold, color = Accent)
+        Label("${a.setsDone} series")
+        Spacer(Modifier.height(8.dp))
+        Chip(modifier = Modifier.fillMaxWidth(), onClick = onFinish, label = { Text("Terminar") }, colors = ChipDefaults.primaryChipColors())
+        Chip(modifier = Modifier.fillMaxWidth(), onClick = onReview, label = { Text("Revisar series") }, colors = ChipDefaults.secondaryChipColors())
+    }
+}
+
+@Composable
+private fun SetScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, focus: Cursor?) {
     if (a.exercises.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Text("Añade ejercicios en el móvil", textAlign = TextAlign.Center)
         }
         return
     }
-    // Serie seleccionada: por defecto la siguiente pendiente (o la elegida en la lista de ejercicios); se puede
-    // navegar con los botones laterales.
+    var reviewing by remember(a.id) { mutableStateOf(false) }
+    if (a.cursor == null && focus == null && !reviewing && actions.finish != null) {
+        AllDoneScreen(a, now, actions.finish) { reviewing = true }
+        return
+    }
+    // Serie seleccionada: por defecto la siguiente pendiente (o la elegida en el menú); se cambia con las flechas.
     val flat = remember(a) { a.exercises.flatMapIndexed { ei, e -> e.sets.indices.map { si -> Cursor(ei, si) } } }
     var idx by remember(a.cursor, a.id, focus) { mutableStateOf((focus ?: a.cursor)?.let { c -> flat.indexOf(c).coerceAtLeast(0) } ?: (flat.size - 1)) }
     val cur = flat.getOrNull(idx) ?: return
@@ -426,6 +594,8 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, focu
     var secs by remember(cur, set) { mutableStateOf(set.durationSec) }
     val isTime = ex.kind == "duration" || ex.kind == "distance"
     val usesWeight = ex.kind == "weight_reps" || ex.kind == "reps" || ex.kind == "assisted"
+    // Cifra que cambian la corona y los botones −/+. Se empieza por el peso, que es lo que más se ajusta.
+    var weightSelected by remember(cur) { mutableStateOf(usesWeight) }
     val workIndex = ex.sets.take(cur.si + 1).count { it.type != "warmup" }
     val typeLabel = when (set.type) {
         "warmup" -> "Calentamiento"
@@ -433,10 +603,45 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, focu
         "failure" -> "Al fallo"
         else -> "Serie $workIndex de ${ex.sets.count { it.type != "warmup" }}"
     }
-    var confirmFinish by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
+    // Una serie hecha no se edita: primero se deshace con el botón central.
+    val step: (Int) -> Unit = { dir ->
+        if (!set.done) {
+            when {
+                isTime -> secs = ((secs ?: 0) + 5 * dir).coerceAtLeast(0)
+                weightSelected -> weight = stepWeight(weight, dir)
+                else -> reps = ((reps ?: 0) + dir).coerceAtLeast(0)
+            }
+        }
+    }
+    val crown = remember { FocusRequester() }
+    var turned by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(cur) { runCatching { crown.requestFocus() } }
 
-    ScalingLazyColumn(modifier = Modifier.fillMaxSize(), state = list, horizontalAlignment = Alignment.CenterHorizontally) {
-        item {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onRotaryScrollEvent { e ->
+                turned += e.verticalScrollPixels
+                val steps = (turned / ROTARY_STEP).toInt()
+                if (steps != 0) {
+                    turned -= steps * ROTARY_STEP
+                    repeat(abs(steps)) { step(if (steps > 0) 1 else -1) }
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                }
+                true
+            }
+            .focusRequester(crown)
+            .focusable(),
+        contentAlignment = Alignment.Center,
+    ) {
+        SetRing(ex.sets, cur.si, Modifier.fillMaxSize())
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 11.dp, vertical = 11.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            StatusPill(clock((now - a.startedAt) / 1000) + (bpm?.let { "  ·  $it ppm" } ?: ""), actions.menu)
             Text(
                 ex.name,
                 fontWeight = FontWeight.Bold,
@@ -444,77 +649,71 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, focu
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
+                lineHeight = 16.sp,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 1.dp),
             )
-        }
-        item {
-            Text(
-                (if (ex.superset) "Superserie · " else "") + typeLabel + if (set.done) " ✓" else "",
-                fontSize = 12.sp,
-                color = TextDim,
-            )
-        }
-        if (usesWeight) {
-            item {
-                Stepper(
-                    value = formatWeight(weight) + if (ex.kind == "assisted") " $weightUnit asist." else " $weightUnit",
-                    onMinus = { weight = stepWeight(weight, -1) },
-                    onPlus = { weight = stepWeight(weight, 1) },
-                )
+            Text((if (ex.superset) "Superserie · " else "") + typeLabel, fontSize = 12.sp, color = if (set.done) Accent else TextDim, maxLines = 1)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                RoundButton(IconMinus, "Bajar", 38, Surface, enabled = !set.done) { step(-1) }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 1.dp)) {
+                    if (isTime) {
+                        ValueField(clock((secs ?: 0).toLong()), "tiempo", "Tiempo", selected = true, enabled = !set.done) {}
+                    } else {
+                        if (usesWeight) {
+                            ValueField(formatWeight(weight), if (ex.kind == "assisted") "$weightUnit asist." else weightUnit, "Peso", weightSelected, !set.done) { weightSelected = true }
+                            Text("×", fontSize = 16.sp, color = TextDim)
+                        }
+                        ValueField("${reps ?: 0}", "reps", "Repeticiones", !weightSelected, !set.done) { weightSelected = false }
+                    }
+                }
+                RoundButton(IconPlus, "Subir", 38, Surface, enabled = !set.done) { step(1) }
             }
-        }
-        item {
-            if (isTime) Stepper(value = clock((secs ?: 0).toLong()), onMinus = { secs = ((secs ?: 0) - 5).coerceAtLeast(0) }, onPlus = { secs = (secs ?: 0) + 5 })
-            else Stepper(value = "${reps ?: 0} reps", onMinus = { reps = ((reps ?: 0) - 1).coerceAtLeast(0) }, onPlus = { reps = (reps ?: 0) + 1 })
-        }
-        if (set.prevWeight != null || set.prevReps != null) {
-            item { Text("Anterior: ${formatWeight(set.prevWeight)} × ${set.prevReps ?: "–"}", fontSize = 11.sp, color = TextDim) }
-        }
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CompactButton(onClick = { if (idx > 0) idx-- }, enabled = idx > 0, colors = ButtonDefaults.secondaryButtonColors()) { Text("‹", fontSize = 20.sp) }
-                Button(
-                    modifier = Modifier.size(ButtonDefaults.LargeButtonSize),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = if (set.done) Surface else Accent, contentColor = Color.White),
-                    onClick = {
-                        if (set.done) actions.uncomplete(cur.ei, cur.si)
-                        else actions.complete(cur.ei, cur.si, if (usesWeight) weight else null, if (isTime) null else reps, if (isTime) secs else null)
-                    },
-                ) { Text(if (set.done) "↺" else "✓", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
-                CompactButton(onClick = { if (idx < flat.size - 1) idx++ }, enabled = idx < flat.size - 1, colors = ButtonDefaults.secondaryButtonColors()) { Text("›", fontSize = 20.sp) }
+            if (set.prevWeight != null || set.prevReps != null) {
+                Text("Anterior ${formatWeight(set.prevWeight)} × ${set.prevReps ?: "–"}", fontSize = 11.sp, color = TextDim, maxLines = 1)
             }
-        }
-        item {
-            Text(
-                clock((now - a.startedAt) / 1000) + "  ·  ${a.setsDone}/${a.setsTotal}" + (bpm?.let { "  ·  $it ppm" } ?: ""),
-                fontSize = 12.sp,
-                color = TextDim,
-            )
-        }
-        item { Spacer(Modifier.height(4.dp)) }
-        actions.menu?.let { menu ->
-            item {
-                Chip(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = menu,
-                    label = { Text("Ejercicios") },
-                    colors = ChipDefaults.secondaryChipColors(),
-                )
+            Spacer(Modifier.height(3.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                RoundButton(IconPrev, "Serie anterior", 36, Surface, enabled = idx > 0) { idx-- }
+                RoundButton(
+                    if (set.done) IconUndo else IconCheck,
+                    if (set.done) "Deshacer serie" else "Completar serie",
+                    54,
+                    if (set.done) Surface else Accent,
+                ) {
+                    if (set.done) actions.uncomplete(cur.ei, cur.si)
+                    else actions.complete(cur.ei, cur.si, if (usesWeight) weight else null, if (isTime) null else reps, if (isTime) secs else null)
+                }
+                RoundButton(IconNext, "Serie siguiente", 36, Surface, enabled = idx < flat.size - 1) { idx++ }
             }
-        }
-        actions.finish?.let { finish ->
-            item { ConfirmChip(confirmFinish, "Terminar entreno", "Toca otra vez para guardar") { if (confirmFinish) finish() else confirmFinish = true } }
         }
     }
 }
 
+/** Tiempo del entreno arriba del todo; al tocarlo se abre el menú (ejercicios y terminar). */
 @Composable
-private fun Stepper(value: String, onMinus: () -> Unit, onPlus: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        CompactButton(onClick = onMinus, colors = ButtonDefaults.secondaryButtonColors()) { Text("−", fontSize = 18.sp) }
-        Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.width(92.dp))
-        CompactButton(onClick = onPlus, colors = ButtonDefaults.secondaryButtonColors()) { Text("+", fontSize = 18.sp) }
+private fun StatusPill(text: String, onMenu: (() -> Unit)?) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Surface)
+            .clickable(enabled = onMenu != null, role = Role.Button, onClickLabel = "Abrir menú del entreno") { onMenu?.invoke() }
+            .padding(horizontal = 9.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        if (onMenu != null) Icon(IconMenu, "Menú del entreno", tint = TextDim, modifier = Modifier.size(13.dp))
+        Text(text, fontSize = 12.sp, color = TextMain, maxLines = 1)
     }
+}
+
+private fun nextSetText(e: WExercise, s: WSet?): String? {
+    if (s == null) return null
+    if (e.kind == "duration" || e.kind == "distance") return s.durationSec?.let { clock(it.toLong()) }
+    val weight = s.weight ?: s.prevWeight
+    val reps = s.reps ?: s.prevReps
+    if (weight == null && reps == null) return null
+    return (weight?.let { "${formatWeight(it)} $weightUnit × " } ?: "") + (reps ?: "–")
 }
 
 @Composable
@@ -535,28 +734,42 @@ private fun RestScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, vib
         }
     }
     val next = a.cursor?.let { c -> a.exercises.getOrNull(c.ei)?.let { e -> e to e.sets.getOrNull(c.si) } }
+    val ending = left <= 5
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(
             progress = left.toFloat() / total,
-            modifier = Modifier.fillMaxSize().padding(2.dp),
+            modifier = Modifier.fillMaxSize().padding(3.dp),
             strokeWidth = 6.dp,
-            indicatorColor = Accent,
-            trackColor = Surface,
+            indicatorColor = if (ending) TextMain else Accent,
+            trackColor = Track,
         )
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-            Text("Descanso", fontSize = 12.sp, color = TextDim)
-            Text(clock(left), fontSize = 40.sp, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                CompactButton(onClick = { actions.restAdd(-15) }, colors = ButtonDefaults.secondaryButtonColors()) { Text("-15") }
-                CompactButton(onClick = { actions.restAdd(15) }, colors = ButtonDefaults.secondaryButtonColors()) { Text("+15") }
-                CompactButton(onClick = { actions.restSkip() }) { Text("»") }
-            }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 18.dp)) {
+            Text("Descanso" + (bpm?.let { "  ·  $it ppm" } ?: ""), fontSize = 12.sp, color = TextDim, maxLines = 1)
+            Text(clock(left), fontSize = 54.sp, fontWeight = FontWeight.Bold, color = if (ending) Accent else TextMain, maxLines = 1)
             if (next != null) {
                 val (e, s) = next
-                Text("Siguiente: ${e.name}", fontSize = 11.sp, color = TextDim, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                s?.let { Text("${formatWeight(it.weight ?: it.prevWeight)} × ${it.reps ?: it.prevReps ?: "–"}", fontSize = 11.sp, color = TextDim) }
+                Text(e.name, fontSize = 13.sp, color = TextMain, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp))
+                nextSetText(e, s)?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Accent, maxLines = 1) }
             }
-            bpm?.let { Text("$it ppm", fontSize = 12.sp, color = TextDim) }
+            Spacer(Modifier.height(5.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RestStep("−15", "Quitar 15 segundos") { actions.restAdd(-15) }
+                RoundButton(IconSkip, "Saltar descanso", 52, Accent) { actions.restSkip() }
+                RestStep("+15", "Añadir 15 segundos") { actions.restAdd(15) }
+            }
         }
     }
+}
+
+@Composable
+private fun RestStep(text: String, description: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(Surface)
+            .clickable(role = Role.Button, onClickLabel = description, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) { Text(text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
 }
