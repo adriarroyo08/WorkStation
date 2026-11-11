@@ -1,7 +1,7 @@
 // Controlador global del entrenamiento en curso: fin de descansos, sincronización con el reloj,
 // notificación de Android, comandos que llegan del reloj y pulso.
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { workoutFromRoutine } from '../../shared/data';
+import { workoutForRoutine } from '../../shared/mesocycle';
 import { buildHealthExport } from '../../shared/health-connect';
 import { buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
 import type { Workout } from '../../shared/types';
@@ -179,7 +179,7 @@ export function useSessionController() {
           break;
         case 'start_routine': {
           const routine = s.data.routines.find((x) => x.id === c.id);
-          if (routine && !s.active) startWorkout(s, workoutFromRoutine(routine));
+          if (routine && !s.active) startWorkout(s, workoutForRoutine(s.data, routine));
           break;
         }
         case 'start_empty':

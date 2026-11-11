@@ -1,4 +1,5 @@
 import { DEFAULT_EXERCISES } from './exercises';
+import { normalizeMesocycle } from './mesocycle';
 import { normalizeRepRange } from './progression';
 import type { Exercise, Routine, SetType, Workout, WorkstationData } from './types';
 import { DEFAULT_SETTINGS, uid } from './types';
@@ -36,7 +37,14 @@ export function normalizeData(input: unknown): WorkstationData {
     version: 1,
     exercises,
     routines: Array.isArray(d.routines) ? d.routines.map((r) => ({ ...r, exercises: Array.isArray(r.exercises) ? normalizeExercises(r.exercises) : r.exercises })) : [],
-    folders: Array.isArray(d.folders) ? d.folders : [],
+    folders: Array.isArray(d.folders)
+      ? d.folders.map((f) => {
+          if (f?.mesocycle === undefined) return f;
+          const { mesocycle, ...rest } = f;
+          const m = normalizeMesocycle(mesocycle);
+          return m ? { ...rest, mesocycle: m } : rest;
+        })
+      : [],
     workouts: Array.isArray(d.workouts) ? d.workouts.map((w) => ({ ...w, exercises: Array.isArray(w.exercises) ? normalizeExercises(w.exercises) : w.exercises })) : [],
     measurements: Array.isArray(d.measurements) ? d.measurements : [],
     settings: { ...DEFAULT_SETTINGS, ...(d.settings ?? {}) },
