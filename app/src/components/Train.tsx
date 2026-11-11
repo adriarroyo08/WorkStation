@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { ask } from '../dialog';
-import { workoutFromRoutine } from '../../../shared/data';
+import { activeProgram, mesoProgress, PHASE_LABELS, programForRoutine, workoutForRoutine } from '../../../shared/mesocycle';
 import type { Routine } from '../../../shared/types';
 import { uid } from '../../../shared/types';
 import { hasPendingData } from '../../../shared/session';
@@ -9,12 +9,13 @@ import { muscleRecovery, nextRoutine } from '../../../shared/planning';
 import { sessionMuscles } from '../../../shared/muscle-detail';
 import { discardActive, finishActive, launchEmpty, launchWorkout, summary, useSummary } from '../controller';
 import { useStore } from '../store';
-import { BatteryCharging, ChevronDown, ChevronRight, Copy, Download, FolderInput, FolderPlus, Link2, MoreHorizontal, Pencil, Play, Plus, Search, Share2, Trash2 } from 'lucide-react';
+import { BatteryCharging, CalendarRange, ChevronDown, ChevronRight, Copy, Download, FolderInput, FolderPlus, Link2, MoreHorizontal, Pencil, Play, Plus, Search, Share2, Trash2 } from 'lucide-react';
 import BodyMap, { SessionMap } from './BodyMap';
 import { haptic, Sheet, useLongPress, useScrollTop, WeekStrip } from './ui';
 import { fmtWeight } from '../../../shared/units';
 import { shareRoutineLink } from './SharedRoutine';
 import { native } from '../native';
+import ProgramSheet from './Program';
 import './Train.css';
 
 // Pantallas que no hacen falta al abrir la app: se descargan aparte y se precargan cuando el navegador está libre.
@@ -159,6 +160,8 @@ function TodayHero({ routine, folder, last }: { routine: Routine; folder?: strin
   // Estimación: cada serie ~45 s más su descanso.
   const minutes = Math.round(routine.exercises.reduce((t, e) => t + e.sets.length * (45 + e.restSec), 0) / 60 / 5) * 5;
   const muscles = sessionMuscles(items).filter((m) => m.pct >= 45);
+  const program = programForRoutine(store.data, routine);
+  const progress = program && mesoProgress(store.data, program);
   return (
     <div className="today">
       <div className="sec">Hoy toca{folder ? ` · ${folder}` : ''}</div>
@@ -166,6 +169,11 @@ function TodayHero({ routine, folder, last }: { routine: Routine; folder?: strin
         <SessionMap items={items} />
         <div className="today-info">
           <h3>{routine.name}</h3>
+          {program && progress && !progress.finished && (
+            <p className="today-program">
+              Semana {progress.week + 1} de {program.mesocycle.weeks.length} · {PHASE_LABELS[program.mesocycle.weeks[progress.week].phase]}
+            </p>
+          )}
           <p className="today-meta">
             {routine.exercises.length} ejercicios · {sets} series{minutes ? ` · ~${minutes} min` : ''}
           </p>
@@ -182,7 +190,7 @@ function TodayHero({ routine, folder, last }: { routine: Routine; folder?: strin
           {last && <small className="muted">Última vez {ago(last)}</small>}
         </div>
       </div>
-      <button className="primary big icon-btn today-go" onClick={() => (haptic(), launchWorkout(store, workoutFromRoutine(routine)))} disabled={!routine.exercises.length}>
+      <button className="primary big icon-btn today-go" onClick={() => (haptic(), launchWorkout(store, workoutForRoutine(store.data, routine)))} disabled={!routine.exercises.length}>
         <Play size={18} fill="currentColor" /> Empezar
       </button>
     </div>
@@ -203,6 +211,7 @@ function Home({ onNewRoutine, onEdit, onExplore, onNews }: { onNews: () => void;
   const { data, settings, update } = store;
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<Routine | null>(null);
+  const [programFolder, setProgramFolder] = useState<string | null>(null);
   const weekStart = new Date();
   weekStart.setHours(0, 0, 0, 0);
   weekStart.setDate(weekStart.getDate() - (settings.weekStartsMonday ? (weekStart.getDay() + 6) % 7 : weekStart.getDay()));
@@ -302,6 +311,13 @@ function Home({ onNewRoutine, onEdit, onExplore, onNews }: { onNews: () => void;
               </button>
               {g.id && (
                 <>
+                  <button
+                    className={`ghost small icon-btn ${data.folders.some((f) => f.id === g.id && activeProgram(f)) ? 'accent-ink' : 'gray'}`}
+                    aria-label={`Programa de la carpeta ${g.name}`}
+                    onClick={() => setProgramFolder(g.id!)}
+                  >
+                    <CalendarRange size={16} />
+                  </button>
                   <button className="ghost small icon-btn gray" aria-label="Nueva rutina en la carpeta" onClick={() => onNewRoutine(g.id)}>
                     <Plus size={16} />
                   </button>
@@ -344,7 +360,7 @@ function Home({ onNewRoutine, onEdit, onExplore, onNews }: { onNews: () => void;
                       </div>
                       <p className="muted small">{r.exercises.map((e) => exName.get(e.exerciseId) ?? e.exerciseId).join(', ') || 'Sin ejercicios'}</p>
                     </div>
-                    <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => launchWorkout(store, workoutFromRoutine(r))} disabled={!r.exercises.length}>
+                    <button className="link" aria-label={`Empezar rutina ${r.name}`} onClick={() => launchWorkout(store, workoutForRoutine(data, r))} disabled={!r.exercises.length}>
                       Empezar
                     </button>
                     <button className="ghost" onClick={() => setMenu(r)} aria-label="Opciones">
@@ -363,6 +379,7 @@ function Home({ onNewRoutine, onEdit, onExplore, onNews }: { onNews: () => void;
         </div>
       )}
 
+      {programFolder && <ProgramSheet folderId={programFolder} onClose={() => setProgramFolder(null)} />}
       {menu && (
         <Sheet title={menu.name} onClose={() => setMenu(null)}>
           <div className="list">

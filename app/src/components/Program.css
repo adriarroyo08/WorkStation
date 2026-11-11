@@ -1,0 +1,178 @@
+/* Programa (mesociclo): fases en plano, sin degradados. Acumulación = naranja tenue, intensificación = naranja, descarga = gris. */
+.program {
+  display: grid;
+  gap: 10px;
+}
+.program .sec {
+  margin-top: 6px;
+}
+.program-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.program-head h3 {
+  margin: 0;
+  flex: 1;
+  font-family: var(--display);
+  font-size: 24px;
+}
+.phase-pill.acumulacion {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent-ink);
+}
+.phase-pill.intensificacion {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+.phase-pill.descarga {
+  background: var(--line-strong);
+  color: var(--text);
+}
+.phase-strip {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.phase-strip li,
+.phase-legend i {
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.phase-strip li {
+  flex: 1;
+}
+.phase-strip .acumulacion,
+.phase-legend .acumulacion {
+  background: color-mix(in srgb, var(--accent) 40%, var(--surface));
+}
+.phase-strip .intensificacion,
+.phase-legend .intensificacion {
+  background: var(--accent);
+}
+.phase-strip .descarga,
+.phase-legend .descarga {
+  background: var(--muted);
+}
+.phase-strip .pendiente {
+  opacity: 0.35;
+}
+.phase-strip .actual {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.phase-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.phase-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.phase-legend i {
+  display: inline-block;
+  width: 14px;
+}
+.program-lifts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.program-lifts li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+}
+.program-lifts.edit label {
+  gap: 10px;
+}
+.program-lifts .onerm {
+  gap: 8px;
+  margin-top: 6px;
+}
+.program-lifts .onerm input {
+  width: 96px;
+}
+.program .warn-text {
+  color: var(--warn-ink);
+}
+.program-templates {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.program-templates .line {
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.program-templates .line.on {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.program-templates small {
+  display: block;
+}
+.week-table {
+  display: grid;
+  gap: 6px;
+}
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+}
+.week-row:not(.head) {
+  padding: 8px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--muted);
+}
+.week-row.acumulacion {
+  border-left-color: color-mix(in srgb, var(--accent) 40%, var(--surface));
+}
+.week-row.intensificacion {
+  border-left-color: var(--accent);
+}
+.week-row.head {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 8px 0 12px;
+}
+.week-row .week-n {
+  grid-column: 1 / 2;
+  font-size: 14px;
+}
+.week-row .week-n + select {
+  grid-column: 2 / 5;
+}
+.week-row input,
+.week-row select {
+  min-width: 0;
+  width: 100%;
+  min-height: 40px;
+}
+.today-program {
+  font-size: 13px;
+  margin: 2px 0 4px;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.ghost.icon-btn.accent-ink {
+  color: var(--accent-ink);
+}
