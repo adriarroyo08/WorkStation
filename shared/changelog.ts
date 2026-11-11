@@ -7,10 +7,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
-    version: '1.22.0',
-    date: '2026-11-10',
+    version: '1.24.0',
+    date: '2026-11-12',
     items: ['En el reloj, cada rutina y cada ejercicio muestran una silueta con los músculos que trabajan, y puedes buscar ejercicios con el teclado o la voz para añadirlos a mitad de sesión, también si el entreno lo empezaste en el móvil.'],
   },
+  {
+    version: '1.23.0',
+    date: '2026-11-12',
+    items: ['Programas de 4 a 12 semanas: convierte una carpeta de rutinas en un bloque con fases de acumulación, intensificación y descarga, y cada sesión sale con el peso calculado desde tu 1RM. Pulsa el calendario junto a la carpeta.'],
+  },
+  { version: '1.22.0', date: '2026-11-11', items: ['30 ejercicios más en la biblioteca base para los grupos con menos opciones, disponibles sin cargar el catálogo.'] },
   {
     version: '1.21.0',
     date: '2026-11-10',

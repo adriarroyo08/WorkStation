@@ -7,6 +7,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Añadido
 
+- Mesociclos: una carpeta de rutinas se convierte en programa de 4 a 12 semanas con plantillas, fases, prescripción por % de 1RM o RPE y seguimiento; sin migraciones (el programa viaja en la carpeta) (#137).
+- 30 ejercicios en la biblioteca base para cuello, abductores, aductores, lumbar, trapecio, antebrazo, gemelos, glúteos e isquios, sin duplicar ejercicios ya importados del catálogo (#180).
 - Exportación optativa a Health Connect en Android: sesiones terminadas en el móvil, con pulso solo si hay muestras reales y permiso, sin duplicados (#163); requiere declarar los tipos de datos en Play Console antes de publicar.
 - Entreno en curso más claro: barra inferior para completar la siguiente serie, ejercicios terminados plegados y notas y descanso en una sola línea.
 - Wear OS: la serie cabe en una pantalla sin scroll, con anillo de series, ajuste con la corona y menú del entreno también cuando se sigue desde el móvil.
