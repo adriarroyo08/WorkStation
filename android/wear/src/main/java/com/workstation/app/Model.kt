@@ -14,7 +14,7 @@ data class WSet(
     val prevReps: Int?,
 )
 
-data class WExercise(val name: String, val kind: String, val superset: Boolean, val sets: List<WSet>)
+data class WExercise(val id: String, val name: String, val kind: String, val superset: Boolean, val sets: List<WSet>)
 
 data class Cursor(val ei: Int, val si: Int)
 
@@ -62,6 +62,7 @@ fun parseState(json: String): WatchState? = runCatching {
                 val e = exArr.getJSONObject(i)
                 val sets = e.getJSONArray("sets")
                 WExercise(
+                    id = e.optString("id"),
                     name = e.getString("name"),
                     kind = e.optString("kind", "weight_reps"),
                     superset = e.optBoolean("superset"),
@@ -100,6 +101,7 @@ object Cmd {
     fun restSkip() = JSONObject().put("type", "rest_skip")
     fun startRoutine(id: String) = JSONObject().put("type", "start_routine").put("id", id)
     fun startEmpty() = JSONObject().put("type", "start_empty")
+    fun addExercise(wid: String, id: String) = JSONObject().put("type", "add_exercise").put("wid", wid).put("id", id)
     fun finish() = JSONObject().put("type", "finish")
     fun heartRate(bpm: Int) = JSONObject().put("type", "hr").put("bpm", bpm)
 }

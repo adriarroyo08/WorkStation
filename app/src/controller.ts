@@ -3,7 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { workoutForRoutine } from '../../shared/mesocycle';
 import { buildHealthExport } from '../../shared/health-connect';
-import { buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
+import { addExerciseToWorkout, buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
 import type { Workout } from '../../shared/types';
 import { uid } from '../../shared/types';
 import { clearSamples, pushHeartRate, takeSamples } from './hr';
@@ -185,6 +185,13 @@ export function useSessionController() {
         case 'start_empty':
           if (!s.active) startEmpty(s);
           break;
+        case 'add_exercise': {
+          if (!s.active || (c.wid && c.wid !== s.active.id) || !s.data.exercises.some((e) => e.id === c.id)) break;
+          const next = addExerciseToWorkout(s.data, s.active, c.id);
+          s.setActive(next);
+          ref.current = { ...s, active: next };
+          break;
+        }
         case 'finish':
           if (!finishActive(s)) native.sendToWatch(JSON.stringify(buildWatchState(s.data, s.active, rest.get())));
           break;

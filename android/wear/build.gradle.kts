@@ -65,6 +65,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.wear.compose:compose-material:1.4.0")
     implementation("androidx.wear.compose:compose-foundation:1.4.0")
+    implementation("androidx.wear:wear-input:1.2.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 }
