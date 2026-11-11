@@ -7,6 +7,11 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.22.0',
+    date: '2026-11-10',
+    items: ['En el reloj, cada rutina y cada ejercicio muestran una silueta con los músculos que trabajan, y puedes buscar ejercicios con el teclado o la voz para añadirlos a mitad de sesión, también si el entreno lo empezaste en el móvil.'],
+  },
+  {
     version: '1.21.0',
     date: '2026-11-10',
     items: ['Entreno más claro: completa la siguiente serie desde una barra al alcance del pulgar y los ejercicios terminados se pliegan. En el reloj, la serie cabe en una pantalla y el peso y las repeticiones se ajustan con la corona.'],

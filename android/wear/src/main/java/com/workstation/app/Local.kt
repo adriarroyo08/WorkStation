@@ -31,7 +31,8 @@ data class LWorkout(
 )
 
 // Biblioteca que manda el móvil (shared/watch-library.ts).
-data class LibExercise(val id: String, val name: String, val kind: String)
+// muscles: grupo muscular → intensidad 0-100, para la silueta.
+data class LibExercise(val id: String, val name: String, val kind: String, val muscles: Map<String, Int> = emptyMap())
 data class LibRoutine(val id: String, val name: String, val folder: String?, val exercises: List<LExercise>)
 data class Recent(val id: String, val name: String, val start: Long, val end: Long?, val sets: Int, val volume: Double)
 
@@ -148,6 +149,7 @@ fun LWorkout.toActive(lib: Library?): Active {
             val ex = lib?.byId?.get(we.exerciseId)
             val prev = alignPrevious(we.sets, lib?.prev?.get(we.exerciseId).orEmpty())
             WExercise(
+                id = we.exerciseId,
                 name = ex?.name ?: we.exerciseId,
                 kind = ex?.kind?.takeIf { it in KINDS } ?: "weight_reps",
                 superset = we.supersetId != null,
@@ -174,7 +176,10 @@ fun parseLibrary(json: String): Library? = runCatching {
         sentAt = o.optLong("sentAt"),
         unit = if (o.optString("unit") == "lb") "lb" else "kg",
         defaultRest = o.optInt("defaultRest", 90),
-        exercises = o.optJSONArray("exercises")?.objs().orEmpty().map { LibExercise(it.getString("id"), it.getString("name"), it.optString("kind", "weight_reps")) },
+        exercises = o.optJSONArray("exercises")?.objs().orEmpty().map { e ->
+            val m = e.optJSONObject("m")
+            LibExercise(e.getString("id"), e.getString("name"), e.optString("kind", "weight_reps"), m?.keys()?.asSequence()?.associateWith { m.optInt(it) }.orEmpty())
+        },
         routines = o.optJSONArray("routines")?.objs().orEmpty().map { r ->
             LibRoutine(r.getString("id"), r.getString("name"), r.str("folder"), r.getJSONArray("exercises").objs().map { e ->
                 LExercise(e.getString("id"), e.int("rest"), e.str("ss"), e.getJSONArray("sets").objs().map(::libSet))
