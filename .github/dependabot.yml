@@ -12,6 +12,12 @@ updates:
         patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'eslint-plugin-*']
       remotion:
         patterns: ['remotion', '@remotion/*']
+    # TypeScript 7 en la raíz rompe la instalación: typescript-eslint 8 exige typescript <6.1.0.
+    # Quitar cuando typescript-eslint admita TypeScript 7 (app/, mcp/ y video/ ya están en 7 y
+    # siguen recibiendo menores y parches).
+    ignore:
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
   - package-ecosystem: gradle
     directory: /android
     schedule: { interval: monthly }

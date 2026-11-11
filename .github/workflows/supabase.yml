@@ -8,6 +8,10 @@ on:
     paths: ['supabase/functions/**', 'shared/**', 'mcp/src/edge.ts']
   workflow_dispatch:
 
+# Clona el repo y despliega con SUPABASE_ACCESS_TOKEN: GITHUB_TOKEN solo necesita leer.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,7 +19,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Comprobar secrets
         id: check
         run: |
@@ -23,14 +27,14 @@ jobs:
             echo "::notice::Sin SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF: se omite el despliegue."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.check.outputs.skip != 'true'
         with:
           node-version: 22
       - name: Empaquetar función
         if: steps.check.outputs.skip != 'true'
         run: npm ci --ignore-scripts && npm --prefix mcp ci --ignore-scripts && npm --prefix mcp run build:edge
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         if: steps.check.outputs.skip != 'true'
       - name: Desplegar
         if: steps.check.outputs.skip != 'true'
