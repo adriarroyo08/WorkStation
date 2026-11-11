@@ -6,6 +6,7 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  { version: '1.22.0', date: '2026-11-11', items: ['30 ejercicios más en la biblioteca base para los grupos con menos opciones, disponibles sin cargar el catálogo.'] },
   {
     version: '1.21.0',
     date: '2026-11-10',
