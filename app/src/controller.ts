@@ -2,6 +2,7 @@
 // notificación de Android, comandos que llegan del reloj y pulso.
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { workoutFromRoutine } from '../../shared/data';
+import { buildHealthExport } from '../../shared/health-connect';
 import { buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
 import type { Workout } from '../../shared/types';
 import { uid } from '../../shared/types';
@@ -92,6 +93,8 @@ export function finishActive(store: Store): boolean {
   const hr = summarizeHeartRate(Date.parse(a.startedAt), takeSamples());
   if (hr) done.heartRate = hr;
   store.update((d) => void d.workouts.push(done));
+  const session = buildHealthExport(done);
+  if (session) native.healthConnectExport(session);
   rest.stop();
   stopwatch.clear();
   native.workoutEnded();

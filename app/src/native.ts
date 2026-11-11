@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import type { WatchCommand } from '../../shared/session';
 import { parseWatchCommand } from '../../shared/session';
+import { parseHealthConnectStatus, type HealthConnectStatus, type HealthExport } from '../../shared/health-connect';
 
 interface NativeApi {
   sendToWatch(json: string): void;
@@ -25,6 +26,12 @@ interface NativeApi {
   setWatchUpload?(json: string): boolean;
   watchUploadUser?(): string;
   watchUploadExpiry?(): string;
+  // Health Connect (ver docs/health-connect.md). El estado vuelve siempre como mensaje health_connect.
+  healthConnectRefresh?(): void;
+  healthConnectEnable?(): void;
+  healthConnectDisable?(): void;
+  healthConnectOpen?(): void;
+  healthConnectExport?(json: string): boolean;
 }
 
 const api = (): NativeApi | undefined => (window as unknown as { WorkstationNative?: NativeApi }).WorkstationNative;
@@ -40,6 +47,16 @@ export function useWatchStatus() {
   );
 }
 
+// Estado de Health Connect. denied: la última petición de permiso no se concedió.
+let healthConnect: { status: HealthConnectStatus | null; denied: boolean } = { status: null, denied: false };
+const healthSubs = new Set<() => void>();
+export function useHealthConnect() {
+  return useSyncExternalStore(
+    (f) => (healthSubs.add(f), () => healthSubs.delete(f)),
+    () => healthConnect,
+  );
+}
+
 let handler: ((c: WatchCommand) => void) | null = null;
 export const onWatchCommand = (h: (c: WatchCommand) => void) => void (handler = h);
 let workoutHandler: ((json: string) => void) | null = null;
@@ -51,8 +68,14 @@ const googleWaiters: { ok: (token: string | null) => void; fail: (e: Error) => v
 // Mensajes que llegan desde Android: {kind:'watch_cmd', payload:'<json>'} | {kind:'watch_status', nodes:[...]}
 (window as unknown as { __workstationFromNative: (raw: string) => void }).__workstationFromNative = (raw: string) => {
   try {
-    const msg = JSON.parse(raw) as { kind: string; payload?: string; nodes?: string[]; granted?: boolean; token?: string; message?: string };
-    if (msg.kind === 'watch_status') {
+    const msg = JSON.parse(raw) as { kind: string; payload?: string; nodes?: string[]; granted?: boolean; token?: string; message?: string; status?: unknown; denied?: boolean };
+    if (msg.kind === 'health_connect') {
+      const status = parseHealthConnectStatus(msg.status);
+      if (status) {
+        healthConnect = { status, denied: !!msg.denied };
+        healthSubs.forEach((f) => f());
+      }
+    } else if (msg.kind === 'watch_status') {
       watch = { nodes: msg.nodes ?? [], checkedAt: Date.now() };
       subs.forEach((f) => f());
     } else if (msg.kind === 'notif_result') {
@@ -130,6 +153,20 @@ export const native = {
   watchUploadUser: (): string | undefined => api()?.watchUploadUser?.(),
   /** Caducidad de la key guardada (ISO): '' si no tiene. La key en sí nunca vuelve a la web. */
   watchUploadExpiry: (): string | undefined => api()?.watchUploadExpiry?.(),
+  /** false en la web y en versiones de la app sin Health Connect: entonces Ajustes no muestra la opción. */
+  healthConnectSupported: () => !!api()?.healthConnectRefresh,
+  healthConnectRefresh: () => api()?.healthConnectRefresh?.(),
+  healthConnectEnable: () => api()?.healthConnectEnable?.(),
+  healthConnectDisable: () => api()?.healthConnectDisable?.(),
+  healthConnectOpen: () => api()?.healthConnectOpen?.(),
+  /** Encola la sesión en Android. Un fallo aquí nunca debe afectar al guardado local. */
+  healthConnectExport: (session: HealthExport) => {
+    try {
+      api()?.healthConnectExport?.(JSON.stringify(session));
+    } catch {
+      /* la sesión ya está guardada en la app */
+    }
+  },
   async saveFile(name: string, blob: Blob): Promise<boolean> {
     const a = api();
     if (!a) return false;

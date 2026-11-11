@@ -52,6 +52,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    testOptions.unitTests.isReturnDefaultValues = true
 
     // La web (app/dist) se empaqueta dentro del APK y se sirve con WebViewAssetLoader.
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/webassets").get().asFile)
@@ -72,9 +73,13 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.8.0")
     implementation("androidx.webkit:webkit:1.18.0")
     implementation("androidx.work:work-runtime:2.10.0")
+    implementation("androidx.health.connect:connect-client:1.1.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("androidx.wear:wear-remote-interactions:1.1.0")
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20250517") // El org.json de android.jar es un stub en los tests de JVM.
 }
