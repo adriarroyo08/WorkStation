@@ -1,4 +1,5 @@
 import type { Region } from './muscle-detail';
+import type { Mesocycle, WorkoutProgram } from './mesocycle';
 export type { Region };
 
 // Modelo de datos compartido entre la app (PWA) y el servidor MCP.
@@ -112,6 +113,8 @@ export interface Workout {
   exercises: WorkoutExercise[];
   // Frecuencia cardiaca (reloj Wear OS o pulsómetro Bluetooth). samples: [segundos desde el inicio, ppm].
   heartRate?: { avg: number; max: number; min: number; samples?: [number, number][] };
+  // Semana y ejercicios principales si se empezó desde un programa (mesociclo).
+  program?: WorkoutProgram;
 }
 
 export interface RoutineExercise {
@@ -133,6 +136,8 @@ export interface Routine {
 export interface RoutineFolder {
   id: string;
   name: string;
+  // Programa de 4 a 12 semanas: las rutinas de la carpeta son sus días (shared/mesocycle.ts).
+  mesocycle?: Mesocycle;
 }
 
 export const MEASUREMENT_FIELDS = ['bodyweight', 'bodyFat', 'neck', 'shoulders', 'chest', 'waist', 'hips', 'leftArm', 'rightArm', 'leftThigh', 'rightThigh', 'leftCalf', 'rightCalf'] as const;

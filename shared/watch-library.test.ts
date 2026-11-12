@@ -21,6 +21,12 @@ describe('reloj autónomo', () => {
     expect(JSON.stringify(lib).length).toBeLessThan(90_000);
   });
 
+  it('cada ejercicio lleva sus músculos para la silueta del reloj', () => {
+    const banca = buildWatchLibrary(data(), 1).exercises.find((e) => e.id === 'press-banca');
+    expect(banca?.m?.pecho).toBe(100);
+    expect(Object.values(banca?.m ?? {}).every((v) => v > 0 && v <= 100)).toBe(true);
+  });
+
   it('valida el entreno que llega del reloj y quita lo que no sirve', () => {
     const d = data();
     expect(parseWatchWorkout('no json', d)).toBeNull();

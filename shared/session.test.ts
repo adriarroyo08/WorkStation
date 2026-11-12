@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
-import { buildWatchState, finishWorkout, isExerciseFinished, nextPendingSet, parseWatchCommand, summarizeHeartRate, toggleSet } from './session';
+import { addExerciseToWorkout, buildWatchState, finishWorkout, isExerciseFinished, nextPendingSet, parseWatchCommand, summarizeHeartRate, toggleSet } from './session';
 import type { Workout } from './types';
 
 const base = (): Workout => ({
@@ -165,5 +165,19 @@ describe('isExerciseFinished', () => {
       { exerciseId: 'b', sets: [set(true)] },
     ]);
     expect(isExerciseFinished(w, 0)).toBe(false);
+  });
+});
+
+describe('addExerciseToWorkout', () => {
+  const w: Workout = { id: 'w', name: 'A', startedAt: '2026-11-10T10:00:00Z', exercises: [] };
+  it('repite el número de series de la última vez, sin hacer', () => {
+    const d = emptyData();
+    d.workouts.push({ id: 'old', name: 'A', startedAt: '2026-11-01T10:00:00Z', exercises: [{ exerciseId: 'press-banca', sets: [{ type: 'warmup', weight: 40, reps: 10, done: true }, { type: 'normal', weight: 80, reps: 8, done: true }] }] });
+    const n = addExerciseToWorkout(d, w, 'press-banca');
+    expect(n.exercises).toEqual([{ exerciseId: 'press-banca', sets: [{ type: 'warmup', done: false }, { type: 'normal', done: false }], supersetId: undefined, restSec: d.settings.defaultRestSec }]);
+    expect(w.exercises).toEqual([]);
+  });
+  it('sin historial pone tres series', () => {
+    expect(addExerciseToWorkout(emptyData(), w, 'sentadilla').exercises[0].sets).toHaveLength(3);
   });
 });

@@ -293,6 +293,7 @@ describe('matriz de evidencia científica de ejercicios (issue #49)', () => {
   it('genera y mantiene el documento entregable docs/evidencia-ejercicios.md al día con la matriz', async () => {
     const stats = getLibraryEvidenceStats();
 
+    const percentage = (count: number) => ((count / stats.total) * 100).toFixed(1).replace('.', ',');
     let md = `# Investigación de evidencia científica y cobertura de la biblioteca de ejercicios
 
 Documento entregable de investigación y matriz científica para los ${stats.total} ejercicios base de WorkStation (Issue #49, parte de la épica #34).
@@ -324,10 +325,10 @@ La biblioteca base (\`DEFAULT_EXERCISES\`) contiene exactamente **${stats.total}
 | Métrica | Ejercicios | Porcentaje |
 | :--- | :---: | :---: |
 | **Total biblioteca base** | **${stats.total}** | **100,0 %** |
-| **Evidencia directa medida total** | **69** | **53,1 %** |
-| ↳ *Estudios de hipertrofia por MRI/ecografía* (\`hipertrofia\`) | 9 | 6,9 % |
-| ↳ *Estudios de electromiografía de superficie* (\`emg\`) | 60 | 46,2 % |
-| **Evidencia biomecánica estimada** (\`estimada\`, sin citas) | **61** | **46,9 %** |
+| **Evidencia directa medida total** | **${stats.directEvidenceCount}** | **${percentage(stats.directEvidenceCount)} %** |
+| ↳ *Estudios de hipertrofia por MRI/ecografía* (\`hipertrofia\`) | ${stats.directHypertrophyCount} | ${percentage(stats.directHypertrophyCount)} % |
+| ↳ *Estudios de electromiografía de superficie* (\`emg\`) | ${stats.directEmgCount} | ${percentage(stats.directEmgCount)} % |
+| **Evidencia biomecánica estimada** (\`estimada\`, sin citas) | **${stats.estimatedCount}** | **${percentage(stats.estimatedCount)} %** |
 
 ### 2.2 Desglose por Patrón de Movimiento
 

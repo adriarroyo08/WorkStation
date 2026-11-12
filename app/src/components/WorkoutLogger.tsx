@@ -302,6 +302,8 @@ export default function WorkoutLogger({
         const aligned = alignPrevious(we.sets, h?.prev ?? []);
         const targetExercise = targets.current.exercises.find((e) => e.exerciseId === we.exerciseId);
         const { report, recommendation } = stagnation.get(we.exerciseId) ?? {};
+        // Los principales de un programa siguen su prescripción: ni sugerencia de progresión ni aviso de descarga.
+        const programLift = !!w.program?.lifts.includes(we.exerciseId);
         const noticeKey = `${w.id}:${we.exerciseId}`;
         const ssPrev = ei > 0 && we.supersetId && w.exercises[ei - 1].supersetId === we.supersetId;
         const ssNext = we.supersetId && w.exercises[ei + 1]?.supersetId === we.supersetId;
@@ -345,7 +347,7 @@ export default function WorkoutLogger({
                 <Pin size={16} className="ico" /> {ex.stickyNote}
               </p>
             )}
-            {mode === 'live' && (
+            {mode === 'live' && !programLift && (
               <SuggestionChip
                 target={targetExercise?.sets.find((s) => s.repsMin !== undefined && s.type !== 'warmup' && s.type !== 'drop')}
                 targetSec={
@@ -367,7 +369,7 @@ export default function WorkoutLogger({
                 onApply={(p) => edit((n) => n.exercises[ei].sets.forEach((s) => !s.done && s.type !== 'warmup' && Object.assign(s, p)))}
               />
             )}
-            {recommendation && !dismissed.has(noticeKey) && (
+            {recommendation && !programLift && !dismissed.has(noticeKey) && (
               <div className="stagnation small muted">
                 <details>
                   <summary>Rendimiento de las últimas sesiones</summary>

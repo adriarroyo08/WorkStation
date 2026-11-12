@@ -1,12 +1,16 @@
 package com.workstation.app
 
+import android.app.RemoteInput
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -67,8 +71,11 @@ import androidx.wear.compose.material.SwipeToDismissBox
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.Colors
+import androidx.wear.input.RemoteInputIntentHelper
+import androidx.wear.input.WearableRemoteInputExtender
 import kotlinx.coroutines.delay
 import org.json.JSONObject
+import java.text.Normalizer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -96,6 +103,7 @@ private val IconSkip = icon("skip", "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z")
 private val IconMenu = icon("menu", "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z")
 private val IconPlus = icon("plus", "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z")
 private val IconMinus = icon("minus", "M19 13H5v-2h14v2z")
+private val IconSearch = icon("search", "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z")
 
 /** Acciones de las pantallas de serie y descanso: comandos al móvil (remoto) o cambios en el entreno local. */
 class SetActions(
@@ -154,7 +162,8 @@ fun WatchApp(
         val resting = shown?.restEnd != null && shown.restEnd > now
         val screen = when {
             active != null -> when {
-                page == "menu" -> page
+                page == "menu" || page == "pick" -> page
+                active.exercises.isEmpty() -> "empty"
                 resting -> "rest"
                 else -> "set"
             }
@@ -218,8 +227,9 @@ fun WatchApp(
                                 focus = Cursor(ei, a.exercises[ei].sets.indexOfFirst { !it.done }.coerceAtLeast(0))
                                 page = ""
                             },
-                            // Un entreno que sigue el móvil solo se añade o descarta desde el móvil.
-                            onAdd = if (active == null) ({ page = "pick" }) else null,
+                            library = library,
+                            // Un entreno que sigue el móvil solo se descarta desde el móvil; añadir sí (lo aplica el móvil).
+                            onAdd = if (library?.exercises.isNullOrEmpty()) null else ({ page = "pick" }),
                             onFinish = actions?.finish,
                             onDiscard = if (active == null) ({
                                 LocalStore.discard()
@@ -231,8 +241,9 @@ fun WatchApp(
                 }
                 "pick" -> Sub({ page = "menu" }) {
                     PickerScreen(library, list) { id ->
-                        focus = Cursor(la!!.exercises.size, 0)
-                        LocalStore.addExercise(id, library?.defaultRest ?: 90)
+                        focus = Cursor(shown!!.exercises.size, 0)
+                        if (active != null) send(Cmd.addExercise(active.id, id))
+                        else LocalStore.addExercise(id, library?.defaultRest ?: 90)
                         page = ""
                     }
                 }
@@ -322,6 +333,7 @@ private fun HomeScreen(
                         onClick = { onRoutine(r) },
                         label = { Text(r.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         secondaryLabel = { Text("${r.exercises.size} ejercicios") },
+                        icon = routineIcon(r, library),
                         colors = ChipDefaults.secondaryChipColors(),
                     )
                 }
@@ -352,9 +364,12 @@ private fun RoutineScreen(r: LibRoutine, library: Library?, list: ScalingLazyLis
         }
         r.exercises.forEach { e ->
             item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(library?.byId?.get(e.exerciseId)?.name ?: e.exerciseId, fontSize = 14.sp, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Label((if (e.supersetId != null) "Superserie · " else "") + "${e.sets.size} series")
+                Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MuscleThumb(musclesOf(library, e.exerciseId))
+                    Column(Modifier.weight(1f)) {
+                        Text(library?.byId?.get(e.exerciseId)?.name ?: e.exerciseId, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text((if (e.supersetId != null) "Superserie · " else "") + "${e.sets.size} series", fontSize = 12.sp, color = TextDim)
+                    }
                 }
             }
         }
@@ -419,6 +434,7 @@ private fun ExercisesScreen(
     a: Active,
     now: Long,
     list: ScalingLazyListState,
+    library: Library?,
     onJump: (Int) -> Unit,
     onAdd: (() -> Unit)?,
     onFinish: (() -> Unit)?,
@@ -435,8 +451,12 @@ private fun ExercisesScreen(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onJump(ei) },
                     label = { Text(e.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    secondaryLabel = { Text((if (e.superset) "Superserie · " else "") + "${e.sets.count { it.done }}/${e.sets.size} series") },
-                    icon = if (e.sets.isNotEmpty() && e.sets.all { it.done }) ({ Icon(IconCheck, "Terminado", tint = Accent) }) else null,
+                    secondaryLabel = {
+                        val finished = e.sets.isNotEmpty() && e.sets.all { it.done }
+                        val progress = if (finished) "Terminado" else "${e.sets.count { it.done }}/${e.sets.size} series"
+                        Text((if (e.superset) "Superserie · " else "") + progress, color = if (finished) Accent else TextDim)
+                    },
+                    icon = exerciseIcon(musclesOf(library, e.id)),
                     colors = ChipDefaults.secondaryChipColors(),
                 )
             }
@@ -464,23 +484,86 @@ private fun ConfirmChip(confirm: Boolean, label: String, confirmLabel: String, o
     )
 }
 
+/** Quita mayúsculas y tildes: «press bánca» encuentra «Press de banca». */
+private fun fold(t: String) = Normalizer.normalize(t.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+/** Todas las palabras buscadas aparecen en el nombre, en cualquier orden. */
+fun matchesQuery(name: String, query: String): Boolean {
+    val n = fold(name)
+    return fold(query).split(' ').filter { it.isNotBlank() }.all { it in n }
+}
+
 @Composable
 private fun PickerScreen(library: Library?, list: ScalingLazyListState, onPick: (String) -> Unit) {
-    val exercises = remember(library) { library?.exercises.orEmpty().sortedBy { it.name.lowercase() } }
+    var query by remember { mutableStateOf("") }
+    // Teclado o dictado del sistema, lo que el usuario tenga configurado en el reloj.
+    val search = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        res.data?.let { RemoteInput.getResultsFromIntent(it)?.getCharSequence(SEARCH_KEY)?.toString() }?.let { query = it.trim() }
+    }
+    val openSearch: () -> Unit = {
+        val input = WearableRemoteInputExtender(RemoteInput.Builder(SEARCH_KEY).setLabel("Buscar ejercicio")).setEmojisAllowed(false).get().build()
+        val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+        RemoteInputIntentHelper.putRemoteInputsExtra(intent, listOf(input))
+        runCatching { search.launch(intent) }
+    }
+    val all = remember(library) { library?.exercises.orEmpty().sortedBy { it.name.lowercase() } }
+    // Sin búsqueda van primero los que has hecho últimamente: lo más probable al añadir a mitad de sesión.
+    val recent = remember(library) { library?.prev?.keys.orEmpty() }
+    val shown = remember(all, query) {
+        if (query.isBlank()) all.filter { it.id in recent } + all.filter { it.id !in recent }
+        else all.filter { matchesQuery(it.name, query) }
+    }
+    LaunchedEffect(query) { list.scrollToItem(0) }
     ScalingLazyColumn(modifier = Modifier.fillMaxSize(), state = list, horizontalAlignment = Alignment.CenterHorizontally) {
         item { Title("Añadir ejercicio") }
-        if (exercises.isEmpty()) item { Label("Abre Workstation en el móvil para traer tus ejercicios") }
-        exercises.forEach { e ->
+        if (all.isEmpty()) {
+            item { Label("Abre Workstation en el móvil para traer tus ejercicios") }
+            return@ScalingLazyColumn
+        }
+        item {
+            Chip(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = openSearch,
+                label = { Text(if (query.isBlank()) "Buscar" else "«$query»", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                secondaryLabel = { Text(if (query.isBlank()) "Teclado o voz" else "${shown.size} resultados · cambiar") },
+                icon = { Icon(IconSearch, null) },
+                colors = ChipDefaults.primaryChipColors(),
+            )
+        }
+        if (query.isNotBlank()) item {
+            Chip(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { query = "" },
+                label = { Text("Ver todos") },
+                colors = ChipDefaults.secondaryChipColors(),
+            )
+        }
+        if (query.isBlank() && recent.isNotEmpty()) item { Label("Recientes primero") }
+        if (shown.isEmpty()) item { Label("Nada con «$query»") }
+        shown.forEach { e ->
             item {
                 Chip(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onPick(e.id) },
                     label = { Text(e.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                    icon = exerciseIcon(e.muscles),
                     colors = ChipDefaults.secondaryChipColors(),
                 )
             }
         }
     }
+}
+
+private const val SEARCH_KEY = "query"
+
+private fun musclesOf(library: Library?, id: String): Map<String, Int> = library?.byId?.get(id)?.muscles.orEmpty()
+
+private fun exerciseIcon(muscles: Map<String, Int>): (@Composable BoxScope.() -> Unit)? =
+    if (muscles.isEmpty()) null else ({ MuscleThumb(muscles) })
+
+private fun routineIcon(r: LibRoutine, library: Library?): (@Composable BoxScope.() -> Unit)? {
+    val m = sessionMuscles(r.exercises.map { musclesOf(library, it.exerciseId) to it.sets.size.coerceAtLeast(1) })
+    return if (m.isEmpty()) null else ({ MuscleThumb(m, both = true) })
 }
 
 /** Anillo con una porción por serie del ejercicio: hechas en naranja, la actual en blanco y las pendientes apagadas. */
@@ -585,7 +668,7 @@ private fun SetScreen(a: Active, now: Long, bpm: Int?, actions: SetActions, focu
     }
     // Serie seleccionada: por defecto la siguiente pendiente (o la elegida en el menú); se cambia con las flechas.
     val flat = remember(a) { a.exercises.flatMapIndexed { ei, e -> e.sets.indices.map { si -> Cursor(ei, si) } } }
-    var idx by remember(a.cursor, a.id, focus) { mutableStateOf((focus ?: a.cursor)?.let { c -> flat.indexOf(c).coerceAtLeast(0) } ?: (flat.size - 1)) }
+    var idx by remember(a.cursor, a.id, focus, flat.size) { mutableStateOf((focus ?: a.cursor)?.let { c -> flat.indexOf(c).coerceAtLeast(0) } ?: (flat.size - 1)) }
     val cur = flat.getOrNull(idx) ?: return
     val ex = a.exercises[cur.ei]
     val set = ex.sets[cur.si]
