@@ -5,14 +5,36 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ## [Sin publicar]
 
+### Añadido
+
+- Mesociclos: una carpeta de rutinas se convierte en programa de 4 a 12 semanas con plantillas, fases, prescripción por % de 1RM o RPE y seguimiento; sin migraciones (el programa viaja en la carpeta) (#137).
+- 30 ejercicios en la biblioteca base para cuello, abductores, aductores, lumbar, trapecio, antebrazo, gemelos, glúteos e isquios, sin duplicar ejercicios ya importados del catálogo (#180).
+- Exportación optativa a Health Connect en Android: sesiones terminadas en el móvil, con pulso solo si hay muestras reales y permiso, sin duplicados (#163); requiere declarar los tipos de datos en Play Console antes de publicar.
+- Entreno en curso más claro: barra inferior para completar la siguiente serie, ejercicios terminados plegados y notas y descanso en una sola línea.
+- Wear OS: la serie cabe en una pantalla sin scroll, con anillo de series, ajuste con la corona y menú del entreno también cuando se sigue desde el móvil.
+- Wear OS: silueta de músculos junto a cada rutina y ejercicio, y búsqueda por teclado o voz para añadir ejercicios a mitad de sesión, también en entrenos que lleva el móvil (comando `add_exercise`).
+
+### Seguridad
+
+- La función del email de bienvenida exige un secreto compartido y responde con mensajes genéricos; requiere configurar `WELCOME_SECRET` y aplicar a mano la migración 012 antes de desplegarla (#150).
+
+## [1.19.0] - 2026-11-09
+
 ### Corregido
 
+- El MCP remoto comprueba la API key al empezar cada petición y las noticias comparten caché entre instancias (#149); requiere la migración 012 antes de desplegar.
+- El MCP remoto deja de aceptar la API key en la URL: solo en `Authorization: Bearer` o `x-api-key` (#148).
+- Al recuperar la contraseña, la pantalla muestra las API keys activas y ofrece revocarlas todas, incluida la del reloj, que el móvil renueva sola (#144).
+- La app móvil apunta a Android 16 (API 36) para su publicación en Google Play (#141).
 - Reduce la espera al ampliar historiales largos, manteniendo todas las sesiones y su contenido accesible (#133).
 - Escape cierra las hojas modales desde su primera aparición, incluida la vista previa de Strong (#132).
 - Movimiento reducido: duraciones y retardos de 0 ms, también al cambiar de tema; auditoría AA en ambos temas y registro de series por teclado (#126).
 
 ### Añadido
 
+- Borrado de cuenta desde Perfil, con confirmación, y política de privacidad que describe el proyecto común de Supabase (#146).
+- Cronómetro de serie con pausa que no se pierde al recargar, aviso al alcanzar el objetivo, progresión de +5 s según el objetivo de la rutina y tiempos en `mm:ss` o `X s` (#139).
+- Auditoría de seguridad previa a la beta (#138) en `docs/seguridad.md`, con refuerzos en enlaces compartidos, sincronización, noticias, MCP y Coach.
 - MCP 0.6.0: `search_articles` y `get_article` consultan la biblioteca propia con evidencia y fuentes; el Coach cita solo los ids recibidos (#57).
 - Diez artículos breves con evidencia científica en castellano (#55) en la biblioteca editorial offline: recomendaciones cuantitativas, niveles de evidencia, limitaciones y DOIs comprobados sobre creatina, proteína, volumen, frecuencia, descanso, sueño, déficit, recomposición, cardio y progresión.
 - Base de artículos propios en Markdown, validación editorial y biblioteca offline compartida por PWA y MCP (#54); sin pantalla ni cambio de versión.
@@ -21,6 +43,13 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Escala RPE/RIR opcional en Ajustes para registrar y editar esfuerzo con medios puntos, conservando RPE como dato canónico (#85).
 - Noticias científicas e investigación (#58): investigación de fuentes abiertas RSS/Atom y APIs biomédicas (PubMed E-utilities, PLOS ONE, Frontiers, JISSN, Crossref, Fisiología del Ejercicio y Stronger by Science), con análisis legal de derechos de reutilización frente a acceso público, matriz de titular/resumen/enlace, contratos en `shared/news-sources.ts` y fixtures de prueba para el recolector de la app en `docs/investigacion-fuentes-noticias.md`.
 - MCP 0.5.0: `update_routine` modifica una rutina guardada (nombre, notas y, por ejercicio, series, repeticiones, peso, duración, descanso, notas, superserie, orden, sustituirlo o quitarlo, y añadir ejercicios) y devuelve cómo queda; `delete_routine` la borra (solo por id o nombre exacto) y devuelve lo borrado. Lógica en `shared/routine-edit.ts`. Las herramientas que escriben llevan ahora `destructiveHint` (verdadero en las que cambian o borran lo que ya había).
+
+### Seguridad
+
+- `import_from_hevy` queda solo para el MCP local con tu propia `HEVY_API_KEY`; el MCP remoto lo indica con un mensaje claro (#145).
+- Límites de almacenamiento en la nube por registro y por cuenta: si se alcanzan, la app lo explica, conserva los datos en el dispositivo y sigue subiendo el resto (#142).
+- El servidor limita `client_updated_at` a su hora más 5 minutos, así una fecha futura no bloquea las ediciones posteriores de un registro; requiere aplicar a mano la migración 009 (#143).
+- La key del reloj en Android se guarda cifrada, queda fuera de las copias del sistema, caduca y se renueva sola, y su revocación se completa aunque cierres sesión sin conexión; requiere aplicar a mano la migración 012 (#147).
 
 ## [1.18.0] - 2026-11-08
 

@@ -1,4 +1,5 @@
 import { DEFAULT_EXERCISES } from './exercises';
+import { normalizeMesocycle } from './mesocycle';
 import { normalizeRepRange } from './progression';
 import type { Exercise, Routine, SetType, Workout, WorkstationData } from './types';
 import { DEFAULT_SETTINGS, uid } from './types';
@@ -16,12 +17,15 @@ export function normalizeData(input: unknown): WorkstationData {
   const defaults = new Map(DEFAULT_EXERCISES.map((e) => [e.id, e]));
   const stored = Array.isArray(d.exercises) ? d.exercises : [];
   const storedIds = new Set(stored.map((e) => e.id));
+  // Conserva el id importado: las rutinas y el historial siguen apuntando a él.
+  const catalogDefaults = new Map(DEFAULT_EXERCISES.filter((e) => e.media).map((e) => [`db-${e.media}`, e]));
+  const importedDefaults = new Set(stored.filter((e) => e.media && catalogDefaults.get(e.id)?.media === e.media).map((e) => catalogDefaults.get(e.id)!.id));
   const exercises: Exercise[] = [
     ...stored.map((e) => {
       const def = defaults.get(e.id);
       return def && !e.custom ? { ...structuredClone(def), ...(e.stickyNote ? { stickyNote: e.stickyNote } : {}), ...(e.exdbId ? { exdbId: e.exdbId } : {}) } : e;
     }),
-    ...DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id)).map((e) => structuredClone(e)),
+    ...DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id) && !importedDefaults.has(e.id)).map((e) => structuredClone(e)),
   ];
   const kinds = new Map(exercises.map((e) => [e.id, e.kind]));
   const normalizeExercises = <T extends Routine['exercises'][number] | Workout['exercises'][number]>(items: T[]): T[] =>
@@ -33,7 +37,14 @@ export function normalizeData(input: unknown): WorkstationData {
     version: 1,
     exercises,
     routines: Array.isArray(d.routines) ? d.routines.map((r) => ({ ...r, exercises: Array.isArray(r.exercises) ? normalizeExercises(r.exercises) : r.exercises })) : [],
-    folders: Array.isArray(d.folders) ? d.folders : [],
+    folders: Array.isArray(d.folders)
+      ? d.folders.map((f) => {
+          if (f?.mesocycle === undefined) return f;
+          const { mesocycle, ...rest } = f;
+          const m = normalizeMesocycle(mesocycle);
+          return m ? { ...rest, mesocycle: m } : rest;
+        })
+      : [],
     workouts: Array.isArray(d.workouts) ? d.workouts.map((w) => ({ ...w, exercises: Array.isArray(w.exercises) ? normalizeExercises(w.exercises) : w.exercises })) : [],
     measurements: Array.isArray(d.measurements) ? d.measurements : [],
     settings: { ...DEFAULT_SETTINGS, ...(d.settings ?? {}) },

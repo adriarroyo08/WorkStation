@@ -40,10 +40,13 @@ class NativeBridge(private val activity: MainActivity) {
     fun ackWatchWorkout(id: String) = WatchWorkouts.ack(ctx, id)
 
     @JavascriptInterface
-    fun setWatchUpload(json: String) = WatchWorkouts.setUpload(ctx, json)
+    fun setWatchUpload(json: String): Boolean = WatchWorkouts.setUpload(ctx, json)
 
     @JavascriptInterface
     fun watchUploadUser(): String = WatchWorkouts.uploadUser(ctx)
+
+    @JavascriptInterface
+    fun watchUploadExpiry(): String = WatchWorkouts.uploadExpiry(ctx)
 
     @JavascriptInterface
     fun requestWatchStatus() {
@@ -88,6 +91,22 @@ class NativeBridge(private val activity: MainActivity) {
         WorkoutService.stop(ctx)
         RestAlarmReceiver.cancel(ctx)
     }
+
+    // Health Connect: el estado vuelve a la web como mensaje health_connect (ver docs/health-connect.md).
+    @JavascriptInterface
+    fun healthConnectRefresh() = activity.healthConnect.refresh()
+
+    @JavascriptInterface
+    fun healthConnectEnable() = activity.healthConnect.enable()
+
+    @JavascriptInterface
+    fun healthConnectDisable() = activity.healthConnect.disable()
+
+    @JavascriptInterface
+    fun healthConnectOpen() = activity.healthConnect.open()
+
+    @JavascriptInterface
+    fun healthConnectExport(json: String): Boolean = HealthConnect.enqueue(ctx, json)
 
     @JavascriptInterface
     fun setSystemBars(dark: Boolean) = activity.setSystemBars(dark)

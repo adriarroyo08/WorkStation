@@ -3,6 +3,10 @@
 [functions.mcp]
 verify_jwt = false
 
-# "welcome" la llama un trigger de la base de datos (005_welcome.sql), sin JWT.
+# "welcome" la llama un trigger de la base de datos (013_welcome_secret.sql) con un secreto compartido, sin JWT.
 [functions.welcome]
+verify_jwt = false
+
+# "delete-account" exige la sesión del usuario y la comprueba ella misma contra Auth.
+[functions.delete-account]
 verify_jwt = false

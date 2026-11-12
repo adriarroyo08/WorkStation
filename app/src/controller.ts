@@ -1,11 +1,13 @@
 // Controlador global del entrenamiento en curso: fin de descansos, sincronización con el reloj,
 // notificación de Android, comandos que llegan del reloj y pulso.
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { workoutFromRoutine } from '../../shared/data';
-import { buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
+import { workoutForRoutine } from '../../shared/mesocycle';
+import { buildHealthExport } from '../../shared/health-connect';
+import { addExerciseToWorkout, buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
 import type { Workout } from '../../shared/types';
 import { uid } from '../../shared/types';
 import { clearSamples, pushHeartRate, takeSamples } from './hr';
+import { stopwatch } from './stopwatch';
 import { native, onWatchCommand } from './native';
 import { rest, useRest } from './rest';
 import { beep, useNow, useStore } from './store';
@@ -28,6 +30,7 @@ export const useSummary = () =>
 export function startWorkout(store: Store, w: Workout) {
   clearSamples();
   rest.stop();
+  stopwatch.clear();
   store.setActive(w);
 }
 
@@ -67,8 +70,7 @@ export function launchWorkout(store: Store, w: Workout) {
   pendingStart = () => startWorkout(store, w);
   gateSubs.forEach((f) => f());
 }
-export const launchEmpty = (store: Store) =>
-  launchWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
+export const launchEmpty = (store: Store) => launchWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
 
 export function startEmpty(store: Store) {
   startWorkout(store, { id: uid(), name: 'Entrenamiento', startedAt: new Date().toISOString(), exercises: [] });
@@ -77,6 +79,7 @@ export function startEmpty(store: Store) {
 export function discardActive(store: Store) {
   clearSamples();
   rest.stop();
+  stopwatch.clear();
   native.workoutEnded();
   store.setActive(null);
 }
@@ -90,7 +93,10 @@ export function finishActive(store: Store): boolean {
   const hr = summarizeHeartRate(Date.parse(a.startedAt), takeSamples());
   if (hr) done.heartRate = hr;
   store.update((d) => void d.workouts.push(done));
+  const session = buildHealthExport(done);
+  if (session) native.healthConnectExport(session);
   rest.stop();
+  stopwatch.clear();
   native.workoutEnded();
   store.setActive(null);
   summary.show(done.id);
@@ -173,12 +179,19 @@ export function useSessionController() {
           break;
         case 'start_routine': {
           const routine = s.data.routines.find((x) => x.id === c.id);
-          if (routine && !s.active) startWorkout(s, workoutFromRoutine(routine));
+          if (routine && !s.active) startWorkout(s, workoutForRoutine(s.data, routine));
           break;
         }
         case 'start_empty':
           if (!s.active) startEmpty(s);
           break;
+        case 'add_exercise': {
+          if (!s.active || (c.wid && c.wid !== s.active.id) || !s.data.exercises.some((e) => e.id === c.id)) break;
+          const next = addExerciseToWorkout(s.data, s.active, c.id);
+          s.setActive(next);
+          ref.current = { ...s, active: next };
+          break;
+        }
         case 'finish':
           if (!finishActive(s)) native.sendToWatch(JSON.stringify(buildWatchState(s.data, s.active, rest.get())));
           break;

@@ -265,11 +265,21 @@ export function formatDuration(sec: number): string {
   return `${s}s`;
 }
 
+// Tiempo de una serie: "45 s" por debajo del minuto y "1:05" a partir de ahí.
+export function formatSeconds(sec: number): string {
+  const total = Math.max(0, Math.round(sec));
+  if (total < 60) return `${total} s`;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(total / 3600);
+  const m = Math.floor(total / 60) % 60;
+  return h ? `${h}:${pad(m)}:${pad(total % 60)}` : `${m}:${pad(total % 60)}`;
+}
+
 export function formatSet(s: WorkoutSet, ex?: Exercise): string {
   const tag = s.type === 'warmup' ? ' (calent.)' : s.type === 'drop' ? ' (drop)' : s.type === 'failure' ? ' (fallo)' : '';
   const rpe = s.rpe ? ` @RPE${s.rpe}` : '';
-  if (ex?.kind === 'duration' || (s.durationSec && !s.reps && !s.distanceM)) return `${formatDuration(s.durationSec ?? 0)}${s.weight ? ` con ${fmtWeight(s.weight, { space: false })}` : ''}${tag}`;
-  if (ex?.kind === 'distance' || (s.distanceM && !s.reps)) return `${s.distanceM ?? 0}m${s.durationSec ? ` en ${formatDuration(s.durationSec)}` : ''}${tag}`;
+  if (ex?.kind === 'duration' || (s.durationSec && !s.reps && !s.distanceM)) return `${formatSeconds(s.durationSec ?? 0)}${s.weight ? ` con ${fmtWeight(s.weight, { space: false })}` : ''}${tag}`;
+  if (ex?.kind === 'distance' || (s.distanceM && !s.reps)) return `${s.distanceM ?? 0}m${s.durationSec ? ` en ${formatSeconds(s.durationSec)}` : ''}${tag}`;
   if (ex?.kind === 'assisted') return `${s.reps ?? 0} reps${s.weight ? ` (asist. ${fmtWeight(s.weight, { space: false })})` : ''}${rpe}${tag}`;
   const w = s.weight ? `${fmtWeight(s.weight, { space: false })} × ` : '';
   return `${w}${s.reps ?? 0}${rpe}${tag}`;

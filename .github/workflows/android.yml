@@ -3,11 +3,11 @@ name: Android (móvil + Wear OS)
 on:
   push:
     branches: [main]
-    paths: ['app/**', 'shared/**', 'android/**', '.github/workflows/android.yml']
+    paths: ['app/**', 'shared/**', 'android/**', 'scripts/check-android-signing.mjs', '.github/workflows/android.yml']
     tags: ['v*']
   # Las PR que tocan Android (p. ej. Dependabot) compilan los APK antes de fusionarse.
   pull_request:
-    paths: ['android/**', '.github/workflows/android.yml']
+    paths: ['android/**', 'scripts/check-android-signing.mjs', 'shared/android-signing.ts', '.github/workflows/android.yml']
   workflow_dispatch:
 
 permissions:
@@ -22,6 +22,14 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+      - name: Comprobar secrets de firma
+        run: node --experimental-strip-types scripts/check-android-signing.mjs
+        env:
+          WS_KEYSTORE_B64: ${{ secrets.WS_KEYSTORE_B64 }}
+          WS_KEYSTORE_PASSWORD: ${{ secrets.WS_KEYSTORE_PASSWORD }}
+          WS_KEY_ALIAS: ${{ secrets.WS_KEY_ALIAS }}
+          WS_KEY_PASSWORD: ${{ secrets.WS_KEY_PASSWORD }}
+
       - name: Web (se empaqueta dentro del APK del móvil)
         run: npm ci && npm run build
         working-directory: app
@@ -39,7 +47,7 @@ jobs:
 
       # Clave de firma desde secrets (Settings → Secrets and variables → Actions):
       #   WS_KEYSTORE_B64 = base64 del .jks · WS_KEYSTORE_PASSWORD · WS_KEY_ALIAS · WS_KEY_PASSWORD
-      # Sin secret se genera una clave temporal: funciona, pero cada build tendrá firma distinta
+      # En PR sin secrets se genera una clave temporal: cada build tendrá firma distinta
       # (habría que desinstalar para actualizar y se perderían los datos de la app).
       - name: Clave de firma
         working-directory: android
@@ -58,9 +66,9 @@ jobs:
         working-directory: android
         env:
           VERSION_CODE: ${{ github.run_number }}
-          WS_KEYSTORE_PASSWORD: ${{ secrets.WS_KEYSTORE_PASSWORD || 'workstation' }}
-          WS_KEY_ALIAS: ${{ secrets.WS_KEY_ALIAS || 'workstation' }}
-          WS_KEY_PASSWORD: ${{ secrets.WS_KEY_PASSWORD || 'workstation' }}
+          WS_KEYSTORE_PASSWORD: ${{ secrets.WS_KEYSTORE_PASSWORD }}
+          WS_KEY_ALIAS: ${{ secrets.WS_KEY_ALIAS }}
+          WS_KEY_PASSWORD: ${{ secrets.WS_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
           set -o pipefail

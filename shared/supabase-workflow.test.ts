@@ -17,6 +17,7 @@ describe('workflow de Supabase', () => {
         expect(step).toContain('SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}');
         expect(step).toContain('supabase functions deploy mcp');
         expect(step).toContain('supabase functions deploy welcome');
+        expect(step).toContain('supabase functions deploy delete-account');
       } else {
         expect(step).not.toMatch(/SUPABASE_ACCESS_TOKEN:\s/);
       }

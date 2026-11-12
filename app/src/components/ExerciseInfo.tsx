@@ -3,7 +3,7 @@
 import { ChevronRight, Pin } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { EXERCISE_KIND_LABELS, catalogLabel } from '../../../shared/exercises';
-import { personalRecords, formatDuration } from '../../../shared/stats';
+import { personalRecords, formatSeconds } from '../../../shared/stats';
 import { fmtWeight } from '../../../shared/units';
 import { loadCatalog } from '../catalog';
 import { cap, useStore } from '../store';
@@ -35,7 +35,7 @@ export default function ExerciseInfo({ id, onClose, onFull }: { id: string; onCl
     (e.kind === 'weight_reps'
       ? pr.bestWeight > 0 && `Mejor peso: ${fmtWeight(pr.bestWeight)}`
       : e.kind === 'duration'
-        ? pr.maxDuration > 0 && `Mejor tiempo: ${formatDuration(pr.maxDuration)}`
+        ? pr.maxDuration > 0 && `Mejor tiempo: ${formatSeconds(pr.maxDuration)}`
         : e.kind === 'distance'
           ? pr.maxDistance > 0 && `Mejor distancia: ${pr.maxDistance} m`
           : pr.maxReps > 0 && `Máx. reps: ${pr.maxReps}`);

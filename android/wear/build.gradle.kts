@@ -3,6 +3,15 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Las publicaciones nunca deben recurrir a las credenciales locales.
+val publishedBuild = System.getenv("GITHUB_EVENT_NAME") != "pull_request" &&
+    (System.getenv("GITHUB_REF") == "refs/heads/main" ||
+        System.getenv("GITHUB_REF")?.startsWith("refs/tags/") == true)
+fun signingValue(name: String): String =
+    System.getenv(name)?.takeIf { it.isNotBlank() }
+        ?: if (publishedBuild) throw GradleException("Falta el secret de firma $name; no se permite publicar con credenciales por defecto.")
+        else "workstation"
+
 android {
     // Mismo applicationId y firma que la app del móvil: requisito del Data Layer de Wear OS.
     namespace = "com.workstation.app"
@@ -23,9 +32,9 @@ android {
         // WS_KEYSTORE_B64 (ver README) y en local se busca en android/keystore/workstation.jks.
         create("shared") {
             storeFile = rootProject.file(System.getenv("WS_KEYSTORE") ?: "keystore/workstation.jks")
-            storePassword = System.getenv("WS_KEYSTORE_PASSWORD") ?: "workstation"
-            keyAlias = System.getenv("WS_KEY_ALIAS") ?: "workstation"
-            keyPassword = System.getenv("WS_KEY_PASSWORD") ?: "workstation"
+            storePassword = signingValue("WS_KEYSTORE_PASSWORD")
+            keyAlias = signingValue("WS_KEY_ALIAS")
+            keyPassword = signingValue("WS_KEY_PASSWORD")
         }
     }
 
@@ -56,6 +65,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.wear.compose:compose-material:1.4.0")
     implementation("androidx.wear.compose:compose-foundation:1.4.0")
+    implementation("androidx.wear:wear-input:1.2.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 }

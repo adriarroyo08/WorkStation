@@ -1,48 +1,25 @@
-// Email de bienvenida. La llama el trigger de 005_welcome.sql con { user_id } al confirmarse una cuenta.
+// Email de bienvenida. La llama el trigger de 013_welcome_secret.sql con { user_id } al confirmarse una cuenta.
 // Envía por SMTP (secrets SMTP_HOST, SMTP_USER, SMTP_PASS y MAIL_FROM; por defecto el relay de Brevo). Se despliega con --no-verify-jwt:
-// no hace falta secreto porque solo actúa sobre cuentas confirmadas y una sola vez por usuario (tabla welcome_sent).
+// se autentica con el secret WELCOME_SECRET, que debe valer lo mismo que `welcome_secret` en Vault. La lógica está en handler.ts.
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
-import { WELCOME_HTML } from './template.ts';
+import { createWelcomeHandler } from './handler.ts';
 
-const URL_ = Deno.env.get('SUPABASE_URL')!;
-const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const admin = { apikey: KEY, authorization: `Bearer ${KEY}`, 'content-type': 'application/json' };
+const env = (k: string) => Deno.env.get(k)!;
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-Deno.serve(async (req) => {
-  const { user_id } = await req.json().catch(() => ({}));
-  if (typeof user_id !== 'string' || !/^[0-9a-f-]{36}$/.test(user_id)) return new Response('user_id', { status: 400 });
-
-  const r = await fetch(`${URL_}/auth/v1/admin/users/${user_id}`, { headers: admin });
-  if (!r.ok) return new Response('usuario', { status: 404 });
-  const user = await r.json();
-  if (!user.email || !user.email_confirmed_at) return new Response('sin confirmar', { status: 409 });
-
-  // Reserva el envío: si la fila ya existía, ya se mandó.
-  const ins = await fetch(`${URL_}/rest/v1/welcome_sent?on_conflict=user_id`, {
-    method: 'POST',
-    headers: { ...admin, prefer: 'resolution=ignore-duplicates,return=representation' },
-    body: JSON.stringify({ user_id }),
-  });
-  if (!ins.ok || !(await ins.json()).length) return new Response('ya enviado');
-
-  const meta = user.user_metadata ?? {};
-  const full: string = meta.full_name ?? meta.name ?? '';
-  const name = full.split(' ')[0] || user.email.split('@')[0];
-  const env = (k: string) => Deno.env.get(k)!;
-  const from = env('MAIL_FROM');
-  const smtp = new SMTPClient({
-    connection: { hostname: Deno.env.get('SMTP_HOST') ?? 'smtp-relay.brevo.com', port: 465, tls: true, auth: { username: env('SMTP_USER'), password: env('SMTP_PASS') } },
-  });
-  try {
-    await smtp.send({ from: `Workstation <${from}>`, to: user.email, subject: '¡Bienvenido a Workstation!', html: WELCOME_HTML.replaceAll('{{name}}', esc(name)) });
-  } catch (e) {
-    // Libera la reserva para poder reintentarlo.
-    await fetch(`${URL_}/rest/v1/welcome_sent?user_id=eq.${user_id}`, { method: 'DELETE', headers: admin });
-    return new Response(String(e), { status: 502 });
-  } finally {
-    await smtp.close().catch(() => {});
-  }
-  return new Response('enviado');
-});
+Deno.serve(
+  createWelcomeHandler({
+    secret: Deno.env.get('WELCOME_SECRET'),
+    supabaseUrl: env('SUPABASE_URL'),
+    serviceKey: env('SUPABASE_SERVICE_ROLE_KEY'),
+    send: async (to, html) => {
+      const smtp = new SMTPClient({
+        connection: { hostname: Deno.env.get('SMTP_HOST') ?? 'smtp-relay.brevo.com', port: 465, tls: true, auth: { username: env('SMTP_USER'), password: env('SMTP_PASS') } },
+      });
+      try {
+        await smtp.send({ from: `Workstation <${env('MAIL_FROM')}>`, to, subject: '¡Bienvenido a Workstation!', html });
+      } finally {
+        await smtp.close().catch(() => {});
+      }
+    },
+  }),
+);

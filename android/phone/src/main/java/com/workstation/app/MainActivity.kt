@@ -57,6 +57,8 @@ class MainActivity : AppCompatActivity() {
         sendToWeb(JSONObject().put("kind", "notif_result").put("granted", granted))
     }
 
+    val healthConnect = HealthConnectUi(this)
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -202,6 +204,12 @@ class MainActivity : AppCompatActivity() {
         val fragment = intent.data?.fragment ?: return
         if (fragment.startsWith("rutina=") && pageReady) webView.evaluateJavascript("location.hash = ${JSONObject.quote("#$fragment")}", null)
         else if (fragment.startsWith("rutina=")) webView.loadUrl(appUrl(intent))
+    }
+
+    // Al volver de Health Connect el permiso puede haber cambiado.
+    override fun onResume() {
+        super.onResume()
+        healthConnect.refresh()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

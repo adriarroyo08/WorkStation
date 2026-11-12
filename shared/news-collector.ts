@@ -4,6 +4,7 @@ import { NEWS_SOURCE_CANDIDATES, parsePlosDocItem, parsePubMedSummaryItem, type 
 export const NEWS_TTL_MS = 60 * 60 * 1000;
 export const NEWS_MAX_BYTES = 2_000_000;
 export const NEWS_TIMEOUT_MS = 8000;
+export const NEWS_CLAIM_RETRY_MS = 60 * 1000;
 export type ResolveNewsHost = (host: string) => Promise<string[]>;
 
 /** Solo direcciones públicas; IPv6 se limita al espacio unicast global. */
@@ -133,7 +134,7 @@ export async function fetchNewsSource(source: NewsSourceCandidate, fetcher: type
   }
 }
 
-interface CachedSource {
+export interface CachedSource {
   attemptedAt: number;
   updatedAt: string | null;
   items: NewsArticle[];
@@ -145,22 +146,89 @@ export interface NewsResult {
   sources: { id: string; updatedAt: string | null; stale: boolean; error?: string }[];
 }
 
-/** Una actualización simultánea por instancia; fallos consumen TTL para no agotar cuotas. */
-export function createNewsCollector(fetcher: typeof fetch, resolve: ResolveNewsHost, now = Date.now) {
+/** Caché común a todas las instancias. Si falla, cada instancia sigue con su memoria. */
+export interface NewsCacheStore {
+  read(): Promise<Map<string, CachedSource>>;
+  /** true si esta instancia debe descargar la fuente; false si otra lo está haciendo o ya está al día. */
+  claim(sourceId: string): Promise<boolean>;
+  write(sourceId: string, entry: CachedSource): Promise<void>;
+}
+
+const NEWS_UNAVAILABLE = 'Fuente no disponible';
+
+function isNewsArticle(item: unknown): item is NewsArticle {
+  const a = item as Partial<NewsArticle> | null;
+  return !!a && typeof a === 'object' && [a.id, a.sourceId, a.title, a.url, a.publishedAt].every((v) => typeof v === 'string') && Array.isArray(a.topics);
+}
+
+/** Convierte una fila de news_cache; descarta las de fuentes fuera del catálogo o con forma inesperada. */
+function parseCacheRow(row: { source_id?: unknown; items?: unknown; updated_at?: unknown; attempted_at?: unknown; error?: unknown }): CachedSource | undefined {
+  const attemptedAt = Date.parse(String(row.attempted_at));
+  if (!NEWS_SOURCE_CANDIDATES.some((s) => s.status === 'aprobada' && s.id === row.source_id)) return undefined;
+  if (!Number.isFinite(attemptedAt) || !Array.isArray(row.items) || !row.items.every(isNewsArticle)) return undefined;
+  return { attemptedAt, updatedAt: typeof row.updated_at === 'string' ? row.updated_at : null, items: row.items, ...(typeof row.error === 'string' ? { error: row.error } : {}) };
+}
+
+/** Caché en la tabla news_cache (migración 012). Usa service role: solo debe construirse en el servidor. */
+export function supabaseNewsStore(o: { url: string; serviceKey: string; fetch?: typeof fetch }): NewsCacheStore {
+  const f = o.fetch ?? fetch;
+  const call = async (path: string, body?: unknown) => {
+    const response = await f(`${o.url.replace(/\/$/, '')}/rest/v1/${path}`, {
+      method: body === undefined ? 'GET' : 'POST',
+      headers: { apikey: o.serviceKey, authorization: `Bearer ${o.serviceKey}`, 'content-type': 'application/json' },
+      signal: AbortSignal.timeout(NEWS_TIMEOUT_MS),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    if (!response.ok) throw new Error(`news_cache HTTP ${response.status}`);
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  };
+  return {
+    async read() {
+      const rows = (await call('news_cache?select=source_id,items,updated_at,attempted_at,error')) as { source_id: string }[];
+      const out = new Map<string, CachedSource>();
+      for (const row of rows) {
+        const entry = parseCacheRow(row);
+        if (entry) out.set(row.source_id, entry);
+      }
+      return out;
+    },
+    claim: async (sourceId) => (await call('rpc/news_cache_claim', { p_source: sourceId, p_ttl_seconds: NEWS_TTL_MS / 1000 })) === true,
+    write: async (sourceId, entry) => void (await call('rpc/news_cache_store', { p_source: sourceId, p_items: entry.items, p_updated_at: entry.updatedAt, p_error: entry.error ?? null })),
+  };
+}
+
+/** Una actualización simultánea por instancia; fallos consumen TTL para no agotar cuotas. Con `store`, una descarga por fuente y hora entre todas las instancias. */
+export function createNewsCollector(fetcher: typeof fetch, resolve: ResolveNewsHost, now = Date.now, store?: NewsCacheStore) {
   const cache = new Map<string, CachedSource>();
   let pending: Promise<NewsResult> | undefined;
   const collect = async (): Promise<NewsResult> => {
     const sources = NEWS_SOURCE_CANDIDATES.filter((s) => s.status === 'aprobada');
+    const expired = (id: string, at: number) => {
+      const entry = cache.get(id);
+      return !entry || !newsCacheFresh(entry.attemptedAt, at);
+    };
+    if (store && sources.some((s) => expired(s.id, now()))) {
+      const shared = await store.read().catch(() => undefined);
+      for (const [id, entry] of shared ?? []) if (!cache.has(id) || entry.attemptedAt > cache.get(id)!.attemptedAt) cache.set(id, entry);
+    }
     for (const source of sources) {
-      const previous = cache.get(source.id);
       const attemptedAt = now();
-      if (previous && newsCacheFresh(previous.attemptedAt, attemptedAt)) continue;
-      try {
-        const items = await fetchNewsSource(source, fetcher, resolve);
-        cache.set(source.id, { attemptedAt, updatedAt: new Date(now()).toISOString(), items });
-      } catch {
-        cache.set(source.id, { attemptedAt, updatedAt: previous?.updatedAt ?? null, items: previous?.items ?? [], error: 'Fuente no disponible' });
+      if (!expired(source.id, attemptedAt)) continue;
+      const previous = cache.get(source.id);
+      if (store && !(await store.claim(source.id).catch(() => true))) {
+        // Otra instancia la está descargando: se sirve lo que haya y se vuelve a mirar la caché común dentro de poco.
+        cache.set(source.id, { ...(previous ?? { updatedAt: null, items: [], error: NEWS_UNAVAILABLE }), attemptedAt: attemptedAt - NEWS_TTL_MS + NEWS_CLAIM_RETRY_MS });
+        continue;
       }
+      let entry: CachedSource;
+      try {
+        entry = { attemptedAt, updatedAt: new Date(now()).toISOString(), items: await fetchNewsSource(source, fetcher, resolve) };
+      } catch {
+        entry = { attemptedAt, updatedAt: previous?.updatedAt ?? null, items: previous?.items ?? [], error: NEWS_UNAVAILABLE };
+      }
+      cache.set(source.id, entry);
+      await store?.write(source.id, entry).catch(() => {});
     }
     const states = sources.map((s) => ({ id: s.id, ...cache.get(s.id)! }));
     const dates = states

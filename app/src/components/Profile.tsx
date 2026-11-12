@@ -5,7 +5,7 @@ import { totals, weekStreak, weeklySeries } from '../../../shared/reports';
 import { muscleSets, personalRecords } from '../../../shared/stats';
 import type { MuscleGroup } from '../../../shared/types';
 import { cap, fmtShort, useStore } from '../store';
-import { formatDuration } from '../../../shared/stats';
+import { formatSeconds } from '../../../shared/stats';
 import { achievements } from '../../../shared/achievements';
 import Achievements, { AchievementIcon } from './Achievements';
 import { Award, Bot, ChevronLeft, ChevronRight, FileBarChart, Sparkles, Moon, Ruler, Settings as SettingsIcon, Sun } from 'lucide-react';
@@ -302,7 +302,7 @@ export default function Profile({ onExercise, signUp = false }: { onExercise: (i
             <button key={p.exerciseId} className="plain row full left exline" onClick={() => onExercise(p.exerciseId)}>
               <span className="grow">{p.exerciseName}</span>
               <span className="muted small">
-                {p.sessions} ses. · {p.best1RM ? `${fmtWeight(p.best1RM)} e1RM` : p.maxDuration ? formatDuration(p.maxDuration) : p.maxDistance ? `${p.maxDistance} m` : `${p.maxReps} reps`}
+                {p.sessions} ses. · {p.best1RM ? `${fmtWeight(p.best1RM)} e1RM` : p.maxDuration ? formatSeconds(p.maxDuration) : p.maxDistance ? `${p.maxDistance} m` : `${p.maxReps} reps`}
               </span>
             </button>
           ))}

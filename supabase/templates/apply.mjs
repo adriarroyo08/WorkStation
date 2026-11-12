@@ -1,18 +1,19 @@
 // Aplica a tu proyecto de Supabase: SMTP propio, plantillas con la marca, política de contraseñas y los secrets
 // de la función `welcome`. Las claves se leen del entorno y van directas a la API de Supabase (no se guardan en ningún sitio).
 //
-//   SUPABASE_ACCESS_TOKEN=sbp_…  SMTP_USER=…@smtp-brevo.com  SMTP_PASS=xsmtpsib-…  MAIL_FROM=tu@email.com  node supabase/templates/apply.mjs
+//   SUPABASE_ACCESS_TOKEN=sbp_…  SMTP_USER=…@smtp-brevo.com  SMTP_PASS=xsmtpsib-…  MAIL_FROM=tu@email.com  WELCOME_SECRET=…  node supabase/templates/apply.mjs
 //
 // SUPABASE_ACCESS_TOKEN: supabase.com → Account → Access Tokens.
+// WELCOME_SECRET: el mismo valor que `welcome_secret` en Vault (ver 013_welcome_secret.sql).
 // Brevo (por defecto): SMTP & API → SMTP → login y clave SMTP; MAIL_FROM, un remitente verificado en Brevo (Senders).
 // Gmail: SMTP_HOST=smtp.gmail.com, SMTP_USER y MAIL_FROM = tu Gmail, SMTP_PASS = contraseña de aplicación.
 // PROJECT_REF por defecto: el de Workstation.
 import { readFileSync } from 'node:fs';
 
-const { SUPABASE_ACCESS_TOKEN: token, SMTP_HOST: host = 'smtp-relay.brevo.com', SMTP_USER: user, MAIL_FROM: from, PROJECT_REF: ref = 'gogaykvgwopkqevarnjo' } = process.env;
+const { SUPABASE_ACCESS_TOKEN: token, SMTP_HOST: host = 'smtp-relay.brevo.com', SMTP_USER: user, MAIL_FROM: from, WELCOME_SECRET: welcomeSecret, PROJECT_REF: ref = 'gogaykvgwopkqevarnjo' } = process.env;
 const pass = process.env.SMTP_PASS?.replace(/\s/g, ''); // las claves no llevan espacios (Google las muestra en grupos de 4)
-if (!token || !user || !pass || !from) {
-  console.error('Faltan SUPABASE_ACCESS_TOKEN, SMTP_USER, SMTP_PASS o MAIL_FROM');
+if (!token || !user || !pass || !from || !welcomeSecret) {
+  console.error('Faltan SUPABASE_ACCESS_TOKEN, SMTP_USER, SMTP_PASS, MAIL_FROM o WELCOME_SECRET');
   process.exit(1);
 }
 const tpl = (n) => readFileSync(new URL(`./${n}.html`, import.meta.url), 'utf8');
@@ -51,5 +52,6 @@ await api('POST', '/secrets', [
   { name: 'SMTP_USER', value: user },
   { name: 'SMTP_PASS', value: pass },
   { name: 'MAIL_FROM', value: from },
+  { name: 'WELCOME_SECRET', value: welcomeSecret },
 ]);
 console.log('✓ Secrets de la función welcome');

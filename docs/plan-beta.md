@@ -306,9 +306,9 @@ La beta cerrada solo podrá abrirse cuando se cumplan **todos** los requisitos s
 - [ ] **Empaquetado y firma de binarios**: Compilación sin errores de los paquetes de distribución Android App Bundle (`:phone:bundleRelease` y `:wear:bundleRelease`) firmados con la clave de lanzamiento compartida.
 - [ ] **Verificación *offline-first* en laboratorio**: Superada la prueba automatizada y manual de desconexión forzada de red durante un entrenamiento de 45 minutos sin pérdida de datos.
 - [ ] **Contenido editorial cargado**: Los 10 artículos científicos en Markdown validados en [content/articulos/](../content/articulos/) y el catálogo de ejercicios base accesible localmente.
-- [ ] **Textos legales y de privacidad en borrador**: Políticas de privacidad y condiciones de uso preparadas en borrador, reflejando de forma estricta que la app no vende datos, no contiene publicidad comercial ni transmite datos de salud a intermediarios publicitarios.
-- [ ] **[Adrián] Validación y firma legal**: Adrián aporta la identificación del responsable de protección de datos (nombre, NIF y dirección de contacto) y valida los borradores legales.
-- [ ] **Material de Google Play Store preparado**: Ficha de la tienda lista con título, descripción corta, descripción detallada, icono 512x512 px, imagen destacada 1024x500 px y capturas de pantalla para teléfono y Wear OS (en temas claro y oscuro).
+- [ ] **Textos legales y de privacidad en borrador**: Políticas de privacidad y condiciones de uso preparadas en borrador ([PRIVACY.md](../PRIVACY.md) y [docs/declaraciones-play.md](declaraciones-play.md), pendiente de validación), reflejando de forma estricta que la app no vende datos, no contiene publicidad comercial ni transmite datos de salud a intermediarios publicitarios.
+- [ ] **[Adrián] Validación y firma legal**: Adrián aporta la identificación del responsable de protección de datos (nombre, NIF y dirección de contacto) y valida los borradores legales ([docs/declaraciones-play.md](declaraciones-play.md)).
+- [ ] **Material de Google Play Store preparado**: Ficha de la tienda lista con textos para smartphone y Wear OS ([docs/ficha-play.md](ficha-play.md), pendiente de validación), inventario de icono 512x512 px, imagen destacada 1024x500 px y guion de capturas de pantalla para teléfono y Wear OS.
 - [ ] **Ausencia absoluta de cobros**: Verificación de que en la app no existen módulos de pasarelas de pago (Stripe, RevenueCat), ni suscripciones en Google Play Billing, ni llamadas a servicios comerciales; la app se declara como 100 % Gratuita.
 - [ ] **[Adrián] Activación en Google Play Console**: Adrián completa la verificación de cuenta y de dispositivo personal, sube los paquetes `.aab` a la pista de prueba cerrada (para móvil y factor de forma Wear OS), da de alta la lista de correos de probadores y aprueba el lanzamiento de la pista en Play Console.
 
@@ -425,7 +425,7 @@ Para mantener una separación nítida entre las tareas técnicas automatizables 
 | Titularidad y abono de la cuota de cuenta de desarrollador en Google Play (25 USD) | Legal / Financiera | **[Adrián]** | Cuenta personal de Google Play Console activa y validada. |
 | Verificación de identidad personal del desarrollador ante Google | Legal / Personal | **[Adrián]** | Verificación DNI/Pasaporte aprobada por Google en Play Console. |
 | Verificación del dispositivo físico Android del desarrollador | Técnica / Personal | **[Adrián]** | Dispositivo vinculado y comprobado mediante la app Play Console. |
-| Revisión y aprobación del responsable de protección de datos en las políticas legales | Legal | **[Adrián]** | Nombre, NIF y dirección de contacto aportados e insertados en la política de privacidad. |
+| Revisión y aprobación del responsable de protección de datos en las políticas legales | Legal | **[Adrián]** | Nombre, NIF y dirección de contacto aportados e insertados en la política de privacidad y en [docs/declaraciones-play.md](declaraciones-play.md). |
 | Creación de la lista de probadores y subida de paquetes al canal de prueba cerrada | Operativa | **[Adrián]** | Canal cerrado desplegado y enlace de opt-in operativo en Google Play. |
 | Seguimiento del cómputo de 14 días y cumplimentación del cuestionario de producción | Operativa / Estratégica | **[Adrián]** | Respuestas enviadas en el panel de control de Play Console tras el periodo de 14 días. |
 | Autorización y activación del lanzamiento en pista de Producción abierta | Decisión final | **[Adrián]** | Pulsación del botón de lanzamiento a Producción en Play Console. |
@@ -446,6 +446,8 @@ Para mantener una separación nítida entre las tareas técnicas automatizables 
 - [docs/auditoria-mcp-entrenador.md](auditoria-mcp-entrenador.md) — Catálogo y auditoría de herramientas MCP de entrenador.
 - [docs/mcp-limites.md](mcp-limites.md) — Especificación de claves de API, revocación y límites de tasa.
 - [docs/evidencia-ejercicios.md](evidencia-ejercicios.md) — Matriz de evidencia científica de ejercicios y patrones de movimiento.
+- [docs/declaraciones-play.md](declaraciones-play.md) — Borradores de la sección Seguridad de los datos y de la declaración de apps de salud para Google Play (pendiente de validación).
+- [docs/ficha-play.md](ficha-play.md) — Borrador de textos de tienda, recursos de Google Play y Wear OS y guion de capturas (pendiente de validación).
 - [android/phone/build.gradle.kts](../android/phone/build.gradle.kts) — Configuración del módulo de aplicación para teléfono Android.
 - [android/wear/build.gradle.kts](../android/wear/build.gradle.kts) — Configuración del módulo de aplicación para reloj Wear OS.
 - [android/phone/src/main/AndroidManifest.xml](../android/phone/src/main/AndroidManifest.xml) — Declaración de permisos, servicios y filtros de intención del smartphone.

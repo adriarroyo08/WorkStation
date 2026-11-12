@@ -1,11 +1,12 @@
 // Cuenta: tarjeta de Perfil, pantalla de email (entrar / crear cuenta / recuperar) y diálogo al cambiar de cuenta.
-import { Circle, CircleAlert, CircleCheck, CloudOff, CloudUpload, Eye, EyeOff, Lock, LogOut, Mail, MailCheck, MonitorSmartphone, RefreshCw, ShieldCheck } from 'lucide-react';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { Circle, CircleAlert, CircleCheck, CloudOff, CloudUpload, Eye, EyeOff, Lock, LogOut, Mail, MailCheck, MonitorSmartphone, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloud, setAccountSwitchPrompt, useCloud } from '../cloud';
 import { useNow } from '../store';
 import { toast } from '../toast';
+import { DELETE_ACCOUNT_WORD, deletionConfirmed } from '../../../shared/account-deletion';
 import { PASSWORD_RULES, passwordOk, passwordStrength } from '../../../shared/password';
-import { Back } from './ui';
+import { Back, Sheet } from './ui';
 
 const STATUS: Record<string, string> = {
   off: 'Sin configurar',
@@ -112,10 +113,78 @@ function Avatar({ name, email, src }: { name: string | null; email: string; src:
 
 const SYNC_ICON = { syncing: RefreshCw, idle: CircleCheck, offline: CloudOff, error: CircleAlert } as const;
 
+/** Solo con el proyecto del build: si el usuario configuró el suyo, la copia no pasa por el proyecto común. */
+function SharedProjectNote() {
+  if (!cloud.builtIn()) return null;
+  return (
+    <p className="small muted">
+      Tu copia en la nube se guarda en un proyecto de Supabase común que administra Workstation. Otros usuarios no pueden verla, pero la administración del proyecto tiene acceso técnico a ella.{' '}
+      <a href="https://github.com/adriarroyo08/WorkStation/blob/main/PRIVACY.md" target="_blank" rel="noreferrer">
+        Política de privacidad
+      </a>
+    </p>
+  );
+}
+
+function DeleteAccountSheet({ onClose }: { onClose: () => void }) {
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => input.current?.focus(), []);
+  const close = () => {
+    if (!busy) onClose();
+  };
+  return (
+    <Sheet title="¿Borrar tu cuenta?" onClose={close}>
+      <form
+        className="ask"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (busy || !deletionConfirmed(typed)) return;
+          setBusy(true);
+          setErr('');
+          try {
+            await cloud.deleteAccount();
+            toast.show('Cuenta borrada');
+            onClose();
+          } catch (e) {
+            setErr((e as Error).message);
+            setBusy(false);
+          }
+        }}
+      >
+        <p className="ask-text">
+          Se borrarán para siempre tu cuenta, la copia de tus datos en la nube y tus API keys. El MCP y la subida automática del reloj dejarán de funcionar. No se puede deshacer.
+        </p>
+        <p className="small muted">Los datos guardados en tus dispositivos no se borran. Puedes exportarlos o eliminarlos en Ajustes → Datos.</p>
+        <label>
+          Escribe {DELETE_ACCOUNT_WORD} para confirmar
+          <input ref={input} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+        </label>
+        {err && (
+          <p className="error small" role="alert">
+            {err}
+          </p>
+        )}
+        <div className="row ask-actions">
+          <button type="button" className="outline grow" onClick={close} disabled={busy}>
+            Cancelar
+          </button>
+          <button type="submit" className="danger-solid grow" disabled={busy || !deletionConfirmed(typed)}>
+            {busy ? 'Borrando…' : 'Borrar definitivamente'}
+          </button>
+        </div>
+      </form>
+    </Sheet>
+  );
+}
+
 export function AccountCard({ onEmail }: { onEmail?: () => void }) {
   const st = useCloud();
   const now = useNow(30_000);
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   if (st.email) {
     const Icon = SYNC_ICON[st.status as keyof typeof SYNC_ICON] ?? CircleCheck;
@@ -145,9 +214,9 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
             disabled={busy || st.status === 'syncing'}
             onClick={async () => {
               setBusy(true);
-              await cloud.syncNow();
+              const ok = await cloud.syncNow();
               setBusy(false);
-              toast.show('Sincronizado');
+              if (ok) toast.show('Sincronizado');
             }}
           >
             <RefreshCw size={16} /> Sincronizar ahora
@@ -155,7 +224,12 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
           <button className="ghost icon-btn gray full" onClick={() => cloud.signOut()}>
             <LogOut size={16} /> Cerrar sesión
           </button>
+          <button className="danger icon-btn full" onClick={() => setDeleting(true)}>
+            <Trash2 size={16} aria-hidden /> Borrar cuenta
+          </button>
         </div>
+        <SharedProjectNote />
+        {deleting && <DeleteAccountSheet onClose={() => setDeleting(false)} />}
       </div>
     );
   }
@@ -181,9 +255,10 @@ export function AccountCard({ onEmail }: { onEmail?: () => void }) {
           <MonitorSmartphone size={18} aria-hidden /> Móvil, web y reloj siempre al día
         </li>
         <li>
-          <ShieldCheck size={18} aria-hidden /> Privado: solo tú ves tus datos
+          <ShieldCheck size={18} aria-hidden /> Otros usuarios no pueden ver tus datos
         </li>
       </ul>
+      <SharedProjectNote />
       {cloud.googleAvailable() && <GoogleButton />}
       <button className={`${cloud.googleAvailable() ? 'outline' : 'primary'} full icon-btn`} onClick={onEmail}>
         <Mail size={16} /> Continuar con email

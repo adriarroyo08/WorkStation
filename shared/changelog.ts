@@ -7,6 +7,38 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.24.0',
+    date: '2026-11-12',
+    items: ['En el reloj, cada rutina y cada ejercicio muestran una silueta con los músculos que trabajan, y puedes buscar ejercicios con el teclado o la voz para añadirlos a mitad de sesión, también si el entreno lo empezaste en el móvil.'],
+  },
+  {
+    version: '1.23.0',
+    date: '2026-11-12',
+    items: ['Programas de 4 a 12 semanas: convierte una carpeta de rutinas en un bloque con fases de acumulación, intensificación y descarga, y cada sesión sale con el peso calculado desde tu 1RM. Pulsa el calendario junto a la carpeta.'],
+  },
+  { version: '1.22.0', date: '2026-11-11', items: ['30 ejercicios más en la biblioteca base para los grupos con menos opciones, disponibles sin cargar el catálogo.'] },
+  {
+    version: '1.21.0',
+    date: '2026-11-10',
+    items: ['Entreno más claro: completa la siguiente serie desde una barra al alcance del pulgar y los ejercicios terminados se pliegan. En el reloj, la serie cabe en una pantalla y el peso y las repeticiones se ajustan con la corona.'],
+  },
+  {
+    version: '1.20.0',
+    date: '2026-11-10',
+    items: ['En Android puedes exportar a Health Connect los entrenamientos que termines, con su pulso si das el permiso. Se activa en Ajustes.'],
+  },
+  {
+    version: '1.19.0',
+    date: '2026-11-09',
+    items: [
+      'Borra tu cuenta y sus datos en la nube desde Perfil, con confirmación previa.',
+      'El cronómetro de las series por tiempo se puede pausar, no se pierde al recargar, avisa al alcanzar el objetivo y sugiere +5 s de progresión.',
+      'Al recuperar la contraseña ves tus API keys activas y puedes revocarlas todas.',
+      'Si llegas al límite de almacenamiento en la nube, la app te lo explica y conserva tus datos en el dispositivo.',
+      'Mejoras de accesibilidad, movimiento reducido y fluidez en historiales largos.',
+    ],
+  },
+  {
     version: '1.18.0',
     date: '2026-11-08',
     items: ['Consulta la carga total y el 1RM estimado con tu peso corporal histórico en dominadas (también asistidas) y fondos; añade el ratio de lastre a los niveles de fuerza.'],
