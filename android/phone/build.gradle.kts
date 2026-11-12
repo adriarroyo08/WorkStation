@@ -81,5 +81,5 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20250517") // El org.json de android.jar es un stub en los tests de JVM.
+    testImplementation("org.json:json:20260814") // El org.json de android.jar es un stub en los tests de JVM.
 }
