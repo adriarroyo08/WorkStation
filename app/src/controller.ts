@@ -3,7 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { workoutForRoutine } from '../../shared/mesocycle';
 import { buildHealthExport } from '../../shared/health-connect';
-import { addExerciseToWorkout, buildWatchState, finishWorkout, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
+import { addExerciseToWorkout, buildWatchState, finishWorkout, onLatest, summarizeHeartRate, toggleSet, type WatchCommand } from '../../shared/session';
 import type { Workout } from '../../shared/types';
 import { uid } from '../../shared/types';
 import { clearSamples, pushHeartRate, takeSamples } from './hr';
@@ -105,7 +105,8 @@ export function finishActive(store: Store): boolean {
 
 export function completeSet(store: Store, w: Workout, ei: number, si: number, overrides = {}, forceDone?: boolean): Workout {
   const { workout, restSec } = toggleSet(store.data, w, ei, si, overrides, forceDone);
-  store.setActive(workout);
+  // Se aplica sobre el entreno más reciente: `w` puede no tener aún lo último que se escribió en el móvil.
+  store.setActive((cur) => onLatest(cur, w.id, (x) => toggleSet(store.data, x, ei, si, overrides, forceDone).workout));
   if (restSec > 0) rest.start(restSec);
   return workout;
 }
@@ -188,7 +189,7 @@ export function useSessionController() {
         case 'add_exercise': {
           if (!s.active || (c.wid && c.wid !== s.active.id) || !s.data.exercises.some((e) => e.id === c.id)) break;
           const next = addExerciseToWorkout(s.data, s.active, c.id);
-          s.setActive(next);
+          s.setActive((cur) => onLatest(cur, next.id, (x) => addExerciseToWorkout(s.data, x, c.id)));
           ref.current = { ...s, active: next };
           break;
         }

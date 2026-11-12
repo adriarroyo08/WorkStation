@@ -37,6 +37,14 @@ export function toggleSet(data: WorkstationData, w: Workout, ei: number, si: num
   return { workout: n, restSec };
 }
 
+/**
+ * Aplica un cambio (un comando del reloj) sobre la versión más reciente del entreno, no sobre la que se vio al recibirlo:
+ * así no se pierde lo que se acaba de escribir en el móvil. Si ya es otro entreno (se terminó o se empezó otro), no toca nada.
+ */
+export function onLatest(cur: Workout, workoutId: string, fn: (w: Workout) => Workout): Workout {
+  return cur.id === workoutId ? fn(cur) : cur;
+}
+
 // Añade un ejercicio al final con tantas series como la última vez (o 3), sin hacer. Lo usan el móvil y el reloj.
 export function addExerciseToWorkout(data: WorkstationData, w: Workout, exerciseId: string, supersetId?: string): Workout {
   const prev = lastSessionSets(data, exerciseId, w.startedAt, w.id);
