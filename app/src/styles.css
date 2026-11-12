@@ -2728,8 +2728,8 @@ button.ghost:has(> svg:only-child) {
   background: color-mix(in srgb, var(--danger) 20%, transparent);
 }
 .check {
-  min-height: 40px;
-  min-width: 40px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0;
   display: grid;
   place-items: center;
@@ -2878,6 +2878,9 @@ button.ghost:has(> svg:only-child) {
 }
 .rest b {
   color: var(--accent-ink);
+  font-family: var(--display);
+  font-size: 34px;
+  line-height: 1;
 }
 .rest-main > span,
 .rest-next {
@@ -2888,7 +2891,7 @@ button.ghost:has(> svg:only-child) {
   background: var(--field);
   color: var(--text);
   min-width: 48px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -2897,8 +2900,8 @@ button.ghost:has(> svg:only-child) {
   background: none;
   color: var(--accent-ink);
 }
-/* Con el descanso visible, el final de la página queda por encima del aviso flotante. */
-section.active.resting {
+/* Con la barra inferior visible, el final de la página queda por encima del aviso flotante. */
+section.active.docked {
   padding-bottom: 96px;
 }
 .plate-form {

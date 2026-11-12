@@ -45,6 +45,20 @@ export function diff(prev: Map<string, string>, next: WorkstationData, now = new
   return out;
 }
 
+/**
+ * Huella tras aplicar datos remotos: `base` es el estado sobre el que se aplicaron y `next` el resultado.
+ * Solo se dan por sincronizados los registros que la aplicación remota cambió; cualquier otra diferencia
+ * entre `prev` y `base` (una edición local aún no encolada) se conserva para que `diff` la siga viendo.
+ */
+export function rebaseSnapshot(prev: Map<string, string>, base: WorkstationData, next: WorkstationData): Map<string, string> {
+  const out = new Map(prev);
+  const before = snapshot(base);
+  const after = snapshot(next);
+  for (const [k, json] of after) if (before.get(k) !== json) out.set(k, json);
+  for (const k of before.keys()) if (!after.has(k)) out.delete(k);
+  return out;
+}
+
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const validExercises = (v: unknown) => Array.isArray(v) && v.every((e) => isObject(e) && typeof e.exerciseId === 'string' && Array.isArray(e.sets));
 

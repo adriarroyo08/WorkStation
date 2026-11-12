@@ -51,6 +51,36 @@ const FONDOS_TRICEPS = 'triceps-lateral 100, triceps-medial 95, triceps-larga 75
 const HIP_THRUST = 'gluteo-mayor 100, gluteo-medio 55, isquios 50, vasto-lateral 40, vasto-medial 35, aductores 35, lumbar 30';
 
 export const ACTIVATION: Record<string, string> = {
+  'cuello-isometrico-frontal-posterior': 'cuello 100',
+  'cuello-isometrico-lateral': 'cuello 100',
+  'extension-cuello-disco': 'cuello 100',
+  'flexion-cuello-disco': 'cuello 100',
+  'pasos-monstruo': 'abductores 100, gluteos 50',
+  'abduccion-lateral': 'abductores 100, gluteos 50',
+  'abduccion-polea': 'abductores 100, gluteos 50',
+  'aduccion-banda': 'aductores 100',
+  'aduccion-lateral': 'aductores 100',
+  'extension-lumbar-suelo': 'lumbar 100, gluteos 50, isquios 50',
+  'bird-dog': 'lumbar 100, core 50, gluteos 50',
+  'extension-lumbar-maquina': 'lumbar 100',
+  'encogimientos-polea': 'trapecio 100',
+  'encogimientos-maquina': 'trapecio 100',
+  'encogimientos-barra-detras': 'trapecio 100',
+  'extension-muneca-barra': 'antebrazo 100',
+  'curl-muneca-mancuernas': 'antebrazo 100',
+  'curl-muneca-polea': 'antebrazo 100',
+  'curl-dedos': 'antebrazo 100',
+  'gemelos-sentado-barra': 'gemelos 100',
+  'gemelos-sentado-unilateral': 'gemelos 100',
+  'gemelos-banda': 'gemelos 100',
+  'puente-gluteo-suelo': 'gluteos 100, isquios 50',
+  'puente-gluteo-unilateral': 'gluteos 100, isquios 50',
+  'extension-cadera-banda': 'gluteos 100, isquios 50',
+  'pull-through': 'gluteos 100, isquios 50, lumbar 50',
+  'curl-femoral-fitball': 'isquios 100, gluteos 50, gemelos 50',
+  'curl-nordico': 'isquios 100, gemelos 50, gluteos 50',
+  'curl-femoral-pie': 'isquios 100',
+  'peso-muerto-unilateral-kettlebell': 'isquios 100, gluteos 50, lumbar 50',
   // Pecho
   'press-banca': PRESS_BANCA,
   'press-banca-smith': PRESS_BANCA,
@@ -86,7 +116,8 @@ export const ACTIVATION: Record<string, string> = {
   'remo-t': 'romboides 100, trap-med 90, dorsal-inf 80, dorsal-sup 70, hombro-post 65, biceps-larga 40, braquial 40, lumbar 45',
   'remo-invertido': 'romboides 100, trap-med 90, dorsal-sup 70, dorsal-inf 60, hombro-post 70, biceps-larga 50, biceps-corta 45, abd-sup 30, gluteo-mayor 25',
   pullover: 'dorsal-inf 100, pecho-med 70, pecho-inf 55, redondo 70, triceps-larga 50, pecho-sup 40, abd-sup 25',
-  'peso-muerto': 'lumbar 100, gluteo-mayor 90, isquios 85, trapecio 70, vasto-lateral 50, vasto-medial 45, recto-femoral 30, trap-med 50, dorsal-inf 45, flexores 60, oblicuos 35, abd-sup 30, abd-inf 30',
+  'peso-muerto':
+    'lumbar 100, gluteo-mayor 90, isquios 85, trapecio 70, vasto-lateral 50, vasto-medial 45, recto-femoral 30, trap-med 50, dorsal-inf 45, flexores 60, oblicuos 35, abd-sup 30, abd-inf 30',
   'peso-muerto-sumo': 'gluteo-mayor 100, aductores 85, vasto-medial 70, vasto-lateral 65, isquios 70, lumbar 75, trapecio 55, gluteo-medio 40, recto-femoral 40, flexores 55',
   'peso-muerto-hexagonal': 'vasto-lateral 100, vasto-medial 95, recto-femoral 60, gluteo-mayor 85, isquios 60, lumbar 70, trapecio 65, flexores 60',
   hiperextensiones: 'lumbar 100, gluteo-mayor 75, isquios 65',
@@ -184,14 +215,16 @@ export const ACTIVATION: Record<string, string> = {
   bici: 'cardio 100, vasto-lateral 80, vasto-medial 80, recto-femoral 70, gluteo-mayor 50, isquios 40, gastrocnemio 40',
   eliptica: 'cardio 100, vasto-lateral 60, vasto-medial 55, gluteo-mayor 55, isquios 40, recto-femoral 40, dorsal-inf 25',
   escaladora: 'cardio 100, gluteo-mayor 85, vasto-lateral 75, vasto-medial 75, gastrocnemio 55, recto-femoral 50, isquios 45, soleo 45',
-  'remo-ergometro': 'cardio 100, vasto-lateral 75, vasto-medial 70, gluteo-mayor 65, dorsal-inf 65, romboides 60, dorsal-sup 55, trap-med 55, hombro-post 45, isquios 45, lumbar 40, biceps-larga 35, braquial 30, abd-sup 30',
+  'remo-ergometro':
+    'cardio 100, vasto-lateral 75, vasto-medial 70, gluteo-mayor 65, dorsal-inf 65, romboides 60, dorsal-sup 55, trap-med 55, hombro-post 45, isquios 45, lumbar 40, biceps-larga 35, braquial 30, abd-sup 30',
   'air-bike': 'cardio 100, vasto-lateral 70, vasto-medial 65, recto-femoral 55, gluteo-mayor 45, hombro-ant 40, pecho-med 30, dorsal-inf 30, triceps-lateral 30, biceps-larga 25',
   comba: 'cardio 100, gastrocnemio 85, soleo 80, hombro-lat 30, flexores 30, recto-femoral 30, hombro-ant 25, abd-sup 25',
   burpees: 'cuerpo_completo 100, pecho-med 60, vasto-lateral 60, vasto-medial 55, gluteo-mayor 55, hombro-ant 50, abd-sup 50, abd-inf 50, triceps-lateral 45, recto-femoral 45, gastrocnemio 40',
   'kettlebell-swing': 'cuerpo_completo 100, gluteo-mayor 100, isquios 85, lumbar 70, flexores 55, abd-sup 45, abd-inf 45, oblicuos 40, hombro-ant 35, trapecio 35, vasto-lateral 35',
   clean: 'cuerpo_completo 100, trapecio 85, gluteo-mayor 85, vasto-lateral 80, vasto-medial 75, isquios 70, lumbar 70, gastrocnemio 55, hombro-lat 50, flexores 50, hombro-ant 45, recto-femoral 45',
   'salto-cajon': 'vasto-lateral 100, vasto-medial 95, gluteo-mayor 90, gastrocnemio 75, recto-femoral 70, soleo 55, isquios 45',
-  'muscle-up': 'dorsal-sup 100, dorsal-inf 90, triceps-lateral 75, triceps-medial 70, pecho-inf 65, redondo 60, biceps-corta 55, biceps-larga 55, braquial 50, hombro-ant 45, flexores 45, abd-sup 40, abd-inf 40',
+  'muscle-up':
+    'dorsal-sup 100, dorsal-inf 90, triceps-lateral 75, triceps-medial 70, pecho-inf 65, redondo 60, biceps-corta 55, biceps-larga 55, braquial 50, hombro-ant 45, flexores 45, abd-sup 40, abd-inf 40',
 };
 
 export interface GroupActivation {

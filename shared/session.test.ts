@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
-import { buildWatchState, finishWorkout, nextPendingSet, parseWatchCommand, summarizeHeartRate, toggleSet } from './session';
+import { addExerciseToWorkout, buildWatchState, finishWorkout, isExerciseFinished, nextPendingSet, parseWatchCommand, summarizeHeartRate, toggleSet } from './session';
 import type { Workout } from './types';
 
 const base = (): Workout => ({
@@ -117,5 +117,67 @@ describe('auditoría: superseries desiguales y datos pendientes', () => {
     w.exercises[0].sets[0].reps = 10;
     expect(pending(w, routine)).toBe(true);
     expect(pending({ ...w, exercises: [{ exerciseId: 'plancha', sets: [{ type: 'normal' as const, durationSec: 60, done: false }] }] })).toBe(true);
+  });
+});
+
+describe('isExerciseFinished', () => {
+  const set = (done: boolean) => ({ type: 'normal' as const, done });
+  const workout = (exercises: Workout['exercises']): Workout => ({ id: 'w', name: 'W', startedAt: '2026-01-01T00:00:00Z', exercises });
+
+  it('pliega un ejercicio hecho cuando ya se ha entrenado el siguiente', () => {
+    const w = workout([
+      { exerciseId: 'a', sets: [set(true), set(true)] },
+      { exerciseId: 'b', sets: [set(true), set(false)] },
+    ]);
+    expect(isExerciseFinished(w, 0)).toBe(true);
+    expect(isExerciseFinished(w, 1)).toBe(false);
+  });
+
+  it('lo deja abierto justo al acabar, para poder corregir la última serie', () => {
+    const w = workout([
+      { exerciseId: 'a', sets: [set(true)] },
+      { exerciseId: 'b', sets: [set(false)] },
+    ]);
+    expect(isExerciseFinished(w, 0)).toBe(false);
+  });
+
+  it('no pliega una superserie hasta terminar todo el bloque', () => {
+    const w = workout([
+      { exerciseId: 'a', supersetId: 's', sets: [set(true)] },
+      { exerciseId: 'b', supersetId: 's', sets: [set(false)] },
+      { exerciseId: 'c', sets: [set(true)] },
+    ]);
+    expect(isExerciseFinished(w, 0)).toBe(false);
+  });
+
+  it('dentro de una superserie terminada solo cuenta lo entrenado después del bloque', () => {
+    const block = [
+      { exerciseId: 'a', supersetId: 's', sets: [set(true)] },
+      { exerciseId: 'b', supersetId: 's', sets: [set(true)] },
+    ];
+    expect(isExerciseFinished(workout([...block, { exerciseId: 'c', sets: [set(false)] }]), 0)).toBe(false);
+    expect(isExerciseFinished(workout([...block, { exerciseId: 'c', sets: [set(true)] }]), 0)).toBe(true);
+  });
+
+  it('no pliega un ejercicio sin series', () => {
+    const w = workout([
+      { exerciseId: 'a', sets: [] },
+      { exerciseId: 'b', sets: [set(true)] },
+    ]);
+    expect(isExerciseFinished(w, 0)).toBe(false);
+  });
+});
+
+describe('addExerciseToWorkout', () => {
+  const w: Workout = { id: 'w', name: 'A', startedAt: '2026-11-10T10:00:00Z', exercises: [] };
+  it('repite el número de series de la última vez, sin hacer', () => {
+    const d = emptyData();
+    d.workouts.push({ id: 'old', name: 'A', startedAt: '2026-11-01T10:00:00Z', exercises: [{ exerciseId: 'press-banca', sets: [{ type: 'warmup', weight: 40, reps: 10, done: true }, { type: 'normal', weight: 80, reps: 8, done: true }] }] });
+    const n = addExerciseToWorkout(d, w, 'press-banca');
+    expect(n.exercises).toEqual([{ exerciseId: 'press-banca', sets: [{ type: 'warmup', done: false }, { type: 'normal', done: false }], supersetId: undefined, restSec: d.settings.defaultRestSec }]);
+    expect(w.exercises).toEqual([]);
+  });
+  it('sin historial pone tres series', () => {
+    expect(addExerciseToWorkout(emptyData(), w, 'sentadilla').exercises[0].sets).toHaveLength(3);
   });
 });

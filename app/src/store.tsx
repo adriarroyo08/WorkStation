@@ -16,6 +16,8 @@ interface Store {
   ai: AiConfig;
   update: (fn: (d: WorkstationData) => void) => void;
   replace: (d: WorkstationData) => void;
+  /** Como `replace`, pero calculado sobre el estado más reciente (incluye cambios aún sin renderizar). Devolver el mismo objeto no cambia nada. */
+  apply: (fn: (d: WorkstationData) => WorkstationData) => void;
   setActive: (w: Workout | null | ((w: Workout) => Workout)) => void;
   setAi: (c: AiConfig) => void;
   setSettings: (s: Partial<Settings>) => void;
@@ -52,6 +54,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const replace = useCallback((d: WorkstationData) => {
     set('data', d);
     setState((s) => (s ? { ...s, data: d } : s));
+  }, []);
+
+  const apply = useCallback((fn: (d: WorkstationData) => WorkstationData) => {
+    setState((s) => {
+      if (!s) return s;
+      const d = fn(s.data);
+      if (d === s.data) return s;
+      set('data', d);
+      return { ...s, data: d };
+    });
   }, []);
 
   const setActive = useCallback((w: Workout | null | ((w: Workout) => Workout)) => {
@@ -95,7 +107,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   if (!state) return <div className="center muted">Cargando…</div>;
   // Unidad de peso activa para todo el árbol (se fija antes de renderizar a los hijos).
   setWeightUnit(state.data.settings.unit);
-  return <Ctx.Provider value={{ ...state, settings: state.data.settings, update, replace, setActive, setAi, setSettings }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ ...state, settings: state.data.settings, update, replace, apply, setActive, setAi, setSettings }}>{children}</Ctx.Provider>;
 }
 
 export function useStore() {

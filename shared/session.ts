@@ -37,6 +37,13 @@ export function toggleSet(data: WorkstationData, w: Workout, ei: number, si: num
   return { workout: n, restSec };
 }
 
+// Añade un ejercicio al final con tantas series como la última vez (o 3), sin hacer. Lo usan el móvil y el reloj.
+export function addExerciseToWorkout(data: WorkstationData, w: Workout, exerciseId: string, supersetId?: string): Workout {
+  const prev = lastSessionSets(data, exerciseId, w.startedAt, w.id);
+  const sets: WorkoutSet[] = (prev.length ? prev : [{ type: 'normal' as const }, { type: 'normal' as const }, { type: 'normal' as const }]).map((p) => ({ type: p.type, done: false }));
+  return { ...w, exercises: [...w.exercises, { exerciseId, sets, supersetId, restSec: data.settings.defaultRestSec }] };
+}
+
 // Siguiente serie pendiente. En superseries alterna entre ejercicios del bloque (A1, B1, A2, B2…).
 export function nextPendingSet(w: Workout): { ei: number; si: number } | null {
   for (let ei = 0; ei < w.exercises.length; ei++) {
@@ -61,6 +68,17 @@ export function nextPendingSet(w: Workout): { ei: number; si: number } | null {
     return { ei, si };
   }
   return null;
+}
+
+// El ejercicio (con toda su superserie) está hecho y ya se ha entrenado algo después: la pantalla puede plegarlo.
+// Justo al acabar sigue abierto, para corregir o deshacer la última serie durante el descanso.
+export function isExerciseFinished(w: Workout, ei: number): boolean {
+  const we = w.exercises[ei];
+  if (!we?.sets.length) return false;
+  let last = ei;
+  while (we.supersetId && w.exercises[last + 1]?.supersetId === we.supersetId) last++;
+  const block = we.supersetId ? w.exercises.filter((e) => e.supersetId === we.supersetId) : [we];
+  return block.every((e) => e.sets.every((s) => s.done)) && w.exercises.slice(last + 1).some((e) => e.sets.some((s) => s.done));
 }
 
 // Cierra el entrenamiento: descarta series sin completar y ejercicios vacíos. null si no queda nada.
@@ -114,7 +132,8 @@ export interface WatchState {
     cursor: { ei: number; si: number } | null;
     setsDone: number;
     setsTotal: number;
-    exercises: { name: string; kind: string; superset: boolean; sets: WatchSet[] }[];
+    // id: ejercicio de la biblioteca (la silueta muscular del reloj sale de ahí).
+    exercises: { id: string; name: string; kind: string; superset: boolean; sets: WatchSet[] }[];
   };
   routines: { id: string; name: string; exercises: number }[];
 }
@@ -143,6 +162,7 @@ export function buildWatchState(data: WorkstationData, w: Workout | null, rest: 
         const ex = names.get(we.exerciseId);
         const prev = alignPrevious(we.sets, lastSessionSets(data, we.exerciseId, w.startedAt, w.id));
         return {
+          id: we.exerciseId,
           name: ex?.name ?? we.exerciseId,
           kind: ex?.kind ?? 'weight_reps',
           superset: !!we.supersetId,
@@ -162,6 +182,8 @@ export type WatchCommand =
   | { type: 'rest_skip' }
   | { type: 'start_routine'; id: string }
   | { type: 'start_empty' }
+  // id: ejercicio de la biblioteca; wid: entreno que veía el reloj.
+  | { type: 'add_exercise'; id: string; wid?: string }
   | { type: 'finish' }
   | { type: 'hr'; bpm: number };
 

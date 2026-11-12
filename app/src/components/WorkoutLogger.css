@@ -74,3 +74,104 @@
 .stagnation button {
   min-height: 44px;
 }
+
+/* Ajustes del ejercicio en una sola línea: lo primero que se ve son las series. */
+.exmeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.exmeta .rest-chip,
+.exmeta-note {
+  min-height: 44px;
+}
+.exmeta-note {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+/* Ejercicio terminado: una línea que se despliega al tocar. */
+.excollapsed > button {
+  width: 100%;
+  min-height: 48px;
+}
+.excollapsed-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.excollapsed-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.excollapsed-ok {
+  flex: none;
+  color: var(--accent-ink);
+}
+
+/* Siguiente serie: se completa con el pulgar, sin buscar la fila. Ocupa el sitio del descanso. */
+.nextdock {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 696px;
+  margin: 0 auto;
+  padding: 8px 8px 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+.nextdock-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  text-align: left;
+}
+.nextdock-info small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.nextdock-info b {
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nextdock-value {
+  flex: none;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+.nextdock-go {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 56px;
+  min-height: 52px;
+  padding: 0 12px;
+  background: var(--field);
+  color: var(--text);
+  font-weight: 700;
+}
+.nextdock-go.on {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}

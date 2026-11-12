@@ -1,6 +1,7 @@
 // Datos que el reloj guarda para entrenar sin el móvil: rutinas, biblioteca, lo último que hiciste en cada
 // ejercicio e historial reciente. Va por Data Layer (/workstation/library), que limita cada DataItem a 100 KB.
 // Los entrenos que se hacen en el reloj vuelven como Workout normales (/workstation/workout/<id>).
+import { exerciseActivation } from './muscle-detail';
 import { workoutSetCount, workoutVolume } from './stats';
 import type { SetType, Workout, WorkstationData } from './types';
 
@@ -11,7 +12,8 @@ export interface WatchLibrary {
   sentAt: number;
   unit: 'kg' | 'lb';
   defaultRest: number;
-  exercises: { id: string; name: string; kind: string }[];
+  // m: músculos que trabaja, grupo → intensidad 0-100 (para la silueta del reloj).
+  exercises: { id: string; name: string; kind: string; m?: Record<string, number> }[];
   routines: { id: string; name: string; folder?: string; exercises: { id: string; rest: number; ss?: string; sets: WSet[] }[] }[];
   prev: Record<string, WSet[]>;
   recent: { id: string; name: string; start: number; end?: number; sets: number; volume: number }[];
@@ -19,6 +21,11 @@ export interface WatchLibrary {
 
 const MAX_BYTES = 90_000;
 const wset = (s: { type: SetType; weight?: number; reps?: number; durationSec?: number }): WSet => ({ t: s.type, w: s.weight, r: s.reps, d: s.durationSec });
+
+const muscles = (e: WorkstationData['exercises'][number]) => {
+  const acts = exerciseActivation(e).filter((a) => a.pct > 0);
+  return acts.length ? Object.fromEntries(acts.map((a) => [a.group, a.pct])) : undefined;
+};
 
 export function buildWatchLibrary(data: WorkstationData, now = Date.now()): WatchLibrary {
   const folders = new Map(data.folders.map((f) => [f.id, f.name]));
@@ -36,7 +43,7 @@ export function buildWatchLibrary(data: WorkstationData, now = Date.now()): Watc
     sentAt: now,
     unit: data.settings.unit ?? 'kg',
     defaultRest: data.settings.defaultRestSec,
-    exercises: data.exercises.map((e) => ({ id: e.id, name: e.name, kind: e.kind })),
+    exercises: data.exercises.map((e) => ({ id: e.id, name: e.name, kind: e.kind, m: muscles(e) })),
     routines: data.routines.map((r) => ({
       id: r.id,
       name: r.name,
@@ -58,6 +65,11 @@ export function buildWatchLibrary(data: WorkstationData, now = Date.now()): Watc
     const inRoutines = new Set(lib.routines.flatMap((r) => r.exercises.map((e) => e.id)));
     for (const id of Object.keys(prev)) if (!inRoutines.has(id)) delete prev[id];
     lib.recent = lib.recent.slice(0, 5);
+  }
+  // Y si aún no cabe, la silueta de los ejercicios que no están en ninguna rutina.
+  if (JSON.stringify(lib).length > MAX_BYTES) {
+    const inRoutines = new Set(lib.routines.flatMap((r) => r.exercises.map((e) => e.id)));
+    for (const e of lib.exercises) if (!inRoutines.has(e.id)) delete e.m;
   }
   return lib;
 }
