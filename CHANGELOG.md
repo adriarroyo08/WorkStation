@@ -14,6 +14,10 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Wear OS: la serie cabe en una pantalla sin scroll, con anillo de series, ajuste con la corona y menú del entreno también cuando se sigue desde el móvil.
 - Wear OS: silueta de músculos junto a cada rutina y ejercicio, y búsqueda por teclado o voz para añadir ejercicios a mitad de sesión, también en entrenos que lleva el móvil (comando `add_exercise`).
 
+### Corregido
+
+- Sincronización: un cambio llegado de otro dispositivo ya no puede pisar una edición local hecha en el mismo instante ni impedir que suba; los datos remotos se aplican sobre el estado más reciente y solo se dan por sincronizados los registros que cambian (#192).
+
 ### Seguridad
 
 - La función del email de bienvenida exige un secreto compartido y responde con mensajes genéricos; requiere configurar `WELCOME_SECRET` y aplicar a mano la migración 012 antes de desplegarla (#150).

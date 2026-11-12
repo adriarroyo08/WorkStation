@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
 import { trainingSummary } from './stats';
-import { applyRemote, diff, initialUpload, recordKey, snapshot, validRemoteDoc, type Collection } from './sync';
+import { applyRemote, diff, initialUpload, rebaseSnapshot, recordKey, snapshot, validRemoteDoc, type Collection } from './sync';
 import type { Workout } from './types';
 
 const w = (id: string, name = id): Workout => ({ id, name, startedAt: '2026-10-01T10:00:00Z', exercises: [] });
@@ -40,6 +40,40 @@ describe('documentos remotos mal formados (auditoría de seguridad)', () => {
     const { data } = applyRemote(emptyData(), [row('settings', 'settings', { platesKg: 5, barKg: 'x', platesLb: 'y', weeklyGoal: 6, futuro: 'z' })]);
     expect(data.settings).toMatchObject({ weeklyGoal: 6, barKg: emptyData().settings.barKg, platesKg: emptyData().settings.platesKg, futuro: 'z' });
     expect(data.settings.platesLb).toBeUndefined();
+  });
+});
+
+describe('cambios remotos sobre ediciones locales sin encolar', () => {
+  const row = (doc: Workout | null, id = doc?.id ?? '') => ({ collection: 'workouts' as const, id, doc, deleted: !doc, client_updated_at: '2026-10-01T00:00:00Z' });
+  const setup = () => {
+    const synced = emptyData();
+    synced.workouts.push(w('a'), w('b'), w('c'));
+    const prev = snapshot(synced);
+    const local = structuredClone(synced);
+    local.workouts[0].name = 'editado aquí'; // aún sin encolar
+    return { prev, local };
+  };
+
+  it('la edición local sigue en diff tras aplicar otro registro remoto', () => {
+    const { prev, local } = setup();
+    const { data } = applyRemote(local, [row(w('b', 'de otro móvil')), row(w('d'))]);
+    const ch = diff(rebaseSnapshot(prev, local, data), data, 'T');
+    expect(ch.map((r) => `${r.id}:${(r.doc as Workout).name}`)).toEqual(['a:editado aquí']);
+  });
+
+  it('los borrados remotos no se reenvían y no tapan la edición local', () => {
+    const { prev, local } = setup();
+    const { data } = applyRemote(local, [row(null, 'c')]);
+    const ch = diff(rebaseSnapshot(prev, local, data), data, 'T');
+    expect(ch.map((r) => `${r.id}:${r.deleted}`)).toEqual(['a:false']);
+  });
+
+  it('sin edición local no queda nada pendiente', () => {
+    const { prev } = setup();
+    const base = emptyData();
+    base.workouts.push(w('a'), w('b'), w('c'));
+    const { data } = applyRemote(base, [row(w('b', 'otro'))]);
+    expect(diff(rebaseSnapshot(prev, base, data), data, 'T')).toEqual([]);
   });
 });
 

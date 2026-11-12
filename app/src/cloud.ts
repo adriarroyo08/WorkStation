@@ -5,7 +5,7 @@ import { apiKeyExpiry, type RecoveryApiKey } from '../../shared/api-keys';
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { del, get, set } from 'idb-keyval';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { applyRemote, diff, estimateClockOffset, initialUpload, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
+import { applyRemote, diff, estimateClockOffset, initialUpload, rebaseSnapshot, recordKey, snapshot, type SyncRecord } from '../../shared/sync';
 import type { WorkstationData } from '../../shared/types';
 import { useStore } from './store';
 import { emptyData } from '../../shared/data';
@@ -90,7 +90,8 @@ const serverNow = () => new Date(Date.now() + clockOffset).toISOString();
 let getData: () => WorkstationData = () => {
   throw new Error('store no listo');
 };
-let applyData: (d: WorkstationData) => void = () => {};
+/** Aplica datos remotos sobre el estado más reciente del store (no sobre el del último render). */
+let applyData: (fn: (d: WorkstationData) => WorkstationData) => void = () => {};
 
 const savePending = () => set('cloud-pending', [...pending.values()]);
 
@@ -167,7 +168,7 @@ async function onSignedIn(uid: string, email: string | null) {
       await snapshotBackup(getData(), 'antes de cambiar de cuenta');
       pending.clear();
       await savePending();
-      applyData(emptyData());
+      applyData(() => emptyData());
     }
   } finally {
     switching = false;
@@ -208,8 +209,10 @@ async function pull(): Promise<Set<string>> {
     if (!rows.length) break;
     rows.forEach((r) => seen.add(recordKey(r.collection, r.id)));
     const pendingTs = new Map([...pending].map(([k, r]) => [k, r.client_updated_at]));
-    const res = applyRemote(getData(), rows, pendingTs);
-    if (res.changed) applyData(res.data);
+    applyData((d) => {
+      const res = applyRemote(d, rows, pendingTs);
+      return res.changed ? res.data : d;
+    });
     // Si en la nube hay una versión igual o más nueva que un cambio pendiente, ese cambio ya no debe subirse.
     let dropped = false;
     for (const r of rows) {
@@ -447,16 +450,19 @@ async function sha256Hex(s: string): Promise<string> {
 export function useCloudSync() {
   const store = useStore();
   const prev = useRef<Map<string, string> | null>(null);
-  const applied = useRef<WorkstationData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
 
   useEffect(() => {
     getData = () => storeRef.current.data;
-    applyData = (d) => {
-      applied.current = d;
-      storeRef.current.replace(d);
-    };
+    // Lo que llega de la nube se marca como ya sincronizado en la huella, registro a registro: una edición local
+    // que coincida en el mismo render sigue siendo una diferencia y se encola.
+    applyData = (fn) =>
+      storeRef.current.apply((base) => {
+        const next = fn(base);
+        if (next !== base && prev.current) prev.current = rebaseSnapshot(prev.current, base, next);
+        return next;
+      });
     ready = setup().catch((e) => emit({ status: 'error', error: String(e) }));
     const online = () => schedule(flush, 200);
     window.addEventListener('online', online);
@@ -465,9 +471,8 @@ export function useCloudSync() {
 
   useEffect(() => {
     const d = store.data;
-    if (!prev.current || applied.current === d) {
+    if (!prev.current) {
       prev.current = snapshot(d);
-      applied.current = null;
       return;
     }
     const changes = diff(prev.current, d, serverNow());
