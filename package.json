@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
-    "@electric-sql/pglite": "^0.5.15",
+    "@electric-sql/pglite": "^0.5.16",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.0",
     "@vitest/coverage-v8": "^5.1.0",
