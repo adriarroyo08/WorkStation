@@ -13,6 +13,7 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 - Entreno en curso más claro: barra inferior para completar la siguiente serie, ejercicios terminados plegados y notas y descanso en una sola línea.
 - Wear OS: la serie cabe en una pantalla sin scroll, con anillo de series, ajuste con la corona y menú del entreno también cuando se sigue desde el móvil.
 - Wear OS: silueta de músculos junto a cada rutina y ejercicio, y búsqueda por teclado o voz para añadir ejercicios a mitad de sesión, también en entrenos que lleva el móvil (comando `add_exercise`).
+- Consentimiento explícito para medidas corporales y pulso al crear la cuenta (email y Google) y una sola vez en las cuentas existentes; se guarda con fecha y versión en la cuenta, y hasta aceptarlo no se sincroniza nada ni se emite la key del reloj (#179).
 
 ### Corregido
 

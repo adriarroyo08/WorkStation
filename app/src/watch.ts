@@ -47,7 +47,7 @@ export function useWatchSync() {
   // Caduca sola: al abrir la app se emite la siguiente antes de que venza y el móvil revoca la anterior.
   const uid = cloud.userId();
   useEffect(() => {
-    if (!uid || !watch.nodes.length || issuing) return;
+    if (!uid || st.consent !== 'ok' || !watch.nodes.length || issuing) return;
     const have = native.watchUploadUser();
     if (have === undefined) return;
     const due = watchKeyDue(have, native.watchUploadExpiry(), uid);
@@ -65,5 +65,5 @@ export function useWatchSync() {
       .finally(() => {
         issuing = false;
       });
-  }, [uid, watch.nodes.length, st.email]);
+  }, [uid, watch.nodes.length, st.email, st.consent]);
 }

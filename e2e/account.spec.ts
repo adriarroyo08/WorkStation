@@ -106,6 +106,7 @@ test('sin sesión, Perfil abre con la tarjeta de cuenta y el registro avisa del 
   await expect(page.getByText('Las contraseñas no coinciden.')).toBeVisible();
   await expect(create).toBeDisabled();
   await page.getByLabel('Repetir contraseña').fill('Secreto123');
+  await expect(page.getByRole('checkbox')).toHaveCount(0); // proyecto propio: sin petición de consentimiento
   await create.click();
   await expect(page.getByText('Te hemos enviado un email')).toBeVisible();
   const signup = mock.hit('/auth/v1/signup')[0];
@@ -127,6 +128,7 @@ test('con sesión, la tarjeta muestra el email y Cerrar sesión', async ({ page,
   await configure(page);
   await login(page, 'ana@example.com');
   await expect(page.locator('.account')).toContainText('ana@example.com');
+  await expect(page.getByRole('dialog')).toHaveCount(0); // proyecto propio: sin petición de consentimiento
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await expect(page.getByText('Inicia sesión para sincronizar')).toBeVisible();
 });
