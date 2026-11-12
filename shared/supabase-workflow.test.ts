@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 
-const workflow = readFileSync(new URL('../.github/workflows/supabase.yml', import.meta.url), 'utf8');
+const workflow = readFileSync(new URL('../.github/workflows/supabase.yml', import.meta.url), 'utf8').replace(/\r\n/g, '\n'); // Windows lo saca con CRLF
 const steps = workflow.split(/\n {6}- /).slice(1);
 const check = steps.find(step => step.startsWith('name: Comprobar secrets'))!;
 
