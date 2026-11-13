@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyData } from './data';
-import { addExerciseToWorkout, buildWatchState, finishWorkout, isExerciseFinished, nextPendingSet, parseWatchCommand, summarizeHeartRate, toggleSet } from './session';
+import { addExerciseToWorkout, buildWatchState, finishWorkout, isExerciseFinished, nextPendingSet, onLatest, parseWatchCommand, summarizeHeartRate, toggleSet } from './session';
 import type { Workout } from './types';
 
 const base = (): Workout => ({
@@ -28,6 +28,32 @@ const base = (): Workout => ({
     },
     { exerciseId: 'curl-barra', sets: [{ type: 'normal', done: false }] },
   ],
+});
+
+describe('comandos del reloj sobre el entreno más reciente', () => {
+  const data = emptyData();
+  const seen = base(); // lo que había al llegar el comando
+  const latest = structuredClone(seen);
+  latest.exercises[2].sets[0].weight = 30; // escrito en el móvil y aún sin pintar
+
+  it('completar una serie desde el reloj conserva lo escrito en el móvil', () => {
+    const r = onLatest(latest, seen.id, (w) => toggleSet(data, w, 0, 0, { weight: 60, reps: 10 }, true).workout);
+    expect(r.exercises[0].sets[0]).toMatchObject({ done: true, weight: 60, reps: 10 });
+    expect(r.exercises[2].sets[0].weight).toBe(30);
+    // Antes se fijaba el resultado calculado sobre lo visto, que no tenía el peso:
+    expect(toggleSet(data, seen, 0, 0, { weight: 60, reps: 10 }, true).workout.exercises[2].sets[0].weight).toBeUndefined();
+  });
+
+  it('añadir un ejercicio también conserva lo escrito', () => {
+    const r = onLatest(latest, seen.id, (w) => addExerciseToWorkout(data, w, 'sentadilla'));
+    expect(r.exercises.map((e) => e.exerciseId)).toEqual(['press-banca', 'remo-barra', 'curl-barra', 'sentadilla']);
+    expect(r.exercises[2].sets[0].weight).toBe(30);
+  });
+
+  it('no toca otro entreno', () => {
+    const other = { ...latest, id: 'otro' };
+    expect(onLatest(other, seen.id, (w) => toggleSet(data, w, 0, 0, {}, true).workout)).toBe(other);
+  });
 });
 
 describe('sesión en curso', () => {
