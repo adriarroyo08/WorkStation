@@ -9,7 +9,10 @@ export const CHANGELOG: Release[] = [
   {
     version: '1.25.0',
     date: '2026-11-12',
-    items: ['Antes de sincronizar tus medidas corporales y tu pulso te pedimos tu consentimiento explícito, al crear la cuenta o una sola vez si ya la tenías.'],
+    items: [
+      'Antes de sincronizar tus medidas corporales y tu pulso te pedimos tu consentimiento explícito, al crear la cuenta o una sola vez si ya la tenías.',
+      'Si falla una consulta del Coach IA, puedes reintentar la pregunta sin duplicarla en la conversación.',
+    ],
   },
   {
     version: '1.24.0',
