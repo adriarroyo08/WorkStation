@@ -17,6 +17,8 @@ Las novedades que ve el usuario dentro de la app están en `shared/changelog.ts`
 
 ### Corregido
 
+- Coach IA: reintenta una pregunta tras un fallo del proveedor sin duplicarla en la conversación (#204).
+
 - Sincronización: un cambio llegado de otro dispositivo ya no puede pisar una edición local hecha en el mismo instante ni impedir que suba; los datos remotos se aplican sobre el estado más reciente y solo se dan por sincronizados los registros que cambian (#192).
 - Reloj: completar una serie o añadir un ejercicio desde el reloj ya no pisa lo que se acaba de escribir en el móvil; los comandos se aplican sobre el entreno más reciente (#199).
 

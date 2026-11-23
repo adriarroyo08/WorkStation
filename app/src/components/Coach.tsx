@@ -21,6 +21,7 @@ const QUICK = [
 export default function Coach({ goSettings, onBack }: { goSettings: () => void; onBack: () => void }) {
   const { data, ai, update, settings } = useStore();
   const [msgs, setMsgs] = useState<(ChatMessage & { articles?: ReturnType<typeof coachArticleContext>['articles'] })[]>([]);
+  const [pending, setPending] = useState<ChatMessage>();
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -28,16 +29,16 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
 
   const configured = ai.baseUrl && ai.model;
 
-  const send = async (text: string) => {
-    if (!text.trim() || busy) return;
-    const next = [...msgs, { role: 'user' as const, content: text }];
-    setMsgs(next);
-    setInput('');
+  const request = async (question: ChatMessage) => {
+    if (abort.current) return;
+    const next = [...msgs, question];
+    const controller = new AbortController();
+    abort.current = controller;
+    setPending(question);
     setBusy(true);
     setErr('');
-    abort.current = new AbortController();
     try {
-      const context = coachArticleContext(text);
+      const context = coachArticleContext(question.content);
       const system: ChatMessage = {
         role: 'system',
         content: `${COACH_SYSTEM_PROMPT}\n\nFecha de hoy: ${new Date().toISOString().slice(0, 10)}\n\nDATOS DEL USUARIO:\n${trainingSummary(data, 15)}\n\n${reportToText(periodReport(data, period('week', 0, settings.weekStartsMonday)))}\n\n${reportToText(periodReport(data, period('month', 0, settings.weekStartsMonday)))}\n\nEjercicios disponibles en su biblioteca: ${data.exercises
@@ -46,14 +47,26 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
           .join(', ')}`,
       };
       system.content += `\n\n${context.prompt}`;
-      const reply = await chat(ai, [system, ...next.map(({ role, content }) => ({ role, content }))], abort.current.signal);
+      const reply = await chat(ai, [system, ...next.map(({ role, content }) => ({ role, content }))], controller.signal);
+      controller.signal.throwIfAborted();
       setMsgs([...next, { role: 'assistant', content: reply, articles: context.articles }]);
+      setPending(undefined);
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') setErr((e as Error).message);
+      if (controller.signal.aborted) setPending(undefined);
+      else setErr((e as Error).message);
     } finally {
+      abort.current = null;
       setBusy(false);
     }
   };
+
+  const send = (text: string) => {
+    if (!text.trim() || abort.current) return;
+    setInput('');
+    void request({ role: 'user', content: text });
+  };
+
+  const visibleMsgs: typeof msgs = pending ? [...msgs, pending] : msgs;
 
   const saveRoutines = (drafts: RoutineDraft[], program?: string) => {
     try {
@@ -86,14 +99,22 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
       <h1>Coach IA</h1>
       <p className="muted small">
         {ai.model} · tus datos se envían solo al proveedor que configuraste.
-        {msgs.length > 0 && (
-          <button className="ghost small" onClick={() => setMsgs([])}>
+        {visibleMsgs.length > 0 && (
+          <button
+            className="ghost small"
+            disabled={busy}
+            onClick={() => {
+              setMsgs([]);
+              setPending(undefined);
+              setErr('');
+            }}
+          >
             Nueva conversación
           </button>
         )}
       </p>
-      {!msgs.length && <h2 className="sec">Prueba con</h2>}
-      {!msgs.length && (
+      {!visibleMsgs.length && <h2 className="sec">Prueba con</h2>}
+      {!visibleMsgs.length && (
         <div className="list flush">
           {QUICK.map((q) => (
             <button key={q} className="item" onClick={() => send(q)}>
@@ -102,7 +123,7 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
           ))}
         </div>
       )}
-      {msgs.map((m, i) => {
+      {visibleMsgs.map((m, i) => {
         const json = m.role === 'assistant' ? (extractJsonBlock(m.content) as (RoutineDraft & { program?: string; routines?: RoutineDraft[] }) | undefined) : undefined;
         const text = m.content.replace(/```json[\s\S]*?```/g, '').trim();
         const parts = m.role === 'assistant' ? articleCitationParts(text, m.articles ?? []) : [{ text, href: undefined }];
@@ -140,7 +161,16 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
           </button>
         </div>
       )}
-      {err && <p className="error">{err}</p>}
+      {pending && err && (
+        <div>
+          <p className="error" role="alert">
+            {err}
+          </p>
+          <button className="ghost" onClick={() => request(pending)}>
+            Reintentar
+          </button>
+        </div>
+      )}
       <form
         className="row composer"
         onSubmit={(e) => {
@@ -148,7 +178,7 @@ export default function Coach({ goSettings, onBack }: { goSettings: () => void; 
           send(input);
         }}
       >
-        <input placeholder="Pregunta a tu coach…" value={input} onChange={(e) => setInput(e.target.value)} />
+        <input aria-label="Pregunta a tu coach" placeholder="Pregunta a tu coach…" value={input} onChange={(e) => setInput(e.target.value)} />
         <button className="primary" disabled={busy}>
           Enviar
         </button>
