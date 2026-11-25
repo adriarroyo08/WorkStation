@@ -43,3 +43,11 @@ Las issues mandan. Etiquetas:
 | `size:s` / `size:m` / `size:l` | Tamaño estimado. |
 
 Si trabajas como worker de Orca, al acabar envía un único `worker_done` con el número del PR en el cuerpo.
+
+## Releases
+
+Subir la versión en `app/package.json` y fusionarla en `main` basta para publicar
+la etiqueta `v<versión>` y su release con notas generadas de los PR fusionados.
+El workflow `Releases por versión` comprueba el cambio frente al estado anterior
+al push; no publica si la versión no cambia o la etiqueta ya existe. En PR solo
+se ejecutan las pruebas, sin crear etiquetas ni releases.
