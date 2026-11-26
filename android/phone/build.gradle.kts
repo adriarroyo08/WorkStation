@@ -72,7 +72,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.appcompat:appcompat:1.8.0")
     implementation("androidx.webkit:webkit:1.18.0")
-    implementation("androidx.work:work-runtime:2.10.0")
+    implementation("androidx.work:work-runtime:2.12.0")
     implementation("androidx.health.connect:connect-client:1.1.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("androidx.wear:wear-remote-interactions:1.1.0")
